@@ -20,8 +20,8 @@
       "default": "./dist/services/agent/core/index.js"
     },
     "./loops": {
-      "types": "./dist/services/loops/index.d.ts",
-      "default": "./dist/services/loops/index.js"
+      "types": "./dist/services/agent/loops/index.d.ts",
+      "default": "./dist/services/agent/loops/index.js"
     },
     "./app": {
       "types": "./dist/services/app/core/index.d.ts",
