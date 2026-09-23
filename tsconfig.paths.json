@@ -1,0 +1,11 @@
+{
+    "compilerOptions": {
+        "outDir": "dist",
+        "rootDir": ".",
+        "paths": {
+            "@common/*": ["./src/common/*"],
+            "@services/*": ["./src/services/*"],
+            "@root/*": ["./src/../*"]
+        }
+    }
+}

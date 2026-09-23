@@ -1,0 +1,173 @@
+import { BaseEntity, BaseEntityProps } from '@common/core/base.entity'
+import { AgentStateProps, AgentState } from '@services/agent/core/agent-state'
+import { ChatMessage, ChatMessageProps } from './chat-message.entity'
+import { ChatSettings, ChatSettingsProps } from './chat-settings.entity'
+import { ChatContext, ChatContextProps } from './chat-context.entity'
+import { AgentTask, AgentTaskProps, TaskStatus } from './agent-task.entity'
+
+export interface ChatProps extends BaseEntityProps {
+    state?: AgentStateProps
+    settings?: ChatSettingsProps
+    messages?: ChatMessageProps[]
+    context?: ChatContextProps
+    tasks?: AgentTaskProps[]
+    traces?: AgentTrace[]
+}
+
+export interface AgentTrace {
+    node: string
+    reasoning?: string
+    taskId?: string
+    timestamp?: Date | string
+}
+
+export class Chat extends BaseEntity {
+    static withDefaults (loopName?: string): Chat {
+        const agentState = new AgentState()
+        agentState.cleanContext()
+
+        return Chat.fromJSON({
+            state: agentState.toJSON(),
+            settings: { loopName },
+        })
+    }
+
+    static fromJSON (props: ChatProps) {
+        return new Chat(
+            props,
+            props.state && AgentState.fromJSON(props.state),
+            props.settings && ChatSettings.fromJSON(props.settings),
+            props.messages?.map(message => ChatMessage.factory(message)),
+            ChatContext.fromJSON(props.context ?? {}),
+            props.tasks?.map(task => AgentTask.fromJSON(task)) ?? [],
+            props.traces,
+        )
+    }
+
+    constructor (
+        private readonly props: ChatProps,
+        public state?: AgentState,
+        public settings?: ChatSettings,
+        public messages?: ChatMessage[],
+        public context: ChatContext = ChatContext.fromJSON({}),
+        public tasks: AgentTask[] = [],
+        public traces?: AgentTrace[],
+    ) {
+        super(props)
+    }
+
+    get lastAnswer () {
+        return this.messages?.slice().reverse().find(message => message.role === 'assistant')?.content
+    }
+
+    get activeTask (): AgentTask | undefined {
+        if (!this.state?.activeTaskId) return undefined
+        return this.tasks.find(t => t.id === this.state?.activeTaskId)
+    }
+
+    public toJSON (): ChatProps {
+        return {
+            ...super.toJSON(),
+            state: this.state?.toJSON(),
+            settings: this.settings?.toJSON(),
+            messages: this.messages?.map(message => message.toJSON()),
+            context: this.context.toJSON(),
+            tasks: this.tasks.map(task => task.toJSON()),
+            traces: this.traces,
+        }
+    }
+
+    public pushMessage (message: ChatMessageProps) {
+        this.messages ??= []
+        this.messages.push(ChatMessage.factory(message))
+    }
+
+    public lastHistoryMessages (count = 6) {
+        return this.messages?.slice(-count, -1)
+    }
+
+    public addTrace (entry: Omit<AgentTrace, 'timestamp'>): void {
+        this.traces ??= []
+        this.traces.push({
+            ...entry,
+            taskId: entry.taskId ?? this.activeTask?.id,
+            timestamp: new Date(),
+        })
+    }
+
+    public setAgentState (contextState: AgentStateProps) {
+        this.state = AgentState.fromJSON(contextState)
+    }
+
+    getTask (taskId: string): AgentTask | undefined {
+        return this.tasks.find(t => t.id === taskId)
+    }
+
+    lastCompletedTask (): AgentTask | undefined {
+        return this.tasks.slice().reverse().find(t => t.status === TaskStatus.COMPLETED && t.loopName === this.settings?.loopName)
+    }
+
+    createTask (goal: string, opts?: { continuesFrom?: string }): AgentTask {
+        if (this.activeTask?.status === TaskStatus.IN_PROGRESS) {
+            this.activeTask.pause()
+        }
+
+        const continuesFromTask = opts?.continuesFrom ? this.getTask(opts.continuesFrom) : undefined
+
+        const newTask = AgentTask.factory({
+            goal,
+            threadId: continuesFromTask?.threadId,
+            previousTaskId: opts?.continuesFrom,
+            loopName: this.settings?.loopName,
+        })
+
+        newTask.threadId ??= newTask.id
+
+        this.tasks.push(newTask)
+        this.state?.setActiveTaskId(newTask.id)
+
+        return newTask
+    }
+
+    reopenTask (taskId: string): AgentTask | undefined {
+        const task = this.getTask(taskId)
+        if (!task) return undefined
+
+        task.reopen()
+        this.state?.setActiveTaskId(task.id)
+
+        return task
+    }
+
+    completeTask (taskId?: string, summary?: string): void {
+        const task = taskId ? this.getTask(taskId) : this.activeTask
+        task?.complete(summary)
+        this.clearActiveTaskIdIfMatches(task)
+    }
+
+    failTask (taskId?: string): void {
+        const task = taskId ? this.getTask(taskId) : this.activeTask
+        task?.fail()
+        this.clearActiveTaskIdIfMatches(task)
+    }
+
+    cancelTask (taskId?: string): void {
+        const task = taskId ? this.getTask(taskId) : this.activeTask
+        task?.cancel()
+        this.clearActiveTaskIdIfMatches(task)
+    }
+
+    private clearActiveTaskIdIfMatches (task?: AgentTask): void {
+        if (task?.id === this.state?.activeTaskId) {
+            this.state?.setActiveTaskId(undefined)
+        }
+    }
+
+    switchLoop (loopName: string): void {
+        if (this.settings?.loopName && this.settings.loopName !== loopName) {
+            this.activeTask?.pause()
+            this.state?.setActiveTaskId(undefined)
+        }
+        this.settings?.setLoopName(loopName)
+    }
+}
