@@ -19,6 +19,14 @@
       "types": "./dist/services/agent/core/index.d.ts",
       "default": "./dist/services/agent/core/index.js"
     },
+    "./skills": {
+      "types": "./dist/services/agent/skills/index.d.ts",
+      "default": "./dist/services/agent/skills/index.js"
+    },
+    "./tools": {
+      "types": "./dist/services/agent/tools/index.d.ts",
+      "default": "./dist/services/agent/tools/index.js"
+    },
     "./loops": {
       "types": "./dist/services/agent/loops/index.d.ts",
       "default": "./dist/services/agent/loops/index.js"
