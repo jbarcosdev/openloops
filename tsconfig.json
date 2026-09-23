@@ -8,6 +8,7 @@
     "module": "nodenext",
     "lib": ["ES2022"],
     "declaration": true,
+    "declarationMap": false,
     "strict": true,
     "removeComments": true,
     "moduleResolution": "nodenext",
