@@ -10,6 +10,24 @@
   "license": "Apache-2.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./core": {
+      "types": "./dist/services/agent/core/index.d.ts",
+      "default": "./dist/services/agent/core/index.js"
+    },
+    "./loops": {
+      "types": "./dist/services/loops/index.d.ts",
+      "default": "./dist/services/loops/index.js"
+    },
+    "./app": {
+      "types": "./dist/services/app/core/index.d.ts",
+      "default": "./dist/services/app/core/index.js"
+    }
+  },
   "files": [
     "dist"
   ],
