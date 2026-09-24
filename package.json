@@ -40,7 +40,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsup",
+    "build": "tsup && tsc-alias",
     "prepublishOnly": "yarn build",
     "check-size": "npm pack --dry-run",
     "release": "npm version patch && npm publish --access public"
