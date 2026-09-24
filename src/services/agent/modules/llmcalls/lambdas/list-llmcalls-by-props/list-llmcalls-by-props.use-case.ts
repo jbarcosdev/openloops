@@ -1,4 +1,4 @@
-import { autoInjectable } from 'tsyringe'
+import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/core/base.use-case'
 import { LLMCallRepository } from '../../repositories'
 import { QueryOptions } from '@common/repositories'
@@ -10,18 +10,18 @@ export interface Params extends BaseUseCaseParams {
 }
 
 export interface Output extends BaseUseCaseOutput {
-	data: LLMCallProps[] | null
+	data: LLMCallProps[] | null | undefined
 }
 
 @autoInjectable()
 export class ListLLMCallsByPropsUseCase extends BaseUseCase<Params, Output> {
-	constructor (private readonly llmCallRepository: LLMCallRepository) {
+	constructor (@inject(LLMCallRepository) private readonly llmCallRepository?: LLMCallRepository) {
 		super()
 	}
 
 	async execute (params: Params): Promise<Output> {
 		const { where, options } = params
-		const result = await this.llmCallRepository.findByProps(where, options)
+		const result = await this.llmCallRepository?.findByProps(where, options)
 
 		return { data: result }
 	}

@@ -1,4 +1,4 @@
-import { autoInjectable } from 'tsyringe'
+import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/core/base.use-case'
 import { LLMCallRepository } from '../../repositories'
 import { LLMCall, LLMCallProps } from '../../entities'
@@ -14,7 +14,7 @@ export interface Output extends BaseUseCaseOutput {
 
 @autoInjectable()
 export class UpdateLLMCallUseCase extends BaseUseCase<Params, Output> {
-	constructor (private readonly llmCallRepository: LLMCallRepository) {
+	constructor (@inject(LLMCallRepository) private readonly llmCallRepository?: LLMCallRepository) {
 		super()
 	}
 
@@ -30,7 +30,7 @@ export class UpdateLLMCallUseCase extends BaseUseCase<Params, Output> {
 
 		this.logger.info(`Updating LLMCall: ${llmCall.stringify()}`)
 
-		const result = await this.llmCallRepository.update(llmCall)
+		const result = await this.llmCallRepository?.update(llmCall)
 
 		if (!result) {
 			throw new Error('LLMCall not found or update failed')

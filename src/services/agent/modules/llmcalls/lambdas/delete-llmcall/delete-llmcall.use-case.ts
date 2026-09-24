@@ -1,4 +1,4 @@
-import { autoInjectable } from 'tsyringe'
+import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/core/base.use-case'
 import { LLMCall, LLMCallProps } from '../../entities'
 import { LLMCallRepository } from '../../repositories'
@@ -9,12 +9,12 @@ export interface Params extends BaseUseCaseParams {
 }
 
 export interface Output extends BaseUseCaseOutput {
-	data: LLMCallProps | null
+	data: LLMCallProps | null | undefined
 }
 
 @autoInjectable()
 export class DeleteLLMCallUseCase extends BaseUseCase<Params, Output> {
-	constructor (private readonly llmCallRepository: LLMCallRepository) {
+	constructor (@inject(LLMCallRepository) private readonly llmCallRepository?: LLMCallRepository) {
 		super()
 	}
 
@@ -25,14 +25,14 @@ export class DeleteLLMCallUseCase extends BaseUseCase<Params, Output> {
 		if (hardDelete) {
 			if (!currentUser?.isAdmin()) this.throwError403()
 
-			const result = await this.llmCallRepository.deleteById(id)
+			const result = await this.llmCallRepository?.deleteById(id)
 			return { data: { deletedCount: result } as any }
 		}
 
 		// soft delete
 		const llmCall = LLMCall.fromJSON({ _id: id })
 		llmCall.setDeletedBy(currentUser)
-		const result = await this.llmCallRepository.update(llmCall)
+		const result = await this.llmCallRepository?.update(llmCall)
 
 		return { data: result }
 	}

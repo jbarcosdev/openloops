@@ -1,4 +1,4 @@
-import { autoInjectable } from 'tsyringe'
+import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/core/base.use-case'
 import { LLMCallRepository } from '../../repositories'
 
@@ -20,7 +20,7 @@ export interface Output extends BaseUseCaseOutput {
 
 @autoInjectable()
 export class GetLLMUsageUseCase extends BaseUseCase<Params, Output> {
-	constructor (private readonly llmCallRepository: LLMCallRepository) {
+	constructor (@inject(LLMCallRepository) private readonly llmCallRepository?: LLMCallRepository) {
 		super()
 	}
 
@@ -44,9 +44,9 @@ export class GetLLMUsageUseCase extends BaseUseCase<Params, Output> {
 		const pipeline = [
 			{
 				$match: {
-					ownerId: this.llmCallRepository._.parseId(ownerId),
-					...(sessionId ? { sessionId: this.llmCallRepository._.parseId(sessionId) } : {}),
-					...(messageId ? { answerId: this.llmCallRepository._.parseId(messageId) } : {}),
+					ownerId: this.llmCallRepository?._.parseId(ownerId),
+					...(sessionId ? { sessionId: this.llmCallRepository?._.parseId(sessionId) } : {}),
+					...(messageId ? { answerId: this.llmCallRepository?._.parseId(messageId) } : {}),
 				}
 			},
 			{
@@ -97,7 +97,7 @@ export class GetLLMUsageUseCase extends BaseUseCase<Params, Output> {
 			}
 		]
 
-		const result = await this.llmCallRepository._.aggregate(pipeline) as any
+		const result = await this.llmCallRepository?._.aggregate(pipeline) as any
 
 
 		return {

@@ -1,4 +1,4 @@
-import { autoInjectable } from 'tsyringe'
+import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/core/base.use-case'
 import { LLMCall, LLMCallProps } from '../../entities'
 import { LLMCallRepository } from '../../repositories'
@@ -13,7 +13,7 @@ export interface Output extends BaseUseCaseOutput {
 
 @autoInjectable()
 export class CreateLLMCallUseCase extends BaseUseCase<Params, Output> {
-	constructor (private readonly llmCallRepository: LLMCallRepository) {
+	constructor (@inject(LLMCallRepository) private readonly llmCallRepository?: LLMCallRepository) {
 		super()
 	}
 
@@ -24,7 +24,7 @@ export class CreateLLMCallUseCase extends BaseUseCase<Params, Output> {
 		llmCall.setCreatedBy(currentUser)
 		llmCall.setOwner(currentUser)
 
-		const result = await this.llmCallRepository.create(llmCall)
+		const result = await this.llmCallRepository?.create(llmCall)
 
 		return { data: llmCall.toJSON() }
 	}
