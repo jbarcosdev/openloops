@@ -1,4 +1,4 @@
-import { autoInjectable } from 'tsyringe'
+import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/core/base.use-case'
 import { McpServer, McpServerProps } from '../../entities'
 import { McpServerRepository } from '../../repositories'
@@ -9,12 +9,12 @@ export interface Params extends BaseUseCaseParams {
 }
 
 export interface Output extends BaseUseCaseOutput {
-	data: McpServerProps | null
+	data: McpServerProps | null | undefined
 }
 
 @autoInjectable()
 export class DeleteMcpServerUseCase extends BaseUseCase<Params, Output> {
-	constructor (private readonly mcpServerRepository: McpServerRepository) {
+	constructor (@inject(McpServerRepository) private readonly mcpServerRepository?: McpServerRepository) {
 		super()
 	}
 
@@ -25,14 +25,14 @@ export class DeleteMcpServerUseCase extends BaseUseCase<Params, Output> {
 		if (hardDelete) {
 			if (!currentUser?.isAdmin()) this.throwError403()
 
-			const result = await this.mcpServerRepository.deleteById(id)
+			const result = await this.mcpServerRepository?.deleteById(id)
 			return { data: { deletedCount: result } as any }
 		}
 
 		// soft delete
 		const mcpServer = McpServer.fromJSON({ _id: id })
 		mcpServer.setDeletedBy(currentUser)
-		const result = await this.mcpServerRepository.update(mcpServer)
+		const result = await this.mcpServerRepository?.update(mcpServer)
 
 		return { data: result }
 	}

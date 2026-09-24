@@ -1,4 +1,4 @@
-import { autoInjectable } from 'tsyringe'
+import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/core/base.use-case'
 import { McpServerRepository } from '../../repositories'
 import { McpServer, McpServerProps } from '../../entities'
@@ -14,7 +14,7 @@ export interface Output extends BaseUseCaseOutput {
 
 @autoInjectable()
 export class UpdateMcpServerUseCase extends BaseUseCase<Params, Output> {
-	constructor (private readonly mcpServerRepository: McpServerRepository) {
+	constructor (@inject(McpServerRepository) private readonly mcpServerRepository?: McpServerRepository) {
 		super()
 	}
 
@@ -28,7 +28,7 @@ export class UpdateMcpServerUseCase extends BaseUseCase<Params, Output> {
 		const mcpServer = McpServer.fromJSON({ ...payload, _id: id })
 		mcpServer.setUpdatedBy(currentUser)
 
-		const result = await this.mcpServerRepository.update(mcpServer)
+		const result = await this.mcpServerRepository?.update(mcpServer)
 
 		if (!result) {
 			throw new Error('Mcp Server not found or update failed')

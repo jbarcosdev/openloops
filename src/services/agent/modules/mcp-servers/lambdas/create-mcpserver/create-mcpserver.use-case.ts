@@ -1,4 +1,4 @@
-import { autoInjectable } from 'tsyringe'
+import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/core/base.use-case'
 import { McpServer, McpServerProps } from '../../entities'
 import { McpServerRepository } from '../../repositories'
@@ -13,7 +13,7 @@ export interface Output extends BaseUseCaseOutput {
 
 @autoInjectable()
 export class CreateMcpServerUseCase extends BaseUseCase<Params, Output> {
-	constructor (private readonly mcpServerRepository: McpServerRepository) {
+	constructor (@inject(McpServerRepository) private readonly mcpServerRepository?: McpServerRepository) {
 		super()
 	}
 
@@ -24,7 +24,7 @@ export class CreateMcpServerUseCase extends BaseUseCase<Params, Output> {
 		mcpServer.setCreatedBy(currentUser)
 		mcpServer.setOwner(currentUser)
 
-		const result = await this.mcpServerRepository.create(mcpServer)
+		const result = await this.mcpServerRepository?.create(mcpServer)
 
 		return { data: mcpServer.toJSON() }
 	}

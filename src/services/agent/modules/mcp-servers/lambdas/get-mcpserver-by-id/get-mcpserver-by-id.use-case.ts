@@ -1,4 +1,4 @@
-import { autoInjectable } from 'tsyringe'
+import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/core/base.use-case'
 import { McpServerRepository } from '../../repositories'
 import { McpServerProps } from '../../entities'
@@ -8,18 +8,18 @@ export interface Params extends BaseUseCaseParams {
 }
 
 export interface Output extends BaseUseCaseOutput {
-	data: McpServerProps | null
+	data: McpServerProps | null | undefined
 }
 
 @autoInjectable()
 export class GetMcpServerByIdUseCase extends BaseUseCase<Params, Output> {
-	constructor (private readonly mcpServerRepository: McpServerRepository) {
+	constructor (@inject(McpServerRepository) private readonly mcpServerRepository?: McpServerRepository) {
 		super()
 	}
 
 	async execute (params: Params): Promise<Output> {
 		const { id } = params
-		const result = await this.mcpServerRepository.findById(id)
+		const result = await this.mcpServerRepository?.findById(id)
 
 		return { data: result }
 	}

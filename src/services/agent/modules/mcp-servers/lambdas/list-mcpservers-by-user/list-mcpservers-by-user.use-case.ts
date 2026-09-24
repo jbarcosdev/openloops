@@ -1,4 +1,4 @@
-import { autoInjectable } from 'tsyringe'
+import { autoInjectable, inject } from 'tsyringe'
 import { ObjectId } from 'mongodb'
 import { QueryOptions } from '@common/repositories'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/core/base.use-case'
@@ -11,12 +11,12 @@ export interface Params extends BaseUseCaseParams {
 }
 
 export interface Output extends BaseUseCaseOutput {
-	data: McpServerProps[] | null
+	data: McpServerProps[] | null | undefined
 }
 
 @autoInjectable()
 export class ListMcpServersByUserUseCase extends BaseUseCase<Params, Output> {
-	constructor (private readonly mcpServerRepository: McpServerRepository) {
+	constructor (@inject(McpServerRepository) private readonly mcpServerRepository?: McpServerRepository) {
 		super()
 	}
 
@@ -24,7 +24,7 @@ export class ListMcpServersByUserUseCase extends BaseUseCase<Params, Output> {
 		const { options, currentUser } = params
 		const { page = 1, limit: pageSize = 10 } = options || {}
 
-		const results = await this.mcpServerRepository._.findMany({
+		const results = await this.mcpServerRepository?._.findMany({
 			where: { 
 				ownerId: new ObjectId(currentUser?.userId),
 			},
