@@ -1,4 +1,4 @@
-import { autoInjectable } from 'tsyringe'
+import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/core/base.use-case'
 import { ChatRepository } from '../../repositories'
 import { ChatProps, Chat } from '../../entities'
@@ -14,7 +14,7 @@ export interface Output extends BaseUseCaseOutput {
 
 @autoInjectable()
 export class DeleteChatUseCase extends BaseUseCase<Params, Output> {
-	constructor (private readonly chatRepository: ChatRepository) {
+	constructor (@inject(ChatRepository) private readonly chatRepository?: ChatRepository) {
 		super()
 	}
 
@@ -25,14 +25,14 @@ export class DeleteChatUseCase extends BaseUseCase<Params, Output> {
 		if (hardDelete) {
 			if (!currentUser?.isAdmin()) this.throwError403()
 
-			const result = await this.chatRepository.deleteById(id)
+			const result = await this.chatRepository?.deleteById(id)
 			return { data: { deletedCount: result } as any }
 		}
 
 		// soft delete
 		const chat = Chat.fromJSON({ _id: id })
 		chat.setDeletedBy(currentUser)
-		const result = await this.chatRepository.update(chat)
+		const result = await this.chatRepository?.update(chat)
 
 		return { data: result || {} }
 	}

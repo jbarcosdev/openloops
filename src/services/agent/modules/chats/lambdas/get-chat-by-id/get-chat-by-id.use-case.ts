@@ -1,4 +1,4 @@
-import { autoInjectable } from 'tsyringe'
+import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/core/base.use-case'
 import { ChatRepository } from '../../repositories'
 import { ChatProps } from '../../entities'
@@ -13,13 +13,13 @@ export interface Output extends BaseUseCaseOutput {
 
 @autoInjectable()
 export class GetChatByIdUseCase extends BaseUseCase<Params, Output> {
-	constructor (private readonly chatRepository: ChatRepository) {
+	constructor (@inject(ChatRepository) private readonly chatRepository?: ChatRepository) {
 		super()
 	}
 
 	async execute (params: Params): Promise<Output> {
 		const { id } = params
-		const data = await this.chatRepository.findById(id) || {}
+		const data = await this.chatRepository?.findById(id) || {}
 
 		return { data }
 	}

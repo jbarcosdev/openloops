@@ -1,4 +1,4 @@
-import { autoInjectable } from 'tsyringe'
+import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/core/base.use-case'
 import { ChatRepository } from '../../repositories'
 import { Chat, ChatProps } from '../../entities'
@@ -14,7 +14,7 @@ export interface Output extends BaseUseCaseOutput {
 
 @autoInjectable()
 export class UpdateChatUseCase extends BaseUseCase<Params, Output> {
-	constructor (private readonly chatRepository: ChatRepository) {
+	constructor (@inject(ChatRepository) private readonly chatRepository?: ChatRepository) {
 		super()
 	}
 
@@ -32,7 +32,7 @@ export class UpdateChatUseCase extends BaseUseCase<Params, Output> {
 		const chat = Chat.fromJSON({ ...payload, _id: id })
 		chat.setUpdatedBy(currentUser)
 
-		const result = await this.chatRepository.update(chat)
+		const result = await this.chatRepository?.update(chat)
 
 		if (!result) {
 			throw new Error('Chat not found or update failed')
