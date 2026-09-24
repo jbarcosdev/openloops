@@ -1,4 +1,4 @@
-import { autoInjectable } from 'tsyringe'
+import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/core/base.use-case'
 import { UserRepository } from '../../repositories'
 import { UserProps } from '../../entities'
@@ -8,18 +8,18 @@ export interface Params extends BaseUseCaseParams {
 }
 
 export interface Output extends BaseUseCaseOutput {
-	data: UserProps | null
+	data: UserProps | null | undefined
 }
 
 @autoInjectable()
 export class GetUserByIdUseCase extends BaseUseCase<Params, Output> {
-	constructor (private readonly userRepository: UserRepository) {
+	constructor (@inject(UserRepository) private readonly userRepository?: UserRepository) {
 		super()
 	}
 
 	async execute (params: Params): Promise<Output> {
 		const { id } = params
-		const result = await this.userRepository.findById(id)
+		const result = await this.userRepository?.findById(id)
 
 		return { data: result }
 	}

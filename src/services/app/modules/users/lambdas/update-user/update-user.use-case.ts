@@ -1,4 +1,4 @@
-import { autoInjectable } from 'tsyringe'
+import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/core/base.use-case'
 import { UserRepository } from '../../repositories'
 import { User, UserProps } from '../../entities'
@@ -14,7 +14,7 @@ export interface Output extends BaseUseCaseOutput {
 
 @autoInjectable()
 export class UpdateUserUseCase extends BaseUseCase<Params, Output> {
-	constructor (private readonly userRepository: UserRepository) {
+	constructor (@inject(UserRepository) private readonly userRepository?: UserRepository) {
 		super()
 	}
 
@@ -30,7 +30,7 @@ export class UpdateUserUseCase extends BaseUseCase<Params, Output> {
 
 		this.logger.info(`Updating user: ${user.stringify()}`)
 
-		const result = await this.userRepository.update(user)
+		const result = await this.userRepository?.update(user)
 
 		if (!result) {
 			throw new Error('User not found or update failed')

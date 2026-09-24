@@ -1,4 +1,4 @@
-import { autoInjectable } from 'tsyringe'
+import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/core/base.use-case'
 import { UserRepository } from '../../repositories'
 import { User, UserProps } from '../../entities'
@@ -13,7 +13,7 @@ export interface Output extends BaseUseCaseOutput {
 
 @autoInjectable()
 export class CreateUserUseCase extends BaseUseCase<Params, Output> {
-	constructor (private readonly userRepository: UserRepository) {
+	constructor (@inject(UserRepository) private readonly userRepository?: UserRepository) {
 		super()
 	}
 
@@ -25,7 +25,7 @@ export class CreateUserUseCase extends BaseUseCase<Params, Output> {
 		const user = await User.create({ ...payload })
 		user.setCreatedBy(currentUser)
 
-		await this.userRepository.create(user)
+		await this.userRepository?.create(user)
 
 		const { password, ...rest } = user.toJSON()
 

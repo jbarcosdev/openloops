@@ -1,4 +1,4 @@
-import { autoInjectable } from 'tsyringe'
+import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/core/base.use-case'
 import { UserRepository } from '../../repositories'
 import { User, UserProps } from '../../entities'
@@ -15,7 +15,7 @@ export interface Output extends BaseUseCaseOutput {
 
 @autoInjectable()
 export class DeleteUserUseCase extends BaseUseCase<Params, Output> {
-	constructor (private readonly userRepository: UserRepository) {
+	constructor (@inject(UserRepository) private readonly userRepository?: UserRepository) {
 		super()
 	}
 
@@ -26,14 +26,14 @@ export class DeleteUserUseCase extends BaseUseCase<Params, Output> {
 		if (hardDelete) {
 			if (!currentUser?.isAdmin()) this.throwError403()
 
-			const result = await this.userRepository.deleteById(id)
+			const result = await this.userRepository?.deleteById(id)
 			return { data: { deletedCount: result } as any }
 		}
 
 		// soft delete
 		const user = await User.fromJSON({ _id: id, deletedReason: accountDeletionReason })
 		user.setDeletedBy(currentUser)
-		const result = await this.userRepository.update(user)
+		const result = await this.userRepository?.update(user)
 
 		return { data: result || {} }
 	}
