@@ -40,7 +40,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsup src/index.ts --format cjs,esm --minify && tsc --emitDeclarationOnly",
+    "build": "tsup",
     "prepublishOnly": "yarn build",
     "check-size": "npm pack --dry-run",
     "release": "npm version patch && npm publish --access public"
