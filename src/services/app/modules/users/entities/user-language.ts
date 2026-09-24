@@ -1,5 +1,5 @@
 import { sanitizeString } from '@common/helpers'
-import { getLanguageFromLanguageCode } from '@common/helpers'
+import { getLanguageFromLanguageCode } from 'countries-and-currencies-utils'
 
 export interface LanguageProps {
 	isoCode?: string

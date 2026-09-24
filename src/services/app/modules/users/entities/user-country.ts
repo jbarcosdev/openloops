@@ -1,5 +1,5 @@
+import { getCountryNameFromCountryCode } from 'countries-and-currencies-utils'
 import { sanitizeString } from '@common/helpers'
-import { getCountryNameFromCountryCode } from '@common/helpers'
 
 export interface CountryProps {
 	isoCode?: string

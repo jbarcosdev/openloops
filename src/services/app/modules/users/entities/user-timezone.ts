@@ -1,5 +1,5 @@
 import { sanitizeString } from '@common/helpers'
-import { getTimezoneOffset } from '@common/helpers'
+import { getTimezoneOffset } from 'countries-and-currencies-utils'
 
 export interface TimezoneProps {
 	ianaIdentifier?: string

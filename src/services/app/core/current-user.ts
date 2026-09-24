@@ -1,5 +1,5 @@
 import { ObjectId } from 'mongodb'
-import { getTimezoneOffset } from '@common/helpers/get-timezone-offset'
+import { getTimezoneOffset } from 'countries-and-currencies-utils'
 import { getMongoDBClient } from '@common/repositories/mongo-db.client'
 import { secretManager } from '@common/utils/secret-manager'
 import { logger } from '@common/logger'

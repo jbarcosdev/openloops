@@ -1,6 +1,8 @@
-import { getCountryDataFromCountryCode } from '@common/helpers/get-country-data-from-country-code'
-import { getCountryISOCodeFromTimezone } from '@common/helpers/get-country-from-timezone'
-import { getTimezoneOffset } from '@common/helpers/get-timezone-offset'
+import {
+    getCountryDataFromCountryCode,
+    getCountryISOCodeFromTimezone,
+    getTimezoneOffset
+} from 'countries-and-currencies-utils'
 
 export class CurrentSession {
     constructor (
