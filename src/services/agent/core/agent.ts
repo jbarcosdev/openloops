@@ -93,7 +93,7 @@ export class Agent {
         return Chat.fromJSON(data)
     }
 
-    static async listUserChats (options: QueryOptions, currentUser: CurrentUser ): Promise<ChatProps[] | null> {
+    static async listUserChats (options: QueryOptions, currentUser: CurrentUser ): Promise<ChatProps[] | null | undefined> {
         const listChatsByUserUseCase = container.resolve(ListChatsByUserUseCase)
         const { page, limit } = options || {}
 
@@ -111,7 +111,7 @@ export class Agent {
         return data
     }
 
-    static async listUserMcpServers (options: QueryOptions, currentUser: CurrentUser ): Promise<McpServerProps[] | null> {
+    static async listUserMcpServers (options: QueryOptions, currentUser: CurrentUser ): Promise<McpServerProps[] | null | undefined> {
         const listMcpServersByUserUseCase = container.resolve(ListMcpServersByUserUseCase)
         const { page, limit } = options || {}
 
@@ -169,6 +169,7 @@ export class Agent {
 
             this.logger.debug(input, '[AGENT] Agent started')
 
+            if (!this._loop?.nodes || !this._loop?.initialNode) throw new Error('[AGENT] Loop is missing')
             if (!message) throw new Error('[AGENT] Message is required')
             if (!currentUser) throw new Error('[AGENT] CurrentUser is required')
 
