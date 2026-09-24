@@ -40,7 +40,10 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc && tsc-alias"
+    "build": "tsup src/index.ts --format cjs,esm --minify && tsc --emitDeclarationOnly",
+    "prepublishOnly": "yarn build",
+    "check-size": "npm pack --dry-run",
+    "release": "npm version patch && npm publish --access public"
   },
   "dependencies": {
     "@mariozechner/pi-ai": "^0.73.1",
