@@ -6,5 +6,6 @@ export default defineConfig({
   dts: false,
   clean: true,
   bundle: false,
+  tsconfig: './tsconfig.json',
   onSuccess: 'tsc --emitDeclarationOnly',
 })
