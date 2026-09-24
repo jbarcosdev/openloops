@@ -20,11 +20,12 @@ export class SecretManager {
     }
 
     private constructor() {
-        if (!process.env.SSUID) {
+        const secretKey = process.env.SECRET_MANAGER_KEY
+        if (!secretKey) {
             throw new Error('[Secret manager] SSUID environment variable is not set')
         }
 
-        this.cryptr = new Cryptr(process.env.SSUID, {
+        this.cryptr = new Cryptr(secretKey, {
             pbkdf2Iterations: 1_000,
             saltLength: 16
         })
