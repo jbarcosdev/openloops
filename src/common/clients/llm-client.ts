@@ -17,16 +17,24 @@ import { CreateLLMCallUseCase } from '@services/agent/modules/llmcalls/lambdas/c
 
 export class LLMClient {
     private readonly logger = new Logger()
-    private readonly langfuse: Langfuse
+    private readonly langfuse?: Langfuse
+    private readonly langfuseEnabled: boolean
 
     constructor () {
         process.env.OPENAI_API_KEY = secretManager.get('OPENAI_API_KEY')
 
-        this.langfuse = new Langfuse({
-            publicKey: secretManager.get('LANGFUSE_PUBLIC_KEY'),
-            secretKey: secretManager.get('LANGFUSE_SECRET_KEY'),
-            baseUrl: process.env.LANGFUSE_BASE_URL,
-        })
+        const publicKey = secretManager.get('LANGFUSE_PUBLIC_KEY')
+        const secretKey = secretManager.get('LANGFUSE_SECRET_KEY')
+        const baseUrl = secretManager.get('LANGFUSE_BASE_URL')
+
+        this.langfuseEnabled = Boolean(publicKey && secretKey && baseUrl)
+
+        if (this.langfuseEnabled) {
+            this.langfuse = new Langfuse({ publicKey, secretKey, baseUrl })
+            this.logger.debug('[LLM Service] Langfuse enabled')
+        } else {
+            this.logger.debug('[LLM Service] Langfuse disabled: configuration variables missing')
+        }
     }
 
     async complete (params: LLMCompletionParams): Promise<AssistantMessage> {
@@ -59,7 +67,7 @@ export class LLMClient {
             }
         }, '[LLM Service] context')
 
-        const trace = this.langfuse.trace({
+        const trace = this.langfuseEnabled ? this.langfuse!.trace({
             sessionId,
             name: taskName,
             userId: currentUser?.userId,
@@ -68,9 +76,9 @@ export class LLMClient {
                 email: currentUser?.email,
                 sessionId,
             },
-        })
+        }) : undefined
 
-        const generation = trace.generation({
+        const generation = trace?.generation({
             name: 'llm-completion',
             model: modelName,
             modelParameters: { temperature, provider },
@@ -82,7 +90,7 @@ export class LLMClient {
                 temperature,
             })
 
-            generation.end({
+            generation?.end({
                 output: response,
                 usage: response.usage ? {
                     promptTokens: response.usage.input,
@@ -91,7 +99,7 @@ export class LLMClient {
                 } : undefined,
             })
 
-            await this.langfuse.flushAsync()
+            if (this.langfuseEnabled) await this.langfuse!.flushAsync()
 
             this.logger.debug({
                 taskName,
@@ -105,11 +113,11 @@ export class LLMClient {
 
             return response
         } catch (error) {
-            generation.end({
+            generation?.end({
                 level: 'ERROR',
                 statusMessage: (error as Error).message,
             })
-            await this.langfuse.flushAsync()
+            if (this.langfuseEnabled) await this.langfuse!.flushAsync()
             throw error
         }
     }
