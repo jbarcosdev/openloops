@@ -17,7 +17,7 @@ export const reportError = async (error: Error | HttpError | string, details?: o
 	const isLocal = process.env.IS_LOCAL === 'true' || process.env.NODE_ENV === 'development'
 
 	try {
-		!isLocal && await sentryClient.captureError(error, {
+		!isLocal && await sentryClient?.captureError(error, {
 			statusCode,
 			errorMessage,
 			errorDetails,
