@@ -7847,20 +7847,30 @@ __metadata:
   languageName: node
   linkType: hard
 
-"openai@npm:^6.10.0":
-  version: 6.10.0
-  resolution: "openai@npm:6.10.0"
+"openai@npm:^7.23.0":
+  version: 7.23.0
+  resolution: "openai@npm:7.23.0"
   peerDependencies:
-    ws: ^8.18.0
+    "@aws-sdk/credential-provider-node": ">=3.972.0 <4"
+    "@smithy/hash-node": ">=4.3.0 <5"
+    "@smithy/signature-v4": ">=5.4.0 <6"
+    undici: ">=5 <9"
+    ws: ^8.21.0
     zod: ^3.25 || ^4.0
   peerDependenciesMeta:
+    "@aws-sdk/credential-provider-node":
+      optional: true
+    "@smithy/hash-node":
+      optional: true
+    "@smithy/signature-v4":
+      optional: true
+    undici:
+      optional: true
     ws:
       optional: true
     zod:
       optional: true
-  bin:
-    openai: bin/cli
-  checksum: 10c0/09f48d7fd4cdc580a2ff8aa67f744373c2e30b5cebc890428a740a134c7bb3ea64113a4d417da96945c3ecfc7e317e78f9a364f93981e65b0aaa7a07b7a45277
+  checksum: 10c0/0db651c394f2da0481e62a059198e050ec1f919cbd8f1f11754140123d192e48d77f1f9500a86c199b358c5ed61a67d87f0f8068c8e3e457ff1c75d54fc4d62c
   languageName: node
   linkType: hard
 
@@ -7895,7 +7905,7 @@ __metadata:
     jsonwebtoken: "npm:^9.0.3"
     langfuse: "npm:^3.38.20"
     mongodb: "npm:^7.6.0"
-    openai: "npm:^6.10.0"
+    openai: "npm:^7.23.0"
     p-limit: "npm:^7.2.0"
     pino: "npm:^10.1.0"
     pino-pretty: "npm:^13.1.3"
