@@ -3,7 +3,7 @@ import { extractJSON } from '@common/helpers'
 import { LLMClient } from '@common/clients'
 import { CurrentUser } from '@services/app/core'
 import { CurrentSession } from '@services/app/core/current-session'
-import type { Chat } from '@services/agent/modules/chats/entities/chat.entity'
+import type { Chat } from '@services/chats/entities/chat.entity'
 
 export interface SkillProps {
     name: string
