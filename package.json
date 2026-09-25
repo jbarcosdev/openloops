@@ -86,7 +86,7 @@
     "eslint-plugin-prettier": "^5.5.6",
     "eslint-plugin-promise": "^7.3.0",
     "jest": "^30.5.2",
-    "prettier": "^3.7.4",
+    "prettier": "^3.9.9",
     "ts-jest": "^29.4.6",
     "tsc-alias": "^1.9.5",
     "tsconfig-paths": "^4.2.0",
