@@ -51,18 +51,12 @@ export class SecretManager {
 
     private getEnvVar(key: string): string {
         const value = process.env[key]
-        if (!value) {
-            logger.error({ key }, '[Secret manager] Environment variable is not set')
-            throw new Error(`[Secret manager] Environment variable ${key} is not set`)
-        }
-        return value
+        if (!value) logger.error({ key }, '[Secret manager] Environment variable is not set')
+        return ''
     }
 
     private decryptEnvVar(encryptedValue: string): string {
-        if (!encryptedValue) {
-            logger.error('[Secret manager] Encrypted value cannot be empty')
-            throw new Error('[Secret manager] Encrypted value cannot be empty')
-        }
+        if (!encryptedValue) logger.error('[Secret manager] Encrypted value cannot be empty')
 
         if (!this.isStringEncrypted(encryptedValue)) {
             logger.debug('[Secret Manager] Value is not encrypted')
