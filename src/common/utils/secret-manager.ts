@@ -51,7 +51,10 @@ export class SecretManager {
 
     private getEnvVar(key: string): string {
         const value = process.env[key]
-        if (!value) throw new Error(`[Secret manager] Environment variable ${key} is not set`)
+        if (!value) {
+            logger.debug({ key }, '[Secret manager] Environment variable is not set')
+            throw new Error(`[Secret manager] Environment variable ${key} is not set`)
+        }
         return value
     }
 
