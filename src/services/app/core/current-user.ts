@@ -3,7 +3,7 @@ import { getTimezoneOffset } from 'countries-and-currencies-utils'
 import { getMongoDBClient } from '@common/repositories/mongo-db.client'
 import { secretManager } from '@common/utils/secret-manager'
 import { logger } from '@common/logger'
-import { User, UserProps, UserRole } from '../modules/users/entities/user.entity'
+import { User, UserProps, UserRole } from '@services/users/entities/user.entity'
 
 export class CurrentUser extends User {
     private _isPremium = false
