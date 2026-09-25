@@ -9,7 +9,7 @@ import { ListMcpServersByUserUseCase } from '@services/agent/modules/mcp-servers
 import { McpServer, McpServerProps } from '@services/agent/modules/mcp-servers/entities'
 import { CreateMcpServerUseCase } from '@services/agent/modules/mcp-servers/lambdas/create-mcpserver'
 import { ChatRepository } from '@services/chats/repositories'
-import { GetLLMUsageUseCase, Params as UsageParams, Output as UsageOutput } from '@services/agent/modules/llmcalls/lambdas/get-llm-usage'
+import { GetLLMUsageUseCase, Params as UsageParams, Output as UsageOutput } from '@services/llmcalls/lambdas/get-llm-usage'
 import { QueryOptions } from '@common/repositories'
 import { Chat, ChatProps } from '@services/chats/entities/chat.entity'
 import { Tool } from '@services/agent/tools/tool'

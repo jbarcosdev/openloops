@@ -13,7 +13,7 @@ import { secretManager } from '@common/utils/secret-manager'
 import { CurrentUser } from '@services/app/core'
 import { Logger } from '@common/logger'
 import { extractJSON } from '@common/helpers'
-import { CreateLLMCallUseCase } from '@services/agent/modules/llmcalls/lambdas/create-llmcall'
+import { CreateLLMCallUseCase } from '@services/llmcalls/lambdas/create-llmcall'
 
 export class LLMClient {
     private readonly logger = new Logger()
