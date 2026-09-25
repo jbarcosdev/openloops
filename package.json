@@ -35,7 +35,7 @@
       "types": "./dist/services/app/core/index.d.ts",
       "default": "./dist/services/app/core/index.js"
     },
-    "./chat": {
+    "./chats": {
       "types": "./dist/services/agent/modules/chats/index.d.ts",
       "default": "./dist/services/agent/modules/chats/index.js"
     }
