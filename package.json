@@ -73,7 +73,7 @@
   "devDependencies": {
     "@types/jest": "^30.0.0",
     "@types/node": "^26.6.2",
-    "@types/sanitize-html": "^2.16.0",
+    "@types/sanitize-html": "^2.16.1",
     "@typescript-eslint/eslint-plugin": "^8.49.0",
     "@typescript-eslint/parser": "^8.70.1",
     "eslint": "^10.11.0",
