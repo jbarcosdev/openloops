@@ -7912,7 +7912,6 @@ __metadata:
     prettier: "npm:^3.7.4"
     reflect-metadata: "npm:^0.2.2"
     sanitize-html: "npm:^2.17.0"
-    source-map-support: "npm:^0.5.21"
     ts-jest: "npm:^29.4.6"
     tsc-alias: "npm:^1.9.5"
     tsconfig-paths: "npm:^4.2.0"
@@ -9280,16 +9279,6 @@ __metadata:
     buffer-from: "npm:^1.0.0"
     source-map: "npm:^0.6.0"
   checksum: 10c0/137539f8c453fa0f496ea42049ab5da4569f96781f6ac8e5bfda26937be9494f4e8891f523c5f98f0e85f71b35d74127a00c46f83f6a4f54672b58d53202565e
-  languageName: node
-  linkType: hard
-
-"source-map-support@npm:^0.5.21":
-  version: 0.5.21
-  resolution: "source-map-support@npm:0.5.21"
-  dependencies:
-    buffer-from: "npm:^1.0.0"
-    source-map: "npm:^0.6.0"
-  checksum: 10c0/9ee09942f415e0f721d6daad3917ec1516af746a8120bba7bb56278707a37f1eb8642bde456e98454b8a885023af81a16e646869975f06afc1a711fb90484e7d
   languageName: node
   linkType: hard
 
