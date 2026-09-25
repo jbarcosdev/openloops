@@ -1,11 +1,9 @@
 import jwt from 'jsonwebtoken'
 import { autoInjectable } from 'tsyringe'
-import { BaseUseCase } from '@common/core/base.use-case'
-import { User, UserRole } from '@services/app/modules/users/entities'
-import { UserRepository } from '@services/app/modules/users/repositories'
+import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/core/base.use-case'
+import { User, UserProps, UserRole } from '@services/users/entities'
+import { UserRepository } from '@services/users/repositories'
 import { CurrentUser } from '@services/app/core'
-import { BaseUseCaseParams, BaseUseCaseOutput } from '@common/core/base.use-case'
-import { UserProps } from '@services/app/modules/users/entities'
 
 export interface Params extends BaseUseCaseParams {
 	payload: {
