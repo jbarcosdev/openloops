@@ -60,7 +60,7 @@
     "dotenv": "^18.0.3",
     "html-to-text": "^10.0.1",
     "jsonwebtoken": "^9.0.3",
-    "langfuse": "^3.38.20",
+    "langfuse": "^3.39.2",
     "mongodb": "^7.6.0",
     "openai": "^7.23.0",
     "p-limit": "^7.2.0",

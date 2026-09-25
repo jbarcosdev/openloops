@@ -7129,21 +7129,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"langfuse-core@npm:^3.38.20":
-  version: 3.38.20
-  resolution: "langfuse-core@npm:3.38.20"
+"langfuse-core@npm:^3.39.2":
+  version: 3.39.2
+  resolution: "langfuse-core@npm:3.39.2"
   dependencies:
     mustache: "npm:^4.2.0"
-  checksum: 10c0/c102d700dd1843d8177ca0941cb25d4f656777a808d3203d5dd2ebfc45fc843d956e179e79567a5de79055f24b5feeeeb68c08a0447ab275da055de6cf363d80
+  checksum: 10c0/cffbb91e02a8a0c866293772bba805c93652062c70169f469c50bef1853a4fcb29fb514b3c8e29cc477ffe5435102f95d50b21eb151d4afcf8f37a8ecf74b103
   languageName: node
   linkType: hard
 
-"langfuse@npm:^3.38.20":
-  version: 3.38.20
-  resolution: "langfuse@npm:3.38.20"
+"langfuse@npm:^3.39.2":
+  version: 3.39.2
+  resolution: "langfuse@npm:3.39.2"
   dependencies:
-    langfuse-core: "npm:^3.38.20"
-  checksum: 10c0/0c0a080d2d366bcb00eba364b9b534befe0fb8f50374e06b03ba518be4bdcee769e1b557d2eb274424f3b6426c2c560d0f423ac09c0928bc5542cd5ede03d9f5
+    langfuse-core: "npm:^3.39.2"
+  checksum: 10c0/dabe6f25116f03212147c583b4974ae20c7f951f5ba31c5cc03d50215966f381c7589db25f1bb5e918bab24134c30fbff6ce701205d67333cccd01616365cfd3
   languageName: node
   linkType: hard
 
@@ -7986,7 +7986,7 @@ __metadata:
     html-to-text: "npm:^10.0.1"
     jest: "npm:^30.2.0"
     jsonwebtoken: "npm:^9.0.3"
-    langfuse: "npm:^3.38.20"
+    langfuse: "npm:^3.39.2"
     mongodb: "npm:^7.6.0"
     openai: "npm:^7.23.0"
     p-limit: "npm:^7.2.0"
