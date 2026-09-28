@@ -4,16 +4,12 @@ import { Logger } from '@common/logger'
 import { CurrentUser, CurrentSession } from '@services/app/core'
 import { CreateChatUseCase } from '@services/chats/lambdas/create-chat/'
 import { UpdateChatUseCase } from '@services/chats/lambdas/update-chat/'
-import { ListChatsByUserUseCase } from '@services/chats/lambdas/list-chats-by-user'
-import { ListMcpServersByUserUseCase } from '@services/mcp-servers/lambdas/list-mcpservers-by-user'
-import { McpServer, McpServerProps } from '@services/mcp-servers/entities'
-import { CreateMcpServerUseCase } from '@services/mcp-servers/lambdas/create-mcpserver'
+import { McpServer } from '@services/mcp-servers/entities'
 import { ChatRepository } from '@services/chats/repositories'
-import { GetLLMUsageUseCase, Params as UsageParams, Output as UsageOutput } from '@services/llmcalls/lambdas/get-llm-usage'
-import { QueryOptions } from '@common/repositories'
 import { Chat, ChatProps } from '@services/chats/entities/chat.entity'
 import { Tool } from '@services/agent/tools/tool'
 import { webSearchTool, callAiTool } from '@services/agent/tools/core'
+import { listMcpServersByUser } from '@services/mcp-servers'
 import { rankToolsByKeywords, WeightedKeyword, ScoredTool } from '@services/agent/utils/rank-tools-by-keywords'
 import { AgentLoop, AgentLoopNode, RunContext } from './agent-loop'
 import { AgentStatus } from './agent-state'
@@ -59,11 +55,6 @@ export class Agent {
 
     private pendingNextNode?: string
 
-    static async getChat (chatId: string): Promise<ChatProps | null> {
-        const chatRepository = container.resolve(ChatRepository)
-        return chatRepository.findById(chatId)
-    }
-
     static async interruptExecution (chatId: string, currentUser: CurrentUser): Promise<void> {
         const updateChatUseCase = container.resolve(UpdateChatUseCase)
         const logger = new Logger()
@@ -91,51 +82,6 @@ export class Agent {
         if (!data) throw new Error('[AGENT] There was an error creating the chat')
 
         return Chat.fromJSON(data)
-    }
-
-    static async listUserChats (options: QueryOptions, currentUser: CurrentUser ): Promise<ChatProps[] | null | undefined> {
-        const listChatsByUserUseCase = container.resolve(ListChatsByUserUseCase)
-        const { page, limit } = options || {}
-
-        const { data } = await listChatsByUserUseCase.execute({ 
-			options: { page, limit },
-			currentUser,
-		})
-
-        return data
-    }
-
-    static async getLLMUsage (filters: UsageParams['filters'], currentUser: CurrentUser ): Promise<UsageOutput['data']> {
-        const getLLMUsageUseCase = container.resolve(GetLLMUsageUseCase)
-        const { data } = await getLLMUsageUseCase.execute({ filters, currentUser })
-        return data
-    }
-
-    static async listUserMcpServers (options: QueryOptions, currentUser: CurrentUser ): Promise<McpServerProps[] | null | undefined> {
-        const listMcpServersByUserUseCase = container.resolve(ListMcpServersByUserUseCase)
-        const { page, limit } = options || {}
-
-        const { data } = await listMcpServersByUserUseCase.execute({ 
-			options: { page, limit },
-			currentUser,
-		})
-
-        return data
-    }
-
-    static async createMcpServer (payload: McpServerProps, currentUser: CurrentUser,): Promise<McpServerProps> {
-        if (!currentUser) throw new Error('[AGENT] CurrentUser is required to create a new mcp server')
-
-        const createMcpServerUseCase = container.resolve(CreateMcpServerUseCase)
-
-        const { data } = await createMcpServerUseCase.execute({
-            payload,
-            currentUser,
-        })
-
-        if (!data) throw new Error('[AGENT] There was an error creating the mcp server')
-
-        return data
     }
 
     constructor (agentOptions: AgentOptions) {
@@ -261,7 +207,9 @@ export class Agent {
     private async loadMcpServers (): Promise<void> {
         if (!this.currentUser) return
 
-        const servers = await Agent.listUserMcpServers({}, this.currentUser)
+        const { data: servers } = await listMcpServersByUser({
+            currentUser: this.currentUser
+        })
 
         for (const props of servers ?? []) {
             const mcpServer = McpServer.fromJSON(props)
