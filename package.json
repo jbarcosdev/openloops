@@ -35,9 +35,25 @@
       "types": "./dist/services/app/core/index.d.ts",
       "default": "./dist/services/app/core/index.js"
     },
+    "./authentication": {
+      "types": "./dist/services/authentication/index.d.ts",
+      "default": "./dist/services/authentication/index.js"
+    },
     "./chats": {
-      "types": "./dist/services/agent/modules/chats/index.d.ts",
-      "default": "./dist/services/agent/modules/chats/index.js"
+      "types": "./dist/services/chats/index.d.ts",
+      "default": "./dist/services/chats/index.js"
+    },
+    "./llmcalls": {
+      "types": "./dist/services/llmcalls/index.d.ts",
+      "default": "./dist/services/llmcalls/index.js"
+    },
+    "./mcps": {
+      "types": "./dist/services/mcp-servers/index.d.ts",
+      "default": "./dist/services/mcp-servers/index.js"
+    },
+    "./users": {
+      "types": "./dist/services/users/index.d.ts",
+      "default": "./dist/services/users/index.js"
     }
   },
   "files": [
