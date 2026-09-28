@@ -1,6 +1,6 @@
-import { CurrentUser } from '@services/app/core'
 import type { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import type { Tool as McpTool } from '@modelcontextprotocol/sdk/types.js'
+import { CurrentUser } from '@common/core'
 
 interface InputSchema {
     type: 'object'

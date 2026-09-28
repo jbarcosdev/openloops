@@ -2,7 +2,7 @@ import { Logger } from '@common/logger'
 import { reportError } from '@common/error'
 import { HttpError, HttpErrorProps } from '@common/error'
 import { secretManager } from '@common/utils/secret-manager'
-import { CurrentSessionProps } from '@services/app/core/current-session'
+import { CurrentSessionProps } from '@common/core'
 
 export abstract class BaseApp {
     public logger: Logger = new Logger()

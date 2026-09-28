@@ -10,7 +10,7 @@ import type {
 } from '@mariozechner/pi-ai'
 
 import { secretManager } from '@common/utils/secret-manager'
-import { CurrentUser } from '@services/app/core'
+import { CurrentUser } from '@common/core'
 import { Logger } from '@common/logger'
 import { extractJSON } from '@common/helpers'
 import { CreateLLMCallUseCase } from '@services/llmcalls/lambdas/create-llmcall'

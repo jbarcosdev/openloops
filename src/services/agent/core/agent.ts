@@ -1,7 +1,7 @@
 import 'reflect-metadata'
 import { container } from 'tsyringe'
 import { Logger } from '@common/logger'
-import { CurrentUser, CurrentSession } from '@services/app/core'
+import { CurrentUser, CurrentSession } from '@common/core'
 import { CreateChatUseCase } from '@services/chats/lambdas/create-chat/'
 import { UpdateChatUseCase } from '@services/chats/lambdas/update-chat/'
 import { McpServer } from '@services/mcp-servers/entities'
