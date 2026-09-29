@@ -1,4 +1,4 @@
-import { AgentLoop, AgentStatus, RunContext } from '@services/agent/core'
+import { AgentLoop, AgentStatus, RunContext } from '@agent/core'
 import {
     fastResponder,
     strategyEngine,

@@ -2,9 +2,9 @@ import { CurrentUser, CurrentSession } from '@common/core'
 import { Logger } from '@common/logger'
 import { Chat } from '@services/chats/entities/chat.entity'
 import { AgentTask } from '@services/chats/entities/agent-task.entity'
-import { Tool, BaseParams } from '@services/agent/tools/tool'
-import { SkillRunOptions } from '@services/agent/skills/skill'
-import { WeightedKeyword, ScoredTool } from '@services/agent/utils/rank-tools-by-keywords'
+import { Tool, BaseParams } from '@agent/tools/tool'
+import { SkillRunOptions } from '@agent/skills/skill'
+import { WeightedKeyword, ScoredTool } from '@agent/utils/rank-tools-by-keywords'
 
 export interface RunContext {
     task?: AgentTask
