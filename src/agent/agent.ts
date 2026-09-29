@@ -52,6 +52,7 @@ export class Agent {
     private _postHooks: Function[] = []
 
     private currentChat: Chat
+    private chatOptions?: ChatOptions
     private currentUser?: CurrentUser
     private currentSession?: CurrentSession
     private currentMessage: string = ''
@@ -133,6 +134,7 @@ export class Agent {
             this.currentUser = currentUser
             this.currentSession = currentSession
             this.currentMessage = message
+            this.chatOptions = options
             this.answerId = (new (require('mongodb').ObjectId)()).toString()
 
             await this.preRunner(chatId)
@@ -188,6 +190,11 @@ export class Agent {
             role: 'user',
             content: this.currentMessage,
         })
+
+        if (this.chatOptions?.notifyOnCompletion) this.currentChat.settings?.setNotifyOnCompletion(true)
+        if (this.chatOptions?.isPrivateSession) this.currentChat.settings?.setIsPrivateSession(true)
+        if (this.chatOptions?.modelName) this.currentChat.settings?.setModelName(this.chatOptions.modelName)
+        if (this.chatOptions?.loopName) this.currentChat.settings?.setLoopName(this.chatOptions.loopName)
 
         this.currentChat.state?.setStatus(AgentStatus.PROCESSING)
         this.currentChat.state?.setCurrentActivity('Starting...')
