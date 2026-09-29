@@ -1,6 +1,6 @@
+import { sentryClient } from './sentry-client'
 import { HttpError } from './http-error'
 import { logger } from '../logger'
-import { sentryClient } from '@common/clients/sentry-client'
 
 export const reportError = async (error: Error | HttpError | string, details?: object): Promise<void> => {
 	error = typeof error === 'string' ? new Error(error) : error
