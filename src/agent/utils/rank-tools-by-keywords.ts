@@ -1,4 +1,4 @@
-import { Tool } from "../tools/tool"
+import { Tool } from "@tools/tool"
 
 export interface WeightedKeyword {
     keyword: string
