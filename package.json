@@ -19,6 +19,10 @@
       "types": "./dist/common/base/index.d.ts",
       "default": "./dist/common/base/index.js"
     },
+    "./common": {
+      "types": "./dist/common/index.d.ts",
+      "default": "./dist/common/index.js"
+    },
     "./core": {
       "types": "./dist/agent/index.d.ts",
       "default": "./dist/agent/index.js"
