@@ -1,4 +1,4 @@
-import { CurrentUser, CurrentSession } from '@common/core'
+import { CurrentUser, CurrentSession } from '@common/base'
 import { Logger } from '@common/logger'
 import { Chat } from '@services/chats/entities/chat.entity'
 import { AgentTask } from '@services/chats/entities/agent-task.entity'

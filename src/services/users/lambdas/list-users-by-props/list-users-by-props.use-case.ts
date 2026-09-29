@@ -1,7 +1,7 @@
 import { autoInjectable, inject } from 'tsyringe'
-import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/core/base.use-case'
-import { UserRepository } from '../../repositories'
+import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
 import { QueryOptions } from '@common/repositories'
+import { UserRepository } from '../../repositories'
 import { UserProps } from '../../entities'
 
 export interface Params extends BaseUseCaseParams {

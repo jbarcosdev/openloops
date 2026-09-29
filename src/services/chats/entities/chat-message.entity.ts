@@ -1,5 +1,5 @@
 import { ObjectId } from 'mongodb'
-import { BaseEntity, BaseEntityProps } from '@common/core/base.entity'
+import { BaseEntity, BaseEntityProps } from '@common/base/base.entity'
 
 type Roles = 'user' | 'assistant'
 

@@ -1,4 +1,4 @@
-import { isPlainObject } from "@common/core/utils"
+import { isPlainObject } from "@common/base/utils"
 
 const METADATA_KEY = "maskInLogs"
 

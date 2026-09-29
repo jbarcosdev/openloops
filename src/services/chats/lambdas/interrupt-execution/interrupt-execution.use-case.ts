@@ -1,5 +1,5 @@
 import { autoInjectable, inject } from 'tsyringe'
-import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/core/base.use-case'
+import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
 import { Chat, ChatProps } from '../../entities'
 import { ChatRepository } from '../../repositories'
 

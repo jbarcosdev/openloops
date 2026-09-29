@@ -1,7 +1,7 @@
 import { autoInjectable } from 'tsyringe'
 import { extractJSON } from '@common/helpers'
 import { LLMClient } from '@clients/llm-client'
-import { CurrentUser, CurrentSession } from '@common/core'
+import { CurrentUser, CurrentSession } from '@common/base'
 
 interface SkillDefinition<TResponse = Record<string, any>> {
     name: string

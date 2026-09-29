@@ -1,6 +1,6 @@
 import { ObjectId } from 'mongodb'
 import { reportError } from '@common/error'
-import { Document } from '@common/core/base.entity'
+import { Document } from '@common/base/base.entity'
 import { MongoClient, getMongoDBClient } from './mongo-db.client'
 
 const DEFAULT_LIMIT = 10

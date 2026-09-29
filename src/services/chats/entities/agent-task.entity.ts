@@ -1,8 +1,8 @@
 import { ObjectId } from 'mongodb'
-import { BaseEntity, BaseEntityProps } from '@common/core/base.entity'
+import { BaseEntity, BaseEntityProps } from '@common/base/base.entity'
 import { AgentAction, AgentActionProps, ActionDescriptor } from './agent-action.entity'
 import { ChatContext } from './chat-context.entity'
-import { Tool, BaseParams } from '@services/agent/tools/tool'
+import { Tool, BaseParams } from '@tools/tool'
 
 export enum TaskStatus {
     PENDING = 'pending',

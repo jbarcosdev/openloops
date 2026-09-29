@@ -1,4 +1,4 @@
-import { CurrentUser, CurrentSession } from '@common/core'
+import { CurrentUser, CurrentSession } from '@common/base'
 import { HttpError } from '@common/error'
 import { BaseApp } from './base.app'
 

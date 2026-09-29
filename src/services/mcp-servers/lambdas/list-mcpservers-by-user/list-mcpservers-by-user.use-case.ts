@@ -1,7 +1,7 @@
 import { autoInjectable, inject } from 'tsyringe'
 import { ObjectId } from 'mongodb'
 import { QueryOptions } from '@common/repositories'
-import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/core/base.use-case'
+import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
 import { McpServerRepository } from '../../repositories'
 import { McpServerProps } from '../../entities'
 

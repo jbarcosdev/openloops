@@ -1,7 +1,7 @@
 import { container } from 'tsyringe'
 import { extractJSON } from '@common/helpers'
 import { LLMClient } from '@clients/llm-client'
-import { CurrentUser, CurrentSession } from '@common/core'
+import { CurrentUser, CurrentSession } from '@common/base'
 import type { Chat } from '@services/chats/entities/chat.entity'
 
 export interface SkillProps {

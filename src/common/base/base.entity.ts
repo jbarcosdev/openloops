@@ -2,7 +2,7 @@ import 'reflect-metadata'
 import { ObjectId } from 'bson'
 import { AdminOnly, OwnerOnly, handleMaskInLogs } from '@common/decorators'
 import { sanitizeString } from '@common/helpers'
-import { CurrentUser } from '@common/core'
+import { CurrentUser } from '@common/base'
 import { deleteEmptyFields, flattenObject } from './utils'
 
 export interface BaseEntityProps {

@@ -1,6 +1,6 @@
 import { ObjectId } from 'mongodb'
 import type { AssistantMessage } from '@mariozechner/pi-ai'
-import { BaseEntity, BaseEntityProps } from '@common/core/base.entity'
+import { BaseEntity, BaseEntityProps } from '@common/base/base.entity'
 
 export interface LLMCallProps extends BaseEntityProps {
 	taskName?: string

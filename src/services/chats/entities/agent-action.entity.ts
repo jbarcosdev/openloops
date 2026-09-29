@@ -1,6 +1,6 @@
 import { ObjectId } from 'mongodb'
-import { BaseEntity, BaseEntityProps } from '@common/core/base.entity'
-import { Tool, BaseParams } from '@services/agent/tools/tool'
+import { BaseEntity, BaseEntityProps } from '@common/base/base.entity'
+import { Tool, BaseParams } from '@tools/tool'
 
 export type ActionStatus = 'pending' | 'running' | 'completed' | 'failed'
 

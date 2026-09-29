@@ -1,5 +1,5 @@
-import { BaseEntity, BaseEntityProps } from '@common/core/base.entity'
-import { AgentStateProps, AgentState } from '@services/agent/core/agent-state'
+import { BaseEntity, BaseEntityProps } from '@common/base/base.entity'
+import { AgentStateProps, AgentState } from '@agent/agent-state'
 import { ChatMessage, ChatMessageProps } from './chat-message.entity'
 import { ChatSettings, ChatSettingsProps } from './chat-settings.entity'
 import { ChatContext, ChatContextProps } from './chat-context.entity'

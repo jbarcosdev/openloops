@@ -1,6 +1,6 @@
 import { MaskInLogs, AdminOnly } from '@common/decorators'
-import { BaseEntity, BaseEntityProps } from '@common/core/base.entity'
 import { getCurrencyDataFromCurrencyCodeAsync } from 'countries-and-currencies-utils'
+import { BaseEntity, BaseEntityProps } from '@common/base/base.entity'
 import { sanitizeString } from '@common/helpers'
 import { UserPassword } from './user-password.value-object'
 import { UserEmail } from './user-email.value-object'

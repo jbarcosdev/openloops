@@ -1,4 +1,4 @@
-import { BaseEntity, BaseEntityProps } from '@common/core/base.entity'
+import { BaseEntity, BaseEntityProps } from '@common/base/base.entity'
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
 
