@@ -1,5 +1,5 @@
-import { Skill } from '../../../skills/skill'
-import { FORMATTING, LATEX_FORMATTING, CITATION_FORMATTING } from '../../../skills/shared/shared-rules'
+import { Skill } from '@skills/skill'
+import { FORMATTING, LATEX_FORMATTING, CITATION_FORMATTING } from '@skills/shared/shared-rules'
 
 type ResponseSchema = {
     final_response: string

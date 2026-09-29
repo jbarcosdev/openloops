@@ -1,4 +1,4 @@
-import { Skill } from '../../../skills/skill'
+import { Skill } from '@skills/skill'
 
 type ResponseSchema = {
     goal: string

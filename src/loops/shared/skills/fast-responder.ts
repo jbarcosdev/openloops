@@ -1,5 +1,5 @@
-import { Skill } from '../../../skills/skill'
-import { FORMATTING, LATEX_FORMATTING, CITATION_FORMATTING, POLICY_RESTRICTIONS } from '../../../skills/shared/shared-rules'
+import { Skill } from '@skills/skill'
+import { FORMATTING, LATEX_FORMATTING, CITATION_FORMATTING, POLICY_RESTRICTIONS } from '@skills/shared/shared-rules'
 
 type ResponseSchema = {
     can_answer: boolean

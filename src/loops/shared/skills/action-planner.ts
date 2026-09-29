@@ -1,4 +1,4 @@
-import { Skill } from '../../../skills/skill'
+import { Skill } from '@skills/skill'
 
 interface PlanStepOutput {
     step_id: number
