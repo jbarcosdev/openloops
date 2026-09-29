@@ -10,7 +10,7 @@ import { Chat, ChatProps } from '@services/chats/entities/chat.entity'
 import { Tool } from '@agent/tools/tool'
 import { webSearchTool, callAiTool } from '@agent/tools/core'
 import { listMcpServersByUser } from '@services/mcp-servers'
-import { rankToolsByKeywords, WeightedKeyword, ScoredTool } from '@agent/utils/rank-tools-by-keywords'
+import { rankToolsByKeywords, WeightedKeyword, ScoredTool } from './utils/rank-tools-by-keywords'
 import { AgentLoop, AgentLoopNode, RunContext } from './agent-loop'
 import { AgentStatus } from './agent-state'
 
