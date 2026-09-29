@@ -4,6 +4,7 @@
         "rootDir": "./src",
         "paths": {
             "@agent/*": ["./src/agent/*"],
+            "@clients/*": ["./src/clients/*"],
             "@common/*": ["./src/common/*"],
             "@services/*": ["./src/services/*"],
             "@root/*": ["./src/../*"]
