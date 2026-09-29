@@ -1,6 +1,3 @@
-import 'reflect-metadata'
-import { container } from 'tsyringe'
-
 import { Langfuse } from 'langfuse'
 import type {
     KnownProvider,
@@ -13,7 +10,7 @@ import { secretManager } from '@common/utils/secret-manager'
 import { CurrentUser } from '@common/base'
 import { Logger } from '@common/logger'
 import { extractJSON } from '@common/helpers'
-import { CreateLLMCallUseCase } from '@services/llmcalls/lambdas/create-llmcall'
+import { createLLMCall } from '@services/llmcalls'
 
 export class LLMClient {
     private readonly logger = new Logger()
@@ -124,9 +121,8 @@ export class LLMClient {
 
     private async postResponse (params: LLMPostResponseParams): Promise<any>  {
         const { taskName, sessionId, answerId, currentUser, response } = params ?? {}
-        const createLLMCallUseCase = container.resolve(CreateLLMCallUseCase)
 
-        await createLLMCallUseCase.execute({
+        await createLLMCall({
             payload: {
                 taskName,
                 sessionId,
