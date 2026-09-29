@@ -116,7 +116,7 @@ export class Agent {
         return this.currentChat.lastAnswer
     }
 
-    async run (props: { input: ChatInput; options: ChatOptions; currentUser: CurrentUser; currentSession?: CurrentSession }) {
+    async run (props: { input: ChatInput; options?: ChatOptions; currentUser: CurrentUser; currentSession?: CurrentSession }) {
         try {
             const { input, options, currentUser, currentSession } = props || {}
             const { chatId, message } = input || {}
