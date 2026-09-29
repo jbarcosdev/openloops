@@ -3,7 +3,7 @@ import {
     SerperClient,
     SerperSearchParams,
     SerperSearchResponse
-} from '@common/clients/serper-client'
+} from '@clients/serper-client'
 
 interface Params extends BaseParams, SerperSearchParams {}
 
