@@ -15,25 +15,25 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
+    "./base": {
+      "types": "./dist/common/base/index.d.ts",
+      "default": "./dist/common/base/index.js"
+    },
     "./core": {
-      "types": "./dist/services/agent/core/index.d.ts",
-      "default": "./dist/services/agent/core/index.js"
+      "types": "./dist/agent/index.d.ts",
+      "default": "./dist/agent/index.js"
     },
     "./skills": {
-      "types": "./dist/services/agent/skills/index.d.ts",
-      "default": "./dist/services/agent/skills/index.js"
+      "types": "./dist/skills/index.d.ts",
+      "default": "./dist/skills/index.js"
     },
     "./tools": {
-      "types": "./dist/services/agent/tools/index.d.ts",
-      "default": "./dist/services/agent/tools/index.js"
+      "types": "./dist/tools/index.d.ts",
+      "default": "./dist/tools/index.js"
     },
     "./loops": {
-      "types": "./dist/services/agent/loops/index.d.ts",
-      "default": "./dist/services/agent/loops/index.js"
-    },
-    "./app": {
-      "types": "./dist/services/app/core/index.d.ts",
-      "default": "./dist/services/app/core/index.js"
+      "types": "./dist/loops/index.d.ts",
+      "default": "./dist/loops/index.js"
     },
     "./authentication": {
       "types": "./dist/services/authentication/index.d.ts",
