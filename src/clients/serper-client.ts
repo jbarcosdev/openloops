@@ -107,12 +107,3 @@ export interface SerperSearchResponse {
     relatedSearches?: SerperRelatedSearch[]
     credits?: number
 }
-
-// const serper = new SerperClient()
-
-// serper.searchOnGoogle({
-//     query: 'medellin weather now',
-//     // type: 'news',
-//     // countryCode: 'co',
-//     // languageCode: 'es',
-// })
