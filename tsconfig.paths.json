@@ -3,6 +3,7 @@
         "outDir": "dist",
         "rootDir": "./src",
         "paths": {
+            "@agent/*": ["./src/agent/*"],
             "@common/*": ["./src/common/*"],
             "@services/*": ["./src/services/*"],
             "@root/*": ["./src/../*"]
