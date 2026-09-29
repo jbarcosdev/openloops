@@ -88,7 +88,7 @@ export class SkillRunner {
         const response = await this.llmClient.complete({
             sessionId,
             answerId,
-            taskName: skill.name,
+            origin: skill.name,
             currentUser,
             messages: [
                 {

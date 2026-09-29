@@ -3,7 +3,7 @@ import type { AssistantMessage } from '@mariozechner/pi-ai'
 import { BaseEntity, BaseEntityProps } from '@common/base/base.entity'
 
 export interface LLMCallProps extends BaseEntityProps {
-	taskName?: string
+	origin?: string
 	answerId?: string | ObjectId
 	sessionId?: string | ObjectId
 	costInUsd?: number
@@ -14,7 +14,7 @@ export class LLMCall extends BaseEntity {
 	static fromJSON (props: LLMCallProps) {
 		return new LLMCall(
 			props,
-			props.taskName || undefined,
+			props.origin || undefined,
 			BaseEntity.toObjectId(props.answerId),
 			BaseEntity.toObjectId(props.sessionId),
 			props.costInUsd ? Number(props.costInUsd) : undefined,
@@ -24,7 +24,7 @@ export class LLMCall extends BaseEntity {
 
 	constructor (
 		private readonly props: LLMCallProps,
-		public taskName?: string,
+		public origin?: string,
 		public answerId?: ObjectId,
 		public sessionId?: ObjectId,
 		public costInUsd?: number,
@@ -36,7 +36,7 @@ export class LLMCall extends BaseEntity {
 	toJSON (): LLMCallProps {
 		return {
 			...super.toJSON(),
-			taskName: this.taskName,
+			origin: this.origin,
 			answerId: this.answerId,
 			sessionId: this.sessionId,
 			costInUsd: this.costInUsd,
@@ -48,7 +48,7 @@ export class LLMCall extends BaseEntity {
 		this.response = response
 	}
 
-	setTaskName (taskId: string) {
-		this.taskName = taskId
+	setOrigin (origin: string) {
+		this.origin = origin
 	}
 }

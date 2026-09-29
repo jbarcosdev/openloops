@@ -101,7 +101,7 @@ export class Skill<TResponse = Record<string, any>> {
             const response = await llmClient.complete({
                 sessionId,
                 answerId,
-                taskName: this.name,
+                origin: this.name,
                 currentUser,
                 messages: [
                     {

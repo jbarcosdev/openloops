@@ -38,7 +38,7 @@ export class LLMClient {
         const { getModel, complete } = await import('@mariozechner/pi-ai')
 
         const {
-            taskName,
+            origin,
             sessionId,
             answerId,
             currentUser,
@@ -57,7 +57,7 @@ export class LLMClient {
         }
 
         this.logger.debug({
-            taskName,
+            origin,
             context: {
                 ...context,
                 messages: this.formatMessagesForLog(messages),
@@ -66,10 +66,10 @@ export class LLMClient {
 
         const trace = this.langfuseEnabled ? this.langfuse!.trace({
             sessionId,
-            name: taskName,
+            name: origin,
             userId: currentUser?.userId,
             metadata: {
-                taskName: taskName,
+                origin,
                 email: currentUser?.email,
                 sessionId,
             },
@@ -99,14 +99,14 @@ export class LLMClient {
             if (this.langfuseEnabled) await this.langfuse!.flushAsync()
 
             this.logger.debug({
-                taskName,
+                origin,
                 response: {
                     ...response,
                     content: this.formatContentForLog(response?.content)
                 }
             }, '[LLM Service] Response')
 
-            await this.postResponse({ taskName, sessionId, answerId, currentUser, response })
+            await this.postResponse({ origin, sessionId, answerId, currentUser, response })
 
             return response
         } catch (error) {
@@ -120,11 +120,11 @@ export class LLMClient {
     }
 
     private async postResponse (params: LLMPostResponseParams): Promise<any>  {
-        const { taskName, sessionId, answerId, currentUser, response } = params ?? {}
+        const { origin, sessionId, answerId, currentUser, response } = params ?? {}
 
         await createLLMCall({
             payload: {
-                taskName,
+                origin,
                 sessionId,
                 answerId,
                 response,
@@ -156,7 +156,7 @@ export class LLMClient {
 }
 
 export interface LLMCompletionParams {
-    taskName: string
+    origin: string
     sessionId: string
     answerId: string
     currentUser?: CurrentUser
@@ -168,7 +168,7 @@ export interface LLMCompletionParams {
 }
 
 export interface LLMPostResponseParams {
-    taskName: string
+    origin: string
     sessionId: string
     answerId: string
     currentUser?: CurrentUser
