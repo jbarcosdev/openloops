@@ -6,6 +6,9 @@
             "@agent/*": ["./src/agent/*"],
             "@clients/*": ["./src/clients/*"],
             "@common/*": ["./src/common/*"],
+            "@loops/*": ["./src/loops/*"],
+            "@skills/*": ["./src/skills/*"],
+            "@tools/*": ["./src/tools/*"],
             "@services/*": ["./src/services/*"],
             "@root/*": ["./src/../*"]
         }
