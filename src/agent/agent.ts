@@ -23,13 +23,13 @@ export interface AgentOptions {
     tools?: Tool[]
 }
 
-interface Input {
+interface ChatInput {
     message: string
     chatId?: string
     messageId?: string
 }
 
-interface Options {
+interface ChatOptions {
     loopName?: string
     modelName?: 'string'
     isPrivateSession?: boolean
@@ -115,7 +115,7 @@ export class Agent {
         return this.currentChat.lastAnswer
     }
 
-    async run (props: { input: Input; options: Options; currentUser: CurrentUser; currentSession?: CurrentSession }) {
+    async run (props: { input: ChatInput; options: ChatOptions; currentUser: CurrentUser; currentSession?: CurrentSession }) {
         try {
             const { input, options, currentUser, currentSession } = props || {}
             const { chatId, message } = input || {}
