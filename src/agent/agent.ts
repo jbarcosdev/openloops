@@ -27,7 +27,13 @@ interface Input {
     message: string
     chatId?: string
     messageId?: string
+}
+
+interface Options {
+    loopName?: string
+    modelName?: 'string'
     isPrivateSession?: boolean
+    notifyOnCompletion?: boolean
 }
 
 type HookType = 'pre_execution' | 'post_execution'
@@ -109,8 +115,9 @@ export class Agent {
         return this.currentChat.lastAnswer
     }
 
-    async run (input: Input, currentUser: CurrentUser, currentSession?: CurrentSession) {
+    async run (props: { input: Input; options: Options; currentUser: CurrentUser; currentSession?: CurrentSession }) {
         try {
+            const { input, options, currentUser, currentSession } = props || {}
             const { chatId, message } = input || {}
 
             this.logger.debug(input, '[AGENT] Agent started')
