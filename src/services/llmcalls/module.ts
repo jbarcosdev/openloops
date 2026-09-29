@@ -8,7 +8,7 @@ export async function getLLMUsage (props: LParams): Promise<LOutput> {
     return getLLMUsageUseCase.execute(props)
 }
 
-export async function CreateLLMCall (props: CParams): Promise<COutput> {
+export async function createLLMCall (props: CParams): Promise<COutput> {
     const createLLMCall = container.resolve(CreateLLMCallUseCase)
     return createLLMCall.execute(props)
 }
