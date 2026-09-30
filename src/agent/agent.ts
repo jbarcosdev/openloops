@@ -18,9 +18,16 @@ export const AGENT_ERROR_CODES = {
     NODE_NOT_FOUND: 'AGENT_NODE_NOT_FOUND',
 } as const
 
+interface AgentIdentity {
+    name?: string
+    gender?: string
+    role?: string
+}
+
 export interface AgentOptions {
     loop: AgentLoop
     tools?: Tool[]
+    identity?: AgentIdentity
 }
 
 interface ChatInput {
