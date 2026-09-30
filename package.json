@@ -119,5 +119,9 @@
   },
   "engines": {
     "node": ">=22.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jbarcosdev/openloops.git"
   }
 }
