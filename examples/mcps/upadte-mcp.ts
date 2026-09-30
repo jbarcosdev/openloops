@@ -17,7 +17,7 @@ async function updateMcp () {
         currentUser,
     })
 
-    logger.info(result, '[Demo] Created mcp:')
+    logger.info(result, '[Demo] Updated mcp:')
 }
 
 updateMcp()
