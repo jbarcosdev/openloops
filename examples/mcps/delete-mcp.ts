@@ -20,6 +20,7 @@ async function hardDeleteMcp () {
 
     const result = await deleteMcpServer({
         id: '6ab59c88d3ea4199c9b7ba09',
+        hardDelete: true, // only admins can perfomr this action
         currentUser,
     })
 
