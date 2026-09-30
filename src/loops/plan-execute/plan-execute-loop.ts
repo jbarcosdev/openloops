@@ -47,10 +47,12 @@ export class PlanExecuteLoop extends AgentLoop {
         ctx.chat.state?.setCurrentActivity('Analyzing requirement...')
 
         const chat_history = ctx.chat.lastHistoryMessages()
+        const agentIdentity = ctx.identity
 
         const result = await fastResponder.run({
             ...ctx.skillParams,
             contextInjection: {
+                ...(agentIdentity && Object.keys(agentIdentity)?.length ? { agentIdentity } : {}),
                 ...(chat_history?.length ? { chat_history } : {}),
             },
         })

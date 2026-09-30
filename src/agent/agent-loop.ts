@@ -7,6 +7,7 @@ import { SkillRunOptions } from '@skills/skill'
 import { WeightedKeyword, ScoredTool } from './utils/rank-tools-by-keywords'
 
 export interface RunContext {
+    identity?: AgentIdentity
     task?: AgentTask
     chat: Chat
     currentUser: CurrentUser
@@ -20,6 +21,12 @@ export interface RunContext {
     reply: (content: string) => void
     setNextNode: (node?: string | AgentLoopNode) => void
     logger: Logger
+}
+
+interface AgentIdentity {
+    name?: string
+    gender?: string
+    role?: string
 }
 
 export type AgentLoopNode = (ctx: RunContext) => Promise<void>

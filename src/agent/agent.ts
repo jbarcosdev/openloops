@@ -53,6 +53,7 @@ export class Agent {
     private readonly logger = new Logger()
 
     private readonly _loop: AgentLoop
+    private readonly _identity?: AgentIdentity
     private _tools: Tool[]
     private _mcps: McpServer[] = []
     private _preHooks: Function[] = []
@@ -103,6 +104,7 @@ export class Agent {
 
         this._loop = agentOptions.loop
         this._tools = agentOptions.tools ?? []
+        this._identity = agentOptions.identity
 
         this.currentChat = Chat.withDefaults(this._loop.name)
     }
@@ -372,6 +374,7 @@ export class Agent {
         const sessionId = this.currentChat._id?.toString() ?? ''
 
         return {
+            identity: this._identity,
             task: this.currentChat.activeTask,
             chat: this.currentChat,
             currentUser: this.currentUser!,
