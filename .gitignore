@@ -1,0 +1,15 @@
+# package directories
+node_modules
+
+# ignore local files
+.*
+
+# exceptions to .*
+!.github/
+!.gitignore
+!.yarnrc.yml
+!.nvmrc
+!.env.example
+
+# distribution folder
+dist/
