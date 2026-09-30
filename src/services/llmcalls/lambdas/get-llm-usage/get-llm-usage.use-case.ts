@@ -103,7 +103,6 @@ export class GetLLMUsageUseCase extends BaseUseCase<Params, Output> {
 		return {
 			data: {
 				...result[0],
-				tokensLimit: 5_000_000,
 			}
 		}
 	}
