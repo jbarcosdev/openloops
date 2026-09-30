@@ -11,7 +11,7 @@ async function updateUserExample () {
         id: '6ab56894eb20887d1ef7942c',
         payload: {
             firstName: 'Jose',
-            lastName: 'Barcos 2',
+            lastName: 'Developer',
         },
         currentUser,
     })
