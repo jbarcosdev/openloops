@@ -94,7 +94,14 @@ export class GetLLMUsageUseCase extends BaseUseCase<Params, Output> {
 					_id: "$ownerId",
 					totalTokens: { $sum: "$response.usage.totalTokens" }
 				}
-			}
+			},
+			{
+                $project: {
+                    _id: 0,
+                    userId: "$_id",
+                    totalTokens: 1
+                }
+            }
 		]
 
 		const result = await this.llmCallRepository?._.aggregate(pipeline) as any
