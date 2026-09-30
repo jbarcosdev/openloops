@@ -123,5 +123,28 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/jbarcosdev/openloops.git"
-  }
+  },
+  "keywords": [
+    "ai-agent-framework",
+    "agent-runtime",
+    "agent-loop",
+    "agent-orchestration",
+    "typescript",
+    "nodejs",
+    "mongodb",
+    "chatbot-framework",
+    "ai-assistant",
+    "langchain",
+    "langchain-alternative",
+    "langgraph",
+    "langgraph-alternative",
+    "crewai",
+    "crewai-alternative",
+    "openclaw",
+    "openclaw-alternative",
+    "hermes",
+    "hermes-agent",
+    "zeroclaw",
+    "agent-marketplace"
+  ]
 }
