@@ -4288,30 +4288,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"countries-and-currencies-utils@npm:^0.1.9":
-  version: 0.1.9
-  resolution: "countries-and-currencies-utils@npm:0.1.9"
-  dependencies:
-    countries-and-timezones: "npm:^3.10.0"
-    country-currency-utils: "npm:^6.0.0"
-  checksum: 10c0/15834bade2338e669c7c4996ca42303a6419a6af4d84b2eb13bc6196ae00db3dfdfff74f2776cbac3dcb9324a4868d5dfb579c02b1619844e84d45107b5502ec
-  languageName: node
-  linkType: hard
-
-"countries-and-timezones@npm:^3.10.0":
-  version: 3.10.0
-  resolution: "countries-and-timezones@npm:3.10.0"
-  checksum: 10c0/94d71134a76c6f1fd7f938c46243ee0e055590e9e59b94d750ce17f080cf27e5e06c72ec414ef5872e826120d11aaa712e62a7bdf1dd6fae602139f3cc3e679a
-  languageName: node
-  linkType: hard
-
-"country-currency-utils@npm:^6.0.0":
-  version: 6.0.0
-  resolution: "country-currency-utils@npm:6.0.0"
-  checksum: 10c0/d668d43378d5350a774c76e7298d571c1fa1ef5f9c54a516f6912c5ca23e649f8ba25a951f3120b70aec45f2e300323dae48576855996c913643213d4485dc48
-  languageName: node
-  linkType: hard
-
 "cross-spawn@npm:^7.0.3, cross-spawn@npm:^7.0.5, cross-spawn@npm:^7.0.6":
   version: 7.0.6
   resolution: "cross-spawn@npm:7.0.6"
@@ -8273,7 +8249,6 @@ __metadata:
     "@typescript-eslint/parser": "npm:^8.70.1"
     axios: "npm:^1.20.0"
     bcryptjs: "npm:^3.0.3"
-    countries-and-currencies-utils: "npm:^0.1.9"
     cryptr: "npm:^6.4.0"
     dotenv: "npm:^18.0.3"
     eslint: "npm:^10.11.0"
