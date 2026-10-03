@@ -1,4 +1,4 @@
-import { getCountryNameFromCountryCode } from 'countries-and-currencies-utils'
+import { getCountry } from 'iso-data'
 import { sanitizeString } from '@common/helpers'
 
 export interface CountryProps {
@@ -10,7 +10,7 @@ export class Country {
 	constructor (public isoCode?: string) {}
 
 	get label () {
-		return this.isoCode ? getCountryNameFromCountryCode(this.isoCode) : undefined
+		return this.isoCode ? getCountry(this.isoCode)?.name : undefined
 	}
 
 	static fromJSON (props: CountryProps): Country {

@@ -1,5 +1,5 @@
 import { ObjectId } from 'mongodb'
-import { getTimezoneOffset } from 'countries-and-currencies-utils'
+import { getTimezone } from 'iso-data'
 import { getMongoDBClient } from '@common/repositories/mongo-db.client'
 import { secretManager } from '@common/utils/secret-manager'
 import { logger } from '@common/logger'
@@ -52,7 +52,7 @@ export class CurrentUser extends User {
     }
 
     get timezoneOffset () {
-        return getTimezoneOffset(this.preferences?.timezone?.ianaIdentifier)
+        return getTimezone(this.preferences?.timezone?.ianaIdentifier)?.offset ?? 0
     }
 
     public setIsPremium (value: boolean) {

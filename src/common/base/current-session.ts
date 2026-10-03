@@ -1,8 +1,4 @@
-import {
-    getCountryDataFromCountryCode,
-    getCountryISOCodeFromTimezone,
-    getTimezoneOffset
-} from 'countries-and-currencies-utils'
+import { getCountry, getTimezone } from 'iso-data'
 
 export class CurrentSession {
     constructor (
@@ -44,12 +40,11 @@ export class CurrentSession {
     }
 
     public get timezoneOffset (): number | undefined {
-        return getTimezoneOffset(this.location?.timezone)
+        return getTimezone(this.location?.timezone)?.offset
     }
 
     public get currencyCode (): string | undefined {
-        const currentCountryData = getCountryDataFromCountryCode(this.location?.country)
-        return currentCountryData?.currency?.isoCode
+        return getCountry(this.location?.country)?.currency.isoCode
     }
 
     static fromJSON (json: CurrentSessionProps): CurrentSession {
@@ -102,7 +97,7 @@ export class CurrentSession {
 
         session.location = session.location?.timezone ? {
             ...session.location,
-            country: getCountryISOCodeFromTimezone(session.location?.timezone),
+            country: getTimezone(session.location?.timezone)?.countryCode,
         } : session.location
 
         return session

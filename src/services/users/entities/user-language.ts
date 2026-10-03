@@ -1,5 +1,5 @@
 import { sanitizeString } from '@common/helpers'
-import { getLanguageFromLanguageCode } from 'countries-and-currencies-utils'
+import { getLanguage } from 'iso-data'
 
 export interface LanguageProps {
 	isoCode?: string
@@ -10,7 +10,7 @@ export class Language {
 	constructor (public isoCode?: string) {}
 
 	get label () {
-		return this.isoCode ? getLanguageFromLanguageCode(this.isoCode)?.nativeName : undefined
+		return this.isoCode ? getLanguage(this.isoCode)?.nativeName : undefined
 	}
 
 	static fromJSON (props: LanguageProps): Language {

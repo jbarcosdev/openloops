@@ -1,5 +1,5 @@
 import { MaskInLogs, AdminOnly } from '@common/decorators'
-import { getCurrencyDataFromCurrencyCodeAsync } from 'countries-and-currencies-utils'
+import { getCurrency } from 'iso-data'
 import { BaseEntity, BaseEntityProps } from '@common/base/base.entity'
 import { sanitizeString } from '@common/helpers'
 import { UserPassword } from './user-password.value-object'
@@ -85,8 +85,8 @@ export class User extends BaseEntity {
 
 	static async create (props: UserProps): Promise<User> {
 		if (props.preferences?.currency?.isoCode) {
-			const currencyData = await getCurrencyDataFromCurrencyCodeAsync(props.preferences.currency.isoCode)
-			props.preferences.currency.label = currencyData?.label
+			const currencyData = getCurrency(props.preferences.currency.isoCode)
+			props.preferences.currency.label = currencyData?.name
 			props.preferences.currency.symbol = currencyData?.symbol
 		}
 

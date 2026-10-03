@@ -6669,6 +6669,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"iso-data@npm:^0.1.0":
+  version: 0.1.0
+  resolution: "iso-data@npm:0.1.0"
+  checksum: 10c0/dd334aa2a64b943b5250ed7e6fb1c35779f7825ff71565fd2504d605d2d91a524b4f87b6837b3ca1cba7ba4e38213cbf3493a44743d1b7afd0a57421f08d6ca7
+  languageName: node
+  linkType: hard
+
 "istanbul-lib-coverage@npm:^3.0.0, istanbul-lib-coverage@npm:^3.2.0":
   version: 3.2.2
   resolution: "istanbul-lib-coverage@npm:3.2.2"
@@ -8279,6 +8286,7 @@ __metadata:
     eslint-plugin-prettier: "npm:^5.5.6"
     eslint-plugin-promise: "npm:^7.3.0"
     html-to-text: "npm:^10.0.1"
+    iso-data: "npm:^0.1.0"
     jest: "npm:^30.5.2"
     jsonwebtoken: "npm:^9.0.3"
     langfuse: "npm:^3.39.2"

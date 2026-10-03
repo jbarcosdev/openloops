@@ -1,5 +1,5 @@
 import { sanitizeString } from '@common/helpers'
-import { getTimezoneOffset } from 'countries-and-currencies-utils'
+import { getTimezone } from 'iso-data'
 
 export interface TimezoneProps {
 	ianaIdentifier?: string
@@ -14,7 +14,7 @@ export class Timezone {
 	constructor (public ianaIdentifier?: string) {}
 
 	get offsetInMinutes (): number | undefined {
-		return this.ianaIdentifier ? getTimezoneOffset(this.ianaIdentifier) ?? undefined : undefined
+		return getTimezone(this.ianaIdentifier)?.offset
 	}
 
 	toJSON (): TimezoneProps {

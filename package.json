@@ -83,6 +83,7 @@
     "cryptr": "^6.4.0",
     "dotenv": "^18.0.3",
     "html-to-text": "^10.0.1",
+    "iso-data": "^0.1.0",
     "jsonwebtoken": "^9.0.3",
     "langfuse": "^3.39.2",
     "mongodb": "^7.6.0",
