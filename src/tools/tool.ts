@@ -42,6 +42,14 @@ export class Tool {
         this.handler = props.handler
     }
 
+    get meta () {
+        return {
+            name: this.name,
+            description: this.description,
+            annotations: this.annotations,
+        }
+    }
+
     async run (...args: any[]) {
         return this.handler(...args)
     }
