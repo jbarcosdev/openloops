@@ -21,6 +21,7 @@ export interface BaseParams {
 export class Tool {
     readonly name: string
     readonly description: string
+    readonly annotations?: string
     readonly destructive: boolean
     readonly parameters: InputSchema
     private readonly handler: (...args: any[]) => Promise<Output>
@@ -28,12 +29,14 @@ export class Tool {
     constructor (props: {
         name: string,
         description: string,
+        annotations?: string,
         destructive?: boolean,
         parameters: InputSchema,
         handler: (...args: any[]) => Promise<Output>,
     }) {
         this.name = props.name
         this.description = props.description
+        this.annotations = props.annotations
         this.destructive = props.destructive ?? false
         this.parameters = props.parameters
         this.handler = props.handler
