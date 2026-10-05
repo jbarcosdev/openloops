@@ -17,6 +17,10 @@ async function runAgent () {
             input: {
                 message: 'hi, how are you?',
             },
+            options: {
+                modelProvider: 'google',
+                modelName: 'gemini-2.5-flash',
+            },
             currentUser,
         })
 
