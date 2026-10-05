@@ -38,7 +38,7 @@ interface ChatInput {
 
 interface ChatOptions {
     loopName?: string
-    modelName?: 'string'
+    modelName?: string
     isPrivateSession?: boolean
     notifyOnCompletion?: boolean
 }
