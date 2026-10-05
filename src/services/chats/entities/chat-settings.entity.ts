@@ -1,6 +1,7 @@
 export interface ChatSettingsProps {
     notifyOnCompletion?: boolean
     isPrivateSession?: boolean
+    modelProvider?: string
     modelName?: string,
     loopName?: string,
 }
@@ -10,6 +11,7 @@ export class ChatSettings {
         private readonly props: ChatSettingsProps,
         public notifyOnCompletion?: boolean,
         public isPrivateSession?: boolean,
+        public modelProvider?: string,
         public modelName?: string,
         public loopName?: string,
     ) {}
@@ -19,6 +21,7 @@ export class ChatSettings {
             props,
             props.notifyOnCompletion,
             props.isPrivateSession,
+            props.modelProvider,
             props.modelName,
             props.loopName,
         )
@@ -28,6 +31,7 @@ export class ChatSettings {
         return {
             notifyOnCompletion: this.notifyOnCompletion,
             isPrivateSession: this.isPrivateSession,
+            modelProvider: this.modelProvider,
             modelName: this.modelName,
             loopName: this.loopName,
         }
@@ -35,6 +39,10 @@ export class ChatSettings {
 
     setLoopName (loopName: string): void {
         this.loopName = loopName
+    }
+
+    setModelProvider (modelProvider: string): void {
+        this.modelProvider = modelProvider
     }
 
     setModelName (modelName: string): void {
