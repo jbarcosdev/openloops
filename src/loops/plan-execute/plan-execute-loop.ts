@@ -1,12 +1,12 @@
 import { AgentLoop, AgentStatus, RunContext } from '@agent/index'
 import {
     fastResponder,
-    strategyEngine,
     actionPlanner,
     stateObserver,
     finalResponder,
     confirmationGate,
 } from '../shared/skills'
+import { strategyEngine, ResponseSchema as StrategySchema } from '../shared/skills/strategy-engine'
 
 const MAX_STEP_RETRIES = 2
 
@@ -73,11 +73,13 @@ export class PlanExecuteLoop extends AgentLoop {
 
         const lastCompletedTask = ctx.task ? undefined : ctx.chat.lastCompletedTask()
         const chatHistory = ctx.chat.lastHistoryMessages()
+        const toolsMeta = ctx.tools?.map(tool => tool.meta)
 
         const result = await strategyEngine.run({
             ...ctx.skillParams,
             contextInjection: {
                 user_goal: ctx.currentMessage,
+                ...(toolsMeta?.length ? { toolsMeta } : {}),
                 ...(chatHistory?.length ? { chat_history: chatHistory } : {}),
                 ...(lastCompletedTask
                     ? { last_completed_task: { goal: lastCompletedTask.goal, summary: lastCompletedTask.summary } }
@@ -104,9 +106,10 @@ export class PlanExecuteLoop extends AgentLoop {
         ctx.chat.state?.setCurrentActivity('Creating action plan...')
 
         const task = ctx.task!
-        const strategy = ctx.chat.context.lastContext({ taskId: task.id, name: 'strategy' })?.content
+        const strategy = ctx.chat.context.lastContext({ taskId: task.id, name: 'strategy' })?.content as StrategySchema
 
-        const tools = ctx.searchTools(strategy?.tool_keywords ?? [])
+        const selectedNames = new Set<string>(strategy?.tool_names ?? [])
+        const tools = ctx.tools?.filter(tool => selectedNames.has(tool.name)) ?? []
 
         const result = await actionPlanner.run({
             ...ctx.skillParams,
