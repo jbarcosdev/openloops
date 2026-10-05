@@ -13,6 +13,8 @@ export interface SkillProps {
 }
 
 export interface SkillRunOptions<TInput = Record<string, any>> {
+    provider?: string
+    modelName?: string
     sessionId: string
     answerId: string
     userMessage?: string // cuando es una skill tipo extracción o planner no tiene userMessage
@@ -39,7 +41,7 @@ export class Skill<TResponse = Record<string, any>> {
     }
 
     async run (options: SkillRunOptions): Promise<TResponse & { responseId: string, costInUsd: number }> {
-        const { sessionId, answerId, userMessage, currentUser, currentSession, contextInjection = {}, input = {}, chat } = options
+        const { provider, modelName, sessionId, answerId, userMessage, currentUser, currentSession, contextInjection = {}, input = {}, chat } = options
 
         try {
             const llmClient = container.resolve(LLMClient)
@@ -99,6 +101,8 @@ export class Skill<TResponse = Record<string, any>> {
             }
 
             const response = await llmClient.complete({
+                provider: provider as any,
+                modelName,
                 sessionId,
                 answerId,
                 origin: this.name,

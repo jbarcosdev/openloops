@@ -1,6 +1,7 @@
 import { CurrentUser, CurrentSession } from '@common/base'
 import { Logger } from '@common/logger'
 import { Chat } from '@services/chats/entities/chat.entity'
+import { ChatSettingsProps } from '@services/chats/entities/chat-settings.entity'
 import { AgentTask } from '@services/chats/entities/agent-task.entity'
 import { Tool, BaseParams } from '@tools/tool'
 import { SkillRunOptions } from '@skills/skill'
@@ -10,6 +11,7 @@ export interface RunContext {
     identity?: AgentIdentity
     task?: AgentTask
     chat: Chat
+    chatOptions?: ChatSettingsProps
     currentUser: CurrentUser
     currentSession?: CurrentSession
     currentMessage: string
@@ -17,7 +19,7 @@ export interface RunContext {
     tools: Tool[]
     searchTools: (keywords: WeightedKeyword[], opts?: { page?: number; limit?: number }) => ScoredTool[]
     baseParams: BaseParams
-    skillParams: Pick<SkillRunOptions, 'sessionId' | 'answerId' | 'userMessage' | 'currentUser' | 'currentSession' | 'chat'>
+    skillParams: Pick<SkillRunOptions, 'provider' | 'modelName' | 'sessionId' | 'answerId' | 'userMessage' | 'currentUser' | 'currentSession' | 'chat'>
     reply: (content: string) => void
     setNextNode: (node?: string | AgentLoopNode) => void
     logger: Logger

@@ -7,6 +7,7 @@ import { UpdateChatUseCase } from '@services/chats/lambdas/update-chat/'
 import { McpServer } from '@services/mcp-servers/entities'
 import { ChatRepository } from '@services/chats/repositories'
 import { Chat, ChatProps } from '@services/chats/entities/chat.entity'
+import { ChatSettingsProps } from '@services/chats/entities/chat-settings.entity'
 import { Tool } from '@tools/tool'
 import { webSearchTool, callAiTool } from '@tools/core'
 import { listMcpServersByUser } from '@services/mcp-servers'
@@ -36,13 +37,6 @@ interface ChatInput {
     messageId?: string
 }
 
-interface ChatOptions {
-    loopName?: string
-    modelName?: string
-    isPrivateSession?: boolean
-    notifyOnCompletion?: boolean
-}
-
 type HookType = 'pre_execution' | 'post_execution'
 
 const MAX_ITERATIONS = 50
@@ -60,7 +54,7 @@ export class Agent {
     private _postHooks: Function[] = []
 
     private currentChat: Chat
-    private chatOptions?: ChatOptions
+    private chatOptions?: ChatSettingsProps
     private currentUser?: CurrentUser
     private currentSession?: CurrentSession
     private currentMessage: string = ''
@@ -125,7 +119,7 @@ export class Agent {
         return this.currentChat.lastAnswer
     }
 
-    async run (props: { input: ChatInput; options?: ChatOptions; currentUser: CurrentUser; currentSession?: CurrentSession }) {
+    async run (props: { input: ChatInput; options?: ChatSettingsProps; currentUser: CurrentUser; currentSession?: CurrentSession }) {
         try {
             const { input, options, currentUser, currentSession } = props || {}
             const { chatId, message } = input || {}
@@ -377,6 +371,7 @@ export class Agent {
             identity: this._identity,
             task: this.currentChat.activeTask,
             chat: this.currentChat,
+            chatOptions: this.chatOptions,
             currentUser: this.currentUser!,
             currentSession: this.currentSession,
             currentMessage: this.currentMessage,
@@ -389,6 +384,8 @@ export class Agent {
                 answerId: this.answerId,
             },
             skillParams: {
+                provider: this.chatOptions?.modelProvider,
+                modelName: this.chatOptions?.modelName,
                 sessionId,
                 answerId: this.answerId,
                 userMessage: this.currentMessage,
