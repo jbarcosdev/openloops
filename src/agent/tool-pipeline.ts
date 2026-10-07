@@ -1,4 +1,5 @@
 import { Logger } from '@common/logger'
+import { BaseEntity } from '@common/base/base.entity'
 import { Tool, BaseParams } from '@tools/tool'
 import { AgentAction, truncateForPrompt } from '@services/tasks/entities/agent-action.entity'
 import { AgentTask, RefSources } from '@services/tasks/entities/agent-task.entity'
@@ -73,7 +74,7 @@ export class ToolPipeline {
             }
         }
 
-        action.answerId = this.deps.baseParams.answerId
+        action.answerId = BaseEntity.toObjectId(this.deps.baseParams.answerId)
 
         await action.runTool(tool, args, this.deps.baseParams)
 

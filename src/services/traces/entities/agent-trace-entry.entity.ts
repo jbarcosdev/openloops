@@ -7,7 +7,7 @@ export interface AgentTraceEntryProps extends BaseEntityProps {
 	node?: string
 	reasoning?: string
 	timestamp?: Date | string
-	answerId?: string
+	answerId?: string | ObjectId
 	messageId?: string | ObjectId
 	kind?: 'skill' | 'node' | 'agent'
 	iteration?: number
@@ -23,7 +23,7 @@ export class AgentTraceEntry extends BaseEntity {
 			props.node,
 			props.reasoning,
 			props.timestamp ? new Date(props.timestamp) : undefined,
-			props.answerId,
+			BaseEntity.toObjectId(props.answerId),
 			BaseEntity.toObjectId(props.messageId),
 			props.kind,
 			props.iteration,
@@ -38,7 +38,7 @@ export class AgentTraceEntry extends BaseEntity {
 		public node?: string,
 		public reasoning?: string,
 		public timestamp?: Date,
-		public answerId?: string,
+		public answerId?: ObjectId,
 		public messageId?: ObjectId,
 		public kind?: 'skill' | 'node' | 'agent',
 		public iteration?: number,

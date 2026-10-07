@@ -35,7 +35,7 @@ export class ListAgentTracesByChatUseCase extends BaseUseCase<Params, Output> {
 				ownerId: BaseEntity.toObjectId(currentUser?.userId),
 				chatId: BaseEntity.toObjectId(chatId),
 				...(taskId ? { taskId: BaseEntity.toObjectId(taskId) } : {}),
-				...(answerId ? { answerId } : {}),
+				...(answerId ? { answerId: BaseEntity.toObjectId(answerId) } : {}),
 			},
 			{ limit: DEFAULT_LIMIT, sortBy: { _id: 1 }, ...options },
 		)

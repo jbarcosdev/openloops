@@ -6,7 +6,7 @@ type Roles = 'user' | 'assistant'
 export interface ChatMessageProps extends BaseEntityProps {
 	role?: Roles
 	content?: string
-	answerId?: string
+	answerId?: string | ObjectId
 }
 
 export class ChatMessage extends BaseEntity {
@@ -23,7 +23,7 @@ export class ChatMessage extends BaseEntity {
 			props,
 			props.role,
 			props.content,
-			props.answerId,
+			BaseEntity.toObjectId(props.answerId),
 		)
 	}
 
@@ -31,7 +31,7 @@ export class ChatMessage extends BaseEntity {
 		private readonly props: ChatMessageProps,
 		public role?: Roles,
 		public content?: string,
-		public answerId?: string,
+		public answerId?: ObjectId,
 	) {
 		super(props)
 	}
