@@ -86,7 +86,7 @@ export class AgentState {
 
     cleanContext (): void {
         this.currentActivity = ''
-        this.language = 'en'
+        this.language = undefined
         this.status = AgentStatus.IDLE
         this.activeTaskId = undefined
         this.lastError = undefined
