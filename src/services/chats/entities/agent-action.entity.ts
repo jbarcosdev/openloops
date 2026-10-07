@@ -1,4 +1,5 @@
 import { ObjectId } from 'mongodb'
+import { Logger } from '@common/logger'
 import { BaseEntity, BaseEntityProps } from '@common/base/base.entity'
 import { Tool, BaseParams } from '@tools/tool'
 
@@ -25,6 +26,8 @@ export interface AgentActionProps extends BaseEntityProps {
 }
 
 export class AgentAction extends BaseEntity {
+    private logger = new Logger()
+
     static factory (action: AgentActionProps): AgentAction {
         const actionId = action._id && ObjectId.isValid(action._id)
             ? new ObjectId(action._id)
@@ -144,6 +147,11 @@ export class AgentAction extends BaseEntity {
             this.markFailed({ message: `Tool "${this.name}" not found` })
             return this
         }
+
+        this.logger.debug({
+            tool: tool.name,
+            args,
+        }, '[Agent Action] Running tool')
 
         this.markRunning()
         try {
