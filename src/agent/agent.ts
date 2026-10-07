@@ -1,5 +1,6 @@
 import 'reflect-metadata'
 import { container } from 'tsyringe'
+import { ObjectId } from 'mongodb'
 import { Logger } from '@common/logger'
 import { CurrentUser, CurrentSession } from '@common/base'
 import { CreateChatUseCase } from '@services/chats/lambdas/create-chat/'
@@ -17,6 +18,8 @@ import { AgentStatus } from './agent-state'
 
 export const AGENT_ERROR_CODES = {
     NODE_NOT_FOUND: 'AGENT_NODE_NOT_FOUND',
+    RUN_FAILED: 'AGENT_RUN_FAILED',
+    MAX_ITERATIONS_REACHED: 'AGENT_MAX_ITERATIONS_REACHED',
 } as const
 
 interface AgentIdentity {
@@ -29,6 +32,7 @@ export interface AgentOptions {
     loop: AgentLoop
     tools?: Tool[]
     identity?: AgentIdentity
+    maxIterations?: number
 }
 
 interface ChatInput {
@@ -39,7 +43,7 @@ interface ChatInput {
 
 type HookType = 'pre_execution' | 'post_execution'
 
-const MAX_ITERATIONS = 50
+const DEFAULT_MAX_ITERATIONS = 50
 
 export class Agent {
     private readonly updateChatUseCase: UpdateChatUseCase = container.resolve(UpdateChatUseCase)
@@ -48,8 +52,11 @@ export class Agent {
 
     private readonly _loop: AgentLoop
     private readonly _identity?: AgentIdentity
+    private readonly maxIterations: number
     private _tools: Tool[]
+    private _mcpTools: Tool[] = []
     private _mcps: McpServer[] = []
+    private mcpLoading?: Promise<void>
     private _preHooks: Function[] = []
     private _postHooks: Function[] = []
 
@@ -59,6 +66,7 @@ export class Agent {
     private currentSession?: CurrentSession
     private currentMessage: string = ''
     private answerId: string = ''
+    private replyCount = 0
     private stopLoop = false
     private stopRequested = false
 
@@ -99,12 +107,13 @@ export class Agent {
         this._loop = agentOptions.loop
         this._tools = agentOptions.tools ?? []
         this._identity = agentOptions.identity
+        this.maxIterations = agentOptions.maxIterations ?? DEFAULT_MAX_ITERATIONS
 
         this.currentChat = Chat.withDefaults(this._loop.name)
     }
 
     get tools () {
-        return this._tools
+        return [...this._tools, ...this._mcpTools]
     }
 
     get mcps () {
@@ -133,12 +142,15 @@ export class Agent {
             this.stopLoop = false
             this.stopRequested = false
             this.pendingNextNode = undefined
+            this.replyCount = 0
+            this.mcpLoading = undefined
+            this._mcpTools = []
 
             this.currentUser = currentUser
             this.currentSession = currentSession
             this.currentMessage = message
             this.chatOptions = options
-            this.answerId = (new (require('mongodb').ObjectId)()).toString()
+            this.answerId = new ObjectId().toString()
 
             await this.preRunner(chatId)
 
@@ -147,11 +159,13 @@ export class Agent {
             await this.postRunner()
 
             return { data: this.currentChat }
-        } catch (error) {
-            this.currentChat.state?.setStatus(AgentStatus.FAILED)
-            this.currentChat.state?.setCurrentActivity('stopped')
-            await this.saveChat()
-            await this.disconnectMcpServers()
+        } catch (error: any) {
+            const message = error?.message ?? String(error)
+
+            this.logger.error({ error: message, stack: error?.stack }, '[AGENT] Run failed')
+            await this.failRun(message)
+
+            return { data: this.currentChat?._id ? this.currentChat : undefined, error: message }
         }
     }
 
@@ -203,9 +217,6 @@ export class Agent {
         this.currentChat.state?.setCurrentActivity('Starting...')
         await this.saveChat({ resetStop: true })
 
-        await this.loadMcpServers()
-
-
         for (const hook of this._preHooks) {
             await hook()
         }
@@ -221,14 +232,40 @@ export class Agent {
         await this.disconnectMcpServers()
     }
 
+    private async failRun (message: string) {
+        try {
+            this.currentChat.state?.setStatus(AgentStatus.FAILED)
+            this.currentChat.state?.setCurrentActivity('stopped')
+            this.currentChat.state?.setLastError({ code: AGENT_ERROR_CODES.RUN_FAILED, message, isRetryable: true, timestamp: new Date() })
+            this.currentChat.addTrace({ node: 'agent', reasoning: `Run failed: ${message}` })
+            this.currentChat.failTask()
+            await this.saveChat()
+        } catch (saveError: any) {
+            this.logger.error({ error: saveError?.message ?? saveError }, '[AGENT] Failed to persist failed run state')
+        } finally {
+            await this.disconnectMcpServers()
+        }
+    }
+
+    private ensureTools (): Promise<Tool[]> {
+        this.mcpLoading ??= this.loadMcpServers()
+        return this.mcpLoading.then(() => this.tools)
+    }
+
     private async loadMcpServers (): Promise<void> {
         if (!this.currentUser) return
 
-        const { data: servers } = await listMcpServersByUser({
-            currentUser: this.currentUser
-        })
+        let servers: any[] = []
 
-        for (const props of servers ?? []) {
+        try {
+            const response = await listMcpServersByUser({ currentUser: this.currentUser })
+            servers = response?.data ?? []
+        } catch (error: any) {
+            this.logger.error({ error: error?.message ?? error }, '[AGENT] Failed to list MCP servers')
+            return
+        }
+
+        const results = await Promise.allSettled(servers.map(async props => {
             const mcpServer = McpServer.fromJSON(props)
 
             try {
@@ -236,21 +273,38 @@ export class Agent {
                 const { tools: mcpTools } = await mcpClient.listTools()
                 const tools = mcpTools.map(mcpTool => Tool.fromMcp(mcpTool, mcpClient, { namespace: mcpServer.name ?? 'mcp' }))
 
-                this._tools.push(...tools)
-                this._mcps.push(mcpServer)
+                return { mcpServer, tools }
             } catch (error) {
                 this.logger.error({ error, mcpServer: mcpServer.name }, '[AGENT] Failed to connect MCP server')
+                return undefined
             }
+        }))
+
+        for (const result of results) {
+            if (result.status === 'rejected') {
+                this.logger.error({ error: result.reason }, '[AGENT] Failed to load MCP server')
+                continue
+            }
+
+            if (!result.value) continue
+
+            this._mcpTools.push(...result.value.tools)
+            this._mcps.push(result.value.mcpServer)
         }
     }
 
     private async disconnectMcpServers (): Promise<void> {
-        for (const mcpServer of this._mcps) {
-            await mcpServer.disconnect().catch(error => {
-                this.logger.error({ error, mcpServer: mcpServer.name }, '[AGENT] Failed to disconnect MCP server')
-            })
-        }
+        await this.mcpLoading?.catch(() => undefined)
+
+        const servers = this._mcps
+
         this._mcps = []
+        this._mcpTools = []
+        this.mcpLoading = undefined
+
+        await Promise.allSettled(servers.map(mcpServer => mcpServer.disconnect().catch(error => {
+            this.logger.error({ error, mcpServer: mcpServer.name }, '[AGENT] Failed to disconnect MCP server')
+        })))
     }
 
     private async saveChat (props?: { resetStop: boolean }) {
@@ -282,7 +336,24 @@ export class Agent {
 
         let iterations = 0
 
-        while (!this.stopLoop && iterations < MAX_ITERATIONS) {
+        while (!this.stopLoop) {
+            if (iterations >= this.maxIterations) {
+                this.logger.error({ maxIterations: this.maxIterations, loop: this._loop.name }, '[AGENT] Iteration limit reached')
+
+                this.currentChat.state?.setStatus(AgentStatus.FAILED)
+                this.currentChat.state?.setLastError({
+                    code: AGENT_ERROR_CODES.MAX_ITERATIONS_REACHED,
+                    message: `The agent loop "${this._loop.name}" reached the limit of ${this.maxIterations} iterations`,
+                    isRetryable: false,
+                    timestamp: new Date(),
+                })
+                this.currentChat.addTrace({ node: 'agent', reasoning: 'Iteration limit reached' })
+                this.currentChat.failTask()
+
+                this.stopLoop = true
+                break
+            }
+
             iterations++
 
             await this.checkInterruptionRequest()
@@ -330,6 +401,8 @@ export class Agent {
             }
         }
 
+        if (this.currentChat.state?.status === AgentStatus.PROCESSING) this.currentChat.state.setStatus(AgentStatus.IDLE)
+
         this.logger.info('[AGENT] Agent Loop stopped')
     }
 
@@ -350,7 +423,7 @@ export class Agent {
         const page = opts?.page ?? 1
         const limit = opts?.limit ?? 5
 
-        const matchedTools = rankToolsByKeywords(keywords, this._tools)
+        const matchedTools = rankToolsByKeywords(keywords, this.tools)
 
         if (matchedTools.length <= 5 && !matchedTools.some(t => t.toolName === webSearchTool.name)) {
             matchedTools.push({ toolName: webSearchTool.name, score: 0.1, matchedKeywords: [], tool: webSearchTool })
@@ -364,8 +437,16 @@ export class Agent {
         return matchedTools.slice(startIndex, startIndex + limit)
     }
 
+    private reply (content: string): void {
+        const isFirstReply = this.replyCount === 0
+
+        this.replyCount++
+        this.currentChat.pushMessage({ _id: isFirstReply ? this.answerId : undefined, answerId: this.answerId, role: 'assistant', content })
+    }
+
     private buildRunContext (): RunContext {
         const sessionId = this.currentChat._id?.toString() ?? ''
+        const agent = this
 
         return {
             identity: this._identity,
@@ -376,7 +457,10 @@ export class Agent {
             currentSession: this.currentSession,
             currentMessage: this.currentMessage,
             answerId: this.answerId,
-            tools: this._tools,
+            get tools () {
+                return agent.tools
+            },
+            ensureTools: () => this.ensureTools(),
             searchTools: this.searchTools.bind(this),
             baseParams: {
                 currentUser: this.currentUser!,
@@ -393,7 +477,7 @@ export class Agent {
                 currentSession: this.currentSession,
                 chat: this.currentChat,
             },
-            reply: (content) => this.currentChat.pushMessage({ _id: this.answerId, role: 'assistant', content }),
+            reply: (content) => this.reply(content),
             setNextNode: (node) => {
                 const resolved = this.resolveNodeName(node)
                 const active = this.currentChat.activeTask
