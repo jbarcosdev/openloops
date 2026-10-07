@@ -77,7 +77,7 @@ export class AgentAction extends BaseEntity {
             args: this.args,
             dependsOn: this.dependsOn,
             status: this.status,
-            output: this.output,
+            output: this.structuredOutput,
             error: this.error,
             reasoning: this.reasoning,
             retries: this.retries,
@@ -97,6 +97,10 @@ export class AgentAction extends BaseEntity {
 
     get isTerminal (): boolean {
         return this.status === 'completed' || this.status === 'failed'
+    }
+
+    get structuredOutput () {
+        return this.output?.structuredContent ? this.output?.structuredContent : this.output
     }
 
     dependenciesSatisfiedBy (completedRefs: Set<string>): boolean {
