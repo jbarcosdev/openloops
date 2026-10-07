@@ -48,7 +48,7 @@ export class ChatContext {
 		this.items.push(contextRecord)
 	}
 
-	selectContext (filters: { taskId: string, name: string }) {
+	selectContext (filters: { taskId?: string, name?: string }) {
 		return this.items?.filter(item => {
 			return (filters.taskId === undefined || item.taskId === filters.taskId) &&
 			(filters.name === undefined || item.meta.name === filters.name)
@@ -58,6 +58,12 @@ export class ChatContext {
 	lastContext (filters: { taskId: string, name: string }): ContextRecord | undefined {
 		const matches = this.selectContext(filters)
 		return matches?.[matches.length - 1]
+	}
+
+	removeContext (filters: { taskId: string, name: string }): number {
+		const before = this.items?.length ?? 0
+		this.items = this.items?.filter(item => !(item.taskId === filters.taskId && item.meta.name === filters.name))
+		return before - (this.items?.length ?? 0)
 	}
 
 	compress () {
