@@ -17,6 +17,7 @@ export interface RunContext {
     currentMessage: string
     answerId: string
     tools: Tool[]
+    ensureTools: () => Promise<Tool[]>
     searchTools: (keywords: WeightedKeyword[], opts?: { page?: number; limit?: number }) => ScoredTool[]
     baseParams: BaseParams
     skillParams: Pick<SkillRunOptions, 'provider' | 'modelName' | 'sessionId' | 'answerId' | 'userMessage' | 'currentUser' | 'currentSession' | 'chat'>
