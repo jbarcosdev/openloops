@@ -10,6 +10,7 @@ const DEFAULT_LIMIT = 100
 export interface Params extends BaseUseCaseParams {
 	chatId: string
 	taskId?: string
+	answerId?: string
 	options?: QueryOptions
 }
 
@@ -24,7 +25,7 @@ export class ListAgentTracesByChatUseCase extends BaseUseCase<Params, Output> {
 	}
 
 	async execute (params: Params): Promise<Output> {
-		const { chatId, taskId, options, currentUser } = params
+		const { chatId, taskId, answerId, options, currentUser } = params
 
 		if (!chatId) throw new Error('chatId is required')
 		if (!currentUser) this.throwError403()
@@ -34,6 +35,7 @@ export class ListAgentTracesByChatUseCase extends BaseUseCase<Params, Output> {
 				ownerId: BaseEntity.toObjectId(currentUser?.userId),
 				chatId: BaseEntity.toObjectId(chatId),
 				...(taskId ? { taskId: BaseEntity.toObjectId(taskId) } : {}),
+				...(answerId ? { answerId } : {}),
 			},
 			{ limit: DEFAULT_LIMIT, sortBy: { _id: 1 }, ...options },
 		)

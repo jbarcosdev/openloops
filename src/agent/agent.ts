@@ -75,6 +75,8 @@ export class Agent {
     private currentSession?: CurrentSession
     private currentMessage: string = ''
     private answerId: string = ''
+    private userMessageId?: string
+    private iteration = 0
     private replyCount = 0
     private stopLoop = false
     private stopRequested = false
@@ -158,6 +160,8 @@ export class Agent {
             this.workspace = undefined
             this.pipeline = undefined
             this.snapshots.clear()
+            this.iteration = 0
+            this.userMessageId = undefined
 
             this.currentUser = currentUser
             this.currentSession = currentSession
@@ -219,10 +223,11 @@ export class Agent {
             await this.loadTasks()
         }
 
-        this.currentChat.pushMessage({
+        const userMessage = this.currentChat.pushMessage({
             role: 'user',
             content: this.currentMessage,
         })
+        this.userMessageId = userMessage._id?.toString()
 
         if (this.chatOptions?.notifyOnCompletion) this.currentChat.settings?.setNotifyOnCompletion(true)
         if (this.chatOptions?.isPrivateSession) this.currentChat.settings?.setIsPrivateSession(true)
@@ -253,7 +258,7 @@ export class Agent {
             this.currentChat.state?.setStatus(AgentStatus.FAILED)
             this.currentChat.state?.setCurrentActivity('stopped')
             this.currentChat.state?.setLastError({ code: AGENT_ERROR_CODES.RUN_FAILED, message, isRetryable: true, timestamp: new Date() })
-            this.currentChat.addTrace({ node: 'agent', reasoning: `Run failed: ${message}` })
+            this.currentChat.addTrace({ node: 'agent', kind: 'agent', reasoning: `Run failed: ${message}` })
             this.currentChat.failTask()
             await this.persist()
         } catch (saveError: any) {
@@ -359,6 +364,11 @@ export class Agent {
                     node: trace.node,
                     reasoning: trace.reasoning,
                     timestamp: trace.timestamp,
+                    answerId: this.answerId,
+                    messageId: this.userMessageId,
+                    kind: trace.kind ?? 'skill',
+                    iteration: trace.iteration ?? this.iteration,
+                    durationMs: trace.durationMs,
                 })),
                 currentUser: this.currentUser,
             })
@@ -475,7 +485,7 @@ export class Agent {
                     isRetryable: false,
                     timestamp: new Date(),
                 })
-                this.currentChat.addTrace({ node: 'agent', reasoning: 'Iteration limit reached' })
+                this.currentChat.addTrace({ node: 'agent', kind: 'agent', reasoning: 'Iteration limit reached' })
                 this.currentChat.failTask()
 
                 this.stopLoop = true
@@ -483,6 +493,7 @@ export class Agent {
             }
 
             iterations++
+            this.iteration = iterations
 
             await this.checkInterruptionRequest()
             if (this.stopRequested) {
@@ -507,13 +518,15 @@ export class Agent {
                     isRetryable: false,
                     timestamp: new Date(),
                 })
-                this.currentChat.addTrace({ node: nodeName ?? '', reasoning: 'Node not found' })
+                this.currentChat.addTrace({ node: nodeName ?? '', kind: 'agent', reasoning: 'Node not found' })
 
                 this.stopLoop = true
                 break
             }
 
+            const startedAt = Date.now()
             await nodeFn.call(this._loop, this.buildRunContext())
+            this.currentChat.addTrace({ node: nodeName!, kind: 'node', durationMs: Date.now() - startedAt, taskId: activeTask?.id })
 
             await this.persist()
 
@@ -581,7 +594,7 @@ export class Agent {
     }
 
     private getWorkspace (): AgentWorkspace {
-        this.workspace ??= new AgentWorkspace(this.currentChat._id!.toString(), this.currentUser!)
+        this.workspace ??= new AgentWorkspace(this.currentChat._id!.toString(), this.currentUser!, this.answerId)
         return this.workspace
     }
 

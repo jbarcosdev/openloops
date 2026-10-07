@@ -13,6 +13,7 @@ export interface WorkspaceItemProps extends BaseEntityProps {
 	size?: number
 	source?: string
 	truncated?: boolean
+	answerId?: string
 }
 
 export class WorkspaceItem extends BaseEntity {
@@ -28,6 +29,7 @@ export class WorkspaceItem extends BaseEntity {
 			props.size,
 			props.source,
 			props.truncated,
+			props.answerId,
 		)
 	}
 
@@ -42,6 +44,7 @@ export class WorkspaceItem extends BaseEntity {
 		public size?: number,
 		public source?: string,
 		public truncated?: boolean,
+		public answerId?: string,
 	) {
 		super(props)
 	}
@@ -58,6 +61,7 @@ export class WorkspaceItem extends BaseEntity {
 			size: this.size,
 			source: this.source,
 			truncated: this.truncated,
+			answerId: this.answerId,
 		}
 	}
 

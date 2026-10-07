@@ -73,6 +73,8 @@ export class ToolPipeline {
             }
         }
 
+        action.answerId = this.deps.baseParams.answerId
+
         await action.runTool(tool, args, this.deps.baseParams)
 
         if (action.status === 'completed') await this.offload(task, action)

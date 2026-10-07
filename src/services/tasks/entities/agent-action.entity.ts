@@ -29,6 +29,7 @@ export interface AgentActionProps extends BaseEntityProps {
 	outputChars?: number
 	startedAt?: Date
 	completedAt?: Date
+	answerId?: string
 }
 
 export interface OffloadedOutput {
@@ -78,6 +79,7 @@ export class AgentAction extends BaseEntity {
 			props.outputChars,
 			props.startedAt,
 			props.completedAt,
+			props.answerId,
 		)
 	}
 
@@ -100,6 +102,7 @@ export class AgentAction extends BaseEntity {
 		public outputChars?: number,
 		public startedAt?: Date,
 		public completedAt?: Date,
+		public answerId?: string,
 	) {
 		super(props)
 	}
@@ -124,6 +127,7 @@ export class AgentAction extends BaseEntity {
 			outputChars: this.outputChars,
 			startedAt: this.startedAt,
 			completedAt: this.completedAt,
+			answerId: this.answerId,
 		}
 	}
 

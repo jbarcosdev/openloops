@@ -7,6 +7,11 @@ export interface AgentTraceEntryProps extends BaseEntityProps {
 	node?: string
 	reasoning?: string
 	timestamp?: Date | string
+	answerId?: string
+	messageId?: string | ObjectId
+	kind?: 'skill' | 'node' | 'agent'
+	iteration?: number
+	durationMs?: number
 }
 
 export class AgentTraceEntry extends BaseEntity {
@@ -18,6 +23,11 @@ export class AgentTraceEntry extends BaseEntity {
 			props.node,
 			props.reasoning,
 			props.timestamp ? new Date(props.timestamp) : undefined,
+			props.answerId,
+			BaseEntity.toObjectId(props.messageId),
+			props.kind,
+			props.iteration,
+			props.durationMs,
 		)
 	}
 
@@ -28,6 +38,11 @@ export class AgentTraceEntry extends BaseEntity {
 		public node?: string,
 		public reasoning?: string,
 		public timestamp?: Date,
+		public answerId?: string,
+		public messageId?: ObjectId,
+		public kind?: 'skill' | 'node' | 'agent',
+		public iteration?: number,
+		public durationMs?: number,
 	) {
 		super(props)
 	}
@@ -40,6 +55,11 @@ export class AgentTraceEntry extends BaseEntity {
 			node: this.node,
 			reasoning: this.reasoning,
 			timestamp: this.timestamp,
+			answerId: this.answerId,
+			messageId: this.messageId,
+			kind: this.kind,
+			iteration: this.iteration,
+			durationMs: this.durationMs,
 		}
 	}
 }

@@ -37,6 +37,7 @@ export class AgentWorkspace implements Workspace {
     constructor (
         private readonly chatId: string,
         private readonly currentUser: CurrentUser,
+        private readonly answerId?: string,
     ) {}
 
     async save (input: WorkspaceSaveInput): Promise<WorkspaceItemProps> {
@@ -50,6 +51,7 @@ export class AgentWorkspace implements Workspace {
                 content: input.content,
                 source: input.source,
                 truncated: input.truncated,
+                answerId: this.answerId,
             },
             currentUser: this.currentUser,
         })

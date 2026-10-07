@@ -15,6 +15,9 @@ export interface AgentTrace {
 	reasoning?: string
 	taskId?: string
 	timestamp?: Date | string
+	kind?: 'skill' | 'node' | 'agent'
+	iteration?: number
+	durationMs?: number
 }
 
 export class Chat extends BaseEntity {
@@ -67,9 +70,11 @@ export class Chat extends BaseEntity {
 		}
 	}
 
-	public pushMessage (message: ChatMessageProps) {
+	public pushMessage (message: ChatMessageProps): ChatMessage {
 		this.messages ??= []
-		this.messages.push(ChatMessage.factory(message))
+		const created = ChatMessage.factory(message)
+		this.messages.push(created)
+		return created
 	}
 
 	public lastHistoryMessages (count = 6) {
