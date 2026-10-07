@@ -9,6 +9,12 @@ import {
 import { strategyEngine, ResponseSchema as StrategySchema } from '../shared/skills/strategy-engine'
 
 const MAX_STEP_RETRIES = 2
+const MAX_REPLANS = 3
+const MAX_TASK_ACTIONS = 25
+const RETRY_BACKOFF_MS = 500
+const HISTORY_OUTPUT_CHARS = 1500
+const OBSERVER_OUTPUT_CHARS = 3000
+const FINAL_OUTPUT_CHARS = 6000
 
 export class PlanExecuteLoop extends AgentLoop {
     get initialNode () {
@@ -43,6 +49,18 @@ export class PlanExecuteLoop extends AgentLoop {
         }
     }
 
+    private stopTask (ctx: RunContext, reason: string): void {
+        const task = ctx.task!
+
+        task.skipPending()
+        ctx.chat.context.addContext({
+            taskId: task.id,
+            meta: { name: 'stop_reason', type: 'artifact', shortDescription: 'Why the task was stopped before completion' },
+            content: reason,
+        })
+        ctx.setNextNode(this.nodes.final_responder)
+    }
+
     private async fastResponder (ctx: RunContext): Promise<void> {
         ctx.chat.state?.setCurrentActivity('Analyzing requirement...')
 
@@ -70,6 +88,8 @@ export class PlanExecuteLoop extends AgentLoop {
 
     private async strategyEngine (ctx: RunContext): Promise<void> {
         ctx.chat.state?.setCurrentActivity('Designing strategy...')
+
+        await ctx.ensureTools()
 
         const lastCompletedTask = ctx.task ? undefined : ctx.chat.lastCompletedTask()
         const chatHistory = ctx.chat.lastHistoryMessages()
@@ -105,8 +125,12 @@ export class PlanExecuteLoop extends AgentLoop {
     private async actionPlanner (ctx: RunContext): Promise<void> {
         ctx.chat.state?.setCurrentActivity('Creating action plan...')
 
+        await ctx.ensureTools()
+
         const task = ctx.task!
         const strategy = ctx.chat.context.lastContext({ taskId: task.id, name: 'strategy' })?.content as StrategySchema
+        const replanFeedback = ctx.chat.context.lastContext({ taskId: task.id, name: 'replan_feedback' })?.content as string | undefined
+        const history = task.executionHistory(HISTORY_OUTPUT_CHARS)
 
         const selectedNames = new Set<string>(strategy?.tool_names ?? [])
         const tools = ctx.tools?.filter(tool => selectedNames.has(tool.name)) ?? []
@@ -119,17 +143,29 @@ export class PlanExecuteLoop extends AgentLoop {
                     strategy: strategy?.hypothesis,
                     required_capabilities: strategy?.required_capabilities,
                 },
+                ...(history.length ? { execution_history: history } : {}),
+                ...(replanFeedback ? { replan_feedback: replanFeedback, replan_attempt: task.replanCount + 1 } : {}),
                 tools,
             },
         })
 
-        const enqueueSteps = (steps: any[]) => steps.map(step => task.addAction({
+        ctx.chat.context.removeContext({ taskId: task.id, name: 'replan_feedback' })
+
+        const steps: any[] = result.steps ?? []
+        const isExecutionPlan = result.plan_status === 'SUCCESS' || result.plan_status === 'NEEDS_CONFIRMATION'
+
+        if (isExecutionPlan && steps.length && steps.every(step => task.hasExecuted(step.tool_name, step.arguments ?? step.args))) {
+            this.stopTask(ctx, 'The planner only proposed steps identical to ones already executed, so there is no new approach to try')
+            return
+        }
+
+        const enqueueSteps = () => task.addPlan(steps.map(step => ({
+            stepId: step.step_id,
             name: step.tool_name,
-            stepId: String(step.step_id),
-            args: step.args ?? step.arguments,
-            dependsOn: step.depends_on?.map(String),
-            author: 'action_planner',
-        }))
+            args: step.arguments ?? step.args,
+            dependsOn: step.depends_on_steps ?? step.depends_on,
+            reasoning: step.rationale,
+        })), 'action_planner')
 
         switch (result.plan_status) {
             case 'MISSING_TOOLS':
@@ -146,7 +182,7 @@ export class PlanExecuteLoop extends AgentLoop {
                 break
 
             case 'NEEDS_CONFIRMATION': {
-                enqueueSteps(result.steps)
+                enqueueSteps()
 
                 const actionsList = (result.confirmation_details?.actions ?? [])
                     .map(action => `- ${action.description}`)
@@ -164,14 +200,22 @@ export class PlanExecuteLoop extends AgentLoop {
             }
 
             case 'SUCCESS':
-                enqueueSteps(result.steps)
+                enqueueSteps()
                 ctx.setNextNode(this.nodes.execution_loop)
                 break
         }
     }
 
     private async executionLoop (ctx: RunContext): Promise<void> {
+        await ctx.ensureTools()
+
         const task = ctx.task!
+
+        if (task.executedSinceOpen >= MAX_TASK_ACTIONS) {
+            this.stopTask(ctx, `The task reached the maximum of ${MAX_TASK_ACTIONS} executed actions`)
+            return
+        }
+
         const [next] = task.readyActions
 
         if (!next) {
@@ -183,9 +227,10 @@ export class PlanExecuteLoop extends AgentLoop {
         const tool = ctx.tools.find(t => t.name === next.name)
         const executed = await task.runReadyAction(next.id, tool, ctx.chat.context, ctx.baseParams)
 
-        if (executed.status === 'failed' && (executed.retries ?? 0) < MAX_STEP_RETRIES) {
-            executed.incrementRetries()
+        if (executed.canRetry && (executed.retries ?? 0) < MAX_STEP_RETRIES) {
+            const retries = executed.incrementRetries()
             executed.resetForRetry()
+            await new Promise(resolve => setTimeout(resolve, RETRY_BACKOFF_MS * retries))
             ctx.setNextNode(this.nodes.execution_loop)
             return
         }
@@ -228,13 +273,15 @@ export class PlanExecuteLoop extends AgentLoop {
     private async executionObserver (ctx: RunContext): Promise<void> {
         const task = ctx.task!
         const lastAction = task.lastExecutedAction
+        const replansRemaining = Math.max(0, MAX_REPLANS - task.replanCount)
 
         const result = await stateObserver.run({
             ...ctx.skillParams,
             contextInjection: {
                 user_intent: task.goal,
-                executed_step: lastAction?.toJSON(),
-                remaining_steps: task.readyActions.map(a => a.toJSON()),
+                executed_step: lastAction?.promptView(OBSERVER_OUTPUT_CHARS),
+                remaining_steps: task.readyActions.map(a => a.promptView()),
+                replans_remaining: replansRemaining,
             },
         })
 
@@ -242,7 +289,22 @@ export class PlanExecuteLoop extends AgentLoop {
 
         switch (result.action) {
             case 'REPLAN':
+                if (replansRemaining <= 0) {
+                    this.stopTask(ctx, `The replan budget is exhausted. Last diagnosis: ${result.feedback_for_planner}`)
+                    break
+                }
+
+                ctx.chat.context.addContext({
+                    taskId: task.id,
+                    meta: { name: 'replan_feedback', type: 'artifact', shortDescription: 'Observer diagnosis for the next planning attempt' },
+                    content: result.feedback_for_planner,
+                })
                 ctx.setNextNode(this.nodes.action_planner)
+                break
+
+            case 'FINISH':
+                task.skipPending()
+                ctx.setNextNode(this.nodes.final_responder)
                 break
 
             case 'ASK_USER':
@@ -264,20 +326,27 @@ export class PlanExecuteLoop extends AgentLoop {
         ctx.chat.state?.setCurrentActivity('Generating final response...')
 
         const task = ctx.task!
-        const executionResults = task.actions
-            .map(a => ({ tool_name: a.name, args: a.args, output: a.output, status: a.status }))
+        const stopReason = ctx.chat.context.lastContext({ taskId: task.id, name: 'stop_reason' })?.content as string | undefined
+        const executionResults = task.executedActions.map(a => a.promptView(FINAL_OUTPUT_CHARS))
 
         const result = await finalResponder.run({
             ...ctx.skillParams,
             contextInjection: {
                 user_goal: task.goal,
                 execution_results: executionResults,
+                ...(stopReason ? { stop_reason: stopReason } : {}),
             },
         })
 
         ctx.reply(result.final_response ?? '')
 
-        ctx.chat.completeTask(task.id, result.reasoning)
+        if (stopReason) {
+            task.summary = result.reasoning
+            ctx.chat.failTask(task.id)
+        } else {
+            ctx.chat.completeTask(task.id, result.reasoning)
+        }
+
         ctx.chat.state?.setStatus(AgentStatus.IDLE)
         ctx.setNextNode(this.nodes.fast_responder)
     }
