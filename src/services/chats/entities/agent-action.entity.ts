@@ -3,10 +3,11 @@ import { Logger } from '@common/logger'
 import { BaseEntity, BaseEntityProps } from '@common/base/base.entity'
 import { Tool, BaseParams } from '@tools/tool'
 
-export type ActionStatus = 'pending' | 'running' | 'completed' | 'failed'
+export type ActionStatus = 'pending' | 'running' | 'completed' | 'failed' | 'skipped'
 
 export interface ActionErrorProps {
     message: string
+    retryable?: boolean
     [key: string]: any
 }
 
@@ -23,6 +24,13 @@ export interface AgentActionProps extends BaseEntityProps {
     author?: string
     startedAt?: Date
     completedAt?: Date
+}
+
+export function truncateForPrompt (value: any, maxChars = 3000): any {
+    if (value === undefined || value === null) return value
+    const text = typeof value === 'string' ? value : JSON.stringify(value)
+    if (text.length <= maxChars) return value
+    return { truncated: true, total_chars: text.length, preview: text.slice(0, maxChars) }
 }
 
 export class AgentAction extends BaseEntity {
@@ -102,8 +110,23 @@ export class AgentAction extends BaseEntity {
         return this.status === 'completed' || this.status === 'failed'
     }
 
+    get canRetry (): boolean {
+        return this.status === 'failed' && this.error?.retryable !== false
+    }
+
     get structuredOutput () {
         return this.output?.structuredContent ? this.output?.structuredContent : this.output
+    }
+
+    promptView (maxChars = 3000) {
+        return {
+            ref: this.stepId ?? this.id,
+            tool: this.name,
+            args: this.args,
+            status: this.status,
+            output: truncateForPrompt(this.structuredOutput, maxChars),
+            error: this.error ? { message: this.error.message } : undefined,
+        }
     }
 
     dependenciesSatisfiedBy (completedRefs: Set<string>): boolean {
@@ -128,6 +151,11 @@ export class AgentAction extends BaseEntity {
         this.completedAt = new Date()
     }
 
+    markSkipped (): void {
+        this.status = 'skipped'
+        this.completedAt = new Date()
+    }
+
     incrementRetries (): number {
         this.retries = (this.retries ?? 0) + 1
         return this.retries
@@ -144,7 +172,14 @@ export class AgentAction extends BaseEntity {
     /** Corre una tool con los argumentos ya resueltos y registra el resultado en sí misma */
     async runTool (tool: Tool | undefined, args: Record<string, any>, baseParams: BaseParams): Promise<this> {
         if (!tool) {
-            this.markFailed({ message: `Tool "${this.name}" not found` })
+            this.markFailed({ message: `Tool "${this.name}" not found`, retryable: false })
+            return this
+        }
+
+        const validationErrors = tool.validate(args)
+        if (validationErrors.length) {
+            this.logger.debug({ tool: tool.name, args, validationErrors }, '[Agent Action] Invalid arguments')
+            this.markFailed({ message: `Invalid arguments: ${validationErrors.join('; ')}`, retryable: false })
             return this
         }
 
@@ -158,7 +193,7 @@ export class AgentAction extends BaseEntity {
             const result = await tool.run({ ...args, ...baseParams })
             this.markCompleted(result?.data)
         } catch (error: any) {
-            this.markFailed({ message: error?.message ?? String(error) })
+            this.markFailed({ message: error?.message ?? String(error), retryable: error?.retryable !== false })
         }
         return this
     }
