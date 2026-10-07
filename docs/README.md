@@ -67,7 +67,7 @@ You know the pattern: before you write a single line of what your agent actually
 - **Production-grade tool execution.** Retries on failed steps, confirmation prompts before destructive actions, and graceful resume after a crash are all built into the runtime.
 - **Native MCP support.** Connect any MCP server and its tools become regular tools instantly. No adapter package, no manual schema mapping.
 - **Sub-agent orchestration.** An agent can launch and coordinate other agents to split up a problem. Full guide coming soon.
-- **Any LLM provider, including local ones.** Built on [`@mariozechner/pi-ai`](https://www.npmjs.com/package/@mariozechner/pi-ai), so OpenAI, Anthropic, and self-hosted models (e.g. via Ollama) all work the same way.
+- **Any LLM provider, including local ones.** Built on [`@earendil-works/pi-ai`](https://www.npmjs.com/package/@earendil-works/pi-ai), so OpenAI, Anthropic, and self-hosted models (e.g. via Ollama) all work the same way.
 - **Observability without ceremony.** Sentry and Langfuse are built in. Set the environment variables and they turn on, no SDK wiring required.
 - **A loop marketplace.** Don't write a customer-support agent from scratch. Install one.
 
