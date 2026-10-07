@@ -1,0 +1,142 @@
+import { Logger } from '@common/logger'
+import { Tool, BaseParams } from '@tools/tool'
+import { AgentAction, truncateForPrompt } from '@services/tasks/entities/agent-action.entity'
+import { AgentTask, RefSources } from '@services/tasks/entities/agent-task.entity'
+import { Workspace } from './workspace'
+import { describeShapeWithin } from './utils/describe-shape'
+
+const DEFAULT_OFFLOAD_THRESHOLD_CHARS = 6000
+const DEFAULT_MAX_STORED_CHARS = 2_000_000
+const DEFAULT_PREVIEW_CHARS = 500
+
+export interface ToolPipelineOptions {
+    offloadThresholdChars?: number
+    maxStoredChars?: number
+    previewChars?: number
+}
+
+export interface ToolPipelineRunOptions {
+    blockDuplicates?: boolean
+}
+
+interface ToolPipelineDeps {
+    workspace: Workspace
+    tools: () => Tool[]
+    baseParams: BaseParams
+    logger: Logger
+}
+
+export class ToolPipeline {
+    private readonly offloadThresholdChars: number
+    private readonly maxStoredChars: number
+    private readonly previewChars: number
+
+    constructor (private readonly deps: ToolPipelineDeps, options?: ToolPipelineOptions) {
+        this.offloadThresholdChars = options?.offloadThresholdChars ?? DEFAULT_OFFLOAD_THRESHOLD_CHARS
+        this.maxStoredChars = options?.maxStoredChars ?? DEFAULT_MAX_STORED_CHARS
+        this.previewChars = options?.previewChars ?? DEFAULT_PREVIEW_CHARS
+    }
+
+    requiresApproval (action: AgentAction): boolean {
+        const tool = this.findTool(action.name)
+        return Boolean(tool?.destructive) && !action.approved
+    }
+
+    async run (task: AgentTask, action: AgentAction, opts?: ToolPipelineRunOptions): Promise<AgentAction> {
+        const tool = this.findTool(action.name)
+
+        if (!tool) {
+            action.markFailed({ message: `Tool "${action.name}" not found`, retryable: false })
+            return action
+        }
+
+        if (tool.destructive && !action.approved) {
+            action.markFailed({ message: `Tool "${tool.name}" is destructive and needs explicit user confirmation before it can run`, retryable: false })
+            return action
+        }
+
+        const sources = await this.loadSources(task, action)
+        const unresolved: string[] = []
+        const args = task.resolveArgs(action, sources, unresolved)
+
+        if (unresolved.length) {
+            action.markFailed({ message: `Unresolved references in arguments: ${unresolved.join(', ')}. The referenced step output or path does not exist.`, retryable: false })
+            return action
+        }
+
+        if (opts?.blockDuplicates !== false) {
+            const duplicate = task.findExecuted(action.name, args, { status: 'completed', exclude: action })
+
+            if (duplicate) {
+                action.markFailed({ message: `An identical call to "${action.name}" already completed (ref ${duplicate.stepId ?? duplicate.id}). Reuse its output instead of repeating it.`, retryable: false })
+                return action
+            }
+        }
+
+        await action.runTool(tool, args, this.deps.baseParams)
+
+        if (action.status === 'completed') await this.offload(task, action)
+
+        return action
+    }
+
+    private findTool (name?: string): Tool | undefined {
+        return this.deps.tools().find(tool => tool.name === name)
+    }
+
+    private async loadSources (task: AgentTask, action: AgentAction): Promise<RefSources> {
+        const { contexts } = AgentTask.collectRefs(action.args)
+        const outputs = new Map<string, any>()
+        const notes = new Map<string, any>()
+
+        const offloaded = task.referencedActions(action.args).filter(a => a.outputRef)
+
+        await Promise.all([
+            ...offloaded.map(async referenced => {
+                const item = await this.deps.workspace.get(referenced.outputRef!, { taskId: task.id })
+                if (item && !item.truncated) outputs.set(referenced.id, item.content)
+            }),
+            ...Array.from(new Set(contexts)).map(async name => {
+                const item = await this.deps.workspace.get(name, { taskId: task.id })
+                if (item) notes.set(name, item.content)
+            }),
+        ])
+
+        return {
+            stepOutput: referenced => outputs.get(referenced.id),
+            context: name => notes.get(name),
+        }
+    }
+
+    private async offload (task: AgentTask, action: AgentAction): Promise<void> {
+        const output = action.structuredOutput
+        const text = typeof output === 'string' ? output : JSON.stringify(output)
+
+        if (!text || text.length <= this.offloadThresholdChars) return
+
+        const name = `out_${String(action.stepId ?? action.id).replace(/[^\w-]/g, '_')}`
+        const oversized = text.length > this.maxStoredChars
+
+        try {
+            await this.deps.workspace.save({
+                name,
+                kind: 'tool_output',
+                taskId: task.id,
+                source: action.name,
+                description: `Output of ${action.name}`,
+                content: oversized ? text.slice(0, this.maxStoredChars) : output,
+                truncated: oversized,
+            })
+
+            action.offloadOutput({
+                ref: name,
+                totalChars: text.length,
+                outline: oversized ? undefined : describeShapeWithin(output),
+                preview: text.slice(0, this.previewChars),
+            })
+        } catch (error: any) {
+            this.deps.logger.error({ error: error?.message ?? error, action: action.name }, '[TOOL PIPELINE] Failed to offload output, keeping a truncated copy')
+            action.output = truncateForPrompt(output, this.offloadThresholdChars)
+        }
+    }
+}
