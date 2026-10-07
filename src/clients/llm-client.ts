@@ -4,7 +4,7 @@ import type {
     Message,
     AssistantMessage,
     Context
-} from '@mariozechner/pi-ai'
+} from '@earendil-works/pi-ai'
 
 import { secretManager } from '@common/utils/secret-manager'
 import { CurrentUser } from '@common/base'
@@ -35,7 +35,8 @@ export class LLMClient {
     }
 
     async complete (params: LLMCompletionParams): Promise<AssistantMessage> {
-        const { getModel, complete } = await import('@mariozechner/pi-ai')
+        const { builtinModels } = await import('@earendil-works/pi-ai/providers/all')
+        const models = builtinModels()
 
         const {
             origin,
@@ -49,7 +50,9 @@ export class LLMClient {
             temperature = 0.7
         } = params ?? {}
 
-        const model = getModel(provider, modelName as never)
+        const model = models.getModel(provider, modelName as never)
+
+        if (!model) throw new Error('[LLM Client] model not found')
 
         const context: Context = {
             systemPrompt,
@@ -83,7 +86,7 @@ export class LLMClient {
         })
 
         try {
-            const response = await complete(model, context, {
+            const response = await models.complete(model, context, {
                 temperature,
             })
 
