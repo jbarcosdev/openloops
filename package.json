@@ -72,7 +72,10 @@
     "prepublishOnly": "yarn build",
     "check-size": "npm pack --dry-run",
     "release": "npm version patch && npm publish --access public",
-    "push": "git push --follow-tags"
+    "push": "git push --follow-tags",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
   },
   "dependencies": {
     "@earendil-works/pi-ai": "^1.0.4",
