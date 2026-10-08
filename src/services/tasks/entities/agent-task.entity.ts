@@ -523,6 +523,14 @@ export class AgentTask extends BaseEntity {
 		return respond ? String(respond.args?.answer ?? '') : undefined
 	}
 
+	get rejectedAnswers (): number {
+		return this.actions.filter(a => a.name === RESPOND && a.status === 'failed').length
+	}
+
+	rejectAnswer (message: string): void {
+		this.actions.find(a => a.name === RESPOND && a.status === 'pending')?.markFailed({ message, retryable: false })
+	}
+
 	forceAnswer (fallback: string): string {
 		const answer = this.pendingAnswer || fallback
 		this.skipPending()

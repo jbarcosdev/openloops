@@ -196,7 +196,10 @@ export class NativeTools {
 
     private async readContext (task: AgentTask, args: Record<string, any>) {
         const item = await this.deps.workspace.get(String(args.name), { taskId: task.id })
-        if (!item) return { found: false }
+        if (!item) {
+            const available = await this.deps.workspace.list({ taskId: task.id }).then(items => items.map(entry => entry.name).slice(0, 30)).catch(() => [])
+            return { found: false, error: `There is no workspace item named "${args.name}". This does not mean a search had no results.`, available }
+        }
 
         const path = args.path ? String(args.path).replace(/^(?=[\w-])/, '.') : undefined
         const value = readPath(item.content, path)

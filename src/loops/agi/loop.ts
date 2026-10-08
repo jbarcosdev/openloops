@@ -1,12 +1,14 @@
 import { AgentLoop, AgentStatus, RunContext } from '@harness/index'
 import { AgentTask, findInvoker } from '@services/tasks/entities/agent-task.entity'
 import { fastResponder, confirmationGate } from '../shared/skills'
+import { ungroundedIdentifiers, UNGROUNDED_PHRASE } from '@harness/utils/grounding'
 import { reasoningEngine } from './skills/reasoning-engine'
 
 const MAX_TURNS = 20
 const MAX_TOOL_CALLS = 40
 const WARN_SAME_TOOL = 3
 const MAX_SAME_TOOL = 6
+const MAX_ANSWER_REJECTIONS = 1
 const WARN_WORKSPACE_TURNS = 3
 const MAX_WORKSPACE_TURNS = 7
 const SUMMARY_CHARS = 400
@@ -162,6 +164,14 @@ export class AgiLoop extends AgentLoop {
         const answer = task.pendingAnswer
 
         if (answer !== undefined) {
+            const invented = task.rejectedAnswers < MAX_ANSWER_REJECTIONS ? await ungroundedIdentifiers(task, ctx.workspace, [answer]) : []
+
+            if (invented.length) {
+                task.rejectAnswer(`Your answer cites the identifier${invented.length > 1 ? 's' : ''} ${invented.map(id => `"${id}"`).join(', ')}, which ${invented.length > 1 ? 'were' : 'was'} ${UNGROUNDED_PHRASE}. Do not state values you did not get from a result or from the user: remove ${invented.length > 1 ? 'them' : 'it'}, or obtain ${invented.length > 1 ? 'them' : 'it'} with a tool, and answer again.`)
+                ctx.setNextNode(this.nodes.reasoning_engine)
+                return
+            }
+
             task.deliverAnswer()
             ctx.reply(answer)
             ctx.chat.completeTask(task.id, answer.slice(0, SUMMARY_CHARS))
