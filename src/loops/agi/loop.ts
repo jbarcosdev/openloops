@@ -1,7 +1,7 @@
 import { AgentLoop, AgentStatus, RunContext } from '@harness/index'
 import { AgentTask } from '@services/tasks/entities/agent-task.entity'
 import { fastResponder, confirmationGate } from '../shared/skills'
-import { reactAgent } from './skills/react-agent'
+import { reactAgent } from './skills/reasoning-engine'
 
 const MAX_TURNS = 20
 const MAX_TOOL_CALLS = 40
