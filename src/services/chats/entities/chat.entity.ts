@@ -1,5 +1,5 @@
 import { BaseEntity, BaseEntityProps } from '@common/base/base.entity'
-import { AgentStateProps, AgentState } from '@agent/agent-state'
+import { AgentStateProps, AgentState } from '@harness/agent-state'
 import { AgentTask, TaskStatus } from '@services/tasks/entities/agent-task.entity'
 import { ChatMessage, ChatMessageProps } from './chat-message.entity'
 import { ChatSettings, ChatSettingsProps } from './chat-settings.entity'

@@ -1,4 +1,4 @@
-import { AgentLoop, AgentStatus, RunContext } from '@agent/index'
+import { AgentLoop, AgentStatus, RunContext } from '@harness/index'
 import { AgentTask } from '@services/tasks/entities/agent-task.entity'
 import { fastResponder, confirmationGate } from '../shared/skills'
 import { reactAgent } from './skills/react-agent'

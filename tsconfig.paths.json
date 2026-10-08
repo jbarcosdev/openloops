@@ -4,9 +4,9 @@
         "rootDir": "./src",
         "paths": {
             "@root/*": ["./src/../*"],
-            "@agent/*": ["./src/agent/*"],
             "@clients/*": ["./src/clients/*"],
             "@common/*": ["./src/common/*"],
+            "@harness/*": ["./src/harness/*"],
             "@loops/*": ["./src/loops/*"],
             "@services/*": ["./src/services/*"],
             "@skills/*": ["./src/skills/*"],

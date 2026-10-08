@@ -1,4 +1,4 @@
-import { AgentLoop, AgentStatus, RunContext } from '@agent/index'
+import { AgentLoop, AgentStatus, RunContext } from '@harness/index'
 import {
     fastResponder,
     actionPlanner,
