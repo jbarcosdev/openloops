@@ -28,6 +28,7 @@ export interface AgentActionProps extends BaseEntityProps {
 	outputRef?: string
 	outputChars?: number
 	outputStub?: Record<string, any>
+	requestedName?: string
 	callId?: string
 	turn?: number
 	startedAt?: Date
@@ -86,6 +87,7 @@ export class AgentAction extends BaseEntity {
 			props.callId,
 			props.turn,
 			props.outputStub,
+			props.requestedName,
 		)
 	}
 
@@ -112,6 +114,7 @@ export class AgentAction extends BaseEntity {
 		public callId?: string,
 		public turn?: number,
 		public outputStub?: Record<string, any>,
+		public requestedName?: string,
 	) {
 		super(props)
 	}
@@ -140,6 +143,7 @@ export class AgentAction extends BaseEntity {
 			callId: this.callId,
 			turn: this.turn,
 			outputStub: this.outputStub,
+			requestedName: this.requestedName,
 		}
 	}
 
@@ -295,4 +299,5 @@ export interface ActionDescriptor {
 	author?: string
 	callId?: string
 	turn?: number
+	requestedName?: string
 }

@@ -54,6 +54,10 @@ export class ToolPipeline {
     private notFoundMessage (name: string): string {
         const invokers = this.deps.tools().map(tool => tool.name as string).filter(toolName => toolName.endsWith('__invoke_tool'))
         const base = `Tool "${name}" is not in your tool list.`
+        const suffix = `__${name.toLowerCase()}`
+        const similar = this.deps.tools().map(tool => tool.name as string).filter(toolName => toolName.toLowerCase().endsWith(suffix))
+
+        if (similar.length) return `${base} Tool names include the server prefix, written in full. Did you mean ${similar.map(toolName => `"${toolName}"`).join(' or ')}?`
 
         if (!invokers.length) return `${base} Use the exact tool names from your tool list.`
 

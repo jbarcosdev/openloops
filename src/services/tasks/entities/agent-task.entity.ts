@@ -89,6 +89,30 @@ const CONTEXT_REF_GLOBAL = new RegExp(`\\{\\{context\\.([\\w-]+)${PATH}\\}\\}`, 
 const LEFTOVER_REF = /\{\{\s*(?:step_|context\.)/
 const CLEARABLE_FIELDS = ['nextNode', 'scratch'] as const
 
+function normalizeToolName (name: string): string {
+	return name.toLowerCase().replace(/-/g, '_')
+}
+
+export function resolveToolName (name: string, declared: string[]): string | undefined {
+	if (declared.includes(name)) return undefined
+
+	const wanted = normalizeToolName(name)
+	const unique = (candidates: string[]) => candidates.length === 1 ? candidates[0] : undefined
+
+	const sameName = unique(declared.filter(candidate => normalizeToolName(candidate) === wanted))
+	if (sameName) return sameName
+
+	const withoutPrefix = unique(declared.filter(candidate => candidate.includes('__') && normalizeToolName(candidate).endsWith(`__${wanted}`)))
+	if (withoutPrefix) return withoutPrefix
+
+	const separator = name.indexOf('__')
+	if (separator <= 0) return undefined
+
+	const rest = normalizeToolName(name.slice(separator + 2))
+
+	return unique(declared.filter(candidate => !candidate.includes('__') && normalizeToolName(candidate) === rest))
+}
+
 function isNativeTool (name?: string): boolean {
 	return NATIVE_TOOL_NAMES.includes(name as string)
 }
@@ -305,6 +329,7 @@ export class AgentTask extends BaseEntity {
 			author: descriptor.author,
 			callId: descriptor.callId,
 			turn: descriptor.turn,
+			requestedName: descriptor.requestedName,
 		})
 		this.actions.push(action)
 		return action
@@ -419,7 +444,7 @@ export class AgentTask extends BaseEntity {
 		this.actions.filter(a => a.name === RESPOND && a.status === 'pending').forEach(a => a.markCompleted({ delivered: true }))
 	}
 
-	addTurn (output: TurnOutput, opts?: { author?: string }): AgentAction[] {
+	addTurn (output: TurnOutput, opts?: { author?: string; declaredTools?: string[] }): AgentAction[] {
 		const turn = this.turns.reduce((max, t) => Math.max(max, t.turn), 0) + 1
 
 		this.turns.push({ turn, reasoning: output.reasoning?.toString().trim().slice(0, REASONING_CHARS) || undefined, state: capState(output.state) })
@@ -433,10 +458,12 @@ export class AgentTask extends BaseEntity {
 		}
 
 		return requests.map((request, position) => {
-			const name = typeof request?.tool === 'string' && request.tool.trim() ? request.tool.trim().replace(TOOL_NAMESPACE, '') : undefined
+			const written = typeof request?.tool === 'string' && request.tool.trim() ? request.tool.trim().replace(TOOL_NAMESPACE, '') : undefined
+			const resolved = written && opts?.declaredTools ? resolveToolName(written, opts.declaredTools) : undefined
+			const name = resolved ?? written
 			const { args, invalid: badArguments } = parseArguments(request?.arguments)
 
-			const action = this.addAction({ name: name ?? INVALID_ACTION, args, stepId: `${turn}_${position + 1}`, turn, author: opts?.author })
+			const action = this.addAction({ name: name ?? INVALID_ACTION, args, stepId: `${turn}_${position + 1}`, turn, author: opts?.author, requestedName: resolved ? written : undefined })
 
 			const invalid = !name ? 'Each action needs a "tool" name'
 				: badArguments ? badArguments
@@ -486,11 +513,13 @@ export class AgentTask extends BaseEntity {
 				content: JSON.stringify({
 					OBSERVATIONS: actions.map(action => {
 						const ref = action.stepId ?? action.id
-						if (action.status === 'skipped') return { ref, tool: action.name, status: 'skipped' }
+						const note = action.requestedName ? { note: `You wrote "${action.requestedName}" but the tool is named "${action.name}": the server prefix is part of the name. It ran as "${action.name}". Write the full name next time.` } : {}
+
+						if (action.status === 'skipped') return { ref, tool: action.name, status: 'skipped', ...note }
 
 						return action.status === 'failed'
-							? { ref, tool: action.name, status: 'failed', error: action.error?.message }
-							: { ref, tool: action.name, status: 'completed', output: action.observationOutput(stale, TOOL_RESULT_CHARS) }
+							? { ref, tool: action.name, status: 'failed', error: action.error?.message, ...note }
+							: { ref, tool: action.name, status: 'completed', output: action.observationOutput(stale, TOOL_RESULT_CHARS), ...note }
 					}),
 				}),
 			})
