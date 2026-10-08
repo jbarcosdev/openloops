@@ -8,12 +8,14 @@ import { NativeTools } from './native-tools'
 import { WeightedKeyword, ScoredTool } from './utils/rank-tools-by-keywords'
 import { describeShapeWithin } from './utils/describe-shape'
 
-const DEFAULT_OFFLOAD_THRESHOLD_CHARS = 30000
+const DEFAULT_OFFLOAD_THRESHOLD_CHARS = 100000
+const DEFAULT_STUB_THRESHOLD_CHARS = 4000
 const DEFAULT_MAX_STORED_CHARS = 2_000_000
 const DEFAULT_PREVIEW_CHARS = 500
 
 export interface ToolPipelineOptions {
     offloadThresholdChars?: number
+    stubThresholdChars?: number
     maxStoredChars?: number
     previewChars?: number
 }
@@ -32,6 +34,7 @@ interface ToolPipelineDeps {
 
 export class ToolPipeline {
     private readonly offloadThresholdChars: number
+    private readonly stubThresholdChars: number
     private readonly maxStoredChars: number
     private readonly previewChars: number
     private readonly nativeTools: NativeTools
@@ -39,6 +42,7 @@ export class ToolPipeline {
     constructor (private readonly deps: ToolPipelineDeps, options?: ToolPipelineOptions) {
         this.nativeTools = new NativeTools({ workspace: deps.workspace, searchTools: deps.searchTools })
         this.offloadThresholdChars = options?.offloadThresholdChars ?? DEFAULT_OFFLOAD_THRESHOLD_CHARS
+        this.stubThresholdChars = options?.stubThresholdChars ?? DEFAULT_STUB_THRESHOLD_CHARS
         this.maxStoredChars = options?.maxStoredChars ?? DEFAULT_MAX_STORED_CHARS
         this.previewChars = options?.previewChars ?? DEFAULT_PREVIEW_CHARS
     }
@@ -137,7 +141,7 @@ export class ToolPipeline {
         const output = action.structuredOutput
         const text = typeof output === 'string' ? output : JSON.stringify(output)
 
-        if (!text || text.length <= this.offloadThresholdChars) return
+        if (!text || text.length <= this.stubThresholdChars) return
 
         const name = `out_${String(action.stepId ?? action.id).replace(/[^\w-]/g, '_')}`
         const oversized = text.length > this.maxStoredChars
@@ -153,15 +157,18 @@ export class ToolPipeline {
                 truncated: oversized,
             })
 
-            action.offloadOutput({
+            const offloaded = {
                 ref: name,
                 totalChars: text.length,
                 outline: oversized ? undefined : describeShapeWithin(output),
                 preview: text.slice(0, this.previewChars),
-            })
+            }
+
+            if (text.length > this.offloadThresholdChars) action.offloadOutput(offloaded)
+            else action.keepOutputWithStub(offloaded)
         } catch (error: any) {
             this.deps.logger.error({ error: error?.message ?? error, action: action.name }, '[TOOL PIPELINE] Failed to offload output, keeping a truncated copy')
-            action.output = truncateForPrompt(output, this.offloadThresholdChars)
+            if (text.length > this.offloadThresholdChars) action.output = truncateForPrompt(output, this.offloadThresholdChars)
         }
     }
 }
