@@ -27,6 +27,7 @@ export interface AgentActionProps extends BaseEntityProps {
 	approved?: boolean
 	outputRef?: string
 	outputChars?: number
+	outputStub?: Record<string, any>
 	callId?: string
 	turn?: number
 	startedAt?: Date
@@ -41,7 +42,7 @@ export interface OffloadedOutput {
 	preview: string
 }
 
-const CLEARABLE_FIELDS = ['error', 'startedAt', 'completedAt', 'outputRef', 'outputChars'] as const
+const CLEARABLE_FIELDS = ['error', 'startedAt', 'completedAt', 'outputRef', 'outputChars', 'outputStub'] as const
 
 export function truncateForPrompt (value: any, maxChars = 3000): any {
 	if (value === undefined || value === null) return value
@@ -84,6 +85,7 @@ export class AgentAction extends BaseEntity {
 			BaseEntity.toObjectId(props.answerId),
 			props.callId,
 			props.turn,
+			props.outputStub,
 		)
 	}
 
@@ -109,6 +111,7 @@ export class AgentAction extends BaseEntity {
 		public answerId?: ObjectId,
 		public callId?: string,
 		public turn?: number,
+		public outputStub?: Record<string, any>,
 	) {
 		super(props)
 	}
@@ -123,7 +126,7 @@ export class AgentAction extends BaseEntity {
 			args: this.args,
 			dependsOn: this.dependsOn,
 			status: this.status,
-			output: this.structuredOutput,
+			output: this.outputStub ?? this.structuredOutput,
 			error: this.error,
 			reasoning: this.reasoning,
 			retries: this.retries,
@@ -136,6 +139,7 @@ export class AgentAction extends BaseEntity {
 			answerId: this.answerId,
 			callId: this.callId,
 			turn: this.turn,
+			outputStub: this.outputStub,
 		}
 	}
 
@@ -155,8 +159,18 @@ export class AgentAction extends BaseEntity {
 		return this.status === 'failed' && this.error?.retryable !== false
 	}
 
+	static unwrap (value: any): any {
+		return value?.structuredContent ? value.structuredContent : value
+	}
+
 	get structuredOutput () {
-		return this.output?.structuredContent ? this.output?.structuredContent : this.output
+		return AgentAction.unwrap(this.output)
+	}
+
+	observationOutput (stale: boolean, maxChars: number): any {
+		if (this.outputStub) return stale ? this.outputStub : this.structuredOutput
+		if (this.outputRef) return this.structuredOutput
+		return truncateForPrompt(this.structuredOutput, maxChars)
 	}
 
 	get clearedFields (): Record<string, ''> {
@@ -172,7 +186,7 @@ export class AgentAction extends BaseEntity {
 			tool: this.name,
 			args: this.args,
 			status: this.status,
-			output: this.outputRef ? this.output : truncateForPrompt(this.structuredOutput, maxChars),
+			output: this.observationOutput(false, maxChars),
 			error: this.error ? { message: this.error.message } : undefined,
 		}
 	}
@@ -209,15 +223,26 @@ export class AgentAction extends BaseEntity {
 		this.completedAt = new Date()
 	}
 
-	offloadOutput (offloaded: OffloadedOutput): void {
-		this.outputRef = offloaded.ref
-		this.outputChars = offloaded.totalChars
-		this.output = {
+	private static stubOf (offloaded: OffloadedOutput): Record<string, any> {
+		return {
 			workspace_ref: offloaded.ref,
 			total_chars: offloaded.totalChars,
 			outline: offloaded.outline,
 			preview: offloaded.preview,
 		}
+	}
+
+	offloadOutput (offloaded: OffloadedOutput): void {
+		this.outputRef = offloaded.ref
+		this.outputChars = offloaded.totalChars
+		this.outputStub = undefined
+		this.output = AgentAction.stubOf(offloaded)
+	}
+
+	keepOutputWithStub (offloaded: OffloadedOutput): void {
+		this.outputRef = offloaded.ref
+		this.outputChars = offloaded.totalChars
+		this.outputStub = AgentAction.stubOf(offloaded)
 	}
 
 	incrementRetries (): number {

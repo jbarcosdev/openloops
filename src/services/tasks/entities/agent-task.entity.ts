@@ -78,7 +78,8 @@ const STATE_KEYS = 12
 const STATE_VALUE_CHARS = 800
 const REASONING_CHARS = 1500
 
-const TOOL_RESULT_CHARS = 30000
+const TOOL_RESULT_CHARS = 100000
+const FULL_OBSERVATION_TURNS = 1
 
 const PATH = '((?:\\.[\\w-]+|\\[\\d+\\])*)'
 const STEP_REF = new RegExp(`^\\{\\{step_([\\w-]+)\\.output${PATH}\\}\\}$`)
@@ -461,9 +462,15 @@ export class AgentTask extends BaseEntity {
 
 		const messages: LLMMessage[] = [{ role: 'user', content: this.opening }]
 
-		for (const record of this.turns) {
+		const included = this.turns.filter(record => {
 			const actions = byTurn.get(record.turn) ?? []
-			if (!actions.length || !actions.every(a => a.isTerminal)) continue
+			return actions.length && actions.every(a => a.isTerminal)
+		})
+		const freshFrom = included.length - FULL_OBSERVATION_TURNS
+
+		for (const [index, record] of included.entries()) {
+			const actions = byTurn.get(record.turn) ?? []
+			const stale = index < freshFrom
 
 			messages.push({
 				role: 'assistant',
@@ -483,7 +490,7 @@ export class AgentTask extends BaseEntity {
 
 						return action.status === 'failed'
 							? { ref, tool: action.name, status: 'failed', error: action.error?.message }
-							: { ref, tool: action.name, status: 'completed', output: action.outputRef ? action.output : truncateForPrompt(action.structuredOutput, TOOL_RESULT_CHARS) }
+							: { ref, tool: action.name, status: 'completed', output: action.observationOutput(stale, TOOL_RESULT_CHARS) }
 					}),
 				}),
 			})
