@@ -128,6 +128,20 @@ export function resolveToolName (name: string, declared: string[]): string | und
 	return unique(declared.filter(candidate => !candidate.includes('__') && normalizeToolName(candidate) === rest))
 }
 
+export function findInvoker (tools: { name: string; parameters?: Record<string, any> }[]): string | undefined {
+	const invokers = tools.filter(tool => tool.name.endsWith('__invoke_tool') && tool.parameters?.properties?.name && tool.parameters?.properties?.arguments)
+
+	return invokers.length === 1 ? invokers[0].name : undefined
+}
+
+function routeNote (action: AgentAction): string | undefined {
+	if (!action.requestedName) return undefined
+
+	return action.args?.name === action.requestedName
+		? `"${action.requestedName}" is a hidden tool and cannot be called directly, so it ran through "${action.name}". Call hidden tools like that from now on: tool "${action.name}", arguments {"name": "${action.requestedName}", "arguments": {...}}.`
+		: `You wrote "${action.requestedName}" but the tool is named "${action.name}": the server prefix is part of the name. It ran as "${action.name}". Write the full name next time.`
+}
+
 function propertyLabel (name: string, property: any): string {
 	const type = Array.isArray(property?.type) ? property.type.join('|') : property?.type ?? property?.anyOf?.map((option: any) => option?.type).filter((option: any) => option && option !== 'null').join('|')
 
@@ -555,7 +569,7 @@ export class AgentTask extends BaseEntity {
 		this.schemas = schemas
 	}
 
-	addTurn (output: TurnOutput, opts?: { author?: string; declaredTools?: string[] }): AgentAction[] {
+	addTurn (output: TurnOutput, opts?: { author?: string; declaredTools?: string[]; invoker?: string }): AgentAction[] {
 		const turn = this.turns.reduce((max, t) => Math.max(max, t.turn), 0) + 1
 
 		this.remember(output.learned)
@@ -573,10 +587,12 @@ export class AgentTask extends BaseEntity {
 		return requests.map((request, position) => {
 			const written = typeof request?.tool === 'string' && request.tool.trim() ? request.tool.trim().replace(TOOL_NAMESPACE, '') : undefined
 			const resolved = written && opts?.declaredTools ? resolveToolName(written, opts.declaredTools) : undefined
-			const name = resolved ?? written
-			const { args, invalid: badArguments } = parseArguments(request?.arguments)
+			const { args: given, invalid: badArguments } = parseArguments(request?.arguments)
+			const hidden = !resolved && written && opts?.invoker && opts.declaredTools && !opts.declaredTools.includes(written) && !NATIVE_TOOL_NAMES.includes(written) && this.schemas?.[written] && !badArguments
+			const name = hidden ? opts!.invoker : resolved ?? written
+			const args = hidden ? { name: written, arguments: given } : given
 
-			const action = this.addAction({ name: name ?? INVALID_ACTION, args, stepId: `${turn}_${position + 1}`, turn, author: opts?.author, requestedName: resolved ? written : undefined })
+			const action = this.addAction({ name: name ?? INVALID_ACTION, args, stepId: `${turn}_${position + 1}`, turn, author: opts?.author, requestedName: resolved || hidden ? written : undefined })
 
 			const invalid = !name ? 'Each action needs a "tool" name'
 				: badArguments ? badArguments
@@ -626,7 +642,8 @@ export class AgentTask extends BaseEntity {
 				content: JSON.stringify({
 					OBSERVATIONS: actions.map(action => {
 						const ref = action.stepId ?? action.id
-						const note = action.requestedName ? { note: `You wrote "${action.requestedName}" but the tool is named "${action.name}": the server prefix is part of the name. It ran as "${action.name}". Write the full name next time.` } : {}
+						const routed = routeNote(action)
+						const note = routed ? { note: routed } : {}
 
 						if (action.status === 'skipped') return { ref, tool: action.name, status: 'skipped', ...note }
 
