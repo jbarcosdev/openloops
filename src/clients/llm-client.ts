@@ -13,7 +13,7 @@ import { extractJSON } from '@common/helpers'
 import { createLLMCall } from '@services/llmcalls'
 import { LLMChatParams, LLMResponse } from './llm-types'
 import { toPiContext, fromPiMessage } from './pi-ai-adapter'
-import { LLMError, retryDelayMs } from './llm-error'
+import { LLMError, retryDelayMs, rejectsSamplingParameter } from './llm-error'
 
 const DEFAULT_PROVIDER = 'openai'
 const DEFAULT_MODEL = 'gpt-4o-mini'
@@ -32,6 +32,8 @@ interface TracedCall {
 }
 
 export class LLMClient {
+    private static readonly modelsWithoutTemperature = new Set<string>()
+
     private readonly logger = new Logger()
     private readonly langfuse?: Langfuse
     private readonly langfuseEnabled: boolean
@@ -74,14 +76,18 @@ export class LLMClient {
         if (!model) throw new Error('[LLM Client] model not found')
 
         const context = toPiContext({ messages, tools }, model)
-        const options = { temperature, maxRetries: MAX_RETRIES, ...(sessionId ? { sessionId } : {}) }
+        const send = (omitTemperature: boolean) => {
+            const options = { ...(omitTemperature ? {} : { temperature }), maxRetries: MAX_RETRIES, ...(sessionId ? { sessionId } : {}) }
+
+            return toolChoice
+                ? models.completeSimple(model, context, { ...options, toolChoice })
+                : models.complete(model, context, options)
+        }
 
         const raw = await this.traced(
             { origin, sessionId, answerId, currentUser, modelName, provider, temperature },
             context,
-            () => this.waitingOnRateLimit(() => toolChoice
-                ? models.completeSimple(model, context, { ...options, toolChoice })
-                : models.complete(model, context, options)),
+            () => this.withoutRejectedTemperature(`${provider}/${modelName}`, send),
         )
 
         if (raw.stopReason === 'error' || raw.stopReason === 'aborted') {
@@ -122,8 +128,20 @@ export class LLMClient {
         return this.traced(
             { origin, sessionId, answerId, currentUser, modelName, provider, temperature },
             context,
-            () => this.waitingOnRateLimit(() => models.complete(model, context, { temperature, maxRetries: MAX_RETRIES })),
+            () => this.withoutRejectedTemperature(`${provider}/${modelName}`, omitTemperature => models.complete(model, context, { ...(omitTemperature ? {} : { temperature }), maxRetries: MAX_RETRIES })),
         )
+    }
+
+    private async withoutRejectedTemperature (key: string, send: (omitTemperature: boolean) => Promise<AssistantMessage>): Promise<AssistantMessage> {
+        const known = LLMClient.modelsWithoutTemperature.has(key)
+        const response = await this.waitingOnRateLimit(() => send(known))
+
+        if (known || response.stopReason !== 'error' || !rejectsSamplingParameter(response.errorMessage)) return response
+
+        LLMClient.modelsWithoutTemperature.add(key)
+        this.logger.warn({ model: key, error: response.errorMessage }, '[LLM Service] The model rejected the temperature setting, retrying without it')
+
+        return this.waitingOnRateLimit(() => send(true))
     }
 
     private async waitingOnRateLimit (run: () => Promise<AssistantMessage>): Promise<AssistantMessage> {
