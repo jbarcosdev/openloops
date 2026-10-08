@@ -1,5 +1,5 @@
 import { AgentLoop, AgentStatus, RunContext } from '@harness/index'
-import { AgentTask } from '@services/tasks/entities/agent-task.entity'
+import { AgentTask, findInvoker } from '@services/tasks/entities/agent-task.entity'
 import { fastResponder, confirmationGate } from '../shared/skills'
 import { reasoningEngine } from './skills/reasoning-engine'
 
@@ -109,7 +109,7 @@ export class AgiLoop extends AgentLoop {
 
         if (result.opening) task.opening = result.opening
 
-        task.addTurn(result, { author: 'reasoning_engine', declaredTools: catalog.tools.map(tool => tool.name) })
+        task.addTurn(result, { author: 'reasoning_engine', declaredTools: catalog.tools.map(tool => tool.name), invoker: findInvoker(catalog.tools) })
 
         if (stopReason) {
             const answer = task.forceAnswer(`I could not finish the task: ${stopReason}.`)
