@@ -10,7 +10,7 @@ const MAX_SAME_TOOL = 6
 const SUMMARY_CHARS = 400
 const BLOCK_DUPLICATES = false
 
-export class ReactLoop extends AgentLoop {
+export class AgiLoop extends AgentLoop {
     get initialNode () {
         return this.nodes.fast_responder
     }
