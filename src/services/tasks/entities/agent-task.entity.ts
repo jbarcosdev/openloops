@@ -681,6 +681,24 @@ export class AgentTask extends BaseEntity {
 		return messages
 	}
 
+	get workspaceStreak (): number {
+		const turns = new Map<number, string[]>()
+
+		for (const action of this.actions) {
+			if (action.turn === undefined || !action.name) continue
+			turns.set(action.turn, [...(turns.get(action.turn) ?? []), action.name])
+		}
+
+		let count = 0
+
+		for (const turn of Array.from(turns.keys()).sort((a, b) => b - a)) {
+			if (!turns.get(turn)!.every(name => name === 'read_context' || name === 'save_context')) break
+			count++
+		}
+
+		return count
+	}
+
 	get sameToolStreak (): { name?: string; count: number } {
 		const turns = new Map<number, Set<string>>()
 

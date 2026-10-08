@@ -43,7 +43,9 @@ export interface OffloadedOutput {
 	preview: string
 }
 
-const STUB_NOTE = 'Partial view: the preview is only the beginning of the result. Do not take values from it as the ones you need; load the part you need with read_context.'
+function stubNote (ref: string): string {
+	return `Partial view: the preview is only the beginning of the result. Do not take values from it as the ones you need. Load them with read_context using name "${ref}": add "path" for a section, or "find" with the text to locate an entity by name inside the result. You cannot compare long lists by eye.`
+}
 const CLEARABLE_FIELDS = ['error', 'startedAt', 'completedAt', 'outputRef', 'outputChars', 'outputStub'] as const
 
 export function truncateForPrompt (value: any, maxChars = 3000): any {
@@ -234,7 +236,7 @@ export class AgentAction extends BaseEntity {
 			total_chars: offloaded.totalChars,
 			outline: offloaded.outline,
 			preview: offloaded.preview,
-			note: STUB_NOTE,
+			note: stubNote(offloaded.ref),
 		}
 	}
 
