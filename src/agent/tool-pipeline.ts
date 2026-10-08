@@ -43,6 +43,17 @@ export class ToolPipeline {
         this.previewChars = options?.previewChars ?? DEFAULT_PREVIEW_CHARS
     }
 
+    private notFoundMessage (name: string): string {
+        const invokers = this.deps.tools().map(tool => tool.name as string).filter(toolName => toolName.endsWith('__invoke_tool'))
+        const base = `Tool "${name}" is not in your tool list.`
+
+        if (!invokers.length) return `${base} Use the exact tool names from your tool list.`
+
+        const example = JSON.stringify({ tool: invokers[0], arguments: { name, arguments: {} } })
+
+        return `${base} It is a hidden tool of a server, so it cannot be called directly. Run it through the server's invoke tool (${invokers.join(', ')}) like this: ${example}, filling "arguments" with the input schema returned by the server's search.`
+    }
+
     requiresApproval (action: AgentAction): boolean {
         const tool = this.findTool(action.name)
         return Boolean(tool?.destructive) && !action.approved
@@ -58,7 +69,7 @@ export class ToolPipeline {
         const tool = this.findTool(action.name)
 
         if (!tool) {
-            action.markFailed({ message: `Tool "${action.name}" not found. Use the exact tool names from your tool list`, retryable: false })
+            action.markFailed({ message: this.notFoundMessage(String(action.name)), retryable: false })
             return action
         }
 
