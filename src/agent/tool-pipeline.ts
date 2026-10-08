@@ -10,6 +10,7 @@ import { describeShapeWithin } from './utils/describe-shape'
 
 const DEFAULT_OFFLOAD_THRESHOLD_CHARS = 100000
 const DEFAULT_STUB_THRESHOLD_CHARS = 4000
+const TRANSIENT_PATTERN = /timeout|timed out|econn|enotfound|network|socket|\b50[234]\b|\b429\b|rate limit|temporar|unavailable|overloaded/i
 const NOT_FOUND_PATTERN = /not found|does not exist|doesn't exist|no existe|no encontrad/i
 const NOT_FOUND_NOTE = "Harness note: a name that fails once may only be written differently from how the system stores it. Before concluding that it does not exist, check it against the system's own listing or search, and treat any suggestion in the error as a hint to verify, not as the answer."
 const DEFAULT_MAX_STORED_CHARS = 2_000_000
@@ -90,6 +91,14 @@ export class ToolPipeline {
 
         if (unresolved.length) {
             action.markFailed({ message: `Unresolved references in arguments: ${unresolved.join(', ')}. The referenced step output or path does not exist.`, retryable: false })
+            return action
+        }
+
+        const failedBefore = task.findExecuted(action.name, args, { status: 'failed', exclude: action })
+
+        if (failedBefore && !TRANSIENT_PATTERN.test(failedBefore.error?.message ?? '')) {
+            const previous = String(failedBefore.error?.message ?? '').slice(0, 500)
+            action.markFailed({ message: `An identical call to "${action.name}" already failed (ref ${failedBefore.stepId ?? failedBefore.id}) with: ${previous}\n\nRepeating it will not change the result. Change the arguments or the approach.`, retryable: false })
             return action
         }
 
