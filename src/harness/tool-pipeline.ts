@@ -14,6 +14,10 @@ const DEFAULT_STUB_THRESHOLD_CHARS = 4000
 const TRANSIENT_PATTERN = /timeout|timed out|econn|enotfound|network|socket|\b50[234]\b|\b429\b|rate limit|temporar|unavailable|overloaded/i
 const NOT_FOUND_PATTERN = /not found|does not exist|doesn't exist|no existe|no encontrad/i
 const NOT_FOUND_NOTE = "Harness note: a name that fails once may only be written differently from how the system stores it. Before concluding that it does not exist, check it against the system's own listing or search, and treat any suggestion in the error as a hint to verify, not as the answer."
+const VALIDATION_PATTERN = /unexpected keyword argument|unexpected argument|missing required argument|validation errors? for/i
+const VALIDATION_NOTE = "Harness note: the arguments do not match the tool's schema. An unexpected argument is usually a misnamed version of a missing one: keep its value and use the name from the schema (HARNESS.schemas lists the arguments of the tools you have already seen)."
+const AMBIGUOUS_PATTERN = /ambiguous|more than one (?:match|result|entity)|multiple (?:matches|results|entities)|\b\d+ \w+ match\b/i
+const AMBIGUOUS_NOTE = "Harness note: the system matched more than one entity, and even an exact name can be ambiguous. Use the unique identifier of the candidate the user chose, from the error or from a listing, in the same argument that took the name. If the user already chose, do not ask again, and never repeat the call with the name."
 const DEFAULT_MAX_STORED_CHARS = 2_000_000
 const DEFAULT_PREVIEW_CHARS = 500
 
@@ -134,11 +138,21 @@ export class ToolPipeline {
 
         await action.runTool(tool, args, this.deps.baseParams)
 
-        if (action.status === 'failed' && action.error && NOT_FOUND_PATTERN.test(action.error.message ?? '')) {
-            action.error = { ...action.error, message: `${action.error.message}\n\n${NOT_FOUND_NOTE}` }
+        if (action.status === 'failed' && action.error) {
+            const message = action.error.message ?? ''
+            const notes = [
+                ...(NOT_FOUND_PATTERN.test(message) ? [NOT_FOUND_NOTE] : []),
+                ...(VALIDATION_PATTERN.test(message) ? [VALIDATION_NOTE] : []),
+                ...(AMBIGUOUS_PATTERN.test(message) ? [AMBIGUOUS_NOTE] : []),
+            ]
+
+            if (notes.length) action.error = { ...action.error, message: `${message}\n\n${notes.join('\n\n')}` }
         }
 
-        if (action.status === 'completed') await this.offload(task, action)
+        if (action.status === 'completed') {
+            task.learnSchemas(action.structuredOutput)
+            await this.offload(task, action)
+        }
 
         return action
     }

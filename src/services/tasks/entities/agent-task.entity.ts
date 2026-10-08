@@ -30,6 +30,12 @@ export interface AgentTaskProps extends BaseEntityProps {
 	opening?: string
 	turns?: TurnRecord[]
 	known?: Record<string, string>
+	schemas?: Record<string, ToolSchemaSummary>
+}
+
+export interface ToolSchemaSummary {
+	required: string[]
+	optional: string[]
 }
 
 export interface TurnRecord {
@@ -80,6 +86,10 @@ const STATE_KEYS = 12
 const KNOWN_ENTRIES = 40
 const KNOWN_KEY_CHARS = 80
 const KNOWN_VALUE_CHARS = 300
+const SCHEMA_TOOLS = 30
+const SCHEMA_PROPERTIES = 15
+const SCHEMA_SCAN_NODES = 20000
+const SCHEMA_SCAN_DEPTH = 8
 const STATE_VALUE_CHARS = 800
 const REASONING_CHARS = 1500
 
@@ -116,6 +126,53 @@ export function resolveToolName (name: string, declared: string[]): string | und
 	const rest = normalizeToolName(name.slice(separator + 2))
 
 	return unique(declared.filter(candidate => !candidate.includes('__') && normalizeToolName(candidate) === rest))
+}
+
+function propertyLabel (name: string, property: any): string {
+	const type = Array.isArray(property?.type) ? property.type.join('|') : property?.type ?? property?.anyOf?.map((option: any) => option?.type).filter((option: any) => option && option !== 'null').join('|')
+
+	return type ? `${name} (${type})` : name
+}
+
+function summarizeSchema (schema: any): ToolSchemaSummary | undefined {
+	const properties = schema?.properties
+
+	if (!properties || typeof properties !== 'object' || Array.isArray(properties)) return undefined
+
+	const required = Array.isArray(schema.required) ? schema.required.filter((name: any) => typeof name === 'string') : []
+	const names = Object.keys(properties)
+
+	return {
+		required: required.slice(0, SCHEMA_PROPERTIES).map((name: string) => propertyLabel(name, properties[name])),
+		optional: names.filter(name => !required.includes(name)).slice(0, SCHEMA_PROPERTIES).map(name => propertyLabel(name, properties[name])),
+	}
+}
+
+function findToolSchemas (value: any): Record<string, ToolSchemaSummary> {
+	const found: Record<string, ToolSchemaSummary> = {}
+	let nodes = 0
+
+	const visit = (node: any, depth: number) => {
+		if (node === null || typeof node !== 'object' || depth > SCHEMA_SCAN_DEPTH || nodes++ > SCHEMA_SCAN_NODES) return
+
+		if (Array.isArray(node)) {
+			node.forEach(item => visit(item, depth + 1))
+			return
+		}
+
+		const schema = node.input_schema ?? node.inputSchema
+
+		if (typeof node.name === 'string' && schema && typeof schema === 'object') {
+			const summary = summarizeSchema(schema)
+			if (summary) found[node.name] = summary
+		}
+
+		Object.values(node).forEach(child => visit(child, depth + 1))
+	}
+
+	visit(value, 0)
+
+	return found
 }
 
 function isNativeTool (name?: string): boolean {
@@ -241,6 +298,7 @@ export class AgentTask extends BaseEntity {
 			props.opening,
 			props.turns ?? [],
 			props.known,
+			props.schemas,
 		)
 	}
 
@@ -268,6 +326,7 @@ export class AgentTask extends BaseEntity {
 		public opening?: string,
 		public turns: TurnRecord[] = [],
 		public known?: Record<string, string>,
+		public schemas?: Record<string, ToolSchemaSummary>,
 	) {
 		super(props)
 	}
@@ -290,6 +349,7 @@ export class AgentTask extends BaseEntity {
 			opening: this.opening,
 			turns: this.turns.length ? this.turns : undefined,
 			known: this.known && Object.keys(this.known).length ? this.known : undefined,
+			schemas: this.schemas && Object.keys(this.schemas).length ? this.schemas : undefined,
 		}
 	}
 
@@ -423,6 +483,7 @@ export class AgentTask extends BaseEntity {
 		if (!ask) return false
 
 		ask.markCompleted({ answer })
+		this.remember([{ key: `user_answer_${ask.stepId ?? ask.id}`, value: `${answer} | in answer to: ${String(ask.args?.question ?? '')}` }])
 		return true
 	}
 
@@ -473,6 +534,25 @@ export class AgentTask extends BaseEntity {
 		for (const key of keys.slice(0, Math.max(0, keys.length - KNOWN_ENTRIES))) delete known[key]
 
 		this.known = Object.keys(known).length ? known : undefined
+	}
+
+	learnSchemas (output: any): void {
+		const found = findToolSchemas(output)
+		const names = Object.keys(found)
+
+		if (!names.length) return
+
+		const schemas: Record<string, ToolSchemaSummary> = { ...this.schemas }
+
+		for (const name of names) {
+			delete schemas[name]
+			schemas[name] = found[name]
+		}
+
+		const keys = Object.keys(schemas)
+		for (const key of keys.slice(0, Math.max(0, keys.length - SCHEMA_TOOLS))) delete schemas[key]
+
+		this.schemas = schemas
 	}
 
 	addTurn (output: TurnOutput, opts?: { author?: string; declaredTools?: string[] }): AgentAction[] {
