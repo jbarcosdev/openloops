@@ -134,11 +134,24 @@ export function findInvoker (tools: { name: string; parameters?: Record<string, 
 	return invokers.length === 1 ? invokers[0].name : undefined
 }
 
+export function seenHiddenTool (written: string, invoker: string, schemas?: Record<string, unknown>): string | undefined {
+	if (!schemas) return undefined
+
+	const separator = written.indexOf('__')
+	const namespace = invoker.slice(0, invoker.indexOf('__'))
+
+	if (separator > 0 && normalizeToolName(written.slice(0, separator)) !== normalizeToolName(namespace)) return undefined
+
+	const bare = normalizeToolName(separator > 0 ? written.slice(separator + 2) : written)
+
+	return Object.keys(schemas).find(key => normalizeToolName(key) === bare)
+}
+
 function routeNote (action: AgentAction): string | undefined {
 	if (!action.requestedName) return undefined
 
-	return action.args?.name === action.requestedName
-		? `"${action.requestedName}" is a hidden tool and cannot be called directly, so it ran through "${action.name}". Call hidden tools like that from now on: tool "${action.name}", arguments {"name": "${action.requestedName}", "arguments": {...}}.`
+	return action.name?.endsWith('__invoke_tool') && action.args?.name && !/(^|__)invoke_tool$/.test(action.requestedName)
+		? `"${action.requestedName}" is a hidden tool and cannot be called directly, so it ran through "${action.name}" as "${action.args?.name}". Call hidden tools like that from now on: tool "${action.name}", arguments {"name": "${action.args?.name}", "arguments": {...}}, with the name written without the server prefix.`
 		: `You wrote "${action.requestedName}" but the tool is named "${action.name}": the server prefix is part of the name. It ran as "${action.name}". Write the full name next time.`
 }
 
@@ -588,9 +601,10 @@ export class AgentTask extends BaseEntity {
 			const written = typeof request?.tool === 'string' && request.tool.trim() ? request.tool.trim().replace(TOOL_NAMESPACE, '') : undefined
 			const resolved = written && opts?.declaredTools ? resolveToolName(written, opts.declaredTools) : undefined
 			const { args: given, invalid: badArguments } = parseArguments(request?.arguments)
-			const hidden = !resolved && written && opts?.invoker && opts.declaredTools && !opts.declaredTools.includes(written) && !NATIVE_TOOL_NAMES.includes(written) && this.schemas?.[written] && !badArguments
+			const hiddenName = !resolved && written && opts?.invoker && opts.declaredTools && !opts.declaredTools.includes(written) && !NATIVE_TOOL_NAMES.includes(written) && !badArguments ? seenHiddenTool(written, opts.invoker, this.schemas) : undefined
+			const hidden = Boolean(hiddenName)
 			const name = hidden ? opts!.invoker : resolved ?? written
-			const args = hidden ? { name: written, arguments: given } : given
+			const args = hidden ? { name: hiddenName, arguments: given } : given
 
 			const action = this.addAction({ name: name ?? INVALID_ACTION, args, stepId: `${turn}_${position + 1}`, turn, author: opts?.author, requestedName: resolved || hidden ? written : undefined })
 

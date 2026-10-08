@@ -65,7 +65,9 @@ export class ToolPipeline {
 
         if (!invokers.length) return `${base} Use the exact tool names from your tool list.`
 
-        const example = JSON.stringify({ tool: invokers[0], arguments: { name, arguments: {} } })
+        const namespace = `${invokers[0].slice(0, invokers[0].indexOf('__'))}__`
+        const bare = name.startsWith(namespace) ? name.slice(namespace.length) : name
+        const example = JSON.stringify({ tool: invokers[0], arguments: { name: bare, arguments: {} } })
 
         return `${base} It is a hidden tool of a server, so it cannot be called directly. Run it through the server's invoke tool (${invokers.join(', ')}) like this: ${example}, filling "arguments" with the input schema returned by the server's search.`
     }
