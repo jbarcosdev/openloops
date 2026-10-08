@@ -26,6 +26,10 @@ export function isDeclarable (tool: Tool): boolean {
     return FUNCTION_NAME.test(tool.name)
 }
 
+export function needsSearch (allTools: Tool[]): boolean {
+    return allTools.filter(isDeclarable).length > FULL_CATALOG_LIMIT
+}
+
 export function describeTool (tool: Tool, chars = TOOL_DESCRIPTION_CHARS): ToolDescription {
     return {
         name: tool.name,
@@ -42,7 +46,7 @@ function declare (tool: Tool): LLMToolDefinition {
 export function buildToolCatalog (allTools: Tool[], nativeTools: LLMToolDefinition[], discovered: string[]): ToolCatalog {
     const tools = allTools.filter(isDeclarable)
 
-    if (tools.length <= FULL_CATALOG_LIMIT) {
+    if (!needsSearch(allTools)) {
         return {
             tools: [...nativeTools.filter(tool => tool.name !== SEARCH_TOOLS), ...tools.map(declare)],
             context: {},

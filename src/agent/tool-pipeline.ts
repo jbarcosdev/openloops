@@ -2,8 +2,9 @@ import { Logger } from '@common/logger'
 import { BaseEntity } from '@common/base/base.entity'
 import { Tool, BaseParams } from '@tools/tool'
 import { AgentAction, truncateForPrompt } from '@services/tasks/entities/agent-action.entity'
-import { AgentTask, RefSources, NATIVE_TOOL_NAMES } from '@services/tasks/entities/agent-task.entity'
+import { AgentTask, RefSources, NATIVE_TOOL_NAMES, SEARCH_TOOLS } from '@services/tasks/entities/agent-task.entity'
 import { Workspace } from './workspace'
+import { needsSearch } from './tool-catalog'
 import { NativeTools } from './native-tools'
 import { WeightedKeyword, ScoredTool } from './utils/rank-tools-by-keywords'
 import { describeShapeWithin } from './utils/describe-shape'
@@ -61,12 +62,26 @@ export class ToolPipeline {
         return `${base} It is a hidden tool of a server, so it cannot be called directly. Run it through the server's invoke tool (${invokers.join(', ')}) like this: ${example}, filling "arguments" with the input schema returned by the server's search.`
     }
 
+    private searchUnavailableMessage (): string {
+        const searchers = this.deps.tools().map(tool => tool.name as string).filter(toolName => toolName.endsWith('__search_tools'))
+        const base = `Tool "${SEARCH_TOOLS}" is not in your tool list: all the external tools you can use are already listed.`
+
+        if (!searchers.length) return `${base} Use the exact tool names from your tool list.`
+
+        return `${base} To find the hidden tools of a server, run that server's own search tool (${searchers.join(', ')}) following its description.`
+    }
+
     requiresApproval (action: AgentAction): boolean {
         const tool = this.findTool(action.name)
         return Boolean(tool?.destructive) && !action.approved
     }
 
     async run (task: AgentTask, action: AgentAction, opts?: ToolPipelineRunOptions): Promise<AgentAction> {
+        if (action.name === SEARCH_TOOLS && !needsSearch(this.deps.tools())) {
+            action.markFailed({ message: this.searchUnavailableMessage(), retryable: false })
+            return action
+        }
+
         if (NATIVE_TOOL_NAMES.includes(action.name as string)) {
             action.answerId = BaseEntity.toObjectId(this.deps.baseParams.answerId)
             await this.nativeTools.run(task, action)
