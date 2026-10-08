@@ -27,6 +27,7 @@ import { AgentWorkspace } from './workspace'
 import { ToolPipeline, ToolPipelineRunOptions } from './tool-pipeline'
 import { NATIVE_TOOLS } from './native-tools'
 import { buildToolCatalog, isDeclarable } from './tool-catalog'
+import { LLMError } from '@clients/llm-error'
 
 export const AGENT_ERROR_CODES = {
     NODE_NOT_FOUND: 'AGENT_NODE_NOT_FOUND',
@@ -181,9 +182,12 @@ export class Agent {
             const message = error?.message ?? String(error)
 
             this.logger.error({ error: message, stack: error?.stack }, '[AGENT] Run failed')
-            await this.failRun(message)
+            const llmError = error instanceof LLMError ? error : undefined
+            const reported = llmError?.userMessage ?? message
 
-            return { data: this.currentChat?._id ? this.currentChat : undefined, error: message }
+            await this.failRun(reported, llmError)
+
+            return { data: this.currentChat?._id ? this.currentChat : undefined, error: reported }
         }
     }
 
@@ -254,11 +258,11 @@ export class Agent {
         await this.disconnectMcpServers()
     }
 
-    private async failRun (message: string) {
+    private async failRun (message: string, llmError?: LLMError) {
         try {
             this.currentChat.state?.setStatus(AgentStatus.FAILED)
             this.currentChat.state?.setCurrentActivity('stopped')
-            this.currentChat.state?.setLastError({ code: AGENT_ERROR_CODES.RUN_FAILED, message, isRetryable: true, timestamp: new Date() })
+            this.currentChat.state?.setLastError({ code: llmError?.code ?? AGENT_ERROR_CODES.RUN_FAILED, message, isRetryable: llmError?.isRetryable ?? true, timestamp: new Date() })
             this.currentChat.addTrace({ node: 'agent', kind: 'agent', reasoning: `Run failed: ${message}` })
             this.currentChat.failTask()
             await this.persist()
