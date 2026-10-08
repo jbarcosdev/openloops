@@ -19,7 +19,7 @@ export interface AgentTaskProps extends BaseEntityProps {
 	status?: TaskStatus
 	goal?: string
 	nextNode?: string
-	threadId?: string
+	threadId?: string | ObjectId
 	previousTaskId?: string
 	summary?: string
 	loopName?: string
@@ -314,7 +314,7 @@ export class AgentTask extends BaseEntity {
 			props.status,
 			props.goal,
 			props.nextNode,
-			props.threadId,
+			BaseEntity.toObjectId(props.threadId),
 			props.previousTaskId,
 			props.summary,
 			props.loopName,
@@ -342,7 +342,7 @@ export class AgentTask extends BaseEntity {
 		public status?: TaskStatus,
 		public goal?: string,
 		public nextNode?: string,
-		public threadId?: string,
+		public threadId?: ObjectId,
 		public previousTaskId?: string,
 		public summary?: string,
 		public loopName?: string,
@@ -369,9 +369,9 @@ export class AgentTask extends BaseEntity {
 			previousTaskId: this.previousTaskId,
 			summary: this.summary,
 			loopName: this.loopName,
-			planCount: this.planCount,
-			planOffset: this.planOffset,
-			executedOffset: this.executedOffset,
+			planCount: this.planCount || undefined,
+			planOffset: this.planOffset || undefined,
+			executedOffset: this.executedOffset || undefined,
 			scratch: this.scratch,
 			opening: this.opening,
 			turns: this.turns.length ? this.turns : undefined,
@@ -748,16 +748,16 @@ export class AgentTask extends BaseEntity {
 		return this.actions.filter(a => a.isTerminal)
 	}
 
-	get lastExecutedAction (): AgentAction | undefined {
-		return this.actions.slice().reverse().find(a => a.isTerminal)
-	}
-
 	get replanCount (): number {
 		return Math.max(0, this.planCount - this.planOffset - 1)
 	}
 
 	get executedSinceOpen (): number {
 		return Math.max(0, this.executedActions.length - this.executedOffset)
+	}
+
+	get lastExecutedAction (): AgentAction | undefined {
+		return this.actions.slice().reverse().find(a => a.isTerminal)
 	}
 
 	executionHistory (maxChars = 1500) {
