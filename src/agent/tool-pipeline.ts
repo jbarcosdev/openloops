@@ -10,6 +10,8 @@ import { describeShapeWithin } from './utils/describe-shape'
 
 const DEFAULT_OFFLOAD_THRESHOLD_CHARS = 100000
 const DEFAULT_STUB_THRESHOLD_CHARS = 4000
+const NOT_FOUND_PATTERN = /not found|does not exist|doesn't exist|no existe|no encontrad/i
+const NOT_FOUND_NOTE = "Harness note: a name that fails once may only be written differently from how the system stores it. Before concluding that it does not exist, check it against the system's own listing or search, and treat any suggestion in the error as a hint to verify, not as the answer."
 const DEFAULT_MAX_STORED_CHARS = 2_000_000
 const DEFAULT_PREVIEW_CHARS = 500
 
@@ -103,6 +105,10 @@ export class ToolPipeline {
         action.answerId = BaseEntity.toObjectId(this.deps.baseParams.answerId)
 
         await action.runTool(tool, args, this.deps.baseParams)
+
+        if (action.status === 'failed' && action.error && NOT_FOUND_PATTERN.test(action.error.message ?? '')) {
+            action.error = { ...action.error, message: `${action.error.message}\n\n${NOT_FOUND_NOTE}` }
+        }
 
         if (action.status === 'completed') await this.offload(task, action)
 
