@@ -32,6 +32,12 @@ export class UpdateChatUseCase extends BaseUseCase<Params, Output> {
 		const chat = Chat.fromJSON({ ...payload, _id: id })
 		chat.setUpdatedBy(currentUser)
 
+		if (payload.toUnset) {
+			const flat = chat.toFlatDocument()
+			const fields = Object.keys(payload.toUnset).filter(field => flat[field] === undefined)
+			if (fields.length) chat.unset(fields as (keyof Chat)[])
+		}
+
 		const result = await this.chatRepository?.update(chat)
 
 		if (!result) {

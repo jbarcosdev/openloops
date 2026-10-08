@@ -43,13 +43,20 @@ function isPlain (value: unknown): value is Doc {
     return Boolean(value) && typeof value === 'object' && Object.getPrototypeOf(value) === Object.prototype
 }
 
-const KEPT_WHEN_UNDEFINED = ['stopRequested']
+function unsetPath (target: Doc, path: string): void {
+    const parts = path.split('.')
+    let node: any = target
+    for (const part of parts.slice(0, -1)) {
+        node = node?.[part]
+        if (node === undefined || node === null) return
+    }
+    delete node[parts[parts.length - 1]]
+}
 
 function mergeDeep (target: Doc, source: Doc): void {
     for (const [key, value] of Object.entries(source)) {
-        if (value === undefined) {
-            if (!KEPT_WHEN_UNDEFINED.includes(key)) delete target[key]
-        } else if (isPlain(value) && isPlain(target[key])) mergeDeep(target[key], value)
+        if (value === undefined) continue
+        if (isPlain(value) && isPlain(target[key])) mergeDeep(target[key], value)
         else target[key] = clone(value)
     }
 }
@@ -107,7 +114,7 @@ export class MemoryCollection {
             else current[key] = clone(value)
         }
 
-        for (const key of unset) delete current[key]
+        for (const key of unset) unsetPath(current, key)
 
         return clone(current)
     }
@@ -163,7 +170,8 @@ export class MemoryDb {
                 return chat
             },
             async update (chat: any) {
-                return db.chats.patch(chat._id, chat.toJSON(), [], { merge: true })
+                const json = chat.toJSON()
+                return db.chats.patch(chat._id, json, Object.keys(json.toUnset ?? {}), { merge: true })
             },
             async findById (id: string, select?: Doc) {
                 return db.chats.findById(id, select)

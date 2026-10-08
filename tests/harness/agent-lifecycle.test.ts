@@ -1,4 +1,5 @@
 import { Agent, AgentStatus, AGENT_ERROR_CODES } from '@harness/index'
+import { AgentTask } from '@services/tasks/entities/agent-task.entity'
 import { useHarness, makeLoop } from '../support'
 
 describe('Agent lifecycle', () => {
@@ -131,5 +132,74 @@ describe('Agent lifecycle', () => {
         agent.addTool({ name: 'x' } as any)
 
         expect(agent.tools.map(t => t.name)).toEqual(['x'])
+    })
+})
+
+describe('Agent with a finished active task', () => {
+    const env = useHarness()
+
+    it.each(['completed', 'failed', 'cancelled', 'abandoned'])('does not resume a %s task when the chat continues', async status => {
+        const loop = makeLoop({ initialNode: 'a', nodes: { a: async ctx => { ctx.chat.state.setStatus(AgentStatus.IDLE) } } })
+        const first = await env.send(new Agent({ loop }), 'one')
+        const chatId = first.data._id.toString()
+
+        const task = AgentTask.factory({ chatId, goal: 'old', status: status as any })
+        env.db.tasks.insert(task.toDocument())
+        env.db.chats.patch(chatId, { state: { activeTaskId: task.id } }, [], { merge: true })
+
+        let seen: unknown = 'unset'
+        const probe = makeLoop({ initialNode: 'a', nodes: { a: async ctx => { seen = ctx.task?.id; ctx.chat.state.setStatus(AgentStatus.IDLE) } } })
+        await env.send(new Agent({ loop: probe }), 'two', chatId)
+
+        expect(seen).toBeUndefined()
+    })
+
+    it('still resumes a task that is waiting for the user', async () => {
+        const loop = makeLoop({ initialNode: 'a', nodes: { a: async ctx => { ctx.chat.state.setStatus(AgentStatus.IDLE) } } })
+        const first = await env.send(new Agent({ loop }), 'one')
+        const chatId = first.data._id.toString()
+
+        const task = AgentTask.factory({ chatId, goal: 'open', status: 'awaiting_user' as any })
+        env.db.tasks.insert(task.toDocument())
+        env.db.chats.patch(chatId, { state: { activeTaskId: task.id } }, [], { merge: true })
+
+        let seen: unknown
+        const probe = makeLoop({ initialNode: 'a', nodes: { a: async ctx => { seen = ctx.task?.id; ctx.chat.state.setStatus(AgentStatus.IDLE) } } })
+        await env.send(new Agent({ loop: probe }), 'two', chatId)
+
+        expect(seen).toBe(task.id)
+    })
+
+    it.each(['completeTask', 'failTask', 'cancelTask'])('removes activeTaskId from the stored chat after %s', async method => {
+        const open = makeLoop({ initialNode: 'a', nodes: { a: async ctx => {
+            ctx.chat.createTask('goal')
+            ctx.chat.state.setStatus(AgentStatus.IDLE)
+        } } })
+        const first = await env.send(new Agent({ loop: open }), 'one')
+        const chatId = first.data._id.toString()
+
+        expect(env.db.chats.findById(chatId)?.state.activeTaskId).toBeDefined()
+
+        const close = makeLoop({ initialNode: 'a', nodes: { a: async ctx => {
+            ctx.chat[method]()
+            ctx.chat.state.setStatus(AgentStatus.IDLE)
+        } } })
+        await env.send(new Agent({ loop: close }), 'two', chatId)
+
+        expect('activeTaskId' in env.db.chats.findById(chatId)!.state).toBe(false)
+    })
+
+    it('keeps the new activeTaskId when a task is created after another one finished in the same run', async () => {
+        const loop = makeLoop({ initialNode: 'a', nodes: { a: async ctx => {
+            ctx.chat.createTask('first')
+            ctx.chat.completeTask()
+            const next = ctx.chat.createTask('second')
+            ctx.chat.state.setStatus(AgentStatus.IDLE)
+            ctx.chat.state.setActiveTaskId(next.id)
+        } } })
+        const first = await env.send(new Agent({ loop }), 'one')
+        const stored = env.db.chats.findById(first.data._id.toString())
+
+        expect(stored?.state.activeTaskId).toBeDefined()
     })
 })

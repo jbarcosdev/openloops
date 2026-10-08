@@ -15,7 +15,7 @@ import {
     updateAgentAction,
     listAgentActionsByTask,
 } from '@services/tasks'
-import { AgentTask } from '@services/tasks/entities/agent-task.entity'
+import { AgentTask, TaskStatus } from '@services/tasks/entities/agent-task.entity'
 import { AgentAction } from '@services/tasks/entities/agent-action.entity'
 import { createAgentTraces } from '@services/traces'
 import { Tool } from '@tools/tool'
@@ -301,6 +301,9 @@ export class Agent {
         }
 
         this.currentChat.tasks = tasks
+
+        const finished = [TaskStatus.COMPLETED, TaskStatus.FAILED, TaskStatus.CANCELLED, TaskStatus.ABANDONED]
+        if (this.currentChat.activeTask?.status && finished.includes(this.currentChat.activeTask.status)) this.currentChat.state?.setActiveTaskId(undefined)
 
         const activeTask = this.currentChat.activeTask
         if (activeTask) await this.hydrateTask(activeTask)
