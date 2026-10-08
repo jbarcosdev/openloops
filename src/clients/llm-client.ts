@@ -13,11 +13,13 @@ import { extractJSON } from '@common/helpers'
 import { createLLMCall } from '@services/llmcalls'
 import { LLMChatParams, LLMResponse } from './llm-types'
 import { toPiContext, fromPiMessage } from './pi-ai-adapter'
+import { LLMError, retryDelayMs } from './llm-error'
 
 const DEFAULT_PROVIDER = 'openai'
 const DEFAULT_MODEL = 'gpt-4o-mini'
 const DEFAULT_TEMPERATURE = 0.7
 const MAX_RETRIES = 4
+const MAX_RATE_LIMIT_WAITS = 2
 
 interface TracedCall {
     origin: string
@@ -77,13 +79,13 @@ export class LLMClient {
         const raw = await this.traced(
             { origin, sessionId, answerId, currentUser, modelName, provider, temperature },
             context,
-            () => toolChoice
+            () => this.waitingOnRateLimit(() => toolChoice
                 ? models.completeSimple(model, context, { ...options, toolChoice })
-                : models.complete(model, context, options),
+                : models.complete(model, context, options)),
         )
 
         if (raw.stopReason === 'error' || raw.stopReason === 'aborted') {
-            throw new Error(`[LLM Client] ${raw.errorMessage ?? `request ${raw.stopReason}`}`)
+            throw LLMError.fromProvider(raw.errorMessage ?? `request ${raw.stopReason}`)
         }
 
         return fromPiMessage(raw)
@@ -120,8 +122,23 @@ export class LLMClient {
         return this.traced(
             { origin, sessionId, answerId, currentUser, modelName, provider, temperature },
             context,
-            () => models.complete(model, context, { temperature, maxRetries: MAX_RETRIES }),
+            () => this.waitingOnRateLimit(() => models.complete(model, context, { temperature, maxRetries: MAX_RETRIES })),
         )
+    }
+
+    private async waitingOnRateLimit (run: () => Promise<AssistantMessage>): Promise<AssistantMessage> {
+        let response = await run()
+
+        for (let waits = 0; waits < MAX_RATE_LIMIT_WAITS && response.stopReason === 'error'; waits++) {
+            const delay = LLMError.fromProvider(response.errorMessage ?? '').code === 'LLM_RATE_LIMITED' ? retryDelayMs(response.errorMessage) : undefined
+            if (!delay) break
+
+            this.logger.warn({ waitMs: delay }, '[LLM Service] Rate limited, waiting before retrying')
+            await new Promise(resolve => setTimeout(resolve, delay))
+            response = await run()
+        }
+
+        return response
     }
 
     private async traced (call: TracedCall, context: Context, run: () => Promise<AssistantMessage>): Promise<AssistantMessage> {
