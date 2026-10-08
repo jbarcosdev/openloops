@@ -11,7 +11,6 @@ const MAX_SAME_TOOL = 6
 const MAX_ANSWER_REJECTIONS = 1
 const WARN_WORKSPACE_TURNS = 3
 const MAX_WORKSPACE_TURNS = 7
-const SUMMARY_CHARS = 400
 const BLOCK_DUPLICATES = false
 
 export class AgiLoop extends AgentLoop {
@@ -125,7 +124,7 @@ export class AgiLoop extends AgentLoop {
         if (stopReason) {
             const answer = task.forceAnswer(`I could not finish the task: ${stopReason}.`)
             ctx.reply(answer)
-            task.summary = answer.slice(0, SUMMARY_CHARS)
+            task.summary = answer
             ctx.chat.failTask(task.id)
             ctx.chat.state?.setStatus(AgentStatus.IDLE)
             ctx.setNextNode(this.nodes.fast_responder)
@@ -174,7 +173,7 @@ export class AgiLoop extends AgentLoop {
 
             task.deliverAnswer()
             ctx.reply(answer)
-            ctx.chat.completeTask(task.id, answer.slice(0, SUMMARY_CHARS))
+            ctx.chat.completeTask(task.id, answer)
             ctx.chat.state?.setStatus(AgentStatus.IDLE)
             ctx.setNextNode(this.nodes.fast_responder)
             return
