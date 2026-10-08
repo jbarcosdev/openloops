@@ -29,6 +29,8 @@ import { NATIVE_TOOLS } from './native-tools'
 import { buildToolCatalog, isDeclarable } from './tool-catalog'
 import { LLMError } from '@clients/llm-error'
 
+const MCP_CONNECT_RETRY_DELAYS_MS = [1000, 2000]
+
 export const AGENT_ERROR_CODES = {
     NODE_NOT_FOUND: 'AGENT_NODE_NOT_FOUND',
     RUN_FAILED: 'AGENT_RUN_FAILED',
@@ -68,6 +70,7 @@ export class Agent {
     private _mcpTools: Tool[] = []
     private _mcps: McpServer[] = []
     private mcpLoading?: Promise<void>
+    private _unavailableSources: string[] = []
     private _preHooks: Function[] = []
     private _postHooks: Function[] = []
 
@@ -159,6 +162,7 @@ export class Agent {
             this.replyCount = 0
             this.mcpLoading = undefined
             this._mcpTools = []
+            this._unavailableSources = []
             this.workspace = undefined
             this.pipeline = undefined
             this.snapshots.clear()
@@ -403,22 +407,35 @@ export class Agent {
             servers = response?.data ?? []
         } catch (error: any) {
             this.logger.error({ error: error?.message ?? error }, '[AGENT] Failed to list MCP servers')
+            this._unavailableSources.push('configured tool servers')
             return
         }
 
         const results = await Promise.allSettled(servers.map(async props => {
             const mcpServer = McpServer.fromJSON(props)
 
-            try {
-                const mcpClient = await mcpServer.connect()
-                const { tools: mcpTools } = await mcpClient.listTools()
-                const tools = mcpTools.map(mcpTool => Tool.fromMcp(mcpTool, mcpClient, { namespace: mcpServer.name ?? 'mcp' }))
+            for (let attempt = 0; attempt <= MCP_CONNECT_RETRY_DELAYS_MS.length; attempt++) {
+                try {
+                    const mcpClient = await mcpServer.connect()
+                    const { tools: mcpTools } = await mcpClient.listTools()
+                    const tools = mcpTools.map(mcpTool => Tool.fromMcp(mcpTool, mcpClient, { namespace: mcpServer.name ?? 'mcp' }))
 
-                return { mcpServer, tools }
-            } catch (error) {
-                this.logger.error({ error, mcpServer: mcpServer.name }, '[AGENT] Failed to connect MCP server')
-                return undefined
+                    return { mcpServer, tools }
+                } catch (error) {
+                    this.logger.error({ error, mcpServer: mcpServer.name, attempt: attempt + 1 }, '[AGENT] Failed to connect MCP server')
+                    await Promise.resolve().then(() => mcpServer.disconnect()).catch(() => undefined)
+
+                    const delay = MCP_CONNECT_RETRY_DELAYS_MS[attempt]
+                    if (delay === undefined) break
+
+                    await new Promise(resolve => setTimeout(resolve, delay))
+                }
             }
+
+            this._unavailableSources.push(mcpServer.name ?? 'mcp')
+            this.currentChat?.addTrace({ node: 'agent', kind: 'agent', reasoning: `Tool source unavailable: ${mcpServer.name ?? 'mcp'}` })
+
+            return undefined
         }))
 
         for (const result of results) {
@@ -643,7 +660,11 @@ export class Agent {
             },
             ensureTools: () => this.ensureTools(),
             searchTools: this.searchTools.bind(this),
-            toolCatalog: async () => buildToolCatalog(await this.ensureTools(), NATIVE_TOOLS, this.currentChat.activeTask?.discoveredToolNames ?? []),
+            toolCatalog: async () => {
+                const catalog = buildToolCatalog(await this.ensureTools(), NATIVE_TOOLS, this.currentChat.activeTask?.discoveredToolNames ?? [])
+
+                return this._unavailableSources.length ? { ...catalog, context: { ...catalog.context, unavailable_sources: this._unavailableSources } } : catalog
+            },
             workspace: this.getWorkspace(),
             runAction: (action, opts) => this.runAction(action, opts),
             requiresApproval: action => this.getPipeline().requiresApproval(action),
