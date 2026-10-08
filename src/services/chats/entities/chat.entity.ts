@@ -122,7 +122,7 @@ export class Chat extends BaseEntity {
 			loopName: this.settings?.loopName,
 		})
 
-		newTask.threadId ??= newTask.id
+		newTask.threadId ??= newTask._id
 
 		this.tasks.push(newTask)
 		this.state?.setActiveTaskId(newTask.id)
