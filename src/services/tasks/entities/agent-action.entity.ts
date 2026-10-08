@@ -27,6 +27,8 @@ export interface AgentActionProps extends BaseEntityProps {
 	approved?: boolean
 	outputRef?: string
 	outputChars?: number
+	callId?: string
+	turn?: number
 	startedAt?: Date
 	completedAt?: Date
 	answerId?: string | ObjectId
@@ -80,6 +82,8 @@ export class AgentAction extends BaseEntity {
 			props.startedAt,
 			props.completedAt,
 			BaseEntity.toObjectId(props.answerId),
+			props.callId,
+			props.turn,
 		)
 	}
 
@@ -103,6 +107,8 @@ export class AgentAction extends BaseEntity {
 		public startedAt?: Date,
 		public completedAt?: Date,
 		public answerId?: ObjectId,
+		public callId?: string,
+		public turn?: number,
 	) {
 		super(props)
 	}
@@ -128,6 +134,8 @@ export class AgentAction extends BaseEntity {
 			startedAt: this.startedAt,
 			completedAt: this.completedAt,
 			answerId: this.answerId,
+			callId: this.callId,
+			turn: this.turn,
 		}
 	}
 
@@ -260,4 +268,6 @@ export interface ActionDescriptor {
 	dependsOn?: string[]
 	reasoning?: string
 	author?: string
+	callId?: string
+	turn?: number
 }

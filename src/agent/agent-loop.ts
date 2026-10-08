@@ -7,6 +7,7 @@ import { AgentAction } from '@services/tasks/entities/agent-action.entity'
 import { Tool, BaseParams } from '@tools/tool'
 import { SkillRunOptions } from '@skills/skill'
 import { WeightedKeyword, ScoredTool } from './utils/rank-tools-by-keywords'
+import type { ToolCatalog } from './tool-catalog'
 import { Workspace } from './workspace'
 import { ToolPipelineRunOptions } from './tool-pipeline'
 
@@ -22,6 +23,7 @@ export interface RunContext {
     tools: Tool[]
     ensureTools: () => Promise<Tool[]>
     searchTools: (keywords: WeightedKeyword[], opts?: { page?: number; limit?: number }) => ScoredTool[]
+    toolCatalog: () => Promise<ToolCatalog>
     workspace: Workspace
     runAction: (action: AgentAction, opts?: ToolPipelineRunOptions) => Promise<AgentAction>
     requiresApproval: (action: AgentAction) => boolean

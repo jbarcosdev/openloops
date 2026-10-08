@@ -1,8 +1,10 @@
 import { container } from 'tsyringe'
 import { extractJSON } from '@common/helpers'
 import { LLMClient } from '@clients/llm-client'
+import { LLMMessage, LLMToolDefinition, LLMToolChoice } from '@clients/llm-types'
 import { CurrentUser, CurrentSession } from '@common/base'
 import type { Chat } from '@services/chats/entities/chat.entity'
+import { buildRuntimeContext } from './runtime-context'
 
 export interface SkillProps {
     name: string
@@ -10,6 +12,7 @@ export interface SkillProps {
     description?: string
     temperature?: number
     systemInstructions: Record<string, any>
+    systemRole?: boolean
 }
 
 export interface SkillRunOptions<TInput = Record<string, any>> {
@@ -23,6 +26,9 @@ export interface SkillRunOptions<TInput = Record<string, any>> {
     contextInjection?: Record<string, any>
     input?: TInput
     chat?: Chat
+    history?: LLMMessage[]
+    tools?: LLMToolDefinition[]
+    toolChoice?: LLMToolChoice
 }
 
 export class Skill<TResponse = Record<string, any>> {
@@ -31,6 +37,7 @@ export class Skill<TResponse = Record<string, any>> {
     readonly description?: string
     readonly temperature?: number
     readonly systemInstructions: Record<string, any>
+    readonly systemRole: boolean
 
     constructor (props: SkillProps) {
         this.name = props.name
@@ -38,92 +45,62 @@ export class Skill<TResponse = Record<string, any>> {
         this.description = props.description
         this.temperature = props.temperature
         this.systemInstructions = props.systemInstructions
+        this.systemRole = props.systemRole ?? false
     }
 
-    async run (options: SkillRunOptions): Promise<TResponse & { responseId: string, costInUsd: number }> {
-        const { provider, modelName, sessionId, answerId, userMessage, currentUser, currentSession, contextInjection = {}, input = {}, chat } = options
+    async run (options: SkillRunOptions): Promise<TResponse & { responseId: string, costInUsd: number, opening?: string }> {
+        const { provider, modelName, sessionId, answerId, userMessage, currentUser, currentSession, contextInjection = {}, input = {}, chat, history = [], tools, toolChoice } = options
 
         try {
             const llmClient = container.resolve(LLMClient)
 
-            const currentCountryCode = currentSession?.location?.country
-            const currentCurrencyCode = currentSession?.currencyCode
-
-            const now = new Date()
-            const timezone = currentSession?.location?.timezone
-            const nowLocal = timezone ? now.toLocaleString('sv-SE', { timeZone: timezone }) : undefined
-
-            const payload = {
-                SYSTEM_INSTRUCTIONS: {
-                    ...this.systemInstructions,
-                },
-                CONTEXT: {
-                    now_utc: new Date().toISOString(),
-                    now_local: nowLocal,
-                    timezone: currentSession?.location?.timezone,
-                    day_of_week: new Date().toLocaleDateString('en-US', { weekday: 'long' }),
-                    ...(chat?.state?.language ? { detected_language: chat.state.language } : {}),
-                    ...(currentUser ?
-                        {
-                            user_details: {
-                                first_name: currentUser?.firstName,
-                                last_name: currentUser?.lastName,
-
-                                // Configuración/Preferencias del usuario
-                                preferred_language: currentUser?.language,
-                                residence_country_code: currentUser?.preferences?.country?.isoCode,
-                                preferred_currency_code: currentUser?.preferences?.currency?.isoCode,
-                            }
-                        } : {}
-                    ),
-                    ...(currentSession ?
-                        {
-                            session_details: {
-                                current_location: {
-                                    country_code: currentCountryCode,
-                                    currency_code: currentCurrencyCode,
-                                    timezone_offset: currentSession?.timezoneOffset,
-                                },
-                                client_info: {
-                                    platform: currentSession?.device?.os,
-                                    brand: currentSession?.device?.brand,
-                                    model: currentSession?.device?.model,
-                                }
-                            }
-                        } : {}
-                    ),
-                    ...contextInjection,
-                },
-                INPUT: {
-                    ...(userMessage ? { user_message: userMessage } : {}),
-                    ...input,
-                },
+            const context = {
+                ...buildRuntimeContext({ currentUser, currentSession, chat }),
+                ...contextInjection,
             }
 
-            const response = await llmClient.complete({
-                provider: provider as any,
+            const inputPayload = {
+                ...(userMessage ? { user_message: userMessage } : {}),
+                ...input,
+            }
+
+            const continuing = history.length > 0
+
+            const opening = continuing ? undefined : JSON.stringify(this.systemRole
+                ? { CONTEXT: context, INPUT: inputPayload }
+                : { SYSTEM_INSTRUCTIONS: { ...this.systemInstructions }, CONTEXT: context, INPUT: inputPayload })
+
+            const conversation: LLMMessage[] = continuing ? history : [{ role: 'user', content: opening! }]
+
+            const messages: LLMMessage[] = this.systemRole
+                ? [{ role: 'system', content: JSON.stringify(this.systemInstructions) }, ...conversation]
+                : conversation
+
+            const response = await llmClient.chat({
+                provider,
                 modelName,
                 sessionId,
                 answerId,
                 origin: this.name,
                 currentUser,
-                messages: [
-                    {
-                        role: 'user',
-                        timestamp: Date.now(),
-                        content: [{ type: 'text', text: JSON.stringify(payload) }],
-                    },
-                ],
+                messages,
+                tools,
+                toolChoice,
                 temperature: this.temperature ?? 0.7,
             })
 
+            const parsed = this.parseJsonResponse<TResponse>(response.text)
+
             const result = {
-                ...this.parseJsonResponse<TResponse>(response),
+                ...parsed,
                 responseId: response.responseId ?? '',
-                costInUsd: response?.usage?.cost?.total,
+                costInUsd: response.usage.costInUsd,
+                ...(opening ? { opening } : {}),
             }
 
-            chat?.addTrace({ node: this.name, reasoning: (result as any)?.reasoning })
+            const reasoning = (result as any)?.reasoning
+
+            chat?.addTrace({ node: this.name, reasoning })
 
             return result
         } catch (error: any) {
@@ -132,10 +109,7 @@ export class Skill<TResponse = Record<string, any>> {
         }
     }
 
-    private parseJsonResponse<T> (response: any): T {
-        const rawContent = response?.content ?? []
-        const text = rawContent[0]?.type === 'text' ? rawContent[0].text : undefined
-
+    private parseJsonResponse<T> (text?: string): T {
         if (!text) throw new Error('LLM response text is empty or invalid')
 
         const content = extractJSON(text)

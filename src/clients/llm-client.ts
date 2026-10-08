@@ -11,6 +11,22 @@ import { CurrentUser } from '@common/base'
 import { Logger } from '@common/logger'
 import { extractJSON } from '@common/helpers'
 import { createLLMCall } from '@services/llmcalls'
+import { LLMChatParams, LLMResponse } from './llm-types'
+import { toPiContext, fromPiMessage } from './pi-ai-adapter'
+
+const DEFAULT_PROVIDER = 'openai'
+const DEFAULT_MODEL = 'gpt-4o-mini'
+const DEFAULT_TEMPERATURE = 0.7
+
+interface TracedCall {
+    origin: string
+    sessionId: string
+    answerId: string
+    currentUser?: CurrentUser
+    modelName: string
+    provider: string
+    temperature: number
+}
 
 export class LLMClient {
     private readonly logger = new Logger()
@@ -34,6 +50,47 @@ export class LLMClient {
         }
     }
 
+    async chat (params: LLMChatParams): Promise<LLMResponse> {
+        const {
+            origin,
+            sessionId,
+            answerId,
+            currentUser,
+            messages,
+            tools,
+            toolChoice,
+            provider = DEFAULT_PROVIDER,
+            modelName = DEFAULT_MODEL,
+            temperature = DEFAULT_TEMPERATURE,
+        } = params
+
+        const { builtinModels } = await import('@earendil-works/pi-ai/providers/all')
+        const models = builtinModels()
+        const model = models.getModel(provider as KnownProvider, modelName as never)
+
+        if (!model) throw new Error('[LLM Client] model not found')
+
+        const context = toPiContext({ messages, tools }, model)
+        const options = { temperature, ...(sessionId ? { sessionId } : {}) }
+
+        const raw = await this.traced(
+            { origin, sessionId, answerId, currentUser, modelName, provider, temperature },
+            context,
+            () => toolChoice
+                ? models.completeSimple(model, context, { ...options, toolChoice })
+                : models.complete(model, context, options),
+        )
+
+        if (raw.stopReason === 'error' || raw.stopReason === 'aborted') {
+            throw new Error(`[LLM Client] ${raw.errorMessage ?? `request ${raw.stopReason}`}`)
+        }
+
+        return fromPiMessage(raw)
+    }
+
+    /**
+     * @deprecated Use chat(). Kept so callers that still depend on the provider message shape keep working.
+     */
     async complete (params: LLMCompletionParams): Promise<AssistantMessage> {
         const { builtinModels } = await import('@earendil-works/pi-ai/providers/all')
         const models = builtinModels()
@@ -45,9 +102,9 @@ export class LLMClient {
             currentUser,
             systemPrompt,
             messages,
-            provider = 'openai',
-            modelName = 'gpt-4o-mini',
-            temperature = 0.7
+            provider = DEFAULT_PROVIDER,
+            modelName = DEFAULT_MODEL,
+            temperature = DEFAULT_TEMPERATURE
         } = params ?? {}
 
         const model = models.getModel(provider, modelName as never)
@@ -59,11 +116,22 @@ export class LLMClient {
             messages,
         }
 
+        return this.traced(
+            { origin, sessionId, answerId, currentUser, modelName, provider, temperature },
+            context,
+            () => models.complete(model, context, { temperature }),
+        )
+    }
+
+    private async traced (call: TracedCall, context: Context, run: () => Promise<AssistantMessage>): Promise<AssistantMessage> {
+        const { origin, sessionId, answerId, currentUser, modelName, provider, temperature } = call
+
         this.logger.debug({
             origin,
             context: {
                 ...context,
-                messages: this.formatMessagesForLog(messages),
+                ...(context.systemPrompt ? { systemPrompt: this.formatTextForLog(context.systemPrompt) } : {}),
+                messages: this.formatMessagesForLog(context.messages),
             }
         }, '[LLM Service] context')
 
@@ -86,9 +154,7 @@ export class LLMClient {
         })
 
         try {
-            const response = await models.complete(model, context, {
-                temperature,
-            })
+            const response = await run()
 
             generation?.end({
                 output: response,
@@ -139,21 +205,25 @@ export class LLMClient {
 
     private formatContentForLog (records?: any[]): any[] | undefined {
         return records?.map((record: any) => {
-            const text = record?.text
-            const extracted = extractJSON(text)
-            const isJson = Object.keys(extracted).length > 0
+            if (record?.type !== 'text') return record
 
-            return {
-                ...record,
-                text: isJson ? extracted : text
-            }
+            return { ...record, text: this.formatTextForLog(record?.text) }
         })
+    }
+
+    private formatTextForLog (text: any): any {
+        if (typeof text !== 'string') return text
+
+        const extracted = extractJSON(text)
+        const isJson = extracted && Object.keys(extracted).length > 0
+
+        return isJson ? extracted : text
     }
 
     private formatMessagesForLog (messages: Message[]): Message[] {
         return messages.map((message: any) => ({
             ...message,
-            content: this.formatContentForLog(message?.content) ?? message?.content
+            content: Array.isArray(message?.content) ? this.formatContentForLog(message.content) : this.formatTextForLog(message?.content)
         }))
     }
 }

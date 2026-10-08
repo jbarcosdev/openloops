@@ -2,11 +2,13 @@ import { Logger } from '@common/logger'
 import { BaseEntity } from '@common/base/base.entity'
 import { Tool, BaseParams } from '@tools/tool'
 import { AgentAction, truncateForPrompt } from '@services/tasks/entities/agent-action.entity'
-import { AgentTask, RefSources } from '@services/tasks/entities/agent-task.entity'
+import { AgentTask, RefSources, NATIVE_TOOL_NAMES } from '@services/tasks/entities/agent-task.entity'
 import { Workspace } from './workspace'
+import { NativeTools } from './native-tools'
+import { WeightedKeyword, ScoredTool } from './utils/rank-tools-by-keywords'
 import { describeShapeWithin } from './utils/describe-shape'
 
-const DEFAULT_OFFLOAD_THRESHOLD_CHARS = 6000
+const DEFAULT_OFFLOAD_THRESHOLD_CHARS = 30000
 const DEFAULT_MAX_STORED_CHARS = 2_000_000
 const DEFAULT_PREVIEW_CHARS = 500
 
@@ -23,6 +25,7 @@ export interface ToolPipelineRunOptions {
 interface ToolPipelineDeps {
     workspace: Workspace
     tools: () => Tool[]
+    searchTools: (keywords: WeightedKeyword[], opts?: { page?: number; limit?: number }) => ScoredTool[]
     baseParams: BaseParams
     logger: Logger
 }
@@ -31,8 +34,10 @@ export class ToolPipeline {
     private readonly offloadThresholdChars: number
     private readonly maxStoredChars: number
     private readonly previewChars: number
+    private readonly nativeTools: NativeTools
 
     constructor (private readonly deps: ToolPipelineDeps, options?: ToolPipelineOptions) {
+        this.nativeTools = new NativeTools({ workspace: deps.workspace, searchTools: deps.searchTools })
         this.offloadThresholdChars = options?.offloadThresholdChars ?? DEFAULT_OFFLOAD_THRESHOLD_CHARS
         this.maxStoredChars = options?.maxStoredChars ?? DEFAULT_MAX_STORED_CHARS
         this.previewChars = options?.previewChars ?? DEFAULT_PREVIEW_CHARS
@@ -44,6 +49,12 @@ export class ToolPipeline {
     }
 
     async run (task: AgentTask, action: AgentAction, opts?: ToolPipelineRunOptions): Promise<AgentAction> {
+        if (NATIVE_TOOL_NAMES.includes(action.name as string)) {
+            action.answerId = BaseEntity.toObjectId(this.deps.baseParams.answerId)
+            await this.nativeTools.run(task, action)
+            return action
+        }
+
         const tool = this.findTool(action.name)
 
         if (!tool) {

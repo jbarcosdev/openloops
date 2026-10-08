@@ -19,13 +19,14 @@ import { AgentTask } from '@services/tasks/entities/agent-task.entity'
 import { AgentAction } from '@services/tasks/entities/agent-action.entity'
 import { createAgentTraces } from '@services/traces'
 import { Tool } from '@tools/tool'
-import { webSearchTool, callAiTool } from '@tools/core'
 import { listMcpServersByUser } from '@services/mcp-servers'
 import { rankToolsByKeywords, WeightedKeyword, ScoredTool } from './utils/rank-tools-by-keywords'
 import { AgentLoop, AgentLoopNode, RunContext } from './agent-loop'
 import { AgentStatus } from './agent-state'
 import { AgentWorkspace } from './workspace'
 import { ToolPipeline, ToolPipelineRunOptions } from './tool-pipeline'
+import { NATIVE_TOOLS } from './native-tools'
+import { buildToolCatalog, isDeclarable } from './tool-catalog'
 
 export const AGENT_ERROR_CODES = {
     NODE_NOT_FOUND: 'AGENT_NODE_NOT_FOUND',
@@ -564,15 +565,7 @@ export class Agent {
         const page = opts?.page ?? 1
         const limit = opts?.limit ?? 5
 
-        const matchedTools = rankToolsByKeywords(keywords, this.tools)
-
-        if (matchedTools.length <= 5 && !matchedTools.some(t => t.toolName === webSearchTool.name)) {
-            matchedTools.push({ toolName: webSearchTool.name, score: 0.1, matchedKeywords: [], tool: webSearchTool })
-        }
-
-        if (matchedTools.length <= 5 && !matchedTools.some(t => t.toolName === callAiTool.name)) {
-            matchedTools.push({ toolName: callAiTool.name, score: 0.1, matchedKeywords: [], tool: callAiTool })
-        }
+        const matchedTools = rankToolsByKeywords(keywords, this.tools.filter(isDeclarable))
 
         const startIndex = (page - 1) * limit
         return matchedTools.slice(startIndex, startIndex + limit)
@@ -602,6 +595,7 @@ export class Agent {
         this.pipeline ??= new ToolPipeline({
             workspace: this.getWorkspace(),
             tools: () => this.tools,
+            searchTools: (keywords, opts) => this.searchTools(keywords, opts),
             baseParams: this.baseParams,
             logger: this.logger,
         })
@@ -645,6 +639,7 @@ export class Agent {
             },
             ensureTools: () => this.ensureTools(),
             searchTools: this.searchTools.bind(this),
+            toolCatalog: async () => buildToolCatalog(await this.ensureTools(), NATIVE_TOOLS, this.currentChat.activeTask?.discoveredToolNames ?? []),
             workspace: this.getWorkspace(),
             runAction: (action, opts) => this.runAction(action, opts),
             requiresApproval: action => this.getPipeline().requiresApproval(action),

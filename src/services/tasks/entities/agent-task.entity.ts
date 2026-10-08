@@ -1,6 +1,7 @@
 import { ObjectId } from 'mongodb'
 import { BaseEntity, BaseEntityProps } from '@common/base/base.entity'
-import { AgentAction, ActionDescriptor } from './agent-action.entity'
+import type { LLMMessage } from '@clients/llm-types'
+import { AgentAction, ActionDescriptor, truncateForPrompt } from './agent-action.entity'
 
 export enum TaskStatus {
 	PENDING = 'pending',
@@ -26,6 +27,25 @@ export interface AgentTaskProps extends BaseEntityProps {
 	planOffset?: number
 	executedOffset?: number
 	scratch?: Record<string, any>
+	opening?: string
+	turns?: TurnRecord[]
+}
+
+export interface TurnRecord {
+	turn: number
+	reasoning?: string
+	state?: Record<string, any>
+}
+
+export interface ActionRequest {
+	tool?: string
+	arguments?: Record<string, any> | string
+}
+
+export interface TurnOutput {
+	reasoning?: string
+	state?: Record<string, any>
+	actions?: ActionRequest[]
 }
 
 export interface PlanStepDescriptor {
@@ -46,6 +66,19 @@ export interface CollectedRefs {
 	contexts: string[]
 }
 
+export const ASK_USER = 'ask_user'
+export const SEARCH_TOOLS = 'search_tools'
+export const RESPOND = 'respond'
+export const NATIVE_TOOL_NAMES = [SEARCH_TOOLS, 'read_context', 'save_context', ASK_USER, RESPOND]
+
+const INVALID_RESPONSE = 'invalid_response'
+const INVALID_ACTION = 'invalid_action'
+const STATE_KEYS = 12
+const STATE_VALUE_CHARS = 800
+const REASONING_CHARS = 1500
+
+const TOOL_RESULT_CHARS = 30000
+
 const PATH = '((?:\\.[\\w-]+|\\[\\d+\\])*)'
 const STEP_REF = new RegExp(`^\\{\\{step_([\\w-]+)\\.output${PATH}\\}\\}$`)
 const STEP_REF_GLOBAL = new RegExp(`\\{\\{step_([\\w-]+)\\.output${PATH}\\}\\}`, 'g')
@@ -53,6 +86,35 @@ const CONTEXT_REF = new RegExp(`^\\{\\{context\\.([\\w-]+)${PATH}\\}\\}$`)
 const CONTEXT_REF_GLOBAL = new RegExp(`\\{\\{context\\.([\\w-]+)${PATH}\\}\\}`, 'g')
 const LEFTOVER_REF = /\{\{\s*(?:step_|context\.)/
 const CLEARABLE_FIELDS = ['nextNode', 'scratch'] as const
+
+function isNativeTool (name?: string): boolean {
+	return NATIVE_TOOL_NAMES.includes(name as string)
+}
+
+function capState (state: any): Record<string, any> | undefined {
+	if (!state || typeof state !== 'object' || Array.isArray(state)) return undefined
+
+	const capped: Record<string, any> = {}
+
+	for (const key of Object.keys(state).slice(0, STATE_KEYS)) {
+		capped[key] = truncateForPrompt(state[key], STATE_VALUE_CHARS)
+	}
+
+	return capped
+}
+
+function parseArguments (value: any): { args: Record<string, any>; invalid?: string } {
+	let args = value
+
+	if (typeof args === 'string') {
+		try { args = JSON.parse(args) } catch { return { args: {}, invalid: '"arguments" must be a JSON object' } }
+	}
+
+	if (args === undefined || args === null) return { args: {} }
+	if (typeof args !== 'object' || Array.isArray(args)) return { args: {}, invalid: '"arguments" must be a JSON object' }
+
+	return { args }
+}
 
 function stringifyValue (value: any): string {
 	return typeof value === 'object' ? JSON.stringify(value) : String(value)
@@ -145,6 +207,8 @@ export class AgentTask extends BaseEntity {
 			props.planOffset ?? 0,
 			props.executedOffset ?? 0,
 			props.scratch,
+			props.opening,
+			props.turns ?? [],
 		)
 	}
 
@@ -169,6 +233,8 @@ export class AgentTask extends BaseEntity {
 		public planOffset: number = 0,
 		public executedOffset: number = 0,
 		public scratch?: Record<string, any>,
+		public opening?: string,
+		public turns: TurnRecord[] = [],
 	) {
 		super(props)
 	}
@@ -188,6 +254,8 @@ export class AgentTask extends BaseEntity {
 			planOffset: this.planOffset,
 			executedOffset: this.executedOffset,
 			scratch: this.scratch,
+			opening: this.opening,
+			turns: this.turns.length ? this.turns : undefined,
 		}
 	}
 
@@ -233,6 +301,8 @@ export class AgentTask extends BaseEntity {
 			dependsOn: descriptor.dependsOn,
 			reasoning: descriptor.reasoning,
 			author: descriptor.author,
+			callId: descriptor.callId,
+			turn: descriptor.turn,
 		})
 		this.actions.push(action)
 		return action
@@ -297,7 +367,170 @@ export class AgentTask extends BaseEntity {
 				.filter(a => a.status === 'completed')
 				.flatMap(a => [a.id, a.stepId].filter(Boolean) as string[])
 		)
-		return this.actions.filter(a => a.isReady && a.dependenciesSatisfiedBy(completedRefs))
+		return this.actions.filter(a => a.isReady && a.name !== ASK_USER && a.name !== RESPOND && a.dependenciesSatisfiedBy(completedRefs))
+	}
+
+	get pendingQuestion (): string | undefined {
+		const ask = this.actions.find(a => a.name === ASK_USER && a.status === 'pending')
+		return ask ? String(ask.args?.question ?? '') : undefined
+	}
+
+	get turnCount (): number {
+		return this.turns.length
+	}
+
+	get toolCallCount (): number {
+		return this.actions.filter(a => a.turn !== undefined && a.isTerminal && a.name !== ASK_USER && a.name !== RESPOND).length
+	}
+
+	answerQuestion (answer: string): boolean {
+		const ask = this.actions.find(a => a.name === ASK_USER && a.status === 'pending')
+		if (!ask) return false
+
+		ask.markCompleted({ answer })
+		return true
+	}
+
+	get state (): Record<string, any> | undefined {
+		return this.turns.length ? this.turns[this.turns.length - 1].state : undefined
+	}
+
+	get pendingAnswer (): string | undefined {
+		const respond = this.actions.find(a => a.name === RESPOND && a.status === 'pending')
+		return respond ? String(respond.args?.answer ?? '') : undefined
+	}
+
+	forceAnswer (fallback: string): string {
+		const answer = this.pendingAnswer || fallback
+		this.skipPending()
+		return answer
+	}
+
+	static answerFrom (output: TurnOutput): string | undefined {
+		const respond = (Array.isArray(output.actions) ? output.actions : []).find(request => request?.tool === RESPOND)
+		const { args } = parseArguments(respond?.arguments)
+		const answer = String(args.answer ?? '').trim()
+		return answer || undefined
+	}
+
+	deliverAnswer (): void {
+		this.actions.filter(a => a.name === RESPOND && a.status === 'pending').forEach(a => a.markCompleted({ delivered: true }))
+	}
+
+	addTurn (output: TurnOutput, opts?: { author?: string }): AgentAction[] {
+		const turn = this.turns.reduce((max, t) => Math.max(max, t.turn), 0) + 1
+
+		this.turns.push({ turn, reasoning: output.reasoning?.toString().trim().slice(0, REASONING_CHARS) || undefined, state: capState(output.state) })
+
+		const requests = Array.isArray(output.actions) ? output.actions : []
+
+		if (!requests.length) {
+			const action = this.addAction({ name: INVALID_RESPONSE, args: {}, stepId: `${turn}_1`, turn, author: opts?.author })
+			action.markFailed({ message: 'Your response had no actions. Return at least one action; to finish the task use the respond tool with your final answer.', retryable: false })
+			return [action]
+		}
+
+		return requests.map((request, position) => {
+			const name = typeof request?.tool === 'string' && request.tool.trim() ? request.tool.trim() : undefined
+			const { args, invalid: badArguments } = parseArguments(request?.arguments)
+
+			const action = this.addAction({ name: name ?? INVALID_ACTION, args, stepId: `${turn}_${position + 1}`, turn, author: opts?.author })
+
+			const invalid = !name ? 'Each action needs a "tool" name'
+				: badArguments ? badArguments
+				: name === ASK_USER && !String(args.question ?? '').trim() ? 'ask_user requires a non-empty "question"'
+				: name === RESPOND && !String(args.answer ?? '').trim() ? 'respond requires a non-empty "answer"'
+				: undefined
+
+			if (invalid) action.markFailed({ message: invalid, retryable: false })
+
+			return action
+		})
+	}
+
+	history (notice?: Record<string, any>): LLMMessage[] {
+		if (!this.opening) return []
+
+		const byTurn = new Map<number, AgentAction[]>()
+
+		for (const action of this.actions) {
+			if (action.turn === undefined) continue
+			byTurn.set(action.turn, [...(byTurn.get(action.turn) ?? []), action])
+		}
+
+		const messages: LLMMessage[] = [{ role: 'user', content: this.opening }]
+
+		for (const record of this.turns) {
+			const actions = byTurn.get(record.turn) ?? []
+			if (!actions.length || !actions.every(a => a.isTerminal)) continue
+
+			messages.push({
+				role: 'assistant',
+				content: JSON.stringify({
+					reasoning: record.reasoning,
+					...(record.state ? { state: record.state } : {}),
+					actions: actions.filter(a => a.name !== INVALID_RESPONSE).map(a => ({ tool: a.name, arguments: a.args ?? {} })),
+				}),
+			})
+
+			messages.push({
+				role: 'user',
+				content: JSON.stringify({
+					OBSERVATIONS: actions.map(action => {
+						const ref = action.stepId ?? action.id
+						if (action.status === 'skipped') return { ref, tool: action.name, status: 'skipped' }
+
+						return action.status === 'failed'
+							? { ref, tool: action.name, status: 'failed', error: action.error?.message }
+							: { ref, tool: action.name, status: 'completed', output: action.outputRef ? action.output : truncateForPrompt(action.structuredOutput, TOOL_RESULT_CHARS) }
+					}),
+				}),
+			})
+		}
+
+		if (notice && Object.keys(notice).length) {
+			const last = messages[messages.length - 1]
+			let content: Record<string, any> = {}
+
+			try { content = JSON.parse(String(last.content)) } catch { content = {} }
+
+			messages[messages.length - 1] = { role: 'user', content: JSON.stringify({ ...content, HARNESS: notice }) }
+		}
+
+		return messages
+	}
+
+	get sameToolStreak (): { name?: string; count: number } {
+		const turns = new Map<number, Set<string>>()
+
+		for (const action of this.actions) {
+			if (action.turn === undefined || !action.name) continue
+			turns.set(action.turn, (turns.get(action.turn) ?? new Set()).add(action.name))
+		}
+
+		let name: string | undefined
+		let count = 0
+
+		for (const turn of Array.from(turns.keys()).sort((a, b) => b - a)) {
+			const names = turns.get(turn)!
+			const only = names.size === 1 ? Array.from(names)[0] : undefined
+
+			if (!only || (name && only !== name)) break
+
+			name = only
+			count++
+		}
+
+		return { name, count }
+	}
+
+	get discoveredToolNames (): string[] {
+		const names = this.actions
+			.filter(a => a.name === SEARCH_TOOLS && a.status === 'completed')
+			.flatMap(a => (a.structuredOutput?.tools ?? []).map((tool: any) => tool?.name))
+			.filter((name: any) => typeof name === 'string')
+
+		return Array.from(new Set<string>(names))
 	}
 
 	get failedActions (): AgentAction[] {
