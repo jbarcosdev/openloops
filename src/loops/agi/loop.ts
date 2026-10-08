@@ -94,6 +94,7 @@ export class AgiLoop extends AgentLoop {
             history: task.history({
                 budget: { turns_left: MAX_TURNS - task.turnCount, tool_calls_left: MAX_TOOL_CALLS - task.toolCallCount },
                 ...(streak.count >= WARN_SAME_TOOL ? { warning: `You ran ${streak.name} ${streak.count} turns in a row. Do not repeat it with small rewordings: follow what its results suggest, change approach, or tell the user what is missing.` } : {}),
+                ...(task.known ? { known: task.known } : {}),
                 ...(stopReason ? { stop_reason: stopReason } : {}),
             }),
             tools: catalog.tools,

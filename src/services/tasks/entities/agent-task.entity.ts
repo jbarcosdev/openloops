@@ -29,6 +29,7 @@ export interface AgentTaskProps extends BaseEntityProps {
 	scratch?: Record<string, any>
 	opening?: string
 	turns?: TurnRecord[]
+	known?: Record<string, string>
 }
 
 export interface TurnRecord {
@@ -46,6 +47,7 @@ export interface TurnOutput {
 	reasoning?: string
 	state?: Record<string, any>
 	actions?: ActionRequest[]
+	learned?: { key?: string; value?: any }[]
 }
 
 export interface PlanStepDescriptor {
@@ -75,6 +77,9 @@ const TOOL_NAMESPACE = /^functions\./
 const INVALID_RESPONSE = 'invalid_response'
 const INVALID_ACTION = 'invalid_action'
 const STATE_KEYS = 12
+const KNOWN_ENTRIES = 40
+const KNOWN_KEY_CHARS = 80
+const KNOWN_VALUE_CHARS = 300
 const STATE_VALUE_CHARS = 800
 const REASONING_CHARS = 1500
 
@@ -235,6 +240,7 @@ export class AgentTask extends BaseEntity {
 			props.scratch,
 			props.opening,
 			props.turns ?? [],
+			props.known,
 		)
 	}
 
@@ -261,6 +267,7 @@ export class AgentTask extends BaseEntity {
 		public scratch?: Record<string, any>,
 		public opening?: string,
 		public turns: TurnRecord[] = [],
+		public known?: Record<string, string>,
 	) {
 		super(props)
 	}
@@ -282,6 +289,7 @@ export class AgentTask extends BaseEntity {
 			scratch: this.scratch,
 			opening: this.opening,
 			turns: this.turns.length ? this.turns : undefined,
+			known: this.known && Object.keys(this.known).length ? this.known : undefined,
 		}
 	}
 
@@ -444,8 +452,33 @@ export class AgentTask extends BaseEntity {
 		this.actions.filter(a => a.name === RESPOND && a.status === 'pending').forEach(a => a.markCompleted({ delivered: true }))
 	}
 
+	remember (learned: any): void {
+		if (!Array.isArray(learned)) return
+
+		const known: Record<string, string> = { ...this.known }
+
+		for (const item of learned) {
+			const key = typeof item?.key === 'string' ? item.key.trim().slice(0, KNOWN_KEY_CHARS) : ''
+			const value = item?.value === undefined || item?.value === null ? '' : stringifyValue(item.value).trim().slice(0, KNOWN_VALUE_CHARS)
+
+			if (!key || !value) continue
+
+			const existing = Object.keys(known).find(candidate => candidate.toLowerCase() === key.toLowerCase())
+			if (existing) delete known[existing]
+
+			known[key] = value
+		}
+
+		const keys = Object.keys(known)
+		for (const key of keys.slice(0, Math.max(0, keys.length - KNOWN_ENTRIES))) delete known[key]
+
+		this.known = Object.keys(known).length ? known : undefined
+	}
+
 	addTurn (output: TurnOutput, opts?: { author?: string; declaredTools?: string[] }): AgentAction[] {
 		const turn = this.turns.reduce((max, t) => Math.max(max, t.turn), 0) + 1
+
+		this.remember(output.learned)
 
 		this.turns.push({ turn, reasoning: output.reasoning?.toString().trim().slice(0, REASONING_CHARS) || undefined, state: capState(output.state) })
 
