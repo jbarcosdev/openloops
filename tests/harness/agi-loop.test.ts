@@ -1,3 +1,4 @@
+import { ObjectId } from 'mongodb'
 import { AgentStatus } from '@harness/agent-state'
 import { LLMError } from '@clients/llm-error'
 import { NATIVE_TOOL_NAMES } from '@services/tasks/entities/agent-task.entity'
@@ -530,6 +531,33 @@ describe('AgiLoop', () => {
             expect(context.chat_history.map((m: any) => m.content)).toEqual(['hi', 'Hello there'])
             expect(context.last_completed_task.goal).toBe('hi')
             expect(llm.call(1).messages).toHaveLength(2)
+        })
+
+        it('stores the thread id of each task as an ObjectId of its own task', async () => {
+            const agent = env.agent(w.tools)
+            llm.script(say('Hello there'))
+            const result = await env.send(agent, 'hi')
+
+            llm.script(say('Second answer'))
+            await env.send(agent, 'again', result.data._id.toString())
+
+            const stored = env.db.tasks.all()
+
+            expect(stored).toHaveLength(2)
+            for (const doc of stored) {
+                expect(doc.threadId).toBeInstanceOf(ObjectId)
+                expect(String(doc.threadId)).toBe(String(doc._id))
+            }
+        })
+    })
+
+    describe('final answer', () => {
+        it('keeps the whole answer as the task summary', async () => {
+            const long = `Result: ${'x'.repeat(3000)} end`
+            llm.script(say(long))
+            await env.send(env.agent(w.tools), 'hi')
+
+            expect(env.tasks()[0].summary).toBe(long)
         })
     })
 

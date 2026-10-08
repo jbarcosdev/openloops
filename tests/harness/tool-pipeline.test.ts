@@ -298,3 +298,54 @@ describe('identifiers in arguments', () => {
         expect((await run('z__audit', { site: 'Belmont Dev Warehouse', page: 1 })).status).toBe('completed')
     })
 })
+
+describe('a plan-execute loop on top of the pipeline', () => {
+    const got: string[] = []
+    const search = makeTool({ name: 'p_search', required: ['q'], properties: { q: { type: 'string' } }, handler: async () => structured({ results: [{ id: 'id1' }, { id: 'id2' }] }) })
+    const fetch = makeTool({ name: 'p_get', required: ['id'], properties: { id: { type: 'string' } }, handler: async (params: any) => { got.push(params.id); return { got: params.id } } })
+
+    beforeEach(() => {
+        got.length = 0
+    })
+
+    async function execute (built: ReturnType<typeof build>) {
+        const completed = new Set<string>()
+        for (let round = 0; round < 10; round++) {
+            const ready = built.task.actions.filter(a => a.isReady && a.dependenciesSatisfiedBy(completed))
+            if (!ready.length) break
+            for (const action of ready) {
+                await built.pipeline.run(built.task, action)
+                if (action.status === 'completed' && action.stepId) completed.add(action.stepId)
+            }
+        }
+    }
+
+    it('runs the steps in dependency order and resolves references between them', async () => {
+        const built = build([search, fetch])
+        built.task.addPlan([
+            { stepId: 2, name: 'p_get', args: { id: '{{step_1.output.results[1].id}}' }, dependsOn: [1] },
+            { stepId: 1, name: 'p_search', args: { q: 'x' } },
+        ])
+        await execute(built)
+
+        expect(built.task.actions.map(a => [a.stepId, a.status])).toEqual([['1_2', 'completed'], ['1_1', 'completed']])
+        expect(got).toEqual(['id2'])
+    })
+
+    it('keeps ids apart when the plan is replaced and skips what was pending', async () => {
+        const built = build([search, fetch])
+        const first = built.task.addPlan([{ stepId: 1, name: 'p_search', args: { q: 'x' } }, { stepId: 2, name: 'p_get', args: { id: '{{step_1.output.results[0].id}}' }, dependsOn: [1] }])
+        const second = built.task.addPlan([{ stepId: 1, name: 'p_search', args: { q: 'y' } }, { stepId: 2, name: 'p_get', args: { id: '{{step_1.output.results[0].id}}' }, dependsOn: [1] }])
+
+        expect(first.map(a => a.stepId)).toEqual(['1_1', '1_2'])
+        expect(second.map(a => a.stepId)).toEqual(['2_1', '2_2'])
+        expect(second[1].args?.id).toBe('{{step_2_1.output.results[0].id}}')
+        expect(second[1].dependsOn).toEqual(['2_1'])
+        expect(first.every(a => a.status === 'skipped')).toBe(true)
+
+        await execute(built)
+
+        expect(second.map(a => a.status)).toEqual(['completed', 'completed'])
+        expect(got).toEqual(['id1'])
+    })
+})
