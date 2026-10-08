@@ -24,8 +24,8 @@
       "default": "./dist/common/index.js"
     },
     "./core": {
-      "types": "./dist/agent/index.d.ts",
-      "default": "./dist/agent/index.js"
+      "types": "./dist/harness/index.d.ts",
+      "default": "./dist/harness/index.js"
     },
     "./clients": {
       "types": "./dist/clients/index.d.ts",

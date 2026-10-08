@@ -1,4 +1,4 @@
-import { AgentLoop, AgentStatus, RunContext } from '@agent/index'
+import { AgentLoop, AgentStatus, RunContext } from '@harness/index'
 import {
     fastResponder,
     actionPlanner,
@@ -53,11 +53,7 @@ export class PlanExecuteLoop extends AgentLoop {
         const task = ctx.task!
 
         task.skipPending()
-        ctx.chat.context.addContext({
-            taskId: task.id,
-            meta: { name: 'stop_reason', type: 'artifact', shortDescription: 'Why the task was stopped before completion' },
-            content: reason,
-        })
+        task.setScratch('stop_reason', reason)
         ctx.setNextNode(this.nodes.final_responder)
     }
 
@@ -109,15 +105,13 @@ export class PlanExecuteLoop extends AgentLoop {
 
         ctx.chat.state?.setLanguage(result.detected_language)
 
-        const task = result.is_continuation && lastCompletedTask
-            ? ctx.chat.reopenTask(lastCompletedTask.id)!
-            : ctx.chat.createTask(result.goal ?? ctx.currentMessage)
+        const reopened = result.is_continuation && lastCompletedTask
+            ? await ctx.reopenTask(lastCompletedTask.id)
+            : undefined
 
-        ctx.chat.context.addContext({
-            taskId: task.id,
-            meta: { name: 'strategy', type: 'artifact', shortDescription: 'High-level strategy for the active task' },
-            content: result,
-        })
+        const task = reopened ?? ctx.chat.createTask(result.goal ?? ctx.currentMessage)
+
+        task.setScratch('strategy', result)
 
         ctx.setNextNode(this.nodes.action_planner)
     }
@@ -128,8 +122,8 @@ export class PlanExecuteLoop extends AgentLoop {
         await ctx.ensureTools()
 
         const task = ctx.task!
-        const strategy = ctx.chat.context.lastContext({ taskId: task.id, name: 'strategy' })?.content as StrategySchema
-        const replanFeedback = ctx.chat.context.lastContext({ taskId: task.id, name: 'replan_feedback' })?.content as string | undefined
+        const strategy = task.getScratch<StrategySchema>('strategy')
+        const replanFeedback = task.getScratch<string>('replan_feedback')
         const history = task.executionHistory(HISTORY_OUTPUT_CHARS)
 
         const selectedNames = new Set<string>(strategy?.tool_names ?? [])
@@ -149,7 +143,7 @@ export class PlanExecuteLoop extends AgentLoop {
             },
         })
 
-        ctx.chat.context.removeContext({ taskId: task.id, name: 'replan_feedback' })
+        task.clearScratch('replan_feedback')
 
         const steps: any[] = result.steps ?? []
         const isExecutionPlan = result.plan_status === 'SUCCESS' || result.plan_status === 'NEEDS_CONFIRMATION'
@@ -223,9 +217,19 @@ export class PlanExecuteLoop extends AgentLoop {
             return
         }
 
+        if (ctx.requiresApproval(next)) {
+            if (task.replanCount >= MAX_REPLANS) {
+                this.stopTask(ctx, `The step "${next.name}" needs the user's confirmation but the replan budget is exhausted`)
+                return
+            }
+
+            task.setScratch('replan_feedback', `The step "${next.name}" uses a destructive tool and has not been confirmed by the user. Plan it again with plan_status NEEDS_CONFIRMATION and fill confirmation_details.`)
+            ctx.setNextNode(this.nodes.action_planner)
+            return
+        }
+
         ctx.chat.state?.setCurrentActivity(`Running ${next.name}...`)
-        const tool = ctx.tools.find(t => t.name === next.name)
-        const executed = await task.runReadyAction(next.id, tool, ctx.chat.context, ctx.baseParams)
+        const executed = await ctx.runAction(next)
 
         if (executed.canRetry && (executed.retries ?? 0) < MAX_STEP_RETRIES) {
             const retries = executed.incrementRetries()
@@ -250,6 +254,7 @@ export class PlanExecuteLoop extends AgentLoop {
 
         switch (result.decision) {
             case 'CONFIRMED':
+                task.approvePending()
                 ctx.chat.state?.setStatus(AgentStatus.PROCESSING)
                 ctx.setNextNode(this.nodes.execution_loop)
                 break
@@ -294,11 +299,7 @@ export class PlanExecuteLoop extends AgentLoop {
                     break
                 }
 
-                ctx.chat.context.addContext({
-                    taskId: task.id,
-                    meta: { name: 'replan_feedback', type: 'artifact', shortDescription: 'Observer diagnosis for the next planning attempt' },
-                    content: result.feedback_for_planner,
-                })
+                task.setScratch('replan_feedback', result.feedback_for_planner)
                 ctx.setNextNode(this.nodes.action_planner)
                 break
 
@@ -326,7 +327,7 @@ export class PlanExecuteLoop extends AgentLoop {
         ctx.chat.state?.setCurrentActivity('Generating final response...')
 
         const task = ctx.task!
-        const stopReason = ctx.chat.context.lastContext({ taskId: task.id, name: 'stop_reason' })?.content as string | undefined
+        const stopReason = task.getScratch<string>('stop_reason')
         const executionResults = task.executedActions.map(a => a.promptView(FINAL_OUTPUT_CHARS))
 
         const result = await finalResponder.run({
