@@ -107,7 +107,7 @@ export class ReactLoop extends AgentLoop {
 
         if (result.opening) task.opening = result.opening
 
-        task.addTurn(result, { author: 'react' })
+        task.addTurn(result, { author: 'react', declaredTools: catalog.tools.map(tool => tool.name) })
 
         if (stopReason) {
             const answer = task.forceAnswer(`I could not finish the task: ${stopReason}.`)
