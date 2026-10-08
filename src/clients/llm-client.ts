@@ -17,6 +17,7 @@ import { toPiContext, fromPiMessage } from './pi-ai-adapter'
 const DEFAULT_PROVIDER = 'openai'
 const DEFAULT_MODEL = 'gpt-4o-mini'
 const DEFAULT_TEMPERATURE = 0.7
+const MAX_RETRIES = 4
 
 interface TracedCall {
     origin: string
@@ -71,7 +72,7 @@ export class LLMClient {
         if (!model) throw new Error('[LLM Client] model not found')
 
         const context = toPiContext({ messages, tools }, model)
-        const options = { temperature, ...(sessionId ? { sessionId } : {}) }
+        const options = { temperature, maxRetries: MAX_RETRIES, ...(sessionId ? { sessionId } : {}) }
 
         const raw = await this.traced(
             { origin, sessionId, answerId, currentUser, modelName, provider, temperature },
@@ -119,7 +120,7 @@ export class LLMClient {
         return this.traced(
             { origin, sessionId, answerId, currentUser, modelName, provider, temperature },
             context,
-            () => models.complete(model, context, { temperature }),
+            () => models.complete(model, context, { temperature, maxRetries: MAX_RETRIES }),
         )
     }
 
