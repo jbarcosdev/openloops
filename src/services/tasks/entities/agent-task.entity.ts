@@ -71,6 +71,7 @@ export const SEARCH_TOOLS = 'search_tools'
 export const RESPOND = 'respond'
 export const NATIVE_TOOL_NAMES = [SEARCH_TOOLS, 'read_context', 'save_context', ASK_USER, RESPOND]
 
+const TOOL_NAMESPACE = /^functions\./
 const INVALID_RESPONSE = 'invalid_response'
 const INVALID_ACTION = 'invalid_action'
 const STATE_KEYS = 12
@@ -431,7 +432,7 @@ export class AgentTask extends BaseEntity {
 		}
 
 		return requests.map((request, position) => {
-			const name = typeof request?.tool === 'string' && request.tool.trim() ? request.tool.trim() : undefined
+			const name = typeof request?.tool === 'string' && request.tool.trim() ? request.tool.trim().replace(TOOL_NAMESPACE, '') : undefined
 			const { args, invalid: badArguments } = parseArguments(request?.arguments)
 
 			const action = this.addAction({ name: name ?? INVALID_ACTION, args, stepId: `${turn}_${position + 1}`, turn, author: opts?.author })

@@ -58,7 +58,7 @@ export class ToolPipeline {
         const tool = this.findTool(action.name)
 
         if (!tool) {
-            action.markFailed({ message: `Tool "${action.name}" not found`, retryable: false })
+            action.markFailed({ message: `Tool "${action.name}" not found. Use the exact tool names from your tool list`, retryable: false })
             return action
         }
 
