@@ -1,7 +1,7 @@
 import { AgentLoop, AgentStatus, RunContext } from '@harness/index'
 import { AgentTask } from '@services/tasks/entities/agent-task.entity'
 import { fastResponder, confirmationGate } from '../shared/skills'
-import { reactAgent } from './skills/reasoning-engine'
+import { reasoningEngine } from './skills/reasoning-engine'
 
 const MAX_TURNS = 20
 const MAX_TOOL_CALLS = 40
@@ -89,7 +89,7 @@ export class ReactLoop extends AgentLoop {
         const lastCompletedTask = ctx.chat.lastCompletedTask()
         const catalog = await ctx.toolCatalog()
 
-        const result = await reactAgent.run({
+        const result = await reasoningEngine.run({
             ...ctx.skillParams,
             history: task.history({
                 budget: { turns_left: MAX_TURNS - task.turnCount, tool_calls_left: MAX_TOOL_CALLS - task.toolCallCount },
@@ -167,7 +167,7 @@ export class ReactLoop extends AgentLoop {
         const pending = task.readyActions.filter(action => ctx.requiresApproval(action))
         const catalog = await ctx.toolCatalog()
 
-        const result = await reactAgent.run({
+        const result = await reasoningEngine.run({
             ...ctx.skillParams,
             history: task.history({ pending_confirmation: pending.map(action => action.promptView()) }),
             tools: catalog.tools,

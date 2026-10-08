@@ -7,8 +7,8 @@ export type ResponseSchema = {
     actions: { tool: string, arguments?: Record<string, any> }[]
 }
 
-export const reactAgent = new Skill<ResponseSchema>({
-    name: 'react_agent',
+export const reasoningEngine = new Skill<ResponseSchema>({
+    name: 'reasoning_engine',
     version: '2.0.0',
     description: 'Continuous reasoning cycle of the agent: reads the situation or the results of its last actions, rewrites its working state and decides the next actions, including the final answer.',
     temperature: 0.3,
