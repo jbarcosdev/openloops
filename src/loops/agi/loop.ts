@@ -18,7 +18,7 @@ export class AgiLoop extends AgentLoop {
     get nodes () {
         return {
             fast_responder: this.fastResponder,
-            react: this.react,
+            reasoning_engine: this.reasoningEngine,
             execution_loop: this.executionLoop,
             request_confirmation: this.requestConfirmation,
             confirmation_gate: this.confirmationGate,
@@ -26,7 +26,7 @@ export class AgiLoop extends AgentLoop {
     }
 
     get name () {
-        return 'react'
+        return 'agi'
     }
 
     get version () {
@@ -68,7 +68,7 @@ export class AgiLoop extends AgentLoop {
         ctx.chat.state?.setLanguage(result.detected_language)
 
         if (!result.can_answer) {
-            ctx.setNextNode(this.nodes.react)
+            ctx.setNextNode(this.nodes.reasoning_engine)
         } else {
             ctx.chat.state?.setStatus(AgentStatus.IDLE)
             ctx.setNextNode(this.nodes.fast_responder)
@@ -76,7 +76,7 @@ export class AgiLoop extends AgentLoop {
         }
     }
 
-    private async react (ctx: RunContext): Promise<void> {
+    private async reasoningEngine (ctx: RunContext): Promise<void> {
         ctx.chat.state?.setCurrentActivity('Thinking...')
 
         const task = ctx.task ?? ctx.chat.createTask(ctx.currentMessage)
@@ -107,7 +107,7 @@ export class AgiLoop extends AgentLoop {
 
         if (result.opening) task.opening = result.opening
 
-        task.addTurn(result, { author: 'react', declaredTools: catalog.tools.map(tool => tool.name) })
+        task.addTurn(result, { author: 'reasoning_engine', declaredTools: catalog.tools.map(tool => tool.name) })
 
         if (stopReason) {
             const answer = task.forceAnswer(`I could not finish the task: ${stopReason}.`)
@@ -143,7 +143,7 @@ export class AgiLoop extends AgentLoop {
 
         if (question) {
             ctx.chat.state?.setStatus(AgentStatus.AWAITING_USER_INPUT)
-            ctx.setNextNode(this.nodes.react)
+            ctx.setNextNode(this.nodes.reasoning_engine)
             ctx.reply(question)
             return
         }
@@ -159,7 +159,7 @@ export class AgiLoop extends AgentLoop {
             return
         }
 
-        ctx.setNextNode(this.nodes.react)
+        ctx.setNextNode(this.nodes.reasoning_engine)
     }
 
     private async requestConfirmation (ctx: RunContext): Promise<void> {
