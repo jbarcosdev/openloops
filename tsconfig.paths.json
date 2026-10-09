@@ -6,6 +6,7 @@
             "@root/*": ["./src/../*"],
             "@clients/*": ["./src/clients/*"],
             "@common/*": ["./src/common/*"],
+            "@guardrails/*": ["./src/guardrails/*"],
             "@harness/*": ["./src/harness/*"],
             "@loops/*": ["./src/loops/*"],
             "@services/*": ["./src/services/*"],
