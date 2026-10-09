@@ -52,7 +52,7 @@ export interface GuardProps<T extends GuardType = GuardType> {
  * Guards are plain instances, like tools. Register them with `agent.addGuard(guard)` or the `guards`
  * option of the agent. Guards of the same type run in registration order and the first one that blocks
  * wins. For an input guard the model is never called, no task is created, and the user gets the guard's
- * `reply` followed by `Ref: <ref>`. The blocked exchange is stored with that `ref` and is left out of the
+ * `reply` followed by `Ref: <ref>`. The blocked exchange is stored, flagged with `excludeFromContext`, and is left out of the
  * history the model reads later.
  *
  * Create your own with `new Guard`:
@@ -74,7 +74,7 @@ export class Guard<T extends GuardType = GuardType> {
     readonly description?: string
     readonly type: T
     readonly reply: string
-    /** Reference shown to the user and stored on both messages, so blocked exchanges can be found later. */
+    /** Reference shown to the user in the reply and written to the traces, so a blocked message can be traced back to this guard. */
     readonly ref: string
     private readonly handler: GuardProps<T>['handler']
 

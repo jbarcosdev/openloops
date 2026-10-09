@@ -53,7 +53,7 @@ export class Chat extends BaseEntity {
 	}
 
 	get lastAnswer () {
-		return this.messages?.slice().reverse().find(message => message.role === 'assistant' && !message.ref)?.content
+		return this.messages?.slice().reverse().find(message => message.role === 'assistant' && !message.excludeFromContext)?.content
 	}
 
 	get activeTask (): AgentTask | undefined {
@@ -78,7 +78,7 @@ export class Chat extends BaseEntity {
 	}
 
 	public lastHistoryMessages (count = 6) {
-		return this.messages?.filter(message => !message.ref).slice(-count, -1)
+		return this.messages?.filter(message => !message.excludeFromContext).slice(-count, -1)
 	}
 
 	public addTrace (entry: Omit<AgentTrace, 'timestamp'>): void {

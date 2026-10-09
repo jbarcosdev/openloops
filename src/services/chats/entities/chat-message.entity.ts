@@ -7,7 +7,7 @@ export interface ChatMessageProps extends BaseEntityProps {
 	role?: Roles
 	content?: string
 	answerId?: string | ObjectId
-	ref?: string
+	excludeFromContext?: boolean
 }
 
 export class ChatMessage extends BaseEntity {
@@ -25,7 +25,7 @@ export class ChatMessage extends BaseEntity {
 			props.role,
 			props.content,
 			BaseEntity.toObjectId(props.answerId),
-			props.ref,
+			props.excludeFromContext,
 		)
 	}
 
@@ -34,7 +34,7 @@ export class ChatMessage extends BaseEntity {
 		public role?: Roles,
 		public content?: string,
 		public answerId?: ObjectId,
-		public ref?: string,
+		public excludeFromContext?: boolean,
 	) {
 		super(props)
 	}
@@ -45,7 +45,7 @@ export class ChatMessage extends BaseEntity {
 			role: this.role,
 			content: this.content,
 			answerId: this.answerId,
-			ref: this.ref,
+			excludeFromContext: this.excludeFromContext || undefined,
 		}
 	}
 }

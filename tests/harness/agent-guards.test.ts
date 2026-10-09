@@ -47,14 +47,14 @@ describe('a blocked message', () => {
 
         expect(assistant.role).toBe('assistant')
         expect(assistant.content).toBe(`Code is not accepted in this conversation.\n\nRef: ${blocker.ref}`)
-        expect(user.ref).toBe(blocker.ref)
-        expect(assistant.ref).toBe(blocker.ref)
+        expect(user.excludeFromContext).toBe(true)
+        expect(assistant.excludeFromContext).toBe(true)
     })
 
-    it('stores the exchange with the reference as a searchable field and leaves the chat idle', () => {
+    it('stores the exchange flagged as excluded from the context and leaves the chat idle', () => {
         const stored = env.db.chats.findById(chat._id.toString())!
 
-        expect(stored.messages.map((m: any) => m.ref)).toEqual([blocker.ref, blocker.ref])
+        expect(stored.messages.map((m: any) => m.excludeFromContext)).toEqual([true, true])
         expect(stored.state.status).toBe(AgentStatus.IDLE)
     })
 
@@ -101,8 +101,8 @@ describe('the conversation after a block', () => {
             messages: [
                 { role: 'user', content: 'a' },
                 { role: 'assistant', content: 'real answer' },
-                { role: 'user', content: 'b', ref: 'r' },
-                { role: 'assistant', content: 'blocked\n\nRef: r', ref: 'r' },
+                { role: 'user', content: 'b', excludeFromContext: true },
+                { role: 'assistant', content: 'blocked\n\nRef: r', excludeFromContext: true },
             ],
         })
 
@@ -119,7 +119,7 @@ describe('guard order and failures', () => {
 
         expect(calls).toEqual(['one', 'two'])
         expect(result.data.messages[1].content).toContain('blocked by two')
-        expect(result.data.messages[1].ref).toBe(guards[1].ref)
+        expect(result.data.messages[1].content).toContain(`Ref: ${guards[1].ref}`)
     })
 
     it('lets the message through when every guard passes', async () => {
@@ -128,7 +128,7 @@ describe('guard order and failures', () => {
 
         expect(llm.calls).toHaveLength(1)
         expect(result.data.messages.at(-1).content).toBe('done')
-        expect(result.data.messages.every((m: any) => !m.ref)).toBe(true)
+        expect(result.data.messages.every((m: any) => !m.excludeFromContext)).toBe(true)
     })
 
     it('closes the request when a guard throws', async () => {

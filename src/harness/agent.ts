@@ -302,8 +302,8 @@ export class Agent {
 
             const reply = failed ? GUARD_FAILURE_REPLY : guard.reply
 
-            userMessage.ref = guard.ref
-            this.reply(`${reply}\n\nRef: ${guard.ref}`, guard.ref)
+            userMessage.excludeFromContext = true
+            this.reply(`${reply}\n\nRef: ${guard.ref}`, true)
             this.currentChat.addTrace({ node: guard.name, kind: 'guard', reasoning: `${guard.type} guard, Ref ${guard.ref}: ${result.reason ?? 'Blocked'}` })
 
             return false
@@ -662,11 +662,11 @@ export class Agent {
         return matchedTools.slice(startIndex, startIndex + limit)
     }
 
-    private reply (content: string, ref?: string): void {
+    private reply (content: string, excludeFromContext?: boolean): void {
         const isFirstReply = this.replyCount === 0
 
         this.replyCount++
-        this.currentChat.pushMessage({ _id: isFirstReply ? this.answerId : undefined, answerId: this.answerId, role: 'assistant', content, ref })
+        this.currentChat.pushMessage({ _id: isFirstReply ? this.answerId : undefined, answerId: this.answerId, role: 'assistant', content, excludeFromContext })
     }
 
     private get baseParams () {
