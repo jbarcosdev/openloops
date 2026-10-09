@@ -15,7 +15,7 @@ export interface AgentTrace {
 	reasoning?: string
 	taskId?: string
 	timestamp?: Date | string
-	kind?: 'skill' | 'node' | 'agent'
+	kind?: 'skill' | 'node' | 'agent' | 'guard'
 	iteration?: number
 	durationMs?: number
 }
@@ -53,7 +53,7 @@ export class Chat extends BaseEntity {
 	}
 
 	get lastAnswer () {
-		return this.messages?.slice().reverse().find(message => message.role === 'assistant')?.content
+		return this.messages?.slice().reverse().find(message => message.role === 'assistant' && !message.ref)?.content
 	}
 
 	get activeTask (): AgentTask | undefined {
@@ -78,7 +78,7 @@ export class Chat extends BaseEntity {
 	}
 
 	public lastHistoryMessages (count = 6) {
-		return this.messages?.slice(-count, -1)
+		return this.messages?.filter(message => !message.ref).slice(-count, -1)
 	}
 
 	public addTrace (entry: Omit<AgentTrace, 'timestamp'>): void {

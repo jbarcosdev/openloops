@@ -3,6 +3,7 @@ import { Agent, AgentLoop } from '@harness/index'
 import { AgiLoop } from '@loops/agi/loop'
 import { fastResponder, confirmationGate } from '@loops/shared/skills'
 import type { Tool } from '@tools/tool'
+import type { Guard } from '@guardrails/guard'
 import type { CurrentUser } from '@common/base'
 import { MemoryDb } from './memory-db'
 import { ScriptedLLM } from './scripted-llm'
@@ -50,8 +51,8 @@ export class HarnessEnv {
         this.spies = []
     }
 
-    agent (tools: Tool[] = []): Agent {
-        return new Agent({ loop: new AgiLoop(), tools })
+    agent (tools: Tool[] = [], guards: Guard[] = []): Agent {
+        return new Agent({ loop: new AgiLoop(), tools, guards })
     }
 
     async send (agent: Agent, message: string, chatId?: string): Promise<RunResult> {
