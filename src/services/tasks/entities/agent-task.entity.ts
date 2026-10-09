@@ -19,7 +19,7 @@ export interface AgentTaskProps extends BaseEntityProps {
 	status?: TaskStatus
 	goal?: string
 	nextNode?: string
-	threadId?: string
+	threadId?: string | ObjectId
 	previousTaskId?: string
 	summary?: string
 	loopName?: string
@@ -134,11 +134,24 @@ export function findInvoker (tools: { name: string; parameters?: Record<string, 
 	return invokers.length === 1 ? invokers[0].name : undefined
 }
 
+export function seenHiddenTool (written: string, invoker: string, schemas?: Record<string, unknown>): string | undefined {
+	if (!schemas) return undefined
+
+	const separator = written.indexOf('__')
+	const namespace = invoker.slice(0, invoker.indexOf('__'))
+
+	if (separator > 0 && normalizeToolName(written.slice(0, separator)) !== normalizeToolName(namespace)) return undefined
+
+	const bare = normalizeToolName(separator > 0 ? written.slice(separator + 2) : written)
+
+	return Object.keys(schemas).find(key => normalizeToolName(key) === bare)
+}
+
 function routeNote (action: AgentAction): string | undefined {
 	if (!action.requestedName) return undefined
 
-	return action.args?.name === action.requestedName
-		? `"${action.requestedName}" is a hidden tool and cannot be called directly, so it ran through "${action.name}". Call hidden tools like that from now on: tool "${action.name}", arguments {"name": "${action.requestedName}", "arguments": {...}}.`
+	return action.name?.endsWith('__invoke_tool') && action.args?.name && !/(^|__)invoke_tool$/.test(action.requestedName)
+		? `"${action.requestedName}" is a hidden tool and cannot be called directly, so it ran through "${action.name}" as "${action.args?.name}". Call hidden tools like that from now on: tool "${action.name}", arguments {"name": "${action.args?.name}", "arguments": {...}}, with the name written without the server prefix.`
 		: `You wrote "${action.requestedName}" but the tool is named "${action.name}": the server prefix is part of the name. It ran as "${action.name}". Write the full name next time.`
 }
 
@@ -301,7 +314,7 @@ export class AgentTask extends BaseEntity {
 			props.status,
 			props.goal,
 			props.nextNode,
-			props.threadId,
+			BaseEntity.toObjectId(props.threadId),
 			props.previousTaskId,
 			props.summary,
 			props.loopName,
@@ -329,7 +342,7 @@ export class AgentTask extends BaseEntity {
 		public status?: TaskStatus,
 		public goal?: string,
 		public nextNode?: string,
-		public threadId?: string,
+		public threadId?: ObjectId,
 		public previousTaskId?: string,
 		public summary?: string,
 		public loopName?: string,
@@ -356,9 +369,9 @@ export class AgentTask extends BaseEntity {
 			previousTaskId: this.previousTaskId,
 			summary: this.summary,
 			loopName: this.loopName,
-			planCount: this.planCount,
-			planOffset: this.planOffset,
-			executedOffset: this.executedOffset,
+			planCount: this.planCount || undefined,
+			planOffset: this.planOffset || undefined,
+			executedOffset: this.executedOffset || undefined,
 			scratch: this.scratch,
 			opening: this.opening,
 			turns: this.turns.length ? this.turns : undefined,
@@ -510,6 +523,14 @@ export class AgentTask extends BaseEntity {
 		return respond ? String(respond.args?.answer ?? '') : undefined
 	}
 
+	get rejectedAnswers (): number {
+		return this.actions.filter(a => a.name === RESPOND && a.status === 'failed').length
+	}
+
+	rejectAnswer (message: string): void {
+		this.actions.find(a => a.name === RESPOND && a.status === 'pending')?.markFailed({ message, retryable: false })
+	}
+
 	forceAnswer (fallback: string): string {
 		const answer = this.pendingAnswer || fallback
 		this.skipPending()
@@ -588,9 +609,10 @@ export class AgentTask extends BaseEntity {
 			const written = typeof request?.tool === 'string' && request.tool.trim() ? request.tool.trim().replace(TOOL_NAMESPACE, '') : undefined
 			const resolved = written && opts?.declaredTools ? resolveToolName(written, opts.declaredTools) : undefined
 			const { args: given, invalid: badArguments } = parseArguments(request?.arguments)
-			const hidden = !resolved && written && opts?.invoker && opts.declaredTools && !opts.declaredTools.includes(written) && !NATIVE_TOOL_NAMES.includes(written) && this.schemas?.[written] && !badArguments
+			const hiddenName = !resolved && written && opts?.invoker && opts.declaredTools && !opts.declaredTools.includes(written) && !NATIVE_TOOL_NAMES.includes(written) && !badArguments ? seenHiddenTool(written, opts.invoker, this.schemas) : undefined
+			const hidden = Boolean(hiddenName)
 			const name = hidden ? opts!.invoker : resolved ?? written
-			const args = hidden ? { name: written, arguments: given } : given
+			const args = hidden ? { name: hiddenName, arguments: given } : given
 
 			const action = this.addAction({ name: name ?? INVALID_ACTION, args, stepId: `${turn}_${position + 1}`, turn, author: opts?.author, requestedName: resolved || hidden ? written : undefined })
 
@@ -667,6 +689,24 @@ export class AgentTask extends BaseEntity {
 		return messages
 	}
 
+	get workspaceStreak (): number {
+		const turns = new Map<number, string[]>()
+
+		for (const action of this.actions) {
+			if (action.turn === undefined || !action.name) continue
+			turns.set(action.turn, [...(turns.get(action.turn) ?? []), action.name])
+		}
+
+		let count = 0
+
+		for (const turn of Array.from(turns.keys()).sort((a, b) => b - a)) {
+			if (!turns.get(turn)!.every(name => name === 'read_context' || name === 'save_context')) break
+			count++
+		}
+
+		return count
+	}
+
 	get sameToolStreak (): { name?: string; count: number } {
 		const turns = new Map<number, Set<string>>()
 
@@ -708,16 +748,16 @@ export class AgentTask extends BaseEntity {
 		return this.actions.filter(a => a.isTerminal)
 	}
 
-	get lastExecutedAction (): AgentAction | undefined {
-		return this.actions.slice().reverse().find(a => a.isTerminal)
-	}
-
 	get replanCount (): number {
 		return Math.max(0, this.planCount - this.planOffset - 1)
 	}
 
 	get executedSinceOpen (): number {
 		return Math.max(0, this.executedActions.length - this.executedOffset)
+	}
+
+	get lastExecutedAction (): AgentAction | undefined {
+		return this.actions.slice().reverse().find(a => a.isTerminal)
 	}
 
 	executionHistory (maxChars = 1500) {

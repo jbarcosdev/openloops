@@ -122,7 +122,7 @@ export class Chat extends BaseEntity {
 			loopName: this.settings?.loopName,
 		})
 
-		newTask.threadId ??= newTask.id
+		newTask.threadId ??= newTask._id
 
 		this.tasks.push(newTask)
 		this.state?.setActiveTaskId(newTask.id)
@@ -161,6 +161,7 @@ export class Chat extends BaseEntity {
 	private clearActiveTaskIdIfMatches (task?: AgentTask): void {
 		if (task?.id === this.state?.activeTaskId) {
 			this.state?.setActiveTaskId(undefined)
+			this.unset(['state.activeTaskId' as keyof this])
 		}
 	}
 
@@ -168,6 +169,7 @@ export class Chat extends BaseEntity {
 		if (this.settings?.loopName && this.settings.loopName !== loopName) {
 			this.activeTask?.pause()
 			this.state?.setActiveTaskId(undefined)
+			this.unset(['state.activeTaskId' as keyof this])
 		}
 		this.settings?.setLoopName(loopName)
 	}

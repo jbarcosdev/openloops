@@ -11,6 +11,50 @@ const SEARCH_DESCRIPTION_CHARS = 300
 const SEARCH_OUTPUT_CHARS = 5500
 const DEFAULT_READ_CHARS = 4000
 const MAX_READ_CHARS = 5000
+const MAX_FIND_MATCHES = 20
+const FIND_RECORD_CHARS = 600
+const FIND_MAX_NODES = 200000
+const FIND_MAX_DEPTH = 12
+
+function squash (text: string): string {
+    return text.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '')
+}
+
+function findRecords (root: any, query: string): { path: string; record: any }[] {
+    const wanted = squash(query)
+    const words = query.toLowerCase().split(/[^\p{L}\p{N}]+/u).filter(Boolean)
+    if (!wanted) return []
+
+    const search = (matches: (text: string) => boolean) => {
+        const found: { path: string; record: any }[] = []
+        const seen = new Set<any>()
+        let nodes = 0
+
+        const walk = (value: any, path: string, parent: any, depth: number) => {
+            if (nodes++ > FIND_MAX_NODES || depth > FIND_MAX_DEPTH) return
+
+            if (typeof value === 'string') {
+                const record = parent !== null && typeof parent === 'object' && !Array.isArray(parent) ? parent : value
+                if (matches(value) && !seen.has(record)) {
+                    seen.add(record)
+                    found.push({ path, record })
+                }
+                return
+            }
+
+            if (Array.isArray(value)) value.forEach((item, index) => walk(item, `${path}[${index}]`, value, depth + 1))
+            else if (value !== null && typeof value === 'object') Object.entries(value).forEach(([key, item]) => walk(item, path ? `${path}.${key}` : key, value, depth + 1))
+        }
+
+        walk(root, '', null, 0)
+
+        return found
+    }
+
+    const exact = search(text => squash(text).includes(wanted))
+
+    return exact.length || words.length < 2 ? exact : search(text => words.every(word => squash(text).includes(squash(word))))
+}
 
 export const NATIVE_TOOLS: LLMToolDefinition[] = [
     {
@@ -39,12 +83,13 @@ export const NATIVE_TOOLS: LLMToolDefinition[] = [
     },
     {
         name: 'read_context',
-        description: 'Read a workspace item: a note saved with save_context, or a large tool output (use the "workspace_ref" name from its result). Supports a path into structured content and paging for long text.',
+        description: 'Read a workspace item: a note saved with save_context, or a large tool output (use the "workspace_ref" name from its result as "name"). Supports a path into structured content, paging for long text, and "find" to locate entries inside a large result by text.',
         parameters: {
             type: 'object',
             properties: {
                 name: { type: 'string', description: 'Name of the workspace item' },
                 path: { type: 'string', description: 'Optional path into structured content, like results[0].id' },
+                find: { type: 'string', description: 'Text to look for inside the item (or inside "path"). Case, spaces, hyphens and underscores are ignored. Returns only the matching entries with their path, so you do not have to read a long list' },
                 offset: { type: 'integer', description: 'Character offset to start reading from (default 0)' },
                 max_chars: { type: 'integer', description: `Maximum characters to return (default ${DEFAULT_READ_CHARS}, max ${MAX_READ_CHARS})` },
             },
@@ -151,11 +196,31 @@ export class NativeTools {
 
     private async readContext (task: AgentTask, args: Record<string, any>) {
         const item = await this.deps.workspace.get(String(args.name), { taskId: task.id })
-        if (!item) return { found: false }
+        if (!item) {
+            const available = await this.deps.workspace.list({ taskId: task.id }).then(items => items.map(entry => entry.name).slice(0, 30)).catch(() => [])
+            return { found: false, error: `There is no workspace item named "${args.name}". This does not mean a search had no results.`, available }
+        }
 
         const path = args.path ? String(args.path).replace(/^(?=[\w-])/, '.') : undefined
         const value = readPath(item.content, path)
         if (value === undefined) return { found: true, name: item.name, path_found: false }
+
+        if (typeof args.find === 'string' && args.find.trim()) {
+            const found = findRecords(value, args.find)
+
+            return {
+                name: item.name,
+                find: args.find,
+                total_matches: found.length,
+                matches: found.slice(0, MAX_FIND_MATCHES).map(({ path: matchPath, record }) => {
+                    const text = typeof record === 'string' ? record : JSON.stringify(record)
+                    return { path: matchPath, record: text.length > FIND_RECORD_CHARS ? text.slice(0, FIND_RECORD_CHARS) : record }
+                }),
+                ...(found.length > MAX_FIND_MATCHES ? { note: `Showing the first ${MAX_FIND_MATCHES} matches: use a more specific text.` } : {}),
+                ...(found.length ? {} : { hint: 'No entry contains this text. Try a shorter or different part of it, or read the item with a path.' }),
+                ...(item.truncated ? { stored_truncated: true } : {}),
+            }
+        }
 
         const text = typeof value === 'string' ? value : JSON.stringify(value)
         const offset = Math.max(Number(args.offset) || 0, 0)

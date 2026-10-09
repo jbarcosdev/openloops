@@ -19,6 +19,7 @@ export interface BaseEntityProps {
     archivedAt?: string | Date
     archivedBy?: string | ObjectId
     sharedWith?: string[] | ObjectId[]
+    toUnset?: Record<string, unknown>
 }
 
 export interface Document extends BaseEntityProps {
@@ -63,7 +64,7 @@ export class BaseEntity {
     @OwnerOnly
     sharedWith?: ObjectId[]
 
-    private toUnset?: Record<string, unknown>
+    public toUnset?: Record<string, unknown>
 
     public static toObjectId (id?: string | ObjectId): ObjectId | undefined {
         if (!id) return undefined

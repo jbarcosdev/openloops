@@ -1,13 +1,16 @@
 import { AgentLoop, AgentStatus, RunContext } from '@harness/index'
 import { AgentTask, findInvoker } from '@services/tasks/entities/agent-task.entity'
 import { fastResponder, confirmationGate } from '../shared/skills'
+import { ungroundedIdentifiers, UNGROUNDED_PHRASE } from '@harness/utils/grounding'
 import { reasoningEngine } from './skills/reasoning-engine'
 
 const MAX_TURNS = 20
 const MAX_TOOL_CALLS = 40
 const WARN_SAME_TOOL = 3
 const MAX_SAME_TOOL = 6
-const SUMMARY_CHARS = 400
+const MAX_ANSWER_REJECTIONS = 1
+const WARN_WORKSPACE_TURNS = 3
+const MAX_WORKSPACE_TURNS = 7
 const BLOCK_DUPLICATES = false
 
 export class AgiLoop extends AgentLoop {
@@ -84,8 +87,15 @@ export class AgiLoop extends AgentLoop {
 
         const streak = task.sameToolStreak
         const exhausted = task.turnCount >= MAX_TURNS || task.toolCallCount >= MAX_TOOL_CALLS
+        const workspaceTurns = task.workspaceStreak
         const stuck = streak.count >= MAX_SAME_TOOL
-        const stopReason = exhausted ? 'The task reached its limit of turns or tool calls' : stuck ? `The same tool (${streak.name}) was called ${streak.count} turns in a row without getting anywhere` : undefined
+        const lost = workspaceTurns >= MAX_WORKSPACE_TURNS
+        const warning = streak.count >= WARN_SAME_TOOL
+            ? `You ran ${streak.name} ${streak.count} turns in a row. Do not repeat it with small rewordings: follow what its results suggest, change approach, or tell the user what is missing.`
+            : workspaceTurns >= WARN_WORKSPACE_TURNS && !lost
+                ? `You spent ${workspaceTurns} turns in a row only reading and saving notes. Stop handling data by hand: locate what you need with read_context using 'find', then act with a tool, or tell the user what is missing.`
+                : undefined
+        const stopReason = exhausted ? 'The task reached its limit of turns or tool calls' : stuck ? `The same tool (${streak.name}) was called ${streak.count} turns in a row without getting anywhere` : lost ? `${workspaceTurns} turns in a row went into reading and saving notes without running any tool` : undefined
         const lastCompletedTask = ctx.chat.lastCompletedTask()
         const catalog = await ctx.toolCatalog()
 
@@ -93,7 +103,7 @@ export class AgiLoop extends AgentLoop {
             ...ctx.skillParams,
             history: task.history({
                 budget: { turns_left: MAX_TURNS - task.turnCount, tool_calls_left: MAX_TOOL_CALLS - task.toolCallCount },
-                ...(streak.count >= WARN_SAME_TOOL ? { warning: `You ran ${streak.name} ${streak.count} turns in a row. Do not repeat it with small rewordings: follow what its results suggest, change approach, or tell the user what is missing.` } : {}),
+                ...(warning ? { warning } : {}),
                 ...(task.known ? { known: task.known } : {}),
                 ...(task.schemas ? { schemas: task.schemas } : {}),
                 ...(stopReason ? { stop_reason: stopReason } : {}),
@@ -114,7 +124,7 @@ export class AgiLoop extends AgentLoop {
         if (stopReason) {
             const answer = task.forceAnswer(`I could not finish the task: ${stopReason}.`)
             ctx.reply(answer)
-            task.summary = answer.slice(0, SUMMARY_CHARS)
+            task.summary = answer
             ctx.chat.failTask(task.id)
             ctx.chat.state?.setStatus(AgentStatus.IDLE)
             ctx.setNextNode(this.nodes.fast_responder)
@@ -153,9 +163,17 @@ export class AgiLoop extends AgentLoop {
         const answer = task.pendingAnswer
 
         if (answer !== undefined) {
+            const invented = task.rejectedAnswers < MAX_ANSWER_REJECTIONS ? await ungroundedIdentifiers(task, ctx.workspace, [answer]) : []
+
+            if (invented.length) {
+                task.rejectAnswer(`Your answer cites the identifier${invented.length > 1 ? 's' : ''} ${invented.map(id => `"${id}"`).join(', ')}, which ${invented.length > 1 ? 'were' : 'was'} ${UNGROUNDED_PHRASE}. Do not state values you did not get from a result or from the user: remove ${invented.length > 1 ? 'them' : 'it'}, or obtain ${invented.length > 1 ? 'them' : 'it'} with a tool, and answer again.`)
+                ctx.setNextNode(this.nodes.reasoning_engine)
+                return
+            }
+
             task.deliverAnswer()
             ctx.reply(answer)
-            ctx.chat.completeTask(task.id, answer.slice(0, SUMMARY_CHARS))
+            ctx.chat.completeTask(task.id, answer)
             ctx.chat.state?.setStatus(AgentStatus.IDLE)
             ctx.setNextNode(this.nodes.fast_responder)
             return

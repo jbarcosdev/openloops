@@ -8,6 +8,7 @@ import { needsSearch } from './tool-catalog'
 import { NativeTools } from './native-tools'
 import { WeightedKeyword, ScoredTool } from './utils/rank-tools-by-keywords'
 import { describeShapeWithin } from './utils/describe-shape'
+import { collectStrings, ungroundedIdentifiers, UNGROUNDED_PHRASE } from './utils/grounding'
 
 const DEFAULT_OFFLOAD_THRESHOLD_CHARS = 100000
 const DEFAULT_STUB_THRESHOLD_CHARS = 4000
@@ -65,7 +66,9 @@ export class ToolPipeline {
 
         if (!invokers.length) return `${base} Use the exact tool names from your tool list.`
 
-        const example = JSON.stringify({ tool: invokers[0], arguments: { name, arguments: {} } })
+        const namespace = `${invokers[0].slice(0, invokers[0].indexOf('__'))}__`
+        const bare = name.startsWith(namespace) ? name.slice(namespace.length) : name
+        const example = JSON.stringify({ tool: invokers[0], arguments: { name: bare, arguments: {} } })
 
         return `${base} It is a hidden tool of a server, so it cannot be called directly. Run it through the server's invoke tool (${invokers.join(', ')}) like this: ${example}, filling "arguments" with the input schema returned by the server's search.`
     }
@@ -114,6 +117,13 @@ export class ToolPipeline {
 
         if (unresolved.length) {
             action.markFailed({ message: `Unresolved references in arguments: ${unresolved.join(', ')}. The referenced step output or path does not exist.`, retryable: false })
+            return action
+        }
+
+        const invented = await ungroundedIdentifiers(task, this.deps.workspace, collectStrings(args))
+
+        if (invented.length) {
+            action.markFailed({ message: `The identifier${invented.length > 1 ? 's' : ''} ${invented.map(id => `"${id}"`).join(', ')} in the arguments of "${action.name}" ${invented.length > 1 ? 'were' : 'was'} ${UNGROUNDED_PHRASE}, so ${invented.length > 1 ? 'they look' : 'it looks'} invented. Identifiers cannot be guessed: get the value from a tool that lists or looks up that entity, or ask the user. If the user gave it earlier in the conversation, ask them to confirm it.`, retryable: false })
             return action
         }
 
