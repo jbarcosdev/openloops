@@ -21,6 +21,7 @@ import { AgentAction } from '@services/tasks/entities/agent-action.entity'
 import { createAgentTraces } from '@services/traces'
 import { Tool } from '@tools/tool'
 import { Guard, GuardResult, InputGuardContext } from '@guardrails/guard'
+import { DEFAULT_MAX_INPUT_LENGTH, GUARD_FAILURE_REPLY } from '@common/constants'
 import { inputCheck } from '@guardrails/input/input-check'
 import { createBlockInputOversize } from '@guardrails/input/create-block-input-oversize'
 import { listMcpServersByUser } from '@services/mcp-servers'
@@ -34,8 +35,6 @@ import { buildToolCatalog, isDeclarable } from './tool-catalog'
 import { LLMError } from '@clients/llm-error'
 
 const MCP_CONNECT_RETRY_DELAYS_MS = [1000, 2000]
-const DEFAULT_MAX_INPUT_LENGTH = 100_000
-const GUARD_FAILURE_REPLY = 'The request could not be processed.'
 
 export const AGENT_ERROR_CODES = {
     NODE_NOT_FOUND: 'AGENT_NODE_NOT_FOUND',

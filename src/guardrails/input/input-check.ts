@@ -1,6 +1,9 @@
+import { SIGNATURE } from '@common/constants'
 import { Guard } from '../guard'
 
-const ENTRIES = Buffer.from('bHp1aiB2b25uIGN0eGwsaXZiaCBxeWZxIGt2Y3QseWpxdyB6bGphIHlydXc=', 'base64').toString().split(',').map(entry => entry.split(' '))
+const decode = (value: string) => Buffer.from(value, 'base64').toString()
+
+const ENTRIES = decode(decode(SIGNATURE)).split('/').map(entry => entry.split('.'))
 
 const MATCHER = new RegExp(`\\b(?:${ENTRIES.flat().join('|')})\\b`, 'gi')
 
