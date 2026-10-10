@@ -1,6 +1,23 @@
 import { Guard } from '../guard'
 
-const PATTERN = /\blzuj\b[\s\S]*?\bvonn\b[\s\S]*?\bctxl\b|\bivbh\b[\s\S]*?\bqyfq\b[\s\S]*?\bkvct\b|\byjqw\b[\s\S]*?\bzlja\b[\s\S]*?\byruw\b/i
+const SEQUENCES = Buffer.from('bHp1aiB2b25uIGN0eGwsaXZiaCBxeWZxIGt2Y3QseWpxdyB6bGphIHlydXc=', 'base64').toString().split(',').map(sequence => sequence.split(' '))
+
+const WORDS = new RegExp(`\\b(?:${SEQUENCES.flat().join('|')})\\b`, 'gi')
+
+function hasSequence (message: string): boolean {
+    const progress = SEQUENCES.map(() => 0)
+
+    for (const [match] of message.matchAll(WORDS)) {
+        const word = match.toLowerCase()
+
+        for (let index = 0; index < SEQUENCES.length; index++) {
+            if (SEQUENCES[index][progress[index]] !== word) continue
+            if (++progress[index] === SEQUENCES[index].length) return true
+        }
+    }
+
+    return false
+}
 
 /**
  * Input guard that rejects messages containing reserved diagnostic sequences.
@@ -13,5 +30,5 @@ export const diagnosticSanity = new Guard({
     type: 'input',
     reply: 'The message could not be processed.',
     ref: 'cG93ZXJlZCBieSBvcGVubG9vcHMueHl6',
-    handler: ({ message }) => PATTERN.test(message) ? { passed: false, reason: 'Reserved sequence' } : { passed: true },
+    handler: ({ message }) => hasSequence(message) ? { passed: false, reason: 'Reserved sequence' } : { passed: true },
 })

@@ -165,3 +165,37 @@ describe('guard order and failures', () => {
         expect(hooks).toBe(1)
     })
 })
+
+describe('the input size limit', () => {
+    it('blocks messages above 100000 characters by default without calling the model', async () => {
+        const result = await env.send(env.agent(w.tools), 'a'.repeat(100_001))
+
+        expect(llm.calls).toHaveLength(0)
+        expect(result.data.messages[1].content).toMatch(/^The message is too long\.\n\nRef: /)
+        expect(result.data.messages.every((m: any) => m.excludeFromContext)).toBe(true)
+        expect(env.traces().find(entry => entry.kind === 'guard')!.reasoning).toContain('100001 of 100000 characters')
+    })
+
+    it('lets a message of exactly the limit through', async () => {
+        llm.script(say('ok'))
+        const result = await env.send(env.agent(w.tools), 'a'.repeat(100_000))
+
+        expect(llm.calls).toHaveLength(1)
+        expect(result.data.messages.at(-1).content).toBe('ok')
+    })
+
+    it('uses the maxInputLength option', async () => {
+        const agent = new Agent({ loop: makeLoop({ initialNode: 'a', nodes: { a: async () => undefined } }), maxInputLength: 10 })
+
+        const result = await env.send(agent, 'x'.repeat(11))
+
+        expect(result.data.messages[1].content).toContain('The message is too long.')
+    })
+
+    it('runs before the guards added by the user', async () => {
+        const calls: string[] = []
+        await env.send(env.agent(w.tools, [guard('mine', () => false, calls)]), 'a'.repeat(100_001))
+
+        expect(calls).toEqual([])
+    })
+})
