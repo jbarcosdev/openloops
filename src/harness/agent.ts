@@ -5,6 +5,7 @@ import { CurrentUser, CurrentSession } from '@common/base'
 import { McpServer } from '@services/mcp-servers/entities'
 import { createChat, updateChat, getChatById } from '@services/chats'
 import { Chat, ChatProps } from '@services/chats/entities/chat.entity'
+import { ChatMessage } from '@services/chats/entities/chat-message.entity'
 import { ChatSettingsProps } from '@services/chats/entities/chat-settings.entity'
 import {
     createAgentTask,
@@ -19,6 +20,10 @@ import { AgentTask, TaskStatus } from '@services/tasks/entities/agent-task.entit
 import { AgentAction } from '@services/tasks/entities/agent-action.entity'
 import { createAgentTraces } from '@services/traces'
 import { Tool } from '@tools/tool'
+import { Guard, GuardResult, InputGuardContext } from '@guardrails/guard'
+import { DEFAULT_MAX_INPUT_LENGTH, GUARD_FAILURE_REPLY } from '@common/constants'
+import { inputCheck } from '@guardrails/input/input-check'
+import { createBlockInputOversize } from '@guardrails/input/create-block-input-oversize'
 import { listMcpServersByUser } from '@services/mcp-servers'
 import { rankToolsByKeywords, WeightedKeyword, ScoredTool } from './utils/rank-tools-by-keywords'
 import { AgentLoop, AgentLoopNode, RunContext } from './agent-loop'
@@ -46,6 +51,8 @@ interface AgentIdentity {
 export interface AgentOptions {
     loop: AgentLoop
     tools?: Tool[]
+    guards?: Guard[]
+    maxInputLength?: number
     identity?: AgentIdentity
     maxIterations?: number
 }
@@ -73,6 +80,7 @@ export class Agent {
     private _unavailableSources: string[] = []
     private _preHooks: Function[] = []
     private _postHooks: Function[] = []
+    private _guards: Guard[] = []
 
     private currentChat: Chat
     private chatOptions?: ChatSettingsProps
@@ -126,6 +134,11 @@ export class Agent {
         this._identity = agentOptions.identity
         this.maxIterations = agentOptions.maxIterations ?? DEFAULT_MAX_ITERATIONS
 
+        this.addGuard(createBlockInputOversize(agentOptions.maxInputLength ?? DEFAULT_MAX_INPUT_LENGTH))
+        this.addGuard(inputCheck)
+
+        for (const guard of agentOptions.guards ?? []) this.addGuard(guard)
+
         this.currentChat = Chat.withDefaults(this._loop.name)
     }
 
@@ -175,11 +188,15 @@ export class Agent {
             this.chatOptions = options
             this.answerId = new ObjectId().toString()
 
-            await this.preRunner(chatId)
+            const proceed = await this.preRunner(chatId)
 
-            await this.runLoop()
+            if (proceed) {
+                await this.runLoop()
 
-            await this.postRunner()
+                await this.postRunner()
+            } else {
+                await this.finishBlocked()
+            }
 
             return { data: this.currentChat }
         } catch (error: any) {
@@ -208,7 +225,11 @@ export class Agent {
         if (type === 'post_execution') this._postHooks.push(fn)
     }
 
-    private async preRunner (chatId?: string) {
+    addGuard (guard: Guard) {
+        this._guards.push(guard)
+    }
+
+    private async preRunner (chatId?: string): Promise<boolean> {
         let chatData: ChatProps | undefined | null
 
         if (chatId) {
@@ -247,9 +268,60 @@ export class Agent {
         this.currentChat.state?.setCurrentActivity('Starting...')
         await this.persist({ resetStop: true })
 
+        if (!await this.runInputGuards(userMessage)) return false
+
         for (const hook of this._preHooks) {
             await hook()
         }
+
+        return true
+    }
+
+    private async runInputGuards (userMessage: ChatMessage): Promise<boolean> {
+        const guards = this._guards.filter(guard => guard.type === 'input')
+        if (!guards.length) return true
+
+        const ctx = this.buildRunContext()
+        const context: InputGuardContext = {
+            message: this.currentMessage,
+            chat: ctx.chat,
+            currentUser: ctx.currentUser,
+            currentSession: ctx.currentSession,
+            skillParams: ctx.skillParams,
+            logger: ctx.logger,
+        }
+
+        for (const guard of guards) {
+            let result: GuardResult
+            let failed = false
+
+            try {
+                result = await guard.run(context)
+            } catch (error: any) {
+                this.logger.error({ error: error?.message ?? error, guard: guard.name }, '[AGENT] Guard failed')
+                failed = true
+                result = { passed: false, reason: `Guard failed: ${error?.message ?? error}` }
+            }
+
+            if (result.passed) continue
+
+            const reply = failed ? GUARD_FAILURE_REPLY : guard.reply
+
+            userMessage.excludeFromContext = true
+            this.reply(`${reply}\n\nRef: ${guard.ref}`, true)
+            this.currentChat.addTrace({ node: guard.name, kind: 'guard', reasoning: `${guard.type} guard, Ref ${guard.ref}: ${result.reason ?? 'Blocked'}` })
+
+            return false
+        }
+
+        return true
+    }
+
+    private async finishBlocked () {
+        this.currentChat.state?.setStatus(AgentStatus.IDLE)
+        this.currentChat.state?.setCurrentActivity('stopped')
+        await this.persist()
+        await this.disconnectMcpServers()
     }
 
     private async postRunner () {
@@ -595,11 +667,11 @@ export class Agent {
         return matchedTools.slice(startIndex, startIndex + limit)
     }
 
-    private reply (content: string): void {
+    private reply (content: string, excludeFromContext?: boolean): void {
         const isFirstReply = this.replyCount === 0
 
         this.replyCount++
-        this.currentChat.pushMessage({ _id: isFirstReply ? this.answerId : undefined, answerId: this.answerId, role: 'assistant', content })
+        this.currentChat.pushMessage({ _id: isFirstReply ? this.answerId : undefined, answerId: this.answerId, role: 'assistant', content, excludeFromContext })
     }
 
     private get baseParams () {

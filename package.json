@@ -43,6 +43,10 @@
       "types": "./dist/loops/index.d.ts",
       "default": "./dist/loops/index.js"
     },
+    "./guardrails": {
+      "types": "./dist/guardrails/index.d.ts",
+      "default": "./dist/guardrails/index.js"
+    },
     "./authentication": {
       "types": "./dist/services/authentication/index.d.ts",
       "default": "./dist/services/authentication/index.js"

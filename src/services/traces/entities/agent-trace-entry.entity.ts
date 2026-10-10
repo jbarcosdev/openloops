@@ -9,7 +9,7 @@ export interface AgentTraceEntryProps extends BaseEntityProps {
 	timestamp?: Date | string
 	answerId?: string | ObjectId
 	messageId?: string | ObjectId
-	kind?: 'skill' | 'node' | 'agent'
+	kind?: 'skill' | 'node' | 'agent' | 'guard'
 	iteration?: number
 	durationMs?: number
 }
@@ -40,7 +40,7 @@ export class AgentTraceEntry extends BaseEntity {
 		public timestamp?: Date,
 		public answerId?: ObjectId,
 		public messageId?: ObjectId,
-		public kind?: 'skill' | 'node' | 'agent',
+		public kind?: 'skill' | 'node' | 'agent' | 'guard',
 		public iteration?: number,
 		public durationMs?: number,
 	) {
