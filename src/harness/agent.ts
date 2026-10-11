@@ -264,6 +264,7 @@ export class Agent {
 
         if (this.chatOptions?.notifyOnCompletion) this.currentChat.settings?.setNotifyOnCompletion(true)
         if (this.chatOptions?.isPrivateSession) this.currentChat.settings?.setIsPrivateSession(true)
+        if (this.chatOptions?.modelProvider) this.currentChat.settings?.setModelProvider(this.chatOptions.modelProvider)
         if (this.chatOptions?.modelName) this.currentChat.settings?.setModelName(this.chatOptions.modelName)
         if (this.chatOptions?.loopName) this.currentChat.settings?.setLoopName(this.chatOptions.loopName)
 
