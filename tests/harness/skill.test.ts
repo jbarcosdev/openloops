@@ -168,8 +168,14 @@ describe('reasoning engine contract', () => {
         for (const tool of NATIVE_TOOLS) expect(instructions).toContain(tool.name)
     })
 
-    it.each(['OUTPUT_FORMAT', 'STATE', 'LEARNED', 'ACTIONS', 'REFERENCES', 'WORKSPACE', 'CONFIRMATION', 'ARGUMENT_SOURCES', 'IDENTIFIERS'])('keeps the %s rule', rule => {
+    it.each(['OUTPUT_FORMAT', 'NEVER_EMPTY', 'STATE', 'LEARNED', 'ACTIONS', 'REFERENCES', 'WORKSPACE', 'CONFIRMATION', 'ARGUMENT_SOURCES', 'IDENTIFIERS'])('keeps the %s rule', rule => {
         expect(instructions).toContain(`${rule}:`)
+    })
+
+    it('forbids empty actions in the rule, the output format and the closing line', () => {
+        expect(instructions).toContain("'actions' (never empty)")
+        expect(instructions).toContain('NEVER_EMPTY:')
+        expect(instructions).toContain('with at least one action')
     })
 
     it('teaches the find option of read_context', () => {

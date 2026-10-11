@@ -31,7 +31,7 @@ export class AgiLoop extends AgentLoop {
     }
 
     get version () {
-        return '1.1.0'
+        return '1.2.0'
     }
 
     get author () {
