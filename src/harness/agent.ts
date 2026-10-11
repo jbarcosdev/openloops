@@ -27,7 +27,7 @@ import { inputCheck } from '@guardrails/input/input-check'
 import { createBlockInputOversize } from '@guardrails/input/create-block-input-oversize'
 import { listMcpServersByUser } from '@services/mcp-servers'
 import { rankToolsByKeywords, WeightedKeyword, ScoredTool } from './utils/rank-tools-by-keywords'
-import { AgentLoop, AgentLoopNode, RunContext } from './agent-loop'
+import { AgentLoop, AgentLoopNode, Harness, RunContext } from './agent-loop'
 import { AgentStatus } from './agent-state'
 import { AgentWorkspace } from './workspace'
 import { ToolPipeline, ToolPipelineRunOptions } from './tool-pipeline'
@@ -680,7 +680,7 @@ export class Agent {
             }
 
             const startedAt = Date.now()
-            await nodeFn.call(this._loop, this.buildRunContext())
+            await nodeFn.call(this._loop, this.buildRunContext(), this.buildHarness())
             this.currentChat.addTrace({ node: nodeName!, kind: 'node', durationMs: Date.now() - startedAt, taskId: activeTask?.id })
 
             await this.persist()
@@ -791,6 +791,23 @@ export class Agent {
             get tools () {
                 return agent.tools
             },
+            baseParams: this.baseParams,
+            skillParams: {
+                provider: this.chatOptions?.modelProvider,
+                modelName: this.chatOptions?.modelName,
+                sessionId,
+                answerId: this.answerId,
+                userMessage: this.currentMessage,
+                currentUser: this.currentUser,
+                currentSession: this.currentSession,
+                chat: this.currentChat,
+            },
+            logger: this.logger,
+        }
+    }
+
+    private buildHarness (): Harness {
+        return {
             ensureTools: () => this.ensureTools(),
             searchTools: this.searchTools.bind(this),
             toolCatalog: async () => {
@@ -803,25 +820,13 @@ export class Agent {
             requiresApproval: action => this.getPipeline().requiresApproval(action),
             requestApproval: (actions, opts) => this.requestApproval(actions, opts.resumeAt),
             reopenTask: taskId => this.reopenTask(taskId),
-            baseParams: this.baseParams,
-            skillParams: {
-                provider: this.chatOptions?.modelProvider,
-                modelName: this.chatOptions?.modelName,
-                sessionId,
-                answerId: this.answerId,
-                userMessage: this.currentMessage,
-                currentUser: this.currentUser,
-                currentSession: this.currentSession,
-                chat: this.currentChat,
-            },
-            reply: (content) => this.reply(content),
-            setNextNode: (node) => {
+            reply: content => this.reply(content),
+            setNextNode: node => {
                 const resolved = this.resolveNodeName(node)
                 const active = this.currentChat.activeTask
                 if (active) active.setNextNode(resolved)
                 else this.pendingNextNode = resolved
             },
-            logger: this.logger,
         }
     }
 }

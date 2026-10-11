@@ -1,4 +1,4 @@
-import { AgentLoop, AgentStatus, RunContext } from '@harness/index'
+import { AgentLoop, AgentStatus, Harness, RunContext } from '@harness/index'
 import { findInvoker } from '@services/tasks/entities/agent-task.entity'
 import { fastResponder } from '../shared/skills'
 import { ungroundedIdentifiers, UNGROUNDED_PHRASE } from '@harness/utils/grounding'
@@ -31,7 +31,7 @@ export class AgiLoop extends AgentLoop {
     }
 
     get version () {
-        return '1.0.0'
+        return '1.1.0'
     }
 
     get author () {
@@ -52,7 +52,7 @@ export class AgiLoop extends AgentLoop {
         }
     }
 
-    private async fastResponder (ctx: RunContext): Promise<void> {
+    private async fastResponder (ctx: RunContext, harness: Harness): Promise<void> {
         ctx.chat.state?.setCurrentActivity('Analyzing requirement...')
 
         const chat_history = ctx.chat.lastHistoryMessages()
@@ -69,15 +69,15 @@ export class AgiLoop extends AgentLoop {
         ctx.chat.state?.setLanguage(result.detected_language)
 
         if (!result.can_answer) {
-            ctx.setNextNode(this.nodes.reasoning_engine)
+            harness.setNextNode(this.nodes.reasoning_engine)
         } else {
             ctx.chat.state?.setStatus(AgentStatus.IDLE)
-            ctx.setNextNode(this.nodes.fast_responder)
-            ctx.reply(result.answer ?? '')
+            harness.setNextNode(this.nodes.fast_responder)
+            harness.reply(result.answer ?? '')
         }
     }
 
-    private async reasoningEngine (ctx: RunContext): Promise<void> {
+    private async reasoningEngine (ctx: RunContext, harness: Harness): Promise<void> {
         ctx.chat.state?.setCurrentActivity('Thinking...')
 
         const task = ctx.task ?? ctx.chat.createTask(ctx.currentMessage)
@@ -95,7 +95,7 @@ export class AgiLoop extends AgentLoop {
                 : undefined
         const stopReason = exhausted ? 'The task reached its limit of turns or tool calls' : stuck ? `The same tool (${streak.name}) was called ${streak.count} turns in a row without getting anywhere` : lost ? `${workspaceTurns} turns in a row went into reading and saving notes without running any tool` : undefined
         const lastCompletedTask = ctx.chat.lastCompletedTask()
-        const catalog = await ctx.toolCatalog()
+        const catalog = await harness.toolCatalog()
 
         const result = await reasoningEngine.run({
             ...ctx.skillParams,
@@ -121,31 +121,31 @@ export class AgiLoop extends AgentLoop {
 
         if (stopReason) {
             const answer = task.forceAnswer(`I could not finish the task: ${stopReason}.`)
-            ctx.reply(answer)
+            harness.reply(answer)
             task.summary = answer
             ctx.chat.failTask(task.id)
             ctx.chat.state?.setStatus(AgentStatus.IDLE)
-            ctx.setNextNode(this.nodes.fast_responder)
+            harness.setNextNode(this.nodes.fast_responder)
             return
         }
 
-        ctx.setNextNode(this.nodes.action_engine)
+        harness.setNextNode(this.nodes.action_engine)
     }
 
-    private async actionEngine (ctx: RunContext): Promise<void> {
+    private async actionEngine (ctx: RunContext, harness: Harness): Promise<void> {
         const task = ctx.task!
 
         const ready = task.readyActions
-        const blocked = ready.filter(action => ctx.requiresApproval(action))
+        const blocked = ready.filter(action => harness.requiresApproval(action))
         const runnable = ready.filter(action => !blocked.includes(action))
 
         if (runnable.length) {
             ctx.chat.state?.setCurrentActivity(`Running ${runnable.map(action => action.name).join(', ')}...`)
-            await Promise.all(runnable.map(action => ctx.runAction(action, { blockDuplicates: BLOCK_DUPLICATES })))
+            await Promise.all(runnable.map(action => harness.runAction(action, { blockDuplicates: BLOCK_DUPLICATES })))
         }
 
         if (blocked.length) {
-            await ctx.requestApproval(blocked, { resumeAt: this.nodes.action_engine })
+            await harness.requestApproval(blocked, { resumeAt: this.nodes.action_engine })
             return
         }
 
@@ -153,30 +153,30 @@ export class AgiLoop extends AgentLoop {
 
         if (question) {
             ctx.chat.state?.setStatus(AgentStatus.AWAITING_USER_INPUT)
-            ctx.setNextNode(this.nodes.reasoning_engine)
-            ctx.reply(question)
+            harness.setNextNode(this.nodes.reasoning_engine)
+            harness.reply(question)
             return
         }
 
         const answer = task.pendingAnswer
 
         if (answer !== undefined) {
-            const invented = task.rejectedAnswers < MAX_ANSWER_REJECTIONS ? await ungroundedIdentifiers(task, ctx.workspace, [answer]) : []
+            const invented = task.rejectedAnswers < MAX_ANSWER_REJECTIONS ? await ungroundedIdentifiers(task, harness.workspace, [answer]) : []
 
             if (invented.length) {
                 task.rejectAnswer(`Your answer cites the identifier${invented.length > 1 ? 's' : ''} ${invented.map(id => `"${id}"`).join(', ')}, which ${invented.length > 1 ? 'were' : 'was'} ${UNGROUNDED_PHRASE}. Do not state values you did not get from a result or from the user: remove ${invented.length > 1 ? 'them' : 'it'}, or obtain ${invented.length > 1 ? 'them' : 'it'} with a tool, and answer again.`)
-                ctx.setNextNode(this.nodes.reasoning_engine)
+                harness.setNextNode(this.nodes.reasoning_engine)
                 return
             }
 
             task.deliverAnswer()
-            ctx.reply(answer)
+            harness.reply(answer)
             ctx.chat.completeTask(task.id, answer)
             ctx.chat.state?.setStatus(AgentStatus.IDLE)
-            ctx.setNextNode(this.nodes.fast_responder)
+            harness.setNextNode(this.nodes.fast_responder)
             return
         }
 
-        ctx.setNextNode(this.nodes.reasoning_engine)
+        harness.setNextNode(this.nodes.reasoning_engine)
     }
 }

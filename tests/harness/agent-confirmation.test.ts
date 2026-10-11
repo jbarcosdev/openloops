@@ -164,18 +164,18 @@ describe('confirmation of destructive calls', () => {
         const loop = () => makeLoop({
             initialNode: 'start',
             nodes: {
-                start: async ctx => {
+                start: async (ctx, harness) => {
                     const task = ctx.chat.createTask(ctx.currentMessage)
                     const actions = task.addTurn({ reasoning: 'r', actions: [{ tool: 't_delete', arguments: { id: '3' } }] }, { declaredTools: ['t_delete'] })
 
-                    await ctx.requestApproval(actions.filter(action => ctx.requiresApproval(action)), { resumeAt: 'finish' })
+                    await harness.requestApproval(actions.filter(action => harness.requiresApproval(action)), { resumeAt: 'finish' })
                 },
-                finish: async ctx => {
-                    for (const action of ctx.task!.readyActions) await ctx.runAction(action)
+                finish: async (ctx, harness) => {
+                    for (const action of ctx.task!.readyActions) await harness.runAction(action)
 
                     ctx.chat.completeTask(ctx.task!.id, 'done')
                     ctx.chat.state?.setStatus(AgentStatus.IDLE)
-                    ctx.reply('all done')
+                    harness.reply('all done')
                 },
             },
         })

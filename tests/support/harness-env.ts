@@ -94,7 +94,7 @@ export function useHarness (): HarnessEnv {
     return env
 }
 
-export function makeLoop (props: { initialNode: string; nodes: Record<string, (ctx: any) => Promise<void>>; name?: string }) {
+export function makeLoop (props: { initialNode: string; nodes: Record<string, (ctx: any, harness: any) => Promise<void>>; name?: string }) {
     return {
         name: props.name ?? 'test_loop',
         version: '1.0.0',

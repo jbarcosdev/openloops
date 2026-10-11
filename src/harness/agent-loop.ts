@@ -21,6 +21,12 @@ export interface RunContext {
     currentMessage: string
     answerId: string
     tools: Tool[]
+    baseParams: BaseParams
+    skillParams: Pick<SkillRunOptions, 'provider' | 'modelName' | 'sessionId' | 'answerId' | 'userMessage' | 'currentUser' | 'currentSession' | 'chat'>
+    logger: Logger
+}
+
+export interface Harness {
     ensureTools: () => Promise<Tool[]>
     searchTools: (keywords: WeightedKeyword[], opts?: { page?: number; limit?: number }) => ScoredTool[]
     toolCatalog: () => Promise<ToolCatalog>
@@ -29,11 +35,8 @@ export interface RunContext {
     requiresApproval: (action: AgentAction) => boolean
     requestApproval: (actions: AgentAction[], opts: { resumeAt: string | AgentLoopNode }) => Promise<void>
     reopenTask: (taskId: string) => Promise<AgentTask | undefined>
-    baseParams: BaseParams
-    skillParams: Pick<SkillRunOptions, 'provider' | 'modelName' | 'sessionId' | 'answerId' | 'userMessage' | 'currentUser' | 'currentSession' | 'chat'>
     reply: (content: string) => void
     setNextNode: (node?: string | AgentLoopNode) => void
-    logger: Logger
 }
 
 interface AgentIdentity {
@@ -42,7 +45,7 @@ interface AgentIdentity {
     role?: string
 }
 
-export type AgentLoopNode = (ctx: RunContext) => Promise<void>
+export type AgentLoopNode = (ctx: RunContext, harness: Harness) => Promise<void>
 
 export interface Author {
     name: string

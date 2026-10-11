@@ -20,9 +20,9 @@ describe('Agent lifecycle', () => {
         const loop = makeLoop({
             initialNode: 'greet',
             nodes: {
-                greet: async ctx => {
+                greet: async (ctx, harness) => {
                     ctx.chat.state.setStatus(AgentStatus.IDLE)
-                    ctx.reply('hola')
+                    harness.reply('hola')
                 },
             },
         })
@@ -50,7 +50,7 @@ describe('Agent lifecycle', () => {
         const loop = makeLoop({
             initialNode: 'first',
             nodes: {
-                first: async ctx => { order.push('first'); ctx.setNextNode('second') },
+                first: async (_ctx, harness) => { order.push('first'); harness.setNextNode('second') },
                 second: async ctx => { order.push('second'); ctx.chat.state.setStatus(AgentStatus.IDLE) },
             },
         })
@@ -68,7 +68,7 @@ describe('Agent lifecycle', () => {
     })
 
     it('fails when the loop points to a node that does not exist', async () => {
-        const loop = makeLoop({ initialNode: 'a', nodes: { a: async ctx => { ctx.setNextNode('ghost') } } })
+        const loop = makeLoop({ initialNode: 'a', nodes: { a: async (_ctx, harness) => { harness.setNextNode('ghost') } } })
         const result = await env.send(new Agent({ loop }), 'x')
 
         expect(result.data.state.status).toBe(AgentStatus.FAILED)
@@ -118,7 +118,7 @@ describe('Agent lifecycle', () => {
     })
 
     it('continues an existing chat and keeps its messages', async () => {
-        const loop = makeLoop({ initialNode: 'a', nodes: { a: async ctx => { ctx.chat.state.setStatus(AgentStatus.IDLE); ctx.reply('ok') } } })
+        const loop = makeLoop({ initialNode: 'a', nodes: { a: async (ctx, harness) => { ctx.chat.state.setStatus(AgentStatus.IDLE); harness.reply('ok') } } })
         const agent = new Agent({ loop })
         const first = await env.send(agent, 'one')
         await env.send(agent, 'two', first.data._id.toString())
