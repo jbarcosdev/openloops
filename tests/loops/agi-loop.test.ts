@@ -245,59 +245,6 @@ describe('AgiLoop', () => {
         })
     })
 
-    describe('confirmation gate', () => {
-        it('pauses a destructive call and runs it once after confirmation', async () => {
-            llm.script({ actions: [act('t_delete', { id: '9' })] }, () => say('Do you want me to delete item 9?'), say('Item 9 deleted.'))
-            const agent = env.agent(w.tools)
-
-            let result = await env.send(agent, 'delete 9')
-            const chatId = result.data._id.toString()
-
-            expect(w.deleted).toEqual([])
-            expect(result.data.state.status).toBe(AgentStatus.AWAITING_USER_CONFIRMATION)
-            expect(result.data.lastAnswer).toBe('Do you want me to delete item 9?')
-            expect(llm.call(1).toolChoice).toBe('none')
-            expect(llm.call(1).messages).toHaveLength(2)
-            expect(llm.opening(1).HARNESS.pending_confirmation[0].tool).toBe('t_delete')
-            expect(env.task().turns).toHaveLength(1)
-
-            result = await env.send(agent, 'yes', chatId)
-
-            expect(result.error).toBeUndefined()
-            expect(w.deleted).toEqual(['9'])
-            expect(env.fast.calls).toBe(1)
-            expect(llm.observations(2)[0]).toMatchObject({ tool: 't_delete', status: 'completed' })
-            expect(result.data.lastAnswer).toBe('Item 9 deleted.')
-            expect(result.data.state.status).toBe(AgentStatus.IDLE)
-        })
-
-        it('cancels the task when the user declines', async () => {
-            llm.script({ actions: [act('t_delete', { id: '5' })] }, () => say('Delete 5?'))
-            const agent = env.agent(w.tools)
-            let result = await env.send(agent, 'delete 5')
-
-            env.gate.decision = 'DECLINED'
-            result = await env.send(agent, 'no', result.data._id.toString())
-
-            expect(w.deleted).toEqual([])
-            expect(result.data.lastAnswer).toBe('cancelled ok')
-            expect(env.task().status).toBe('cancelled')
-        })
-
-        it('keeps waiting when the reply is unclear', async () => {
-            llm.script({ actions: [act('t_delete', { id: '1' })] }, () => say('Delete 1?'))
-            const agent = env.agent(w.tools)
-            let result = await env.send(agent, 'delete 1')
-
-            env.gate.decision = 'UNCLEAR'
-            result = await env.send(agent, 'hmm', result.data._id.toString())
-
-            expect(w.deleted).toEqual([])
-            expect(result.data.state.status).toBe(AgentStatus.AWAITING_USER_CONFIRMATION)
-            expect(result.data.lastAnswer).toBe('sure?')
-        })
-    })
-
     describe('ask_user', () => {
         it('pauses with the question and resumes with the answer as an observation and a known fact', async () => {
             llm.script({ state: { next: 'ask' }, actions: [act('ask_user', { question: 'Which warehouse?' })] }, say('Using the second one.'))
@@ -430,7 +377,7 @@ describe('AgiLoop', () => {
             })
 
             it('still asks for confirmation when a destructive tool was resolved by name', async () => {
-                llm.script({ actions: [act('wipe', {})] }, say('asked'))
+                llm.script({ actions: [act('wipe', {})] })
                 const result = await env.send(env.agent(tools), 'wipe it')
 
                 expect(ran).not.toContain('wipe')

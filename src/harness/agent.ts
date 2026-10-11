@@ -22,6 +22,7 @@ import { createAgentTraces } from '@services/traces'
 import { Tool } from '@tools/tool'
 import { Guard, GuardResult, InputGuardContext } from '@guardrails/guard'
 import { DEFAULT_MAX_INPUT_LENGTH, GUARD_FAILURE_REPLY } from '@common/constants'
+import { approvalRequest, confirmationGate } from '@loops/shared/skills'
 import { inputCheck } from '@guardrails/input/input-check'
 import { createBlockInputOversize } from '@guardrails/input/create-block-input-oversize'
 import { listMcpServersByUser } from '@services/mcp-servers'
@@ -81,6 +82,7 @@ export class Agent {
     private _preHooks: Function[] = []
     private _postHooks: Function[] = []
     private _guards: Guard[] = []
+    private awaitingConfirmation = false
 
     private currentChat: Chat
     private chatOptions?: ChatSettingsProps
@@ -181,6 +183,7 @@ export class Agent {
             this.snapshots.clear()
             this.iteration = 0
             this.userMessageId = undefined
+            this.awaitingConfirmation = false
 
             this.currentUser = currentUser
             this.currentSession = currentSession
@@ -191,7 +194,7 @@ export class Agent {
             const proceed = await this.preRunner(chatId)
 
             if (proceed) {
-                await this.runLoop()
+                if (await this.resolveConfirmation()) await this.runLoop()
 
                 await this.postRunner()
             } else {
@@ -264,6 +267,8 @@ export class Agent {
         if (this.chatOptions?.modelName) this.currentChat.settings?.setModelName(this.chatOptions.modelName)
         if (this.chatOptions?.loopName) this.currentChat.settings?.setLoopName(this.chatOptions.loopName)
 
+        this.awaitingConfirmation = this.currentChat.state?.status === AgentStatus.AWAITING_USER_CONFIRMATION
+
         this.currentChat.state?.setStatus(AgentStatus.PROCESSING)
         this.currentChat.state?.setCurrentActivity('Starting...')
         await this.persist({ resetStop: true })
@@ -318,10 +323,63 @@ export class Agent {
     }
 
     private async finishBlocked () {
-        this.currentChat.state?.setStatus(AgentStatus.IDLE)
+        this.currentChat.state?.setStatus(this.awaitingConfirmation ? AgentStatus.AWAITING_USER_CONFIRMATION : AgentStatus.IDLE)
         this.currentChat.state?.setCurrentActivity('stopped')
         await this.persist()
         await this.disconnectMcpServers()
+    }
+
+    private async requestApproval (actions: AgentAction[], resumeAt: string | AgentLoopNode): Promise<void> {
+        const task = this.currentChat.activeTask
+        if (!task) throw new Error('[AGENT] An active task is required to request approval')
+
+        const ctx = this.buildRunContext()
+
+        const result = await approvalRequest.run({
+            ...ctx.skillParams,
+            input: { goal: task.goal, pending_actions: actions.map(action => action.promptView()) },
+        })
+
+        const question = typeof result.question === 'string' && result.question.trim()
+            ? result.question
+            : `Do you confirm that I run ${actions.map(action => action.name).join(', ')}?`
+
+        task.setNextNode(this.resolveNodeName(resumeAt))
+        this.currentChat.state?.setStatus(AgentStatus.AWAITING_USER_CONFIRMATION)
+        this.currentChat.addTrace({ node: 'approval_request', kind: 'agent', reasoning: `Asked for confirmation of ${actions.map(action => action.name).join(', ')}`, taskId: task.id })
+        this.reply(question)
+    }
+
+    private async resolveConfirmation (): Promise<boolean> {
+        const task = this.currentChat.activeTask
+        if (!this.awaitingConfirmation || !task) return true
+
+        const ctx = this.buildRunContext()
+        const pending = this.currentChat.lastAnswer
+
+        const result = await confirmationGate.run({
+            ...ctx.skillParams,
+            contextInjection: { ...(pending ? { pending_confirmation: pending } : {}) },
+        })
+
+        switch (result.decision) {
+            case 'CONFIRMED':
+                task.approvePending()
+                this.currentChat.state?.setStatus(AgentStatus.PROCESSING)
+                return true
+
+            case 'DECLINED':
+                this.currentChat.cancelTask(task.id)
+                this.currentChat.state?.setStatus(AgentStatus.IDLE)
+                this.reply(result.acknowledgement)
+                return false
+
+            case 'UNCLEAR':
+            default:
+                this.currentChat.state?.setStatus(AgentStatus.AWAITING_USER_CONFIRMATION)
+                this.reply(result.clarification_prompt)
+                return false
+        }
     }
 
     private async postRunner () {
@@ -743,6 +801,7 @@ export class Agent {
             workspace: this.getWorkspace(),
             runAction: (action, opts) => this.runAction(action, opts),
             requiresApproval: action => this.getPipeline().requiresApproval(action),
+            requestApproval: (actions, opts) => this.requestApproval(actions, opts.resumeAt),
             reopenTask: taskId => this.reopenTask(taskId),
             baseParams: this.baseParams,
             skillParams: {

@@ -1,7 +1,7 @@
 import { ObjectId } from 'mongodb'
 import { Agent, AgentLoop } from '@harness/index'
 import { AgiLoop } from '@loops/agi/loop'
-import { fastResponder, confirmationGate } from '@loops/shared/skills'
+import { fastResponder, confirmationGate, approvalRequest } from '@loops/shared/skills'
 import type { Tool } from '@tools/tool'
 import type { Guard } from '@guardrails/guard'
 import type { CurrentUser } from '@common/base'
@@ -19,7 +19,8 @@ export class HarnessEnv {
     readonly llm = new ScriptedLLM()
     readonly user = { userId: new ObjectId().toString(), email: 'tester@example.com', isAdmin: () => false } as unknown as CurrentUser
     readonly fast = { canAnswer: false, calls: 0 }
-    readonly gate = { decision: 'CONFIRMED' }
+    readonly gate = { decision: 'CONFIRMED', calls: [] as Record<string, any>[] }
+    readonly approval = { question: 'Do you confirm?', calls: [] as Record<string, any>[] }
     private spies: jest.SpyInstance[] = []
 
     start (): void {
@@ -31,17 +32,23 @@ export class HarnessEnv {
         this.fast.canAnswer = false
         this.fast.calls = 0
         this.gate.decision = 'CONFIRMED'
+        this.gate.calls = []
+        this.approval.question = 'Do you confirm?'
+        this.approval.calls = []
 
         this.spies = [
             jest.spyOn(fastResponder as any, 'run').mockImplementation(async () => {
                 this.fast.calls++
                 return { can_answer: this.fast.canAnswer, answer: 'fast answer', detected_language: 'es' }
             }),
-            jest.spyOn(confirmationGate as any, 'run').mockImplementation(async () => ({
-                decision: this.gate.decision,
-                acknowledgement: 'cancelled ok',
-                clarification_prompt: 'sure?',
-            })),
+            jest.spyOn(confirmationGate as any, 'run').mockImplementation(async (options: any) => {
+                this.gate.calls.push(options)
+                return { decision: this.gate.decision, acknowledgement: 'cancelled ok', clarification_prompt: 'sure?' }
+            }),
+            jest.spyOn(approvalRequest as any, 'run').mockImplementation(async (options: any) => {
+                this.approval.calls.push(options)
+                return { question: this.approval.question }
+            }),
         ]
     }
 

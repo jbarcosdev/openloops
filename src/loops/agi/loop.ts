@@ -1,6 +1,6 @@
 import { AgentLoop, AgentStatus, RunContext } from '@harness/index'
-import { AgentTask, findInvoker } from '@services/tasks/entities/agent-task.entity'
-import { fastResponder, confirmationGate } from '../shared/skills'
+import { findInvoker } from '@services/tasks/entities/agent-task.entity'
+import { fastResponder } from '../shared/skills'
 import { ungroundedIdentifiers, UNGROUNDED_PHRASE } from '@harness/utils/grounding'
 import { reasoningEngine } from './skills/reasoning-engine'
 
@@ -22,9 +22,7 @@ export class AgiLoop extends AgentLoop {
         return {
             fast_responder: this.fastResponder,
             reasoning_engine: this.reasoningEngine,
-            execution_loop: this.executionLoop,
-            request_confirmation: this.requestConfirmation,
-            confirmation_gate: this.confirmationGate,
+            action_engine: this.actionEngine,
         }
     }
 
@@ -131,10 +129,10 @@ export class AgiLoop extends AgentLoop {
             return
         }
 
-        ctx.setNextNode(this.nodes.execution_loop)
+        ctx.setNextNode(this.nodes.action_engine)
     }
 
-    private async executionLoop (ctx: RunContext): Promise<void> {
+    private async actionEngine (ctx: RunContext): Promise<void> {
         const task = ctx.task!
 
         const ready = task.readyActions
@@ -147,7 +145,7 @@ export class AgiLoop extends AgentLoop {
         }
 
         if (blocked.length) {
-            ctx.setNextNode(this.nodes.request_confirmation)
+            await ctx.requestApproval(blocked, { resumeAt: this.nodes.action_engine })
             return
         }
 
@@ -180,58 +178,5 @@ export class AgiLoop extends AgentLoop {
         }
 
         ctx.setNextNode(this.nodes.reasoning_engine)
-    }
-
-    private async requestConfirmation (ctx: RunContext): Promise<void> {
-        const task = ctx.task!
-        const pending = task.readyActions.filter(action => ctx.requiresApproval(action))
-        const catalog = await ctx.toolCatalog()
-
-        const result = await reasoningEngine.run({
-            ...ctx.skillParams,
-            history: task.history({ pending_confirmation: pending.map(action => action.promptView()) }),
-            tools: catalog.tools,
-            toolChoice: 'none',
-            contextInjection: { ...this.context(ctx), ...catalog.context },
-        })
-
-        const question = AgentTask.answerFrom(result) ?? `Do you confirm that I run ${pending.map(action => action.name).join(', ')}?`
-
-        ctx.chat.state?.setStatus(AgentStatus.AWAITING_USER_CONFIRMATION)
-        ctx.setNextNode(this.nodes.confirmation_gate)
-        ctx.reply(question)
-    }
-
-    private async confirmationGate (ctx: RunContext): Promise<void> {
-        const task = ctx.task!
-
-        const result = await confirmationGate.run({
-            ...ctx.skillParams,
-            contextInjection: {
-                ...(ctx.chat.lastAnswer ? { pending_confirmation: ctx.chat.lastAnswer } : {}),
-            },
-        })
-
-        switch (result.decision) {
-            case 'CONFIRMED':
-                task.approvePending()
-                ctx.chat.state?.setStatus(AgentStatus.PROCESSING)
-                ctx.setNextNode(this.nodes.execution_loop)
-                break
-
-            case 'DECLINED':
-                ctx.chat.cancelTask(task.id)
-                ctx.chat.state?.setStatus(AgentStatus.IDLE)
-                ctx.setNextNode(this.nodes.fast_responder)
-                ctx.reply(result.acknowledgement)
-                break
-
-            case 'UNCLEAR':
-            default:
-                ctx.chat.state?.setStatus(AgentStatus.AWAITING_USER_CONFIRMATION)
-                ctx.setNextNode(this.nodes.confirmation_gate)
-                ctx.reply(result.clarification_prompt)
-                break
-        }
     }
 }

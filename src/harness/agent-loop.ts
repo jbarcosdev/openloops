@@ -27,6 +27,7 @@ export interface RunContext {
     workspace: Workspace
     runAction: (action: AgentAction, opts?: ToolPipelineRunOptions) => Promise<AgentAction>
     requiresApproval: (action: AgentAction) => boolean
+    requestApproval: (actions: AgentAction[], opts: { resumeAt: string | AgentLoopNode }) => Promise<void>
     reopenTask: (taskId: string) => Promise<AgentTask | undefined>
     baseParams: BaseParams
     skillParams: Pick<SkillRunOptions, 'provider' | 'modelName' | 'sessionId' | 'answerId' | 'userMessage' | 'currentUser' | 'currentSession' | 'chat'>
