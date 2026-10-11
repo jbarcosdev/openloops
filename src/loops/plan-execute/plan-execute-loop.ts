@@ -1,5 +1,5 @@
-import { AgentLoop, AgentStatus, RunContext } from '@harness/index'
-import { fastResponder, confirmationGate } from '../shared/skills'
+import { AgentLoop, AgentStatus, Harness, RunContext } from '@harness/index'
+import { fastResponder } from '../shared/skills'
 import {
     actionPlanner,
     stateObserver,
@@ -29,7 +29,6 @@ export class PlanExecuteLoop extends AgentLoop {
             execution_loop: this.executionLoop,
             state_observer: this.executionObserver,
             final_responder: this.finalResponder,
-            confirmation_gate: this.confirmationGate,
         }
     }
 
@@ -38,7 +37,7 @@ export class PlanExecuteLoop extends AgentLoop {
     }
 
     get version () {
-        return '1.0.0'
+        return '1.1.0'
     }
 
     get author () {
@@ -49,15 +48,15 @@ export class PlanExecuteLoop extends AgentLoop {
         }
     }
 
-    private stopTask (ctx: RunContext, reason: string): void {
+    private stopTask (ctx: RunContext, harness: Harness, reason: string): void {
         const task = ctx.task!
 
         task.skipPending()
         task.setScratch('stop_reason', reason)
-        ctx.setNextNode(this.nodes.final_responder)
+        harness.setNextNode(this.nodes.final_responder)
     }
 
-    private async fastResponder (ctx: RunContext): Promise<void> {
+    private async fastResponder (ctx: RunContext, harness: Harness): Promise<void> {
         ctx.chat.state?.setCurrentActivity('Analyzing requirement...')
 
         const chat_history = ctx.chat.lastHistoryMessages()
@@ -74,18 +73,18 @@ export class PlanExecuteLoop extends AgentLoop {
         ctx.chat.state?.setLanguage(result.detected_language)
 
         if (!result.can_answer) {
-            ctx.setNextNode(this.nodes.strategy_engine)
+            harness.setNextNode(this.nodes.strategy_engine)
         } else {
             ctx.chat.state?.setStatus(AgentStatus.IDLE)
-            ctx.setNextNode(this.nodes.fast_responder)
-            ctx.reply(result.answer ?? '')
+            harness.setNextNode(this.nodes.fast_responder)
+            harness.reply(result.answer ?? '')
         }
     }
 
-    private async strategyEngine (ctx: RunContext): Promise<void> {
+    private async strategyEngine (ctx: RunContext, harness: Harness): Promise<void> {
         ctx.chat.state?.setCurrentActivity('Designing strategy...')
 
-        await ctx.ensureTools()
+        await harness.ensureTools()
 
         const lastCompletedTask = ctx.task ? undefined : ctx.chat.lastCompletedTask()
         const chatHistory = ctx.chat.lastHistoryMessages()
@@ -106,20 +105,20 @@ export class PlanExecuteLoop extends AgentLoop {
         ctx.chat.state?.setLanguage(result.detected_language)
 
         const reopened = result.is_continuation && lastCompletedTask
-            ? await ctx.reopenTask(lastCompletedTask.id)
+            ? await harness.reopenTask(lastCompletedTask.id)
             : undefined
 
         const task = reopened ?? ctx.chat.createTask(result.goal ?? ctx.currentMessage)
 
         task.setScratch('strategy', result)
 
-        ctx.setNextNode(this.nodes.action_planner)
+        harness.setNextNode(this.nodes.action_planner)
     }
 
-    private async actionPlanner (ctx: RunContext): Promise<void> {
+    private async actionPlanner (ctx: RunContext, harness: Harness): Promise<void> {
         ctx.chat.state?.setCurrentActivity('Creating action plan...')
 
-        await ctx.ensureTools()
+        await harness.ensureTools()
 
         const task = ctx.task!
         const strategy = task.getScratch<StrategySchema>('strategy')
@@ -149,7 +148,7 @@ export class PlanExecuteLoop extends AgentLoop {
         const isExecutionPlan = result.plan_status === 'SUCCESS' || result.plan_status === 'NEEDS_CONFIRMATION'
 
         if (isExecutionPlan && steps.length && steps.every(step => task.hasExecuted(step.tool_name, step.arguments ?? step.args))) {
-            this.stopTask(ctx, 'The planner only proposed steps identical to ones already executed, so there is no new approach to try')
+            this.stopTask(ctx, harness, 'The planner only proposed steps identical to ones already executed, so there is no new approach to try')
             return
         }
 
@@ -165,117 +164,74 @@ export class PlanExecuteLoop extends AgentLoop {
             case 'MISSING_TOOLS':
                 ctx.chat.state?.setStatus(AgentStatus.AWAITING_USER_INPUT)
                 ctx.chat.failTask(task.id)
-                ctx.setNextNode(undefined)
-                ctx.reply(result.user_response)
+                harness.setNextNode(undefined)
+                harness.reply(result.user_response)
                 break
 
             case 'NEEDS_CLARIFICATION':
                 ctx.chat.state?.setStatus(AgentStatus.AWAITING_USER_INPUT)
-                ctx.setNextNode(undefined)
-                ctx.reply(result.clarification_prompt)
+                harness.setNextNode(undefined)
+                harness.reply(result.clarification_prompt)
                 break
 
             case 'NEEDS_CONFIRMATION': {
-                enqueueSteps()
+                const actions = enqueueSteps()
+                const gated = actions.filter(action => harness.requiresApproval(action))
 
-                const actionsList = (result.confirmation_details?.actions ?? [])
-                    .map(action => `- ${action.description}`)
-                    .join('\n')
-
-                ctx.chat.state?.setStatus(AgentStatus.AWAITING_USER_CONFIRMATION)
-                ctx.setNextNode(this.nodes.confirmation_gate)
-                ctx.reply([
-                    result.clarification_prompt,
-                    result.confirmation_details?.impact_summary,
-                    actionsList,
-                    result.confirmation_details?.confirm_label,
-                ].filter(Boolean).join('\n\n'))
+                await harness.requestApproval(gated.length ? gated : actions, { resumeAt: this.nodes.execution_loop })
                 break
             }
 
             case 'SUCCESS':
                 enqueueSteps()
-                ctx.setNextNode(this.nodes.execution_loop)
+                harness.setNextNode(this.nodes.execution_loop)
                 break
         }
     }
 
-    private async executionLoop (ctx: RunContext): Promise<void> {
-        await ctx.ensureTools()
+    private async executionLoop (ctx: RunContext, harness: Harness): Promise<void> {
+        await harness.ensureTools()
 
         const task = ctx.task!
 
         if (task.executedSinceOpen >= MAX_TASK_ACTIONS) {
-            this.stopTask(ctx, `The task reached the maximum of ${MAX_TASK_ACTIONS} executed actions`)
+            this.stopTask(ctx, harness, `The task reached the maximum of ${MAX_TASK_ACTIONS} executed actions`)
             return
         }
 
         const [next] = task.readyActions
 
         if (!next) {
-            ctx.setNextNode(this.nodes.final_responder)
+            harness.setNextNode(this.nodes.final_responder)
             return
         }
 
-        if (ctx.requiresApproval(next)) {
+        if (harness.requiresApproval(next)) {
             if (task.replanCount >= MAX_REPLANS) {
-                this.stopTask(ctx, `The step "${next.name}" needs the user's confirmation but the replan budget is exhausted`)
+                this.stopTask(ctx, harness, `The step "${next.name}" needs the user's confirmation but the replan budget is exhausted`)
                 return
             }
 
             task.setScratch('replan_feedback', `The step "${next.name}" uses a destructive tool and has not been confirmed by the user. Plan it again with plan_status NEEDS_CONFIRMATION and fill confirmation_details.`)
-            ctx.setNextNode(this.nodes.action_planner)
+            harness.setNextNode(this.nodes.action_planner)
             return
         }
 
         ctx.chat.state?.setCurrentActivity(`Running ${next.name}...`)
-        const executed = await ctx.runAction(next)
+        const executed = await harness.runAction(next)
 
         if (executed.canRetry && (executed.retries ?? 0) < MAX_STEP_RETRIES) {
             const retries = executed.incrementRetries()
             executed.resetForRetry()
             await new Promise(resolve => setTimeout(resolve, RETRY_BACKOFF_MS * retries))
-            ctx.setNextNode(this.nodes.execution_loop)
+            harness.setNextNode(this.nodes.execution_loop)
             return
         }
 
-        ctx.setNextNode(this.nodes.state_observer)
+        harness.setNextNode(this.nodes.state_observer)
     }
 
-    private async confirmationGate (ctx: RunContext): Promise<void> {
-        const task = ctx.task!
-
-        const result = await confirmationGate.run({
-            ...ctx.skillParams,
-            contextInjection: {
-                ...(ctx.chat.lastAnswer ? { pending_confirmation: ctx.chat.lastAnswer } : {}),
-            },
-        })
-
-        switch (result.decision) {
-            case 'CONFIRMED':
-                task.approvePending()
-                ctx.chat.state?.setStatus(AgentStatus.PROCESSING)
-                ctx.setNextNode(this.nodes.execution_loop)
-                break
-
-            case 'DECLINED':
-                ctx.chat.cancelTask(task.id)
-                ctx.chat.state?.setStatus(AgentStatus.IDLE)
-                ctx.setNextNode(this.nodes.fast_responder)
-                ctx.reply(result.acknowledgement)
-                break
-
-            case 'UNCLEAR':
-            default:
-                ctx.chat.state?.setStatus(AgentStatus.AWAITING_USER_CONFIRMATION)
-                ctx.setNextNode(this.nodes.confirmation_gate)
-                ctx.reply(result.clarification_prompt)
-                break
-        }
-    }
-
-    private async executionObserver (ctx: RunContext): Promise<void> {
+    private async executionObserver (ctx: RunContext, harness: Harness): Promise<void> {
         const task = ctx.task!
         const lastAction = task.lastExecutedAction
         const replansRemaining = Math.max(0, MAX_REPLANS - task.replanCount)
@@ -295,35 +251,35 @@ export class PlanExecuteLoop extends AgentLoop {
         switch (result.action) {
             case 'REPLAN':
                 if (replansRemaining <= 0) {
-                    this.stopTask(ctx, `The replan budget is exhausted. Last diagnosis: ${result.feedback_for_planner}`)
+                    this.stopTask(ctx, harness, `The replan budget is exhausted. Last diagnosis: ${result.feedback_for_planner}`)
                     break
                 }
 
                 task.setScratch('replan_feedback', result.feedback_for_planner)
-                ctx.setNextNode(this.nodes.action_planner)
+                harness.setNextNode(this.nodes.action_planner)
                 break
 
             case 'FINISH':
                 task.skipPending()
-                ctx.setNextNode(this.nodes.final_responder)
+                harness.setNextNode(this.nodes.final_responder)
                 break
 
             case 'ASK_USER':
                 ctx.chat.state?.setStatus(AgentStatus.AWAITING_USER_INPUT)
-                ctx.setNextNode(undefined)
-                ctx.reply(result.user_prompt ?? '')
+                harness.setNextNode(undefined)
+                harness.reply(result.user_prompt ?? '')
                 break
 
             case 'CONTINUE':
             default: {
                 const stillPending = task.actions.some(a => a.status === 'pending')
-                ctx.setNextNode(stillPending ? this.nodes.execution_loop : this.nodes.final_responder)
+                harness.setNextNode(stillPending ? this.nodes.execution_loop : this.nodes.final_responder)
                 break
             }
         }
     }
 
-    private async finalResponder (ctx: RunContext): Promise<void> {
+    private async finalResponder (ctx: RunContext, harness: Harness): Promise<void> {
         ctx.chat.state?.setCurrentActivity('Generating final response...')
 
         const task = ctx.task!
@@ -339,7 +295,7 @@ export class PlanExecuteLoop extends AgentLoop {
             },
         })
 
-        ctx.reply(result.final_response ?? '')
+        harness.reply(result.final_response ?? '')
 
         if (stopReason) {
             task.summary = result.reasoning
@@ -349,6 +305,6 @@ export class PlanExecuteLoop extends AgentLoop {
         }
 
         ctx.chat.state?.setStatus(AgentStatus.IDLE)
-        ctx.setNextNode(this.nodes.fast_responder)
+        harness.setNextNode(this.nodes.fast_responder)
     }
 }
