@@ -1,12 +1,12 @@
 import { AgentLoop, AgentStatus, RunContext } from '@harness/index'
+import { fastResponder, confirmationGate } from '../shared/skills'
 import {
-    fastResponder,
     actionPlanner,
     stateObserver,
     finalResponder,
-    confirmationGate,
-} from '../shared/skills'
-import { strategyEngine, ResponseSchema as StrategySchema } from '../shared/skills/strategy-engine'
+    strategyEngine,
+    ResponseSchema as StrategySchema
+} from './skills'
 
 const MAX_STEP_RETRIES = 2
 const MAX_REPLANS = 3
