@@ -19,10 +19,10 @@ const base = { sessionId: 's', answerId: 'a' }
 describe('Skill.run', () => {
     afterEach(() => jest.restoreAllMocks())
 
-    describe('legacy mode', () => {
+    describe('without the system role', () => {
         it('sends one user message with instructions, context and input', async () => {
             const chat = respondWith('{"reasoning":"r","x":1}')
-            const skill = new Skill({ name: 'legacy', systemInstructions: { rule: 1 } })
+            const skill = new Skill({ name: 'legacy', systemInstructions: { rule: 1 }, systemRole: false })
             const result = await skill.run({ ...base, userMessage: 'hi', input: { k: 1 }, contextInjection: { c: 2 } })
 
             const { messages, origin } = chat.mock.calls[0][0]
@@ -40,7 +40,11 @@ describe('Skill.run', () => {
     })
 
     describe('system role mode', () => {
-        const skill = new Skill({ name: 'modern', systemInstructions: { rule: 1 }, systemRole: true, temperature: 0.2 })
+        const skill = new Skill({ name: 'modern', systemInstructions: { rule: 1 }, temperature: 0.2 })
+
+        it('is the default', () => {
+            expect(skill.systemRole).toBe(true)
+        })
 
         it('puts the instructions in the system message and returns the opening on the first call', async () => {
             const chat = respondWith('{"x":1}')
@@ -66,6 +70,59 @@ describe('Skill.run', () => {
             expect(messages[1].content).toBe('before')
             expect(messages[2].role).toBe('assistant')
             expect(result.opening).toBeUndefined()
+        })
+    })
+
+    describe('chat turns', () => {
+        const turns = [{ role: 'user' as const, content: 'hi' }, { role: 'assistant' as const, content: 'hello there' }]
+        const skill = new Skill({ name: 'chatty', systemInstructions: { rule: 1 } })
+
+        it('are placed before the opening as real messages', async () => {
+            const chat = respondWith('{"x":1}')
+            await skill.run({ ...base, userMessage: 'and now?', chatHistory: turns })
+
+            const { messages } = chat.mock.calls[0][0]
+            expect(messages.map(message => message.role)).toEqual(['system', 'user', 'assistant', 'user'])
+            expect(messages[1].content).toBe('hi')
+            expect(messages[2].content).toBe('hello there')
+            expect(JSON.parse(messages[3].content as string).INPUT.user_message).toBe('and now?')
+        })
+
+        it('keep the prefix identical when the chat grows by one exchange', async () => {
+            const chat = respondWith('{"x":1}')
+            await skill.run({ ...base, userMessage: 'one', chatHistory: turns })
+            await skill.run({ ...base, userMessage: 'two', chatHistory: [...turns, { role: 'user', content: 'one' }, { role: 'assistant', content: 'answer' }] })
+
+            const first = chat.mock.calls[0][0].messages.slice(0, -1)
+            expect(chat.mock.calls[1][0].messages.slice(0, first.length)).toEqual(first)
+        })
+
+        it('cannot be combined with a thread to continue', async () => {
+            const chat = respondWith('{"x":1}')
+
+            await expect(skill.run({ ...base, history: [{ role: 'user', content: 'x' }], chatHistory: turns })).rejects.toThrow('history and chatHistory cannot be used together')
+            expect(chat).not.toHaveBeenCalled()
+        })
+    })
+
+    describe('the context injection', () => {
+        const skill = new Skill({ name: 'strict', systemInstructions: {} })
+
+        it.each(['tools', 'toolChoice', 'history', 'chatHistory'])('rejects %s because it has its own run option', async (key) => {
+            const chat = respondWith('{"x":1}')
+
+            await expect(skill.run({ ...base, contextInjection: { [key]: [] } })).rejects.toThrow(`[SKILL:strict] ${key} must be passed as run options`)
+            expect(chat).not.toHaveBeenCalled()
+        })
+
+        it('names every misplaced key', async () => {
+            await expect(skill.run({ ...base, contextInjection: { tools: [], history: [] } })).rejects.toThrow('tools, history must be passed')
+        })
+
+        it('accepts any other key', async () => {
+            respondWith('{"x":1}')
+
+            await expect(skill.run({ ...base, contextInjection: { chat_history: [], last_completed_task: {} } })).resolves.toMatchObject({ x: 1 })
         })
     })
 

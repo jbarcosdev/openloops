@@ -81,6 +81,12 @@ export class Chat extends BaseEntity {
 		return this.messages?.filter(message => !message.excludeFromContext).slice(-count, -1)
 	}
 
+	public lastHistoryTurns (count = 6): { role: 'user' | 'assistant'; content: string }[] {
+		return (this.lastHistoryMessages(count) ?? [])
+			.filter(message => (message.role === 'user' || message.role === 'assistant') && message.content)
+			.map(message => ({ role: message.role as 'user' | 'assistant', content: message.content as string }))
+	}
+
 	public addTrace (entry: Omit<AgentTrace, 'timestamp'>): void {
 		this.pendingTraces.push({
 			...entry,

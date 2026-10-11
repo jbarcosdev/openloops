@@ -6,6 +6,8 @@ import { CurrentUser, CurrentSession } from '@common/base'
 import type { Chat } from '@services/chats/entities/chat.entity'
 import { buildRuntimeContext } from './runtime-context'
 
+const RESERVED_CONTEXT_KEYS = ['tools', 'toolChoice', 'history', 'chatHistory']
+
 export interface SkillProps {
     name: string
     version?: string
@@ -13,6 +15,11 @@ export interface SkillProps {
     temperature?: number
     systemInstructions: Record<string, any>
     systemRole?: boolean
+}
+
+export interface ChatTurn {
+    role: 'user' | 'assistant'
+    content: string
 }
 
 export interface SkillRunOptions<TInput = Record<string, any>> {
@@ -27,6 +34,7 @@ export interface SkillRunOptions<TInput = Record<string, any>> {
     input?: TInput
     chat?: Chat
     history?: LLMMessage[]
+    chatHistory?: ChatTurn[]
     tools?: LLMToolDefinition[]
     toolChoice?: LLMToolChoice
 }
@@ -45,11 +53,15 @@ export class Skill<TResponse = Record<string, any>> {
         this.description = props.description
         this.temperature = props.temperature
         this.systemInstructions = props.systemInstructions
-        this.systemRole = props.systemRole ?? false
+        this.systemRole = props.systemRole ?? true
     }
 
     async run (options: SkillRunOptions): Promise<TResponse & { responseId: string, costInUsd: number, opening?: string }> {
-        const { provider, modelName, sessionId, answerId, userMessage, currentUser, currentSession, contextInjection = {}, input = {}, chat, history = [], tools, toolChoice } = options
+        const { provider, modelName, sessionId, answerId, userMessage, currentUser, currentSession, contextInjection = {}, input = {}, chat, history = [], chatHistory = [], tools, toolChoice } = options
+
+        const misplaced = RESERVED_CONTEXT_KEYS.filter(key => key in contextInjection)
+        if (misplaced.length) throw new Error(`[SKILL:${this.name}] ${misplaced.join(', ')} must be passed as run options, not inside contextInjection`)
+        if (history.length && chatHistory.length) throw new Error(`[SKILL:${this.name}] history and chatHistory cannot be used together`)
 
         try {
             const llmClient = container.resolve(LLMClient)
@@ -70,7 +82,9 @@ export class Skill<TResponse = Record<string, any>> {
                 ? { CONTEXT: context, INPUT: inputPayload }
                 : { SYSTEM_INSTRUCTIONS: { ...this.systemInstructions }, CONTEXT: context, INPUT: inputPayload })
 
-            const conversation: LLMMessage[] = continuing ? history : [{ role: 'user', content: opening! }]
+            const conversation: LLMMessage[] = continuing
+                ? history
+                : [...chatHistory.map(turn => ({ role: turn.role, content: turn.content }) as LLMMessage), { role: 'user', content: opening! }]
 
             const messages: LLMMessage[] = this.systemRole
                 ? [{ role: 'system', content: JSON.stringify(this.systemInstructions) }, ...conversation]

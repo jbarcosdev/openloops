@@ -108,6 +108,21 @@ describe('the conversation after a block', () => {
 
         expect(chat.lastAnswer).toBe('real answer')
     })
+
+    it('gives skills the previous turns as role and content only, without the blocked ones or the current message', () => {
+        const chat = Chat.fromJSON({
+            messages: [
+                { role: 'user', content: 'a' },
+                { role: 'assistant', content: 'b' },
+                { role: 'user', content: 'blocked', excludeFromContext: true },
+                { role: 'assistant', content: 'blocked\n\nRef: r', excludeFromContext: true },
+                { role: 'user', content: 'current' },
+            ],
+        })
+
+        expect(chat.lastHistoryTurns()).toEqual([{ role: 'user', content: 'a' }, { role: 'assistant', content: 'b' }])
+        expect(chat.lastHistoryTurns(2)).toEqual([{ role: 'assistant', content: 'b' }])
+    })
 })
 
 describe('guard order and failures', () => {
