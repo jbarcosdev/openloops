@@ -43,7 +43,7 @@ describe('AgiLoop', () => {
             const [task] = env.tasks()
 
             expect(task.turns).toHaveLength(3)
-            expect(task.turns.every(turn => turn.mode === 'plain_chat' && turn.loopVersion === '1.4.0' && turn.skill === 'reasoning_engine' && turn.skillVersion === '2.1.0' && turn.costInUsd === 0)).toBe(true)
+            expect(task.turns.every(turn => turn.mode === 'plain_chat' && turn.loopVersion === '1.4.1' && turn.skill === 'reasoning_engine' && turn.skillVersion === '2.1.0' && turn.costInUsd === 0)).toBe(true)
         })
 
         it('uses the reasoning engine as the only skill that talks to the model', () => {
@@ -246,11 +246,33 @@ describe('AgiLoop', () => {
             expect(llm.observations(1)[0].error).toContain('no actions')
         })
 
-        it('surfaces unparseable model output as a run error', async () => {
-            llm.script({ raw: 'not json at all' })
-            const result = await env.send(env.agent(w.tools), 'garbage')
+        it('tells the model a plain text response was not read, without assuming it was the final answer', async () => {
+            llm.script({ raw: 'Bitcoin is around 83,600 USD' }, say('ok'))
+            await env.send(env.agent(w.tools), 'garbage')
 
-            expect(result.error).toBeDefined()
+            const failed = llm.observations(1)[0]
+
+            expect(failed).toMatchObject({ tool: 'invalid_response', status: 'failed' })
+            expect(failed.error).toContain('not a JSON object')
+            expect(failed.error).toContain('nothing in it was read or executed')
+            expect(failed.error).not.toContain('no actions')
+        })
+
+        it('keeps a snippet of the unreadable response in the turn', async () => {
+            llm.script({ raw: 'x'.repeat(500) }, say('ok'))
+            await env.send(env.agent(w.tools), 'garbage')
+
+            const [task] = env.tasks()
+
+            expect(task.turns[0].rawResponse).toBe('x'.repeat(300))
+            expect(task.turns[1].rawResponse).toBeUndefined()
+        })
+
+        it('does not treat a JSON response without actions as unreadable', async () => {
+            llm.script({ actions: [] }, say('ok'))
+            await env.send(env.agent(w.tools), 'empty')
+
+            expect(env.tasks()[0].turns[0].rawResponse).toBeUndefined()
         })
     })
 

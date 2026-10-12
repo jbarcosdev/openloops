@@ -47,6 +47,7 @@ export interface TurnMeta {
 	loopVersion?: string
 	costInUsd?: number
 	blocks?: number
+	rawResponse?: string
 }
 
 export interface TurnRecord extends TurnMeta {
@@ -216,6 +217,8 @@ function findToolSchemas (value: any): Record<string, ToolSchemaSummary> {
 function isNativeTool (name?: string): boolean {
 	return NATIVE_TOOL_NAMES.includes(name as string)
 }
+
+const NOT_JSON_MESSAGE = 'Your last response was not a JSON object, so nothing in it was read or executed. Reply again with ONLY the JSON object (reasoning, state, actions). In "actions" put the tool calls you need next; if you already have what you need, use a respond action whose "answer" is the text for the user.'
 
 function definedOnly<T extends Record<string, any>> (value?: T): Partial<T> {
 	return Object.fromEntries(Object.entries(value ?? {}).filter(([, item]) => item !== undefined)) as Partial<T>
@@ -605,7 +608,7 @@ export class AgentTask extends BaseEntity {
 		this.schemas = schemas
 	}
 
-	addTurn (output: TurnOutput, opts?: { author?: string; declaredTools?: string[]; invoker?: string; meta?: TurnMeta }): AgentAction[] {
+	addTurn (output: TurnOutput, opts?: { author?: string; declaredTools?: string[]; invoker?: string; meta?: TurnMeta; notJson?: boolean }): AgentAction[] {
 		const turn = this.turns.reduce((max, t) => Math.max(max, t.turn), 0) + 1
 
 		this.remember(output.learned)
@@ -616,7 +619,7 @@ export class AgentTask extends BaseEntity {
 
 		if (!requests.length) {
 			const action = this.addAction({ name: INVALID_RESPONSE, args: {}, stepId: `${turn}_1`, turn, author: opts?.author })
-			action.markFailed({ message: 'Your response had no actions. Return at least one action; to finish the task use the respond tool with your final answer.', retryable: false })
+			action.markFailed({ message: opts?.notJson ? NOT_JSON_MESSAGE : 'Your response had no actions. Return at least one action; to finish the task use the respond tool with your final answer.', retryable: false })
 			return [action]
 		}
 

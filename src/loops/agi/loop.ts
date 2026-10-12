@@ -31,7 +31,7 @@ export class AgiLoop extends AgentLoop {
     }
 
     get version () {
-        return '1.4.0'
+        return '1.4.1'
     }
 
     get author () {
@@ -116,11 +116,14 @@ export class AgiLoop extends AgentLoop {
 
         if (result.opening) task.opening = result.opening
 
+        const { rawText, ...callInfo } = result.callInfo
+
         task.addTurn(result, {
             author: 'reasoning_engine',
             declaredTools: catalog.tools.map(tool => tool.name),
             invoker: findInvoker(catalog.tools),
-            meta: { ...result.callInfo, loopVersion: this.version, costInUsd: result.costInUsd, blocks: result.callInfo.blocks > 1 ? result.callInfo.blocks : undefined },
+            notJson: Boolean(rawText),
+            meta: { ...callInfo, rawResponse: rawText, loopVersion: this.version, costInUsd: result.costInUsd, blocks: callInfo.blocks > 1 ? callInfo.blocks : undefined },
         })
 
         if (stopReason) {

@@ -23,6 +23,15 @@ describe('addTurn', () => {
         expect(Object.keys(task.turns[1])).toEqual(['turn', 'reasoning', 'state'])
     })
 
+    it('uses a specific error when the response was not JSON and the generic one when it only had no actions', () => {
+        const unreadable = newTask().addTurn({}, { notJson: true, meta: { rawResponse: 'plain words' } })[0]
+        const task = newTask()
+        const empty = task.addTurn({ reasoning: 'r', actions: [] })[0]
+
+        expect(JSON.stringify(unreadable)).toContain('not a JSON object')
+        expect(JSON.stringify(empty)).toContain('no actions')
+    })
+
     it('numbers turns and gives each action a step id', () => {
         const task = newTask()
         const first = turn(task, ['ext', 'other_ext'])

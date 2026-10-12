@@ -10,6 +10,7 @@ import { SkillMode, DEFAULT_SKILL_MODE, buildModeCall, readModeResponse } from '
 
 export { SkillMode, DEFAULT_SKILL_MODE } from './call-modes'
 
+const RAW_RESPONSE_CHARS = 300
 const RESERVED_CONTEXT_KEYS = ['tools', 'mode', 'history', 'chatHistory']
 
 export interface SkillProps {
@@ -56,6 +57,7 @@ export interface SkillCallInfo {
     model?: string
     provider?: string
     blocks: number
+    rawText?: string
 }
 
 export class Skill<TResponse = Record<string, any>> {
@@ -131,13 +133,14 @@ export class Skill<TResponse = Record<string, any>> {
             }
 
             const parsed = this.parseJsonResponse<TResponse>(reading.text)
+            const rawText = Object.keys(parsed as object).length === 0 && reading.text.trim() ? reading.text.trim().slice(0, RAW_RESPONSE_CHARS) : undefined
 
             const result = {
                 ...parsed,
                 responseId: response.responseId ?? '',
                 costInUsd: response.usage.costInUsd,
                 ...(opening ? { opening } : {}),
-                callInfo: { skill: this.name, skillVersion: this.version, mode, model: response.model, provider: response.provider ?? provider, blocks: reading.blocks },
+                callInfo: { skill: this.name, skillVersion: this.version, mode, model: response.model, provider: response.provider ?? provider, blocks: reading.blocks, ...(rawText ? { rawText } : {}) },
             }
 
             const reasoning = (result as any)?.reasoning

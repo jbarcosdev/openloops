@@ -133,6 +133,45 @@ describe('Skill.run', () => {
         expect(chat.mock.calls[0][0].temperature).toBe(0.7)
     })
 
+    describe('responses with several text blocks', () => {
+        const first = JSON.stringify({ reasoning: 'r1', state: {}, actions: [{ tool: 't', arguments: {} }] })
+        const second = JSON.stringify({ reasoning: 'r2', state: {}, actions: [{ tool: 'respond', arguments: { answer: 'invented' } }] })
+
+        it('uses the first complete block, leaves a trace and reports how many arrived', async () => {
+            respondWith(first + second, { textBlocks: [first, second], model: 'm1', provider: 'p1' })
+            const chat = { addTrace: jest.fn() } as any
+            const result: any = await new Skill({ name: 's', version: '9.9.9', systemInstructions: {} }).run({ ...base, chat, tools: [{ name: 't', description: 'd', parameters: {} }] })
+
+            expect(result.reasoning).toBe('r1')
+            expect(result.callInfo).toEqual({ skill: 's', skillVersion: '9.9.9', mode: 'plain_chat', model: 'm1', provider: 'p1', blocks: 2 })
+            expect(chat.addTrace).toHaveBeenCalledWith({ node: 's', reasoning: expect.stringContaining('2 text blocks; block 1 was used') })
+        })
+
+        it('returns a snippet of the text when the response has no JSON at all', async () => {
+            respondWith('Just a plain sentence. '.repeat(30))
+            const result: any = await new Skill({ name: 's', systemInstructions: {} }).run({ ...base })
+
+            expect(result.callInfo.rawText).toHaveLength(300)
+            expect(result.callInfo.rawText.startsWith('Just a plain sentence.')).toBe(true)
+        })
+
+        it('leaves no snippet when the response has JSON', async () => {
+            respondWith('{"x":1}')
+            const result: any = await new Skill({ name: 's', systemInstructions: {} }).run({ ...base })
+
+            expect(result.callInfo.rawText).toBeUndefined()
+        })
+
+        it('leaves no warning when there is a single block', async () => {
+            respondWith('{"x":1}')
+            const chat = { addTrace: jest.fn() } as any
+            const result: any = await new Skill({ name: 's', systemInstructions: {} }).run({ ...base, chat })
+
+            expect(result.callInfo.blocks).toBe(1)
+            expect(chat.addTrace).toHaveBeenCalledTimes(1)
+        })
+    })
+
     describe('with a tool catalog', () => {
         const tools = [{ name: 't', description: 'd', parameters: { type: 'object' } }]
 
