@@ -44,9 +44,11 @@ describe('AgiLoop', () => {
             expect(llm.calls.every(call => call.origin === 'reasoning_engine')).toBe(true)
         })
 
-        it('sends the skill temperature and declares tools with tool choice none', () => {
+        it('sends the skill temperature and the tool catalog as text, with no native tools and no tool choice', () => {
             expect(llm.calls.every(call => call.temperature === 0.3)).toBe(true)
-            expect(llm.calls.every(call => call.toolChoice === 'none')).toBe(true)
+            expect(llm.calls.every(call => call.toolChoice === undefined)).toBe(true)
+            expect(llm.calls.every(call => call.nativeTools === undefined)).toBe(true)
+            expect(llm.calls.every(call => (call.toolList ?? []).length > 0)).toBe(true)
         })
 
         it('declares the natives (without search) plus every external tool when the catalog is small', () => {

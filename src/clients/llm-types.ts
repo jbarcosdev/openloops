@@ -10,6 +10,7 @@ export interface LLMToolDefinition {
     name: string
     description: string
     parameters: Record<string, any>
+    strict?: boolean
 }
 
 export type LLMMessage =
@@ -40,7 +41,7 @@ export interface LLMResponse {
     native?: unknown
 }
 
-export type LLMToolChoice = 'auto' | 'none'
+export type LLMToolChoice = 'auto' | 'none' | 'required'
 
 export interface LLMChatParams {
     origin: string

@@ -1,5 +1,5 @@
 import { LLMClient } from '@clients/llm-client'
-import type { LLMChatParams } from '@clients/llm-types'
+import type { LLMChatParams, LLMToolDefinition } from '@clients/llm-types'
 
 export interface ScriptedAction {
     tool?: string
@@ -29,12 +29,14 @@ export function failWith (error: Error): ScriptedTurn {
     return { throws: error }
 }
 
+export type RecordedCall = LLMChatParams & { toolList?: LLMToolDefinition[], nativeTools?: LLMToolDefinition[] }
+
 function clone<T> (value: T): T {
     return JSON.parse(JSON.stringify(value))
 }
 
 export class ScriptedLLM {
-    calls: LLMChatParams[] = []
+    calls: RecordedCall[] = []
     private steps: ScriptStep[] = []
     private spy?: jest.SpyInstance
 
@@ -69,7 +71,7 @@ export class ScriptedLLM {
 
     private async respond (params: LLMChatParams) {
         const index = this.calls.length
-        this.calls.push(clone(params))
+        this.calls.push(this.record(params))
 
         const next = this.steps.shift()
         if (!next) throw new Error('The scripted LLM ran out of steps')
@@ -92,7 +94,22 @@ export class ScriptedLLM {
         } as any
     }
 
-    call (index: number): LLMChatParams {
+    private record (params: LLMChatParams): RecordedCall {
+        const copy: RecordedCall = clone(params)
+        const position = copy.messages.findIndex(message => message.role === 'system' && message.content.startsWith('{"tool_list":'))
+
+        copy.nativeTools = copy.tools
+
+        if (position !== -1) {
+            const [listing] = copy.messages.splice(position, 1)
+            copy.toolList = JSON.parse(listing.content as string).tool_list
+            copy.tools = copy.tools ?? copy.toolList
+        }
+
+        return copy
+    }
+
+    call (index: number): RecordedCall {
         return this.calls[index]
     }
 
