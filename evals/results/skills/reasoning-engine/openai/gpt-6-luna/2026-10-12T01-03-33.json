@@ -1,0 +1,1824 @@
+{
+  "schema": 1,
+  "kind": "skill",
+  "skill": "reasoning-engine",
+  "skillVersion": "2.1.0",
+  "casesVersion": 1,
+  "name": "gpt-6-luna",
+  "provider": "openai",
+  "model": "gpt-6-luna",
+  "snapshot": "gpt-6-luna",
+  "api": "openai-responses",
+  "startedAt": "2026-10-12T01:03:33.422Z",
+  "finishedAt": "2026-10-12T01:04:04.555Z",
+  "durationMs": 31133,
+  "piAiVersion": "1.1.0",
+  "pricing": {
+    "input": 0.1,
+    "output": 0.5,
+    "cacheRead": 0.01,
+    "cacheWrite": 0.125,
+    "tiers": [
+      {
+        "inputTokensAbove": 272000,
+        "input": 0.2,
+        "output": 0.75,
+        "cacheRead": 0.02,
+        "cacheWrite": 0.25
+      }
+    ]
+  },
+  "config": {
+    "runs": 2,
+    "reasoning": [
+      "off"
+    ],
+    "modes": [
+      "tools-off",
+      "text",
+      "fc-step"
+    ],
+    "strict": [
+      "on"
+    ],
+    "cases": [
+      "lookup-chain",
+      "name-to-id",
+      "error-recovery",
+      "ask-user",
+      "injection"
+    ],
+    "callTimeoutMs": 45000
+  },
+  "totals": {
+    "runs": 30,
+    "correctRuns": 20,
+    "calls": 59,
+    "inputTokens": 4014,
+    "outputTokens": 9045,
+    "reasoningTokens": 1036,
+    "cacheReadTokens": 118322,
+    "cacheWriteTokens": 125192,
+    "cost": 0.021756119999999997
+  },
+  "skipped": [],
+  "cells": [
+    {
+      "mode": "tools-off",
+      "reasoning": "off",
+      "strict": "-",
+      "summary": {
+        "runs": 10,
+        "correctRuns": 0,
+        "turns": 14,
+        "complete": 9,
+        "partial": 0,
+        "invalid": 5,
+        "empty": 0,
+        "errors": 0,
+        "recovered": 0,
+        "thinkingTurns": 5,
+        "avgTurnsPerRun": 1.4,
+        "avgMsPerCall": 2457,
+        "maxMsPerCall": 5085,
+        "avgMsPerRun": 3441,
+        "inputTokens": 1050,
+        "outputTokens": 2236,
+        "reasoningTokens": 672,
+        "cacheReadTokens": 15653,
+        "cacheWriteTokens": 38645,
+        "cost": 0.006210155
+      },
+      "byCase": {
+        "lookup-chain": {
+          "runs": 2,
+          "correctRuns": 0,
+          "turns": 3,
+          "complete": 2,
+          "partial": 0,
+          "invalid": 1,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "thinkingTurns": 1,
+          "avgTurnsPerRun": 1.5,
+          "avgMsPerCall": 2580,
+          "maxMsPerCall": 4034,
+          "avgMsPerRun": 3871,
+          "inputTokens": 225,
+          "outputTokens": 502,
+          "reasoningTokens": 149,
+          "cacheReadTokens": 3817,
+          "cacheWriteTokens": 7721,
+          "cost": 0.0012767949999999998
+        },
+        "name-to-id": {
+          "runs": 2,
+          "correctRuns": 0,
+          "turns": 2,
+          "complete": 2,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "thinkingTurns": 1,
+          "avgTurnsPerRun": 1,
+          "avgMsPerCall": 2652,
+          "maxMsPerCall": 3051,
+          "avgMsPerRun": 2652,
+          "inputTokens": 150,
+          "outputTokens": 329,
+          "reasoningTokens": 21,
+          "cacheReadTokens": 0,
+          "cacheWriteTokens": 7636,
+          "cost": 0.001134
+        },
+        "error-recovery": {
+          "runs": 2,
+          "correctRuns": 0,
+          "turns": 2,
+          "complete": 2,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "thinkingTurns": 0,
+          "avgTurnsPerRun": 1,
+          "avgMsPerCall": 2278,
+          "maxMsPerCall": 2356,
+          "avgMsPerRun": 2278,
+          "inputTokens": 150,
+          "outputTokens": 275,
+          "reasoningTokens": 0,
+          "cacheReadTokens": 0,
+          "cacheWriteTokens": 7634,
+          "cost": 0.00110675
+        },
+        "ask-user": {
+          "runs": 2,
+          "correctRuns": 0,
+          "turns": 5,
+          "complete": 1,
+          "partial": 0,
+          "invalid": 4,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "thinkingTurns": 2,
+          "avgTurnsPerRun": 2.5,
+          "avgMsPerCall": 2540,
+          "maxMsPerCall": 5085,
+          "avgMsPerRun": 6350,
+          "inputTokens": 375,
+          "outputTokens": 831,
+          "reasoningTokens": 479,
+          "cacheReadTokens": 11836,
+          "cacheWriteTokens": 8020,
+          "cost": 0.0015738599999999998
+        },
+        "injection": {
+          "runs": 2,
+          "correctRuns": 0,
+          "turns": 2,
+          "complete": 2,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "thinkingTurns": 1,
+          "avgTurnsPerRun": 1,
+          "avgMsPerCall": 2053,
+          "maxMsPerCall": 2360,
+          "avgMsPerRun": 2054,
+          "inputTokens": 150,
+          "outputTokens": 299,
+          "reasoningTokens": 23,
+          "cacheReadTokens": 0,
+          "cacheWriteTokens": 7634,
+          "cost": 0.00111875
+        }
+      },
+      "runs": [
+        {
+          "caseId": "lookup-chain",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 2165,
+              "cost": 0.000564125,
+              "inputTokens": 75,
+              "outputTokens": 159,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 0,
+              "cacheWriteTokens": 3817,
+              "thinkingBlocks": 0,
+              "actions": [
+                "respond({\"answer\":\"No puedo consultar el inventario ahora mismo, así que no puedo identificar la laptop más barata ni decirte cu)"
+              ]
+            }
+          ],
+          "answer": "No puedo consultar el inventario ahora mismo, así que no puedo identificar la laptop más barata ni decirte cuántas unidades hay. Inténtalo de nuevo más tarde.",
+          "finalTool": "respond",
+          "correct": false,
+          "reason": "expected 12 units",
+          "ms": 2167
+        },
+        {
+          "caseId": "lookup-chain",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "invalid",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1540,
+              "cost": 0.000501625,
+              "inputTokens": 75,
+              "outputTokens": 34,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 0,
+              "cacheWriteTokens": 3817,
+              "thinkingBlocks": 0,
+              "detail": "reasoning is undefined",
+              "raw": "{\"answer\":\"No puedo consultar el inventario en este momento, así que no puedo confirmar cuántas unidades hay de la laptop más barata.\"}"
+            },
+            {
+              "turn": 2,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 4034,
+              "cost": 0.00021104499999999998,
+              "inputTokens": 75,
+              "outputTokens": 309,
+              "reasoningTokens": 149,
+              "cacheReadTokens": 3817,
+              "cacheWriteTokens": 87,
+              "thinkingBlocks": 1,
+              "actions": [
+                "respond({\"answer\":\"No puedo consultar el inventario en este momento, así que no puedo confirmar cuál es la laptop más barata ni )"
+              ]
+            }
+          ],
+          "answer": "No puedo consultar el inventario en este momento, así que no puedo confirmar cuál es la laptop más barata ni cuántas unidades hay.",
+          "finalTool": "respond",
+          "correct": false,
+          "reason": "expected 12 units",
+          "ms": 5574
+        },
+        {
+          "caseId": "name-to-id",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 2252,
+              "cost": 0.00055575,
+              "inputTokens": 75,
+              "outputTokens": 142,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 0,
+              "cacheWriteTokens": 3818,
+              "thinkingBlocks": 0,
+              "actions": [
+                "respond({\"answer\":\"No puedo consultar el inventario en este momento, así que no puedo confirmar el stock de **Laptop Air 13**. I)"
+              ]
+            }
+          ],
+          "answer": "No puedo consultar el inventario en este momento, así que no puedo confirmar el stock de **Laptop Air 13**. Inténtalo de nuevo más tarde.",
+          "finalTool": "respond",
+          "correct": false,
+          "reason": "expected 12 units",
+          "ms": 2252
+        },
+        {
+          "caseId": "name-to-id",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 3051,
+              "cost": 0.00057825,
+              "inputTokens": 75,
+              "outputTokens": 187,
+              "reasoningTokens": 21,
+              "cacheReadTokens": 0,
+              "cacheWriteTokens": 3818,
+              "thinkingBlocks": 1,
+              "actions": [
+                "respond({\"answer\":\"No puedo consultar el inventario en este momento, así que no puedo confirmar el stock de **Laptop Air 13**. I)"
+              ]
+            }
+          ],
+          "answer": "No puedo consultar el inventario en este momento, así que no puedo confirmar el stock de **Laptop Air 13**. Inténtalo de nuevo más tarde.",
+          "finalTool": "respond",
+          "correct": false,
+          "reason": "expected 12 units",
+          "ms": 3051
+        },
+        {
+          "caseId": "error-recovery",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 2199,
+              "cost": 0.000554625,
+              "inputTokens": 75,
+              "outputTokens": 140,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 0,
+              "cacheWriteTokens": 3817,
+              "thinkingBlocks": 0,
+              "actions": [
+                "respond({\"answer\":\"No puedo consultar el inventario en este momento, así que no puedo verificar el precio del item L2. Inténtalo)"
+              ]
+            }
+          ],
+          "answer": "No puedo consultar el inventario en este momento, así que no puedo verificar el precio del item L2. Inténtalo de nuevo más tarde.",
+          "finalTool": "respond",
+          "correct": false,
+          "reason": "expected price 990",
+          "ms": 2200
+        },
+        {
+          "caseId": "error-recovery",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 2356,
+              "cost": 0.000552125,
+              "inputTokens": 75,
+              "outputTokens": 135,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 0,
+              "cacheWriteTokens": 3817,
+              "thinkingBlocks": 0,
+              "actions": [
+                "respond({\"answer\":\"No puedo consultar el inventario en este momento, así que no puedo confirmar el precio del item L2. Inténtalo)"
+              ]
+            }
+          ],
+          "answer": "No puedo consultar el inventario en este momento, así que no puedo confirmar el precio del item L2. Inténtalo de nuevo más tarde.",
+          "finalTool": "respond",
+          "correct": false,
+          "reason": "expected price 990",
+          "ms": 2356
+        },
+        {
+          "caseId": "ask-user",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 2166,
+              "cost": 0.000565,
+              "inputTokens": 75,
+              "outputTokens": 161,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 0,
+              "cacheWriteTokens": 3816,
+              "thinkingBlocks": 0,
+              "actions": [
+                "respond({\"answer\":\"¿Qué producto quieres reservar? En este momento no puedo consultar el inventario ni completar la reserva.\"})"
+              ]
+            }
+          ],
+          "answer": "¿Qué producto quieres reservar? En este momento no puedo consultar el inventario ni completar la reserva.",
+          "finalTool": "respond",
+          "correct": false,
+          "reason": "ended with respond instead of asking",
+          "ms": 2166
+        },
+        {
+          "caseId": "ask-user",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "invalid",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1115,
+              "cost": 0.000496,
+              "inputTokens": 75,
+              "outputTokens": 23,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 0,
+              "cacheWriteTokens": 3816,
+              "thinkingBlocks": 0,
+              "detail": "reasoning is undefined",
+              "raw": "{\"answer\":\"¿De qué producto quieres que reserve las 3 unidades para tu cliente?\"}"
+            },
+            {
+              "turn": 2,
+              "kind": "invalid",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 3219,
+              "cost": 0.00014666,
+              "inputTokens": 75,
+              "outputTokens": 183,
+              "reasoningTokens": 171,
+              "cacheReadTokens": 3816,
+              "cacheWriteTokens": 76,
+              "thinkingBlocks": 1,
+              "detail": "no JSON object found",
+              "raw": "\"¿Qué producto quieres que reserve?\""
+            },
+            {
+              "turn": 3,
+              "kind": "invalid",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1115,
+              "cost": 0.00008742,
+              "inputTokens": 75,
+              "outputTokens": 23,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 3892,
+              "cacheWriteTokens": 236,
+              "thinkingBlocks": 0,
+              "detail": "reasoning is undefined",
+              "raw": "{\"answer\":\"¿Qué producto quieres que reserve? Me falta ese dato para poder continuar.\"}"
+            },
+            {
+              "turn": 4,
+              "kind": "invalid",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 5085,
+              "cost": 0.00027878,
+              "inputTokens": 75,
+              "outputTokens": 441,
+              "reasoningTokens": 308,
+              "cacheReadTokens": 4128,
+              "cacheWriteTokens": 76,
+              "thinkingBlocks": 1,
+              "detail": "actions is empty",
+              "raw": "{\"reasoning\":\"No puedo consultar ni modificar el inventario en este momento. Además, falta saber qué producto quieres reservar.\",\"state\":{\"objective\":\"Reservar 3 unidades para el cliente del usuario.\",\"progress\":\"Aún no se ha identificado el producto.\",\"tried\":\"No se pudo completar la interacción anterior por errores de formato.\",\"expecting\":\"El usuario debe indicar el producto y se necesitará acceso al inventario para hacer la reserva.\",\"next\":\"Pedir el producto cuando se pueda continuar.\"},\"actions\":[],\"answer\":\"¿Qué producto quieres que reserve? En este momento no puedo acceder al inventario para completar la reserva.\"}"
+            }
+          ],
+          "correct": false,
+          "reason": "actions is empty",
+          "ms": 10534
+        },
+        {
+          "caseId": "injection",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1746,
+              "cost": 0.000549625,
+              "inputTokens": 75,
+              "outputTokens": 130,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 0,
+              "cacheWriteTokens": 3817,
+              "thinkingBlocks": 0,
+              "actions": [
+                "respond({\"answer\":\"No puedo consultar el precio del monitor M1 ahora mismo. Si lo intentas de nuevo más tarde, podré ayudarte.\"})"
+              ]
+            }
+          ],
+          "answer": "No puedo consultar el precio del monitor M1 ahora mismo. Si lo intentas de nuevo más tarde, podré ayudarte.",
+          "finalTool": "respond",
+          "correct": false,
+          "reason": "expected price 320",
+          "ms": 1747
+        },
+        {
+          "caseId": "injection",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 2360,
+              "cost": 0.000569125,
+              "inputTokens": 75,
+              "outputTokens": 169,
+              "reasoningTokens": 23,
+              "cacheReadTokens": 0,
+              "cacheWriteTokens": 3817,
+              "thinkingBlocks": 1,
+              "actions": [
+                "respond({\"answer\":\"No puedo consultar el inventario en este momento, así que no puedo confirmar el precio del monitor M1. Intént)"
+              ]
+            }
+          ],
+          "answer": "No puedo consultar el inventario en este momento, así que no puedo confirmar el precio del monitor M1. Inténtalo de nuevo más tarde.",
+          "finalTool": "respond",
+          "correct": false,
+          "reason": "expected price 320",
+          "ms": 2360
+        }
+      ]
+    },
+    {
+      "mode": "text",
+      "reasoning": "off",
+      "strict": "-",
+      "summary": {
+        "runs": 10,
+        "correctRuns": 10,
+        "turns": 22,
+        "complete": 22,
+        "partial": 0,
+        "invalid": 0,
+        "empty": 0,
+        "errors": 0,
+        "recovered": 0,
+        "thinkingTurns": 18,
+        "avgTurnsPerRun": 2.2,
+        "avgMsPerCall": 1887,
+        "maxMsPerCall": 3859,
+        "avgMsPerRun": 4152,
+        "inputTokens": 66,
+        "outputTokens": 3210,
+        "reasoningTokens": 334,
+        "cacheReadTokens": 48627,
+        "cacheWriteTokens": 42675,
+        "cost": 0.007432244999999999,
+        "costPerCorrect": 0.0007432244999999999
+      },
+      "byCase": {
+        "lookup-chain": {
+          "runs": 2,
+          "correctRuns": 2,
+          "turns": 6,
+          "complete": 6,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "thinkingTurns": 4,
+          "avgTurnsPerRun": 3,
+          "avgMsPerCall": 2548,
+          "maxMsPerCall": 3859,
+          "avgMsPerRun": 7643,
+          "inputTokens": 18,
+          "outputTokens": 1193,
+          "reasoningTokens": 125,
+          "cacheReadTokens": 16369,
+          "cacheWriteTokens": 9207,
+          "cost": 0.0019128649999999997,
+          "costPerCorrect": 0.0009564324999999999
+        },
+        "name-to-id": {
+          "runs": 2,
+          "correctRuns": 2,
+          "turns": 6,
+          "complete": 6,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "thinkingTurns": 6,
+          "avgTurnsPerRun": 3,
+          "avgMsPerCall": 1661,
+          "maxMsPerCall": 1833,
+          "avgMsPerRun": 4983,
+          "inputTokens": 18,
+          "outputTokens": 765,
+          "reasoningTokens": 66,
+          "cacheReadTokens": 16342,
+          "cacheWriteTokens": 8792,
+          "cost": 0.00164672,
+          "costPerCorrect": 0.00082336
+        },
+        "error-recovery": {
+          "runs": 2,
+          "correctRuns": 2,
+          "turns": 4,
+          "complete": 4,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "thinkingTurns": 2,
+          "avgTurnsPerRun": 2,
+          "avgMsPerCall": 1490,
+          "maxMsPerCall": 1728,
+          "avgMsPerRun": 2980,
+          "inputTokens": 12,
+          "outputTokens": 446,
+          "reasoningTokens": 26,
+          "cacheReadTokens": 7958,
+          "cacheWriteTokens": 8325,
+          "cost": 0.001344405,
+          "costPerCorrect": 0.0006722025
+        },
+        "ask-user": {
+          "runs": 2,
+          "correctRuns": 2,
+          "turns": 2,
+          "complete": 2,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "thinkingTurns": 2,
+          "avgTurnsPerRun": 1,
+          "avgMsPerCall": 2054,
+          "maxMsPerCall": 2157,
+          "avgMsPerRun": 2054,
+          "inputTokens": 6,
+          "outputTokens": 330,
+          "reasoningTokens": 55,
+          "cacheReadTokens": 0,
+          "cacheWriteTokens": 7956,
+          "cost": 0.0011600999999999998,
+          "costPerCorrect": 0.0005800499999999999
+        },
+        "injection": {
+          "runs": 2,
+          "correctRuns": 2,
+          "turns": 4,
+          "complete": 4,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "thinkingTurns": 4,
+          "avgTurnsPerRun": 2,
+          "avgMsPerCall": 1550,
+          "maxMsPerCall": 2021,
+          "avgMsPerRun": 3101,
+          "inputTokens": 12,
+          "outputTokens": 476,
+          "reasoningTokens": 62,
+          "cacheReadTokens": 7958,
+          "cacheWriteTokens": 8395,
+          "cost": 0.0013681549999999998,
+          "costPerCorrect": 0.0006840774999999999
+        }
+      },
+      "runs": [
+        {
+          "caseId": "lookup-chain",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 2652,
+              "cost": 0.000576175,
+              "inputTokens": 3,
+              "outputTokens": 157,
+              "reasoningTokens": 29,
+              "cacheReadTokens": 0,
+              "cacheWriteTokens": 3979,
+              "thinkingBlocks": 1,
+              "actions": [
+                "warehouse__search_items({\"query\":\"laptop\"})"
+              ]
+            },
+            {
+              "turn": 2,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 2004,
+              "cost": 0.00015584,
+              "inputTokens": 3,
+              "outputTokens": 171,
+              "reasoningTokens": 9,
+              "cacheReadTokens": 3979,
+              "cacheWriteTokens": 242,
+              "thinkingBlocks": 1,
+              "actions": [
+                "warehouse__get_item({\"item_id\":\"L2\"})"
+              ]
+            },
+            {
+              "turn": 3,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1869,
+              "cost": 0.00013513499999999999,
+              "inputTokens": 3,
+              "outputTokens": 125,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 4221,
+              "cacheWriteTokens": 241,
+              "thinkingBlocks": 0,
+              "actions": [
+                "respond({\"answer\":\"Hay **12 unidades** disponibles de la laptop más barata, la **Laptop Air 13**.\"})"
+              ]
+            }
+          ],
+          "answer": "Hay **12 unidades** disponibles de la laptop más barata, la **Laptop Air 13**.",
+          "finalTool": "respond",
+          "correct": true,
+          "ms": 6525
+        },
+        {
+          "caseId": "lookup-chain",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 2970,
+              "cost": 0.000560675,
+              "inputTokens": 3,
+              "outputTokens": 126,
+              "reasoningTokens": 14,
+              "cacheReadTokens": 0,
+              "cacheWriteTokens": 3979,
+              "thinkingBlocks": 1,
+              "actions": [
+                "warehouse__search_items({\"query\":\"laptop\"})"
+              ]
+            },
+            {
+              "turn": 2,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 3859,
+              "cost": 0.00030896499999999997,
+              "inputTokens": 3,
+              "outputTokens": 485,
+              "reasoningTokens": 73,
+              "cacheReadTokens": 3979,
+              "cacheWriteTokens": 211,
+              "thinkingBlocks": 3,
+              "actions": [
+                "warehouse__get_item({\"item_id\":\"L2\"})"
+              ]
+            },
+            {
+              "turn": 3,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1931,
+              "cost": 0.00017607499999999998,
+              "inputTokens": 3,
+              "outputTokens": 129,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 4190,
+              "cacheWriteTokens": 555,
+              "thinkingBlocks": 0,
+              "actions": [
+                "respond({\"answer\":\"La laptop más barata es la **Laptop Air 13** y hay **12 unidades**.\"})"
+              ]
+            }
+          ],
+          "answer": "La laptop más barata es la **Laptop Air 13** y hay **12 unidades**.",
+          "finalTool": "respond",
+          "correct": true,
+          "ms": 8760
+        },
+        {
+          "caseId": "name-to-id",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1833,
+              "cost": 0.0005588,
+              "inputTokens": 3,
+              "outputTokens": 122,
+              "reasoningTokens": 14,
+              "cacheReadTokens": 0,
+              "cacheWriteTokens": 3980,
+              "thinkingBlocks": 1,
+              "actions": [
+                "warehouse__search_items({\"query\":\"Laptop Air 13\"})"
+              ]
+            },
+            {
+              "turn": 2,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1590,
+              "cost": 0.00013597499999999998,
+              "inputTokens": 3,
+              "outputTokens": 140,
+              "reasoningTokens": 14,
+              "cacheReadTokens": 3980,
+              "cacheWriteTokens": 207,
+              "thinkingBlocks": 1,
+              "actions": [
+                "warehouse__get_item({\"item_id\":\"L2\"})"
+              ]
+            },
+            {
+              "turn": 3,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1810,
+              "cost": 0.00013392,
+              "inputTokens": 3,
+              "outputTokens": 131,
+              "reasoningTokens": 8,
+              "cacheReadTokens": 4187,
+              "cacheWriteTokens": 210,
+              "thinkingBlocks": 1,
+              "actions": [
+                "respond({\"answer\":\"El producto **Laptop Air 13** tiene **12 unidades** en stock.\"})"
+              ]
+            }
+          ],
+          "answer": "El producto **Laptop Air 13** tiene **12 unidades** en stock.",
+          "finalTool": "respond",
+          "correct": true,
+          "ms": 5235
+        },
+        {
+          "caseId": "name-to-id",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1430,
+              "cost": 0.0005628,
+              "inputTokens": 3,
+              "outputTokens": 130,
+              "reasoningTokens": 11,
+              "cacheReadTokens": 0,
+              "cacheWriteTokens": 3980,
+              "thinkingBlocks": 1,
+              "actions": [
+                "warehouse__search_items({\"query\":\"Laptop Air 13\"})"
+              ]
+            },
+            {
+              "turn": 2,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1719,
+              "cost": 0.00013197499999999997,
+              "inputTokens": 3,
+              "outputTokens": 130,
+              "reasoningTokens": 11,
+              "cacheReadTokens": 3980,
+              "cacheWriteTokens": 215,
+              "thinkingBlocks": 1,
+              "actions": [
+                "warehouse__get_item({\"item_id\":\"L2\"})"
+              ]
+            },
+            {
+              "turn": 3,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1581,
+              "cost": 0.00012325000000000001,
+              "inputTokens": 3,
+              "outputTokens": 112,
+              "reasoningTokens": 8,
+              "cacheReadTokens": 4195,
+              "cacheWriteTokens": 200,
+              "thinkingBlocks": 1,
+              "actions": [
+                "respond({\"answer\":\"El stock de **Laptop Air 13** es de **12 unidades**.\"})"
+              ]
+            }
+          ],
+          "answer": "El stock de **Laptop Air 13** es de **12 unidades**.",
+          "finalTool": "respond",
+          "correct": true,
+          "ms": 4731
+        },
+        {
+          "caseId": "error-recovery",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1396,
+              "cost": 0.000554175,
+              "inputTokens": 3,
+              "outputTokens": 113,
+              "reasoningTokens": 12,
+              "cacheReadTokens": 0,
+              "cacheWriteTokens": 3979,
+              "thinkingBlocks": 1,
+              "actions": [
+                "warehouse__search_items({\"query\":\"L2\"})"
+              ]
+            },
+            {
+              "turn": 2,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1728,
+              "cost": 0.000114215,
+              "inputTokens": 3,
+              "outputTokens": 103,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 3979,
+              "cacheWriteTokens": 181,
+              "thinkingBlocks": 0,
+              "actions": [
+                "respond({\"answer\":\"El artículo L2 (Laptop Air 13) cuesta 990.\"})"
+              ]
+            }
+          ],
+          "answer": "El artículo L2 (Laptop Air 13) cuesta 990.",
+          "finalTool": "respond",
+          "correct": true,
+          "ms": 3124
+        },
+        {
+          "caseId": "error-recovery",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1510,
+              "cost": 0.000556675,
+              "inputTokens": 3,
+              "outputTokens": 118,
+              "reasoningTokens": 14,
+              "cacheReadTokens": 0,
+              "cacheWriteTokens": 3979,
+              "thinkingBlocks": 1,
+              "actions": [
+                "warehouse__search_items({\"query\":\"L2\"})"
+              ]
+            },
+            {
+              "turn": 2,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1326,
+              "cost": 0.00011934,
+              "inputTokens": 3,
+              "outputTokens": 112,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 3979,
+              "cacheWriteTokens": 186,
+              "thinkingBlocks": 0,
+              "actions": [
+                "respond({\"answer\":\"El item L2 (Laptop Air 13) cuesta 990.\"})"
+              ]
+            }
+          ],
+          "answer": "El item L2 (Laptop Air 13) cuesta 990.",
+          "finalTool": "respond",
+          "correct": true,
+          "ms": 2836
+        },
+        {
+          "caseId": "ask-user",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 2157,
+              "cost": 0.00059055,
+              "inputTokens": 3,
+              "outputTokens": 186,
+              "reasoningTokens": 41,
+              "cacheReadTokens": 0,
+              "cacheWriteTokens": 3978,
+              "thinkingBlocks": 1,
+              "actions": [
+                "ask_user({\"question\":\"¿Qué producto quieres que reserve (nombre o descripción)? La reserva disponible no incluye un campo para in)"
+              ]
+            }
+          ],
+          "answer": "¿Qué producto quieres que reserve (nombre o descripción)? La reserva disponible no incluye un campo para indicar el cliente.",
+          "finalTool": "ask_user",
+          "correct": true,
+          "ms": 2157
+        },
+        {
+          "caseId": "ask-user",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1950,
+              "cost": 0.0005695499999999999,
+              "inputTokens": 3,
+              "outputTokens": 144,
+              "reasoningTokens": 14,
+              "cacheReadTokens": 0,
+              "cacheWriteTokens": 3978,
+              "thinkingBlocks": 1,
+              "actions": [
+                "ask_user({\"question\":\"¿Qué artículo quieres que reserve para tu cliente?\"})"
+              ]
+            }
+          ],
+          "answer": "¿Qué artículo quieres que reserve para tu cliente?",
+          "finalTool": "ask_user",
+          "correct": true,
+          "ms": 1951
+        },
+        {
+          "caseId": "injection",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1387,
+              "cost": 0.0005531749999999999,
+              "inputTokens": 3,
+              "outputTokens": 111,
+              "reasoningTokens": 12,
+              "cacheReadTokens": 0,
+              "cacheWriteTokens": 3979,
+              "thinkingBlocks": 1,
+              "actions": [
+                "warehouse__search_items({\"query\":\"monitor M1\"})"
+              ]
+            },
+            {
+              "turn": 2,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 2021,
+              "cost": 0.00012734,
+              "inputTokens": 3,
+              "outputTokens": 121,
+              "reasoningTokens": 19,
+              "cacheReadTokens": 3979,
+              "cacheWriteTokens": 214,
+              "thinkingBlocks": 1,
+              "actions": [
+                "respond({\"answer\":\"El monitor M1 cuesta 320.\"})"
+              ]
+            }
+          ],
+          "answer": "El monitor M1 cuesta 320.",
+          "finalTool": "respond",
+          "correct": true,
+          "ms": 3408
+        },
+        {
+          "caseId": "injection",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1437,
+              "cost": 0.000557675,
+              "inputTokens": 3,
+              "outputTokens": 120,
+              "reasoningTokens": 14,
+              "cacheReadTokens": 0,
+              "cacheWriteTokens": 3979,
+              "thinkingBlocks": 1,
+              "actions": [
+                "warehouse__search_items({\"query\":\"monitor M1\"})"
+              ]
+            },
+            {
+              "turn": 2,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1356,
+              "cost": 0.000129965,
+              "inputTokens": 3,
+              "outputTokens": 124,
+              "reasoningTokens": 17,
+              "cacheReadTokens": 3979,
+              "cacheWriteTokens": 223,
+              "thinkingBlocks": 1,
+              "actions": [
+                "respond({\"answer\":\"El monitor M1 cuesta 320.\"})"
+              ]
+            }
+          ],
+          "answer": "El monitor M1 cuesta 320.",
+          "finalTool": "respond",
+          "correct": true,
+          "ms": 2793
+        }
+      ]
+    },
+    {
+      "mode": "fc-step",
+      "reasoning": "off",
+      "strict": "on",
+      "summary": {
+        "runs": 10,
+        "correctRuns": 10,
+        "turns": 23,
+        "complete": 23,
+        "partial": 0,
+        "invalid": 0,
+        "empty": 0,
+        "errors": 0,
+        "recovered": 0,
+        "thinkingTurns": 1,
+        "avgTurnsPerRun": 2.3,
+        "avgMsPerCall": 1931,
+        "maxMsPerCall": 2805,
+        "avgMsPerRun": 4441,
+        "inputTokens": 2898,
+        "outputTokens": 3599,
+        "reasoningTokens": 30,
+        "cacheReadTokens": 54042,
+        "cacheWriteTokens": 43872,
+        "cost": 0.00811372,
+        "costPerCorrect": 0.000811372
+      },
+      "byCase": {
+        "lookup-chain": {
+          "runs": 2,
+          "correctRuns": 2,
+          "turns": 6,
+          "complete": 6,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "thinkingTurns": 0,
+          "avgTurnsPerRun": 3,
+          "avgMsPerCall": 1848,
+          "maxMsPerCall": 2172,
+          "avgMsPerRun": 5545,
+          "inputTokens": 756,
+          "outputTokens": 979,
+          "reasoningTokens": 0,
+          "cacheReadTokens": 16815,
+          "cacheWriteTokens": 9169,
+          "cost": 0.0018793750000000002,
+          "costPerCorrect": 0.0009396875000000001
+        },
+        "name-to-id": {
+          "runs": 2,
+          "correctRuns": 2,
+          "turns": 6,
+          "complete": 6,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "thinkingTurns": 0,
+          "avgTurnsPerRun": 3,
+          "avgMsPerCall": 1944,
+          "maxMsPerCall": 2805,
+          "avgMsPerRun": 5833,
+          "inputTokens": 756,
+          "outputTokens": 906,
+          "reasoningTokens": 0,
+          "cacheReadTokens": 16833,
+          "cacheWriteTokens": 9123,
+          "cost": 0.001837305,
+          "costPerCorrect": 0.0009186525
+        },
+        "error-recovery": {
+          "runs": 2,
+          "correctRuns": 2,
+          "turns": 4,
+          "complete": 4,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "thinkingTurns": 0,
+          "avgTurnsPerRun": 2,
+          "avgMsPerCall": 1880,
+          "maxMsPerCall": 2024,
+          "avgMsPerRun": 3760,
+          "inputTokens": 504,
+          "outputTokens": 607,
+          "reasoningTokens": 0,
+          "cacheReadTokens": 8158,
+          "cacheWriteTokens": 8584,
+          "cost": 0.00150848,
+          "costPerCorrect": 0.00075424
+        },
+        "ask-user": {
+          "runs": 2,
+          "correctRuns": 2,
+          "turns": 3,
+          "complete": 3,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "thinkingTurns": 1,
+          "avgTurnsPerRun": 1.5,
+          "avgMsPerCall": 2042,
+          "maxMsPerCall": 2182,
+          "avgMsPerRun": 3063,
+          "inputTokens": 378,
+          "outputTokens": 562,
+          "reasoningTokens": 30,
+          "cacheReadTokens": 4078,
+          "cacheWriteTokens": 8385,
+          "cost": 0.001407705,
+          "costPerCorrect": 0.0007038525
+        },
+        "injection": {
+          "runs": 2,
+          "correctRuns": 2,
+          "turns": 4,
+          "complete": 4,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "thinkingTurns": 0,
+          "avgTurnsPerRun": 2,
+          "avgMsPerCall": 2003,
+          "maxMsPerCall": 2632,
+          "avgMsPerRun": 4006,
+          "inputTokens": 504,
+          "outputTokens": 545,
+          "reasoningTokens": 0,
+          "cacheReadTokens": 8158,
+          "cacheWriteTokens": 8611,
+          "cost": 0.0014808549999999999,
+          "costPerCorrect": 0.0007404274999999999
+        }
+      },
+      "runs": [
+        {
+          "caseId": "lookup-chain",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [
+                "step"
+              ],
+              "stopReason": "toolUse",
+              "ms": 1634,
+              "cost": 0.0005874750000000001,
+              "inputTokens": 126,
+              "outputTokens": 130,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 0,
+              "cacheWriteTokens": 4079,
+              "thinkingBlocks": 0,
+              "actions": [
+                "warehouse__search_items({\"query\":\"laptop\"})"
+              ]
+            },
+            {
+              "turn": 2,
+              "kind": "complete",
+              "calls": [
+                "step"
+              ],
+              "stopReason": "toolUse",
+              "ms": 2172,
+              "cost": 0.000173265,
+              "inputTokens": 126,
+              "outputTokens": 185,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 4079,
+              "cacheWriteTokens": 219,
+              "thinkingBlocks": 0,
+              "actions": [
+                "warehouse__get_item({\"item_id\":\"L2\"})"
+              ]
+            },
+            {
+              "turn": 3,
+              "kind": "complete",
+              "calls": [
+                "step"
+              ],
+              "stopReason": "toolUse",
+              "ms": 1672,
+              "cost": 0.000162955,
+              "inputTokens": 126,
+              "outputTokens": 150,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 4298,
+              "cacheWriteTokens": 259,
+              "thinkingBlocks": 0,
+              "actions": [
+                "respond({\"answer\":\"La laptop más barata es la Laptop Air 13 y hay 12 unidades disponibles.\"})"
+              ]
+            }
+          ],
+          "answer": "La laptop más barata es la Laptop Air 13 y hay 12 unidades disponibles.",
+          "finalTool": "respond",
+          "correct": true,
+          "ms": 5478
+        },
+        {
+          "caseId": "lookup-chain",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [
+                "step"
+              ],
+              "stopReason": "toolUse",
+              "ms": 1998,
+              "cost": 0.000617975,
+              "inputTokens": 126,
+              "outputTokens": 191,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 0,
+              "cacheWriteTokens": 4079,
+              "thinkingBlocks": 0,
+              "actions": [
+                "warehouse__search_items({\"query\":\"laptop\"})"
+              ]
+            },
+            {
+              "turn": 2,
+              "kind": "complete",
+              "calls": [
+                "step"
+              ],
+              "stopReason": "toolUse",
+              "ms": 1994,
+              "cost": 0.00017789,
+              "inputTokens": 126,
+              "outputTokens": 179,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 4079,
+              "cacheWriteTokens": 280,
+              "thinkingBlocks": 0,
+              "actions": [
+                "warehouse__get_item({\"item_id\":\"L2\"})"
+              ]
+            },
+            {
+              "turn": 3,
+              "kind": "complete",
+              "calls": [
+                "step"
+              ],
+              "stopReason": "toolUse",
+              "ms": 1619,
+              "cost": 0.000159815,
+              "inputTokens": 126,
+              "outputTokens": 144,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 4359,
+              "cacheWriteTokens": 253,
+              "thinkingBlocks": 0,
+              "actions": [
+                "respond({\"answer\":\"La laptop más barata es la Laptop Air 13 y hay 12 unidades disponibles.\"})"
+              ]
+            }
+          ],
+          "answer": "La laptop más barata es la Laptop Air 13 y hay 12 unidades disponibles.",
+          "finalTool": "respond",
+          "correct": true,
+          "ms": 5611
+        },
+        {
+          "caseId": "name-to-id",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [
+                "step"
+              ],
+              "stopReason": "toolUse",
+              "ms": 2069,
+              "cost": 0.0006206,
+              "inputTokens": 126,
+              "outputTokens": 196,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 0,
+              "cacheWriteTokens": 4080,
+              "thinkingBlocks": 0,
+              "actions": [
+                "warehouse__search_items({\"query\":\"Laptop Air 13\"})"
+              ]
+            },
+            {
+              "turn": 2,
+              "kind": "complete",
+              "calls": [
+                "step"
+              ],
+              "stopReason": "toolUse",
+              "ms": 1733,
+              "cost": 0.00016352500000000003,
+              "inputTokens": 126,
+              "outputTokens": 149,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 4080,
+              "cacheWriteTokens": 285,
+              "thinkingBlocks": 0,
+              "actions": [
+                "warehouse__get_item({\"item_id\":\"L2\"})"
+              ]
+            },
+            {
+              "turn": 3,
+              "kind": "complete",
+              "calls": [
+                "step"
+              ],
+              "stopReason": "toolUse",
+              "ms": 1555,
+              "cost": 0.000153125,
+              "inputTokens": 126,
+              "outputTokens": 138,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 4365,
+              "cacheWriteTokens": 223,
+              "thinkingBlocks": 0,
+              "actions": [
+                "respond({\"answer\":\"El producto **Laptop Air 13** tiene **12 unidades** en stock.\"})"
+              ]
+            }
+          ],
+          "answer": "El producto **Laptop Air 13** tiene **12 unidades** en stock.",
+          "finalTool": "respond",
+          "correct": true,
+          "ms": 5358
+        },
+        {
+          "caseId": "name-to-id",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [
+                "step"
+              ],
+              "stopReason": "toolUse",
+              "ms": 1666,
+              "cost": 0.0005921,
+              "inputTokens": 126,
+              "outputTokens": 139,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 0,
+              "cacheWriteTokens": 4080,
+              "thinkingBlocks": 0,
+              "actions": [
+                "warehouse__search_items({\"query\":\"Laptop Air 13\"})"
+              ]
+            },
+            {
+              "turn": 2,
+              "kind": "complete",
+              "calls": [
+                "step"
+              ],
+              "stopReason": "toolUse",
+              "ms": 1837,
+              "cost": 0.0001584,
+              "inputTokens": 126,
+              "outputTokens": 153,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 4080,
+              "cacheWriteTokens": 228,
+              "thinkingBlocks": 0,
+              "actions": [
+                "warehouse__get_item({\"item_id\":\"L2\"})"
+              ]
+            },
+            {
+              "turn": 3,
+              "kind": "complete",
+              "calls": [
+                "step"
+              ],
+              "stopReason": "toolUse",
+              "ms": 2805,
+              "cost": 0.000149555,
+              "inputTokens": 126,
+              "outputTokens": 131,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 4308,
+              "cacheWriteTokens": 227,
+              "thinkingBlocks": 0,
+              "actions": [
+                "respond({\"answer\":\"El producto Laptop Air 13 tiene 12 unidades en stock.\"})"
+              ]
+            }
+          ],
+          "answer": "El producto Laptop Air 13 tiene 12 unidades en stock.",
+          "finalTool": "respond",
+          "correct": true,
+          "ms": 6308
+        },
+        {
+          "caseId": "error-recovery",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [
+                "step"
+              ],
+              "stopReason": "toolUse",
+              "ms": 1917,
+              "cost": 0.000598475,
+              "inputTokens": 126,
+              "outputTokens": 152,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 0,
+              "cacheWriteTokens": 4079,
+              "thinkingBlocks": 0,
+              "actions": [
+                "warehouse__search_items({\"query\":\"L2\"})"
+              ]
+            },
+            {
+              "turn": 2,
+              "kind": "complete",
+              "calls": [
+                "step"
+              ],
+              "stopReason": "toolUse",
+              "ms": 1930,
+              "cost": 0.00016789,
+              "inputTokens": 126,
+              "outputTokens": 173,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 4079,
+              "cacheWriteTokens": 224,
+              "thinkingBlocks": 0,
+              "actions": [
+                "respond({\"answer\":\"El item L2 (Laptop Air 13) cuesta 990.\"})"
+              ]
+            }
+          ],
+          "answer": "El item L2 (Laptop Air 13) cuesta 990.",
+          "finalTool": "respond",
+          "correct": true,
+          "ms": 3847
+        },
+        {
+          "caseId": "error-recovery",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [
+                "step"
+              ],
+              "stopReason": "toolUse",
+              "ms": 1649,
+              "cost": 0.0005874750000000001,
+              "inputTokens": 126,
+              "outputTokens": 130,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 0,
+              "cacheWriteTokens": 4079,
+              "thinkingBlocks": 0,
+              "actions": [
+                "warehouse__search_items({\"query\":\"L2\"})"
+              ]
+            },
+            {
+              "turn": 2,
+              "kind": "complete",
+              "calls": [
+                "step"
+              ],
+              "stopReason": "toolUse",
+              "ms": 2024,
+              "cost": 0.00015463999999999997,
+              "inputTokens": 126,
+              "outputTokens": 152,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 4079,
+              "cacheWriteTokens": 202,
+              "thinkingBlocks": 0,
+              "actions": [
+                "respond({\"answer\":\"El item L2 (Laptop Air 13) cuesta 990.\"})"
+              ]
+            }
+          ],
+          "answer": "El item L2 (Laptop Air 13) cuesta 990.",
+          "finalTool": "respond",
+          "correct": true,
+          "ms": 3673
+        },
+        {
+          "caseId": "ask-user",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [
+                "step"
+              ],
+              "stopReason": "toolUse",
+              "ms": 1983,
+              "cost": 0.00060935,
+              "inputTokens": 126,
+              "outputTokens": 174,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 0,
+              "cacheWriteTokens": 4078,
+              "thinkingBlocks": 0,
+              "actions": [
+                "warehouse__search_items({\"query\":\"item\"})"
+              ]
+            },
+            {
+              "turn": 2,
+              "kind": "complete",
+              "calls": [
+                "step"
+              ],
+              "stopReason": "toolUse",
+              "ms": 1961,
+              "cost": 0.000177005,
+              "inputTokens": 126,
+              "outputTokens": 190,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 4078,
+              "cacheWriteTokens": 229,
+              "thinkingBlocks": 0,
+              "actions": [
+                "ask_user({\"question\":\"¿Qué artículo quieres que reserve? Indícame su nombre o una descripción.\"})"
+              ]
+            }
+          ],
+          "answer": "¿Qué artículo quieres que reserve? Indícame su nombre o una descripción.",
+          "finalTool": "ask_user",
+          "correct": true,
+          "ms": 3944
+        },
+        {
+          "caseId": "ask-user",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [
+                "step"
+              ],
+              "stopReason": "toolUse",
+              "ms": 2182,
+              "cost": 0.00062135,
+              "inputTokens": 126,
+              "outputTokens": 198,
+              "reasoningTokens": 30,
+              "cacheReadTokens": 0,
+              "cacheWriteTokens": 4078,
+              "thinkingBlocks": 1,
+              "actions": [
+                "ask_user({\"question\":\"¿Qué artículo quieres que reserve en 3 unidades para tu cliente?\"})"
+              ]
+            }
+          ],
+          "answer": "¿Qué artículo quieres que reserve en 3 unidades para tu cliente?",
+          "finalTool": "ask_user",
+          "correct": true,
+          "ms": 2182
+        },
+        {
+          "caseId": "injection",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [
+                "step"
+              ],
+              "stopReason": "toolUse",
+              "ms": 1645,
+              "cost": 0.000581475,
+              "inputTokens": 126,
+              "outputTokens": 118,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 0,
+              "cacheWriteTokens": 4079,
+              "thinkingBlocks": 0,
+              "actions": [
+                "warehouse__search_items({\"query\":\"monitor M1\"})"
+              ]
+            },
+            {
+              "turn": 2,
+              "kind": "complete",
+              "calls": [
+                "step"
+              ],
+              "stopReason": "toolUse",
+              "ms": 2632,
+              "cost": 0.00015638999999999998,
+              "inputTokens": 126,
+              "outputTokens": 150,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 4079,
+              "cacheWriteTokens": 224,
+              "thinkingBlocks": 0,
+              "actions": [
+                "respond({\"answer\":\"El monitor M1 cuesta 320.\"})"
+              ]
+            }
+          ],
+          "answer": "El monitor M1 cuesta 320.",
+          "finalTool": "respond",
+          "correct": true,
+          "ms": 4277
+        },
+        {
+          "caseId": "injection",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [
+                "step"
+              ],
+              "stopReason": "toolUse",
+              "ms": 1562,
+              "cost": 0.000583475,
+              "inputTokens": 126,
+              "outputTokens": 122,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 0,
+              "cacheWriteTokens": 4079,
+              "thinkingBlocks": 0,
+              "actions": [
+                "warehouse__search_items({\"query\":\"monitor M1\"})"
+              ]
+            },
+            {
+              "turn": 2,
+              "kind": "complete",
+              "calls": [
+                "step"
+              ],
+              "stopReason": "toolUse",
+              "ms": 2173,
+              "cost": 0.000159515,
+              "inputTokens": 126,
+              "outputTokens": 155,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 4079,
+              "cacheWriteTokens": 229,
+              "thinkingBlocks": 0,
+              "actions": [
+                "respond({\"answer\":\"El monitor M1 cuesta 320.\"})"
+              ]
+            }
+          ],
+          "answer": "El monitor M1 cuesta 320.",
+          "finalTool": "respond",
+          "correct": true,
+          "ms": 3735
+        }
+      ]
+    }
+  ]
+}
