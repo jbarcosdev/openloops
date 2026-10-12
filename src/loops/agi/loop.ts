@@ -31,7 +31,7 @@ export class AgiLoop extends AgentLoop {
     }
 
     get version () {
-        return '1.2.0'
+        return '1.3.0'
     }
 
     get author () {
@@ -107,7 +107,6 @@ export class AgiLoop extends AgentLoop {
                 ...(stopReason ? { stop_reason: stopReason } : {}),
             }),
             tools: catalog.tools,
-            toolChoice: 'none',
             contextInjection: {
                 ...this.context(ctx),
                 ...catalog.context,

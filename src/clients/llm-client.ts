@@ -21,6 +21,18 @@ const DEFAULT_TEMPERATURE = 0.7
 const MAX_RETRIES = 4
 const MAX_RATE_LIMIT_WAITS = 2
 
+const REQUIRED_TOOL_CHOICE: Record<string, string> = {
+    'anthropic-messages': 'any',
+    'bedrock-converse-stream': 'any',
+    'google-generative-ai': 'any',
+    'google-vertex': 'any',
+    'mistral-conversations': 'any',
+    'openai-completions': 'required',
+    'openai-responses': 'required',
+    'azure-openai-responses': 'required',
+    'openai-codex-responses': 'required',
+}
+
 interface TracedCall {
     origin: string
     sessionId: string
@@ -75,12 +87,15 @@ export class LLMClient {
 
         if (!model) throw new Error('[LLM Client] model not found')
 
+        const resolvedChoice = toolChoice === 'required' ? REQUIRED_TOOL_CHOICE[model.api] : toolChoice
+        if (toolChoice === 'required' && !resolvedChoice) throw new Error(`[LLM Client] forced tool choice is not supported for api ${model.api}`)
+
         const context = toPiContext({ messages, tools }, model)
         const send = (omitTemperature: boolean) => {
             const options = { ...(omitTemperature ? {} : { temperature }), maxRetries: MAX_RETRIES, ...(sessionId ? { sessionId } : {}) }
 
-            return toolChoice
-                ? models.completeSimple(model, context, { ...options, toolChoice })
+            return resolvedChoice
+                ? models.completeSimple(model, context, { ...options, toolChoice: resolvedChoice as never })
                 : models.complete(model, context, options)
         }
 
@@ -166,7 +181,7 @@ export class LLMClient {
             origin,
             context: {
                 ...context,
-                ...(context.systemPrompt ? { systemPrompt: this.formatTextForLog(context.systemPrompt) } : {}),
+                ...(context.systemPrompt ? { systemPrompt: this.formatSystemForLog(context.systemPrompt) } : {}),
                 messages: this.formatMessagesForLog(context.messages),
             }
         }, '[LLM Service] context')
@@ -245,6 +260,12 @@ export class LLMClient {
 
             return { ...record, text: this.formatTextForLog(record?.text) }
         })
+    }
+
+    private formatSystemForLog (systemPrompt: string): any {
+        const parts = systemPrompt.split('\n\n').filter(Boolean)
+
+        return parts.length > 1 ? parts.map(part => this.formatTextForLog(part)) : this.formatTextForLog(systemPrompt)
     }
 
     private formatTextForLog (text: any): any {

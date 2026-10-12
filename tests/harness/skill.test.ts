@@ -108,7 +108,7 @@ describe('Skill.run', () => {
     describe('the context injection', () => {
         const skill = new Skill({ name: 'strict', systemInstructions: {} })
 
-        it.each(['tools', 'toolChoice', 'history', 'chatHistory'])('rejects %s because it has its own run option', async (key) => {
+        it.each(['tools', 'mode', 'history', 'chatHistory'])('rejects %s because it has its own run option', async (key) => {
             const chat = respondWith('{"x":1}')
 
             await expect(skill.run({ ...base, contextInjection: { [key]: [] } })).rejects.toThrow(`[SKILL:strict] ${key} must be passed as run options`)
@@ -133,12 +133,50 @@ describe('Skill.run', () => {
         expect(chat.mock.calls[0][0].temperature).toBe(0.7)
     })
 
-    it('passes tools and tool choice to the client', async () => {
-        const chat = respondWith('{"x":1}')
-        const tools = [{ name: 't', description: 'd', parameters: {} }]
-        await new Skill({ name: 's', systemInstructions: {} }).run({ ...base, tools, toolChoice: 'none' })
+    describe('with a tool catalog', () => {
+        const tools = [{ name: 't', description: 'd', parameters: { type: 'object' } }]
 
-        expect(chat.mock.calls[0][0]).toMatchObject({ tools, toolChoice: 'none' })
+        it('sends it as text in a second system message by default, with no native tools and no tool choice', async () => {
+            const chat = respondWith('{"x":1}')
+            await new Skill({ name: 's', systemInstructions: { r: 1 } }).run({ ...base, tools })
+
+            const sent = chat.mock.calls[0][0]
+
+            expect(sent.tools).toBeUndefined()
+            expect(sent.toolChoice).toBeUndefined()
+            expect(sent.messages.map(message => message.role)).toEqual(['system', 'system', 'user'])
+            expect(JSON.parse(sent.messages[1].content as string)).toEqual({ tool_list: tools })
+        })
+
+        it('sends no tool list when there are no tools', async () => {
+            const chat = respondWith('{"x":1}')
+            await new Skill({ name: 's', systemInstructions: {} }).run({ ...base })
+
+            expect(chat.mock.calls[0][0].messages.map(message => message.role)).toEqual(['system', 'user'])
+        })
+
+        it('declares them natively with tool choice none only in legacy_tools_off', async () => {
+            const chat = respondWith('{"x":1}')
+            await new Skill({ name: 's', systemInstructions: {} }).run({ ...base, tools, mode: 'legacy_tools_off' })
+
+            expect(chat.mock.calls[0][0]).toMatchObject({ tools, toolChoice: 'none' })
+            expect(chat.mock.calls[0][0].messages.map(message => message.role)).toEqual(['system', 'user'])
+        })
+
+        it('uses the mode of the skill unless the run overrides it', async () => {
+            const chat = respondWith('{"x":1}')
+            const skill = new Skill({ name: 's', systemInstructions: {}, mode: 'legacy_tools_off' })
+
+            await skill.run({ ...base, tools })
+            await skill.run({ ...base, tools, mode: 'plain_chat' })
+
+            expect(chat.mock.calls[0][0].toolChoice).toBe('none')
+            expect(chat.mock.calls[1][0].toolChoice).toBeUndefined()
+        })
+
+        it('defaults to plain_chat', () => {
+            expect(new Skill({ name: 's', systemInstructions: {} }).mode).toBe('plain_chat')
+        })
     })
 
     it('fails when the response has no text', async () => {

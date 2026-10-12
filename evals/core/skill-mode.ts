@@ -122,12 +122,14 @@ export function skillModes (def: SkillDefinition): Partial<Record<ModeId, ModeDe
         return field ? { tool: action.tool, text: String(action.arguments?.[field] ?? '') } : undefined
     }
 
-    const opening = (caseDef: CaseDef, listTools: boolean) => JSON.stringify({
-        CONTEXT: { now_utc: '2026-10-11T15:00:00.000Z', day_of_week: 'Sunday', ...def.context, ...(listTools ? { tool_list: toolsOf(caseDef).map(tool => ({ name: tool.name, description: tool.description, parameters: tool.parameters })) } : {}) },
+    const opening = (caseDef: CaseDef) => JSON.stringify({
+        CONTEXT: { now_utc: '2026-10-11T15:00:00.000Z', day_of_week: 'Sunday', ...def.context },
         INPUT: { user_message: caseDef.userMessage },
     })
 
     const system = JSON.stringify(def.systemInstructions)
+
+    const toolList = (caseDef: CaseDef) => JSON.stringify({ tool_list: toolsOf(caseDef).map(tool => ({ name: tool.name, description: tool.description, parameters: tool.parameters })) })
 
     const textParse = (caseDef: CaseDef) => (message: AssistantMessage): Parsed => {
         const calls = toolCalls(message)
@@ -169,7 +171,7 @@ export function skillModes (def: SkillDefinition): Partial<Record<ModeId, ModeDe
 
             return {
                 system,
-                opening: opening(caseDef, false),
+                opening: opening(caseDef),
                 finalOf,
                 tools: toolsOf(caseDef),
                 toolChoice: () => 'none',
@@ -188,8 +190,8 @@ export function skillModes (def: SkillDefinition): Partial<Record<ModeId, ModeDe
             const feedback = feedbackFor(caseDef, ctx, () => ++turn)
 
             return {
-                system,
-                opening: opening(caseDef, true),
+                system: `${system}\n\n${toolList(caseDef)}`,
+                opening: opening(caseDef),
                 finalOf,
                 toolChoice: () => undefined,
                 parse: textParse(caseDef),
@@ -232,8 +234,8 @@ export function skillModes (def: SkillDefinition): Partial<Record<ModeId, ModeDe
             }
 
             return {
-                system: JSON.stringify({ ...def.systemInstructions, delivery: STEP_ADDENDUM }),
-                opening: opening(caseDef, true),
+                system: `${JSON.stringify({ ...def.systemInstructions, delivery: STEP_ADDENDUM })}\n\n${toolList(caseDef)}`,
+                opening: opening(caseDef),
                 finalOf,
                 tools: [withStrict(stepTool, strict)],
                 toolChoice: forced => forced,

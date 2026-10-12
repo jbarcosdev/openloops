@@ -105,6 +105,36 @@ describe('LLMClient.chat', () => {
         expect(mockModels.completeSimple.mock.calls[0][2]).toMatchObject({ toolChoice: 'none', temperature: 0.3 })
     })
 
+    it.each([
+        ['anthropic-messages', 'any'],
+        ['openai-completions', 'required'],
+        ['openai-responses', 'required'],
+        ['google-generative-ai', 'any'],
+    ])('maps a required tool choice to the value of %s', async (api, expected) => {
+        mockModels.getModel.mockReturnValue({ api, id: 'm', provider: 'p' })
+        mockModels.completeSimple.mockResolvedValue(reply())
+        await new LLMClient().chat(params({ toolChoice: 'required' }))
+
+        expect(mockModels.completeSimple.mock.calls[0][2]).toMatchObject({ toolChoice: expected })
+    })
+
+    it('fails when the api has no forced tool choice', async () => {
+        mockModels.getModel.mockReturnValue({ api: 'unknown-api', id: 'm', provider: 'p' })
+        await expect(new LLMClient().chat(params({ toolChoice: 'required' }))).rejects.toThrow('forced tool choice is not supported')
+    })
+
+    it('logs every system message, including the tool list', async () => {
+        mockModels.getModel.mockReturnValue({ api: 'openai-responses', id: 'm', provider: 'p' })
+        mockModels.complete.mockResolvedValue(reply())
+        const client = new LLMClient()
+        const debug = jest.spyOn((client as any).logger, 'debug').mockImplementation(() => undefined)
+
+        await client.chat(params({ messages: [{ role: 'system', content: '{"rules":1}' }, { role: 'system', content: '{"tool_list":[{"name":"t"}]}' }, { role: 'user', content: 'hi' }] }))
+
+        const logged = debug.mock.calls.find(call => call[1] === '[LLM Service] context')![0] as any
+        expect(logged.context.systemPrompt).toEqual([{ rules: 1 }, { tool_list: [{ name: 't' }] }])
+    })
+
     it('fails when the model does not exist', async () => {
         mockModels.getModel.mockReturnValue(undefined)
         await expect(new LLMClient().chat(params())).rejects.toThrow('model not found')
@@ -212,6 +242,7 @@ describe('pi-ai adapter', () => {
         }, model)
 
         expect(context.tools).toEqual([{ name: 't', description: 'd', parameters: { type: 'object' } }])
+        expect(toPiContext({ messages: [], tools: [{ name: 't', description: 'd', parameters: { type: 'object' }, strict: true }] }, model).tools).toEqual([{ name: 't', description: 'd', parameters: { type: 'object' }, constrainedSampling: { type: 'json_schema', strict: 'prefer' } }])
         expect((context.messages[1] as any).stopReason).toBe('toolUse')
         expect((context.messages[2] as any).role).toBe('toolResult')
     })

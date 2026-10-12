@@ -15,7 +15,7 @@ function isPiAssistant (value: unknown): value is AssistantMessage {
 }
 
 function toPiTool (tool: LLMToolDefinition): PiTool {
-    return { name: tool.name, description: tool.description, parameters: tool.parameters as any }
+    return { name: tool.name, description: tool.description, parameters: tool.parameters as any, ...(tool.strict ? { constrainedSampling: { type: 'json_schema', strict: 'prefer' } as const } : {}) }
 }
 
 export function toPiContext (input: { messages: LLMMessage[]; tools?: LLMToolDefinition[] }, model: Model<Api>): Context {

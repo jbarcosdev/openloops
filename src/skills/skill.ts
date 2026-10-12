@@ -1,12 +1,15 @@
 import { container } from 'tsyringe'
 import { extractJSON } from '@common/helpers'
 import { LLMClient } from '@clients/llm-client'
-import { LLMMessage, LLMToolDefinition, LLMToolChoice } from '@clients/llm-types'
+import { LLMMessage, LLMToolDefinition } from '@clients/llm-types'
 import { CurrentUser, CurrentSession } from '@common/base'
 import type { Chat } from '@services/chats/entities/chat.entity'
 import { buildRuntimeContext } from './runtime-context'
+import { SkillMode, DEFAULT_SKILL_MODE, buildModeCall, readModeResponse } from './call-modes'
 
-const RESERVED_CONTEXT_KEYS = ['tools', 'toolChoice', 'history', 'chatHistory']
+export { SkillMode, DEFAULT_SKILL_MODE } from './call-modes'
+
+const RESERVED_CONTEXT_KEYS = ['tools', 'mode', 'history', 'chatHistory']
 
 export interface SkillProps {
     name: string
@@ -15,6 +18,8 @@ export interface SkillProps {
     temperature?: number
     systemInstructions: Record<string, any>
     systemRole?: boolean
+    /** Default mode of this skill. Defaults to `plain_chat`. See {@link SkillMode} before changing it. */
+    mode?: SkillMode
 }
 
 export interface ChatTurn {
@@ -36,7 +41,11 @@ export interface SkillRunOptions<TInput = Record<string, any>> {
     history?: LLMMessage[]
     chatHistory?: ChatTurn[]
     tools?: LLMToolDefinition[]
-    toolChoice?: LLMToolChoice
+    /**
+     * How the model is called when `tools` is given. Defaults to the mode of the skill, which defaults to `plain_chat`.
+     * Do not set `legacy_tools_off` unless you know exactly what you are doing: it scored 0 to 30% in the evals. See {@link SkillMode}.
+     */
+    mode?: SkillMode
 }
 
 export class Skill<TResponse = Record<string, any>> {
@@ -46,6 +55,7 @@ export class Skill<TResponse = Record<string, any>> {
     readonly temperature?: number
     readonly systemInstructions: Record<string, any>
     readonly systemRole: boolean
+    readonly mode: SkillMode
 
     constructor (props: SkillProps) {
         this.name = props.name
@@ -54,10 +64,11 @@ export class Skill<TResponse = Record<string, any>> {
         this.temperature = props.temperature
         this.systemInstructions = props.systemInstructions
         this.systemRole = props.systemRole ?? true
+        this.mode = props.mode ?? DEFAULT_SKILL_MODE
     }
 
     async run (options: SkillRunOptions): Promise<TResponse & { responseId: string, costInUsd: number, opening?: string }> {
-        const { provider, modelName, sessionId, answerId, userMessage, currentUser, currentSession, contextInjection = {}, input = {}, chat, history = [], chatHistory = [], tools, toolChoice } = options
+        const { provider, modelName, sessionId, answerId, userMessage, currentUser, currentSession, contextInjection = {}, input = {}, chat, history = [], chatHistory = [], tools, mode = this.mode } = options
 
         const misplaced = RESERVED_CONTEXT_KEYS.filter(key => key in contextInjection)
         if (misplaced.length) throw new Error(`[SKILL:${this.name}] ${misplaced.join(', ')} must be passed as run options, not inside contextInjection`)
@@ -86,9 +97,7 @@ export class Skill<TResponse = Record<string, any>> {
                 ? history
                 : [...chatHistory.map(turn => ({ role: turn.role, content: turn.content }) as LLMMessage), { role: 'user', content: opening! }]
 
-            const messages: LLMMessage[] = this.systemRole
-                ? [{ role: 'system', content: JSON.stringify(this.systemInstructions) }, ...conversation]
-                : conversation
+            const call = buildModeCall({ mode, skill: this.name, systemInstructions: this.systemInstructions, systemRole: this.systemRole, conversation, tools })
 
             const response = await llmClient.chat({
                 provider,
@@ -97,13 +106,13 @@ export class Skill<TResponse = Record<string, any>> {
                 answerId,
                 origin: this.name,
                 currentUser,
-                messages,
-                tools,
-                toolChoice,
+                messages: call.messages,
+                tools: call.tools,
+                toolChoice: call.toolChoice,
                 temperature: this.temperature ?? 0.7,
             })
 
-            const parsed = this.parseJsonResponse<TResponse>(response.text)
+            const parsed = this.parseJsonResponse<TResponse>(readModeResponse(mode, this.name, response))
 
             const result = {
                 ...parsed,
