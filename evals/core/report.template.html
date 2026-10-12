@@ -142,11 +142,15 @@ const MODES = {
   'tools-off': { name: 'Chat, tools disabled', short: 'chat, tools disabled',
     input: ['System prompt: plain text with the instructions.', 'Tools field: the tools are declared as JSON schemas, but tool choice is set to none, so the model cannot call them.', 'Messages: plain text; tool results come back as text.'],
     output: ['Plain text that contains one serialized JSON object (reasoning, state, learned facts and the list of actions).', 'Our code extracts and validates that JSON.'],
-    note: 'How agi called models before these evaluations, kept only as a reference baseline. In model evals it uses a short generic prompt; in skill evals it uses the real skill prompt.' },
+    note: 'How agi called models before these evaluations, kept only as a reference baseline. In model evals it uses a short generic prompt; in skill evals it uses the real skill prompt.',
+    skill: { input: ['System prompt: the real skill instructions, serialized as one JSON object.', 'Tools field: the tools are declared as JSON schemas, but tool choice is set to none, so the model cannot call them.', 'Messages: JSON text. The first one carries the context and the user request; each next one carries the observations of the last actions and the harness budget.'],
+      output: ['Plain text that contains one serialized JSON object (reasoning, state, learned facts and the list of actions).', 'Our code extracts and validates that JSON.'] } },
   text: { name: 'Plain chat completion', short: 'plain chat',
     input: ['System prompt: plain text with the instructions and a catalog of the tools written as text.', 'Tools field: not sent.', 'Messages: plain text; tool results come back as text.'],
     output: ['Plain text that contains one serialized JSON object (reasoning, state, learned facts and the list of actions).', 'Our code extracts and validates that JSON.'],
-    note: 'The simplest contract: it works with any provider because it needs no function calling support.' },
+    note: 'The simplest contract: it works with any provider because it needs no function calling support.',
+    skill: { input: ['System prompt: the real skill instructions, serialized as one JSON object.', 'Tools field: not sent. The tool list travels as text inside the first message.', 'Messages: JSON text. The first one carries the context, the tool list and the user request; each next one carries the observations of the last actions and the harness budget.'],
+      output: ['Plain text that contains one serialized JSON object (reasoning, state, learned facts and the list of actions), or, for skills that answer once, the JSON object of the response.', 'Our code extracts and validates that JSON.'] } },
   'fc-split': { name: 'Function calling, two calls', short: 'function calling x2',
     input: ['System prompt: short plain-text instructions.', 'Tools field: a reflect tool plus every action tool as JSON schemas; tool choice is forced, so the model must call tools.', 'Messages: tool results come back as tool messages.'],
     output: ['Two native tool calls in the same turn: reflect (reasoning, state, learned) and the action tool.', 'Arguments are structured objects checked by the provider when strict schema is on.'],
@@ -154,9 +158,16 @@ const MODES = {
   'fc-step': { name: 'Function calling, one call', short: 'function calling x1',
     input: ['System prompt: plain-text instructions plus the action catalog as text.', 'Tools field: one step tool as a JSON schema; tool choice is forced.', 'Messages: tool results come back as tool messages.'],
     output: ['One native call to step with structured fields: reasoning, state, learned and the list of actions.', 'Inside each action, the tool arguments travel as a serialized JSON string (arguments_json), which we parse tolerantly.'],
-    note: 'Some models append garbage after the JSON, so the parser has to be tolerant.' },
+    note: 'Some models append garbage after the JSON, so the parser has to be tolerant.',
+    skill: { input: ['System prompt: the real skill instructions as one JSON object, plus a delivery rule that asks for the answer through the step tool.', 'Tools field: one step tool as a JSON schema; tool choice is forced. The tool list travels as text inside the first message.', 'Messages: JSON text; tool results come back as tool messages.'] } },
+  schema: { name: 'Structured output, one call', short: 'structured output',
+    input: ['System prompt: the real skill instructions as one JSON object, plus a delivery rule that asks for the answer through the output tool.', 'Tools field: one output tool whose parameters are the response schema of the skill; tool choice is forced.', 'Messages: JSON text with the context and the input of the skill.'],
+    output: ['One native call to output, with the fields of the response schema as structured arguments, checked by the provider when strict schema is on.'],
+    note: 'For skills that answer once with a JSON object and call no tools.' },
 };
-const MODE_ORDER = ['tools-off', 'text', 'fc-split', 'fc-step'];
+const info = id => { const m = MODES[id] || { name: id, short: id, input: [], output: [], note: '' }; return state.kind === 'skill' && m.skill ? { ...m, ...m.skill } : m; };
+const modeIdx = m => m === 'schema' ? 3 : Math.max(0, MODE_ORDER.indexOf(m));
+const MODE_ORDER = ['tools-off', 'text', 'fc-split', 'fc-step', 'schema'];
 const modeName = id => (MODES[id] || { name: id }).name;
 const reasoningName = v => v === 'n/a' ? 'no reasoning mode' : 'reasoning ' + v;
 const strictText = v => v === 'on' ? 'strict schema' : v === 'off' ? 'free-form arguments' : '';
@@ -164,7 +175,7 @@ const reasoningTip = v => v === 'n/a' ? 'This model has no reasoning mode.' : v 
 const strictTip = v => v === 'on' ? 'Strict schema: the provider constrains tool arguments to the declared schema while generating.' : 'Free-form arguments: the model writes tool arguments without provider-side constraints.';
 
 function modeTip (id) {
-  const m = MODES[id]; if (!m) return esc(id);
+  const m = MODES[id] && info(id); if (!m) return esc(id);
   return '<b>' + esc(m.name) + '</b><div class="th">What the model receives</div><ul>' + m.input.map(t => '<li>' + esc(t) + '</li>').join('') + '</ul><div class="th">What the model returns</div><ul>' + m.output.map(t => '<li>' + esc(t) + '</li>').join('') + '</ul><div class="nt">' + esc(m.note) + '</div>';
 }
 const tipEl = $('tip');
@@ -272,7 +283,7 @@ function scatter (id, list, xKey, xLabel, xFmt, log) {
     if (k === 3) return '<path ' + extra + ' d="M' + cx + ',' + (cy - r - 2) + ' L' + (cx + r + 2) + ',' + cy + ' L' + cx + ',' + (cy + r + 2) + ' L' + (cx - r - 2) + ',' + cy + ' Z"/>';
     return '<circle ' + extra + ' cx="' + cx + '" cy="' + cy + '" r="' + r + '"/>';
   };
-  pts.forEach((r, i) => { svg += shape(Math.max(0, MODE_ORDER.indexOf(r.mode)), X(r[xKey]), Y(r.accuracy), 'class="pt" data-i="' + i + '" style="fill:' + colorOf(r.model) + '"'); });
+  pts.forEach((r, i) => { svg += shape(modeIdx(r.mode), X(r[xKey]), Y(r.accuracy), 'class="pt" data-i="' + i + '" style="fill:' + colorOf(r.model) + '"'); });
   const front = pts.filter(p => !pts.some(q => q !== p && q[xKey] <= p[xKey] && q.accuracy >= p.accuracy && (q[xKey] < p[xKey] || q.accuracy > p.accuracy))).sort((a, b) => b.accuracy - a.accuracy || a[xKey] - b[xKey]).slice(0, 6);
   const placed = [];
   for (const p of front) {
@@ -287,7 +298,7 @@ function scatter (id, list, xKey, xLabel, xFmt, log) {
   svg += '</svg>';
   const usedModels = models.filter(m2 => pts.some(r => r.model === m2));
   const usedModes = MODE_ORDER.filter(k => pts.some(r => r.mode === k));
-  const key = k => '<svg width="16" height="16" viewBox="-9 -9 18 18" style="fill:var(--muted)">' + shape(Math.max(0, MODE_ORDER.indexOf(k)), 0, 0, '', 5.5) + '</svg>';
+  const key = k => '<svg width="16" height="16" viewBox="-9 -9 18 18" style="fill:var(--muted)">' + shape(modeIdx(k), 0, 0, '', 5.5) + '</svg>';
   $(id).innerHTML = svg + '<div class="legend">' + usedModels.map(m2 => '<span><span class="dot" style="background:' + colorOf(m2) + '"></span>' + esc(shortModel(m2)) + '</span>').join('') + '</div><div class="legend">' + usedModes.map(k => '<span data-mode="' + k + '" tabindex="0" style="cursor:help">' + key(k) + esc(modeName(k)) + '</span>').join('') + '</div><div class="pin" id="pin-' + id + '">Hover a point for details, click it to pin them here. Labels mark the best trade-offs: no other setup is cheaper and at least as accurate.</div>';
   const info = r => '<b>' + esc(setupText(r)) + '</b><br>Accuracy ' + pct(r.accuracy) + ' (' + r.correct + ' of ' + r.runs + ' conversations) · ' + usdK(r.costPerCorrect) + ' per 1,000 correct answers · ' + sec(r.secPerRun) + ' per conversation';
   $(id).querySelectorAll('.pt').forEach(c => {
@@ -396,7 +407,7 @@ function renderModels (list) {
 function renderModes (list) {
   const el = $('tab-modes');
   const modes = MODE_ORDER.filter(m => list.some(r => r.mode === m));
-  const cards = modes.map(m => { const a = aggregate(list.filter(r => r.mode === m)); const info = MODES[m]; return '<div class="card mcard"><h3>' + esc(info.name) + '</h3><dl><dt>Input</dt><dd><ul style="margin:0;padding-left:16px">' + info.input.map(t => '<li>' + esc(t) + '</li>').join('') + '</ul></dd><dt>Output</dt><dd><ul style="margin:0;padding-left:16px">' + info.output.map(t => '<li>' + esc(t) + '</li>').join('') + '</ul></dd></dl><div class="muted" style="font-size:12.5px">' + esc(info.note) + '</div><div class="stats"><div><div class="n">' + pct(a.accuracy) + '</div><div class="l">accuracy</div></div><div><div class="n">' + usdK(a.costPerCorrect) + '</div><div class="l">per 1,000 correct</div></div><div><div class="n">' + sec(a.secPerRun) + '</div><div class="l">per conversation</div></div></div></div>'; }).join('');
+  const cards = modes.map(m => { const a = aggregate(list.filter(r => r.mode === m)); const mi = info(m); return '<div class="card mcard"><h3>' + esc(mi.name) + '</h3><dl><dt>Input</dt><dd><ul style="margin:0;padding-left:16px">' + mi.input.map(t => '<li>' + esc(t) + '</li>').join('') + '</ul></dd><dt>Output</dt><dd><ul style="margin:0;padding-left:16px">' + mi.output.map(t => '<li>' + esc(t) + '</li>').join('') + '</ul></dd></dl><div class="muted" style="font-size:12.5px">' + esc(mi.note) + '</div><div class="stats"><div><div class="n">' + pct(a.accuracy) + '</div><div class="l">accuracy</div></div><div><div class="n">' + usdK(a.costPerCorrect) + '</div><div class="l">per 1,000 correct</div></div><div><div class="n">' + sec(a.secPerRun) + '</div><div class="l">per conversation</div></div></div></div>'; }).join('');
   const ms = [...new Set(list.map(r => r.model))].sort();
   const heat = (fn, fmt, scale) => '<div class="scroll"><table class="hm"><thead><tr><th class="l">Model</th>' + modes.map(m => '<th>' + modeChip(m) + '</th>').join('') + '</tr></thead><tbody>' + ms.map(m => '<tr><td class="l"><span class="dot" style="background:' + colorOf(m) + '"></span> ' + esc(shortModel(m)) + '</td>' + modes.map(k => { const items = list.filter(r => r.model === m && r.mode === k); if (!items.length) return '<td class="c muted">-</td>'; const a = aggregate(items); const v = fn(a); const s = scale(v, a); return '<td class="c" style="background:' + heatColor(s) + ';color:' + heatInk(s) + '" data-tip="' + esc(shortModel(m) + ' · ' + modeName(k) + ': ' + pct(a.accuracy) + ' accuracy, ' + usdK(a.costPerCorrect) + ' per 1,000 correct, ' + sec(a.secPerRun) + ' per conversation, averaged over ' + items.length + ' setups') + '">' + fmt(v) + '</td>'; }).join('') + '</tr>').join('') + '</tbody></table></div>';
   const accHeat = heat(a => a.accuracy, pct, v => v);
@@ -520,7 +531,7 @@ const TABS = [['summary', 'Summary', renderSummary], ['models', 'Models', render
 function buildHelp () {
   $('helpBody').innerHTML = '<p style="margin-top:14px">An evaluation sends the same small tasks to a model many times and checks the answers. Each task is a <b>conversation</b>: the model may call fake tools (a warehouse inventory) and ends by answering the user.</p>' +
     '<h3>What is a setup?</h3><p>The full recipe that was tested: <b>model</b> + <b>mode</b> (how the request and answer are shaped) + <b>reasoning</b> level + <b>strict schema</b> where it applies. Every row, bar and point in this report is one setup.</p>' +
-    '<h3>Modes</h3>' + MODE_ORDER.map(id => '<div class="mini"><b>' + esc(MODES[id].name) + '</b><div class="th">What the model receives</div><ul>' + MODES[id].input.map(t => '<li>' + esc(t) + '</li>').join('') + '</ul><div class="th">What the model returns</div><ul>' + MODES[id].output.map(t => '<li>' + esc(t) + '</li>').join('') + '</ul><div class="muted" style="margin-top:6px">' + esc(MODES[id].note) + '</div></div>').join('') +
+    '<h3>Modes</h3>' + MODE_ORDER.filter(id => allRows.some(r => r.mode === id)).map(id => '<div class="mini"><b>' + esc(info(id).name) + '</b><div class="th">What the model receives</div><ul>' + info(id).input.map(t => '<li>' + esc(t) + '</li>').join('') + '</ul><div class="th">What the model returns</div><ul>' + info(id).output.map(t => '<li>' + esc(t) + '</li>').join('') + '</ul><div class="muted" style="margin-top:6px">' + esc(info(id).note) + '</div></div>').join('') +
     '<h3>Terms</h3><div class="def">' +
     [['Reasoning (off, low)', 'How much native thinking is requested from the provider before it answers. It is not the reasoning text field inside the answer. Models that cannot turn it off get their lowest setting. Anthropic rejects reasoning together with a forced tool choice, so those combinations are skipped.'],
      ['Strict schema', 'When on, the provider constrains tool arguments to the declared schema while generating. Only applies to function calling modes.'],
@@ -545,7 +556,10 @@ function meta () {
   const list = visible(); const t = aggregate(list);
   const versions = [...new Set(DATA.results.map(r => r.piAiVersion))].join(', ');
   $('meta').textContent = 'Generated ' + DATA.generatedAt.slice(0, 16).replace('T', ' ') + ' UTC · ' + t.setups + ' setups · ' + num(t.runs) + ' conversations · ' + usd(t.cost) + ' spent · pi-ai ' + versions;
-  $('title').textContent = state.kind === 'skill' ? 'Skill evaluation report' : 'Model evaluation report';
+  const skills = [...new Set(DATA.results.filter(r => r.kind === 'skill').map(r => r.skill + (r.skillVersion ? ' v' + r.skillVersion : '')))];
+  const heading = state.kind === 'skill' ? 'Skill evaluation report' + (skills.length ? ': ' + skills.join(', ') : '') : 'Model evaluation report';
+  $('title').textContent = heading;
+  document.title = heading;
   const newest = Math.max(0, ...allRows.filter(r => r.kind === state.kind).map(r => r.casesVersion));
   const stale = [...new Set(allRows.filter(r => r.kind === state.kind && r.casesVersion < newest).map(r => r.snapshot))];
   const old = $('stale'); if (old) old.remove();

@@ -1,6 +1,6 @@
 import type { AssistantMessage, Message } from '@earendil-works/pi-ai'
 
-export type ModeId = 'tools-off' | 'text' | 'fc-split' | 'fc-step'
+export type ModeId = 'tools-off' | 'text' | 'fc-split' | 'fc-step' | 'schema'
 export type Strict = 'on' | 'off'
 export type Kind = 'complete' | 'reflect-only' | 'action-only' | 'invalid' | 'empty' | 'error'
 
@@ -36,6 +36,7 @@ export interface CaseDef {
     id: string
     description: string
     userMessage: string
+    input?: Record<string, any>
     tools: ToolSpec[]
     maxTurns?: number
     world: (tool: string, args: any, ctx: WorldCtx) => string

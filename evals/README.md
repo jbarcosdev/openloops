@@ -5,7 +5,7 @@ A small evaluation framework that measures how well each LLM drives the openloop
 1. **Models**: for each model, which *setup* (mode + reasoning level + strict schema) gives the best accuracy per dollar on a fixed set of agent-style cases?
 2. **Skills**: does the real prompt of a skill (for example `reasoningEngine`) behave well on the models and modes we picked?
 
-Every run writes a JSON result, and every `models` / `skills` run also generates an HTML report (for you) and a JSON bundle (for an agent that analyzes failures).
+Every run writes a JSON result. Every `models` run also generates an HTML report (for you) and a JSON bundle (for an agent that analyzes failures). `skills` runs also generate an HTML report and a JSON bundle, one pair per skill. Bundles live in `results/bundles/models/` and `results/bundles/skills/`.
 
 ---
 
@@ -46,7 +46,7 @@ Every run writes a JSON result, and every `models` / `skills` run also generates
 | **Setup** | The combination model + mode + reasoning + strict. |
 | **Cell** | One setup evaluated on all selected cases and runs. |
 | **Snapshot** | A concrete model id (for example `gpt-6-luna`). A model file can list several snapshots. |
-| **Bundle** | A JSON file (plus an HTML report) that groups the newest result of each snapshot and its earlier runs. |
+| **Bundle** | A JSON file (plus an HTML report) that groups the newest result of each model snapshot, or the last execution of one skill, and its earlier runs. |
 
 Directory layout:
 
@@ -221,27 +221,34 @@ The bundle created by a run only contains the snapshots from that run (plus thei
 
 ### eval skills
 
-Runs the real system prompt of a skill against scenario conversations that follow the real protocol of the reasoning engine, so you can check that the skill works on the models and modes you chose in production.
+Runs the real system prompt of a skill against a few scenarios and saves the results of that skill. At the end you get console tables, one result JSON per model, and one bundle per skill: an HTML executive report (same design as the model report, with the modes described for what they really send) and a JSON bundle for an agent. If a bundle was not generated (for example the run was interrupted, or the results come from an older version of the framework), rebuild it from the last execution with `yarn eval:bundle --skill reasoning-engine`.
 
 ```
-yarn eval:skills [skill names...] [--models names] [same flags as eval models]
+yarn eval:skills [skill names...] [--models names] [--dry-run] [same flags as eval models]
 ```
 
 ```bash
-yarn eval:skills
+yarn eval:skills --dry-run
+yarn eval:skills reasoning-engine --dry-run
 yarn eval:skills reasoning-engine
-yarn eval:skills reasoning-engine --models gpt-6-luna,gemini-2.5-flash
+yarn eval:skills reasoning-engine --models gpt-6-luna
 yarn eval:skills reasoning-engine --modes text --runs 1
+yarn eval:skills reasoning-engine --cases direct-answer,honest-failure,prompt-extraction
 yarn eval:skills reasoning-engine --reasoning off,low
-yarn eval:skills reasoning-engine --cases honest-failure,injection
 ```
 
-- With no skill names, every folder in `skills/` runs.
-- `--models` overrides the model list in the skill spec. Names follow the same matching as `eval models`.
-- Skill specs support the modes `tools-off`, `text` and `fc-step`. The default comes from the spec (`text,fc-step` for `reasoning-engine`) and the default `runs` is the spec value (2).
-- `--cases` here selects **scenario** ids, for `reasoning-engine`: `direct-answer`, `lookup-chain`, `name-to-id`, `error-recovery`, `ask-user`, `injection`, `prompt-extraction`, `honest-failure`.
-- The skill is loaded from the source of `@loops/agi`, so run it from the repository root after building or editing the skill. The result records the skill name and version.
-- Results are stored separately under `results/skills/<skill>/...` and appear in the report next to the model results.
+- `--dry-run` sends nothing, prints the plan and a rough cost estimate (based on the real size of the skill prompt). Run it first.
+- With no skill names, every folder in `skills/` runs (folders starting with `_` are ignored).
+- `--models` overrides the model list of the skill spec. Names follow the same matching as `eval models`.
+- Each skill has its own default scenarios (`defaultCases` in the spec) to keep the cost low. `--cases` can pick any scenario of the skill. For `reasoning-engine` the defaults are `lookup-chain`, `name-to-id`, `error-recovery`, `ask-user`, `injection`; the others available are `direct-answer`, `prompt-extraction`, `honest-failure`.
+- Defaults for `reasoning-engine`: models `gpt-6-luna`, `gpt-4o-mini`, `claude-haiku-5-5`, `gemini-2.5-flash`; modes `text` and `fc-step`; reasoning `off`; strict `on`; 2 runs. That is 80 conversations and roughly 0.10 to 0.15 USD (the real cost of the last run was 0.14 USD with `tools-off` included).
+- Skill kinds and modes:
+  - `loop` skills (like `reasoning-engine`, they call tools and observe results) support `text`, `fc-step` and `tools-off` (reference only, needs `--with-tools-off`). `tools-off` is what production sends today (tools declared with tool choice `none`).
+  - `single` skills (one call in, one JSON object out, like `approval-request`) support `text` (JSON in plain text) and `schema` (a forced `output` tool whose parameters are the response schema, strict by default).
+- The skill is loaded from the source of `@loops/agi` (or wherever its spec points), so the prompt and version tested are the ones in the working tree. The result records the skill name and version.
+- The bundle is written to `results/bundles/skills/<skill>-<timestamp>.json` with the `.html` next to it, and both paths are printed when the run ends. It contains every model and mode of that execution.
+- Results are stored under `results/skills/<skill>/<provider>/<snapshot>/<timestamp>.json`. Read them back with `yarn eval:show skill/reasoning-engine/gpt-6-luna` or compare runs with `yarn eval:compare`.
+- What is real and what is replicated: the system prompt, the opening message and the observation format are the real ones. The harness behavior (`known`, `schemas`, warnings, stop reasons, placeholders, workspace stubs) is not run: the eval only sends `HARNESS.budget`.
 
 ---
 
@@ -290,25 +297,30 @@ yarn eval:show --stamp 2026-10-11
 Builds a JSON bundle and the HTML report from saved results, without calling any model. Use it to gather results from several separate runs into one report.
 
 ```
-yarn eval:bundle [refs...] [--stamp prefix] [--full] [--no-history] [--out file]
+yarn eval:bundle [refs...] [--skill name] [--all] [--last] [--stamp prefix] [--full] [--no-history] [--out file]
 ```
 
 ```bash
 yarn eval:bundle
 yarn eval:bundle --stamp 2026-10-11
 yarn eval:bundle gpt-6-luna gemini-2.5-flash
+yarn eval:bundle --skill reasoning-engine
+yarn eval:bundle --skill reasoning-engine --all
+yarn eval:bundle --last
 yarn eval:bundle --no-history
 yarn eval:bundle --full --out evals/results/bundles/full.json
 ```
 
 Behavior:
 
-- **No refs**: includes every snapshot found in `results/`. For each one only the **newest** run goes in `results`; older runs of the same snapshot go to `history` (aggregates only) so the report can show whether a model improved or regressed.
-- **With refs**: includes exactly those results and nothing else.
+- **No refs, no `--skill`**: a models bundle. It includes every model snapshot found in `results/models/`. For each one only the **newest** run goes in `results`; older runs of the same snapshot go to `history` (aggregates only) so the report can show whether a model improved or regressed.
+- **`--skill name`**: a bundle of that skill (`--skill` alone, with no name, bundles every skill together). By default it takes the **last execution** of the skill, which means the runs that started within 10 minutes of the newest one, so it holds exactly the models and modes of your latest `eval:skills`. Add `--all` to take the newest run of every model that has ever been evaluated instead. History only includes older runs of the same skill version and the same scenarios.
+- **`--last`**: the same last-execution rule for models bundles.
+- **With refs**: includes exactly those results and nothing else; the bundle goes to the models or skills folder depending on the refs.
 - `--stamp prefix`: pick, for each snapshot, the newest run whose timestamp starts with the prefix instead of the newest overall.
 - `--no-history`: leave out earlier runs.
 - `--full`: keep longer answers and raw model output and keep **all** passing conversations (default keeps one passing sample per case and truncates text). The file gets much larger.
-- `--out file`: write the JSON there. The HTML is written next to it with the same name and a `.html` extension. Default: `results/bundles/bundle-<timestamp>.json`.
+- `--out file`: write the JSON there. The HTML is written next to it with the same name and a `.html` extension. Default: `results/bundles/models/bundle-<timestamp>.json` for models and `results/bundles/skills/<skill>-<timestamp>.json` for skills.
 
 Which file is for whom: the **HTML** is for you to read. The **JSON** is for an agent: it contains every failed conversation with the answer, the reason and per-turn detail.
 
@@ -319,14 +331,16 @@ Which file is for whom: the **HTML** is for you to read. The **JSON** is for an 
 Rebuilds the HTML report. Use it after the report template changed, or to regenerate the HTML of an old bundle.
 
 ```
-yarn eval:report [bundle.json] [--stamp prefix] [--out file]
+yarn eval:report [bundle.json] [--skill name] [--all] [--last] [--stamp prefix] [--out file]
 ```
 
 ```bash
-yarn eval:report evals/results/bundles/bundle-2026-10-11T19-14-00.json
+yarn eval:report evals/results/bundles/models/bundle-2026-10-11T19-14-00.json
 yarn eval:report
+yarn eval:report --skill reasoning-engine
 ```
 
+- With `--skill <name>`: same as `eval bundle --skill <name>`.
 - With a bundle path: writes `<same name>.html` next to it from that JSON, nothing else changes.
 - Without a path: behaves like `eval bundle` with no refs and prints both file paths.
 
@@ -351,17 +365,21 @@ Output sections: model files (provider/model, snapshots, reasoning levels), mode
 | `--snapshot` | models, skills | comma list of model ids | the model file's `snapshots` or its `model` | Override which concrete model ids are tested. |
 | `--models` | skills | comma list of model names | the skill spec's `models` | Override which models run the skill. |
 | `--reasoning` | models, skills | `off`, `low`, `medium`, `high` (comma list) | `off` | Native thinking effort per cell. Ignored by models without reasoning. |
-| `--modes` | models, skills | `tools-off`, `text`, `fc-split`, `fc-step` (comma list) | `text,fc-split,fc-step` (skills: the spec's modes) | Replace the list of modes. |
+| `--modes` | models, skills | `tools-off`, `text`, `fc-split`, `fc-step`, `schema` (skills of kind `single` only) (comma list) | `text,fc-split,fc-step` (skills: the spec's modes) | Replace the list of modes. |
 | `--with-tools-off` | models, skills | none (boolean) | off | Add the `tools-off` reference mode. |
 | `--strict` | models, skills | `on`, `off` (comma list) | `on` | Strict schema for function calling modes. |
 | `--cases` | models, skills | comma list of case or scenario ids | all | Restrict what is evaluated. |
 | `--runs` | models, skills | integer | 3 (skills: spec value) | Repetitions per case. |
 | `--timeout` | models, skills | milliseconds | 45000 | Time limit per LLM call. |
 | `--concurrency` | models, skills | integer | 6 | Parallel conversations. |
+| `--dry-run` | models, skills | none (boolean) | off | Print the plan and a rough cost estimate without calling any model. |
 | `--stamp` | show, bundle, report | timestamp prefix | none | Pick runs by timestamp prefix. |
 | `--full` | bundle | none (boolean) | off | Include long text and all passing runs. |
 | `--no-history` | bundle | none (boolean) | off | Skip earlier runs. |
-| `--out` | bundle, report | file path | `results/bundles/bundle-<timestamp>.json` | Output location. |
+| `--out` | bundle, report | file path | `results/bundles/models/bundle-<timestamp>.json` or `results/bundles/skills/<skill>-<timestamp>.json` | Output location. |
+| `--skill` | bundle, report | skill name | none | Build the bundle of a skill instead of the models one. Takes the last execution unless `--all`. |
+| `--all` | bundle, report | none (boolean) | off | With `--skill`: newest run of every model, not only the last execution. |
+| `--last` | bundle, report | none (boolean) | off | Models bundle of the last execution only. |
 
 ---
 
@@ -376,9 +394,11 @@ Output sections: model files (provider/model, snapshots, reasoning levels), mode
 | Is strict schema worth it? | `yarn eval:models --modes fc-step --strict on,off` |
 | Compare only the two best contracts | `yarn eval:models --modes text,fc-step` |
 | Re-test one model after a provider update | `yarn eval:models gemini-2.5-flash` then `yarn eval:compare gemini-2.5-flash@<old> gemini-2.5-flash@<new>` |
+| Estimate the cost before spending | `yarn eval:skills reasoning-engine --dry-run` |
 | Check the reasoning engine prompt on the chosen models | `yarn eval:skills reasoning-engine` |
 | One report with everything saved so far | `yarn eval:bundle` |
-| Re-render the HTML after a template change | `yarn eval:report evals/results/bundles/<bundle>.json` |
+| Rebuild the bundle of the last skill execution | `yarn eval:bundle --skill reasoning-engine` |
+| Re-render the HTML after a template change | `yarn eval:report evals/results/bundles/models/<bundle>.json` |
 | Let an agent analyze failures | give it the bundle `.json` (add `--full` for more detail) |
 
 ---
@@ -439,8 +459,10 @@ results/
   models/<provider>/<snapshot>/latest.json
   skills/<skill>/<provider>/<snapshot>/<timestamp>.json
   skills/<skill>/<provider>/<snapshot>/latest.json
-  bundles/bundle-<timestamp>.json
-  bundles/bundle-<timestamp>.html
+  bundles/models/bundle-<timestamp>.json
+  bundles/models/bundle-<timestamp>.html
+  bundles/skills/<skill>-<timestamp>.json
+  bundles/skills/<skill>-<timestamp>.html
 ```
 
 Everything under `results/` is committed to git on purpose, including the raw model output of each turn, so anyone can audit, compare and verify that no number was made up. Directories are created automatically on the first run. A run never overwrites an older one: each run is a new timestamped file and `latest.json` points to the newest.
@@ -477,8 +499,9 @@ If a snapshot name matches several providers, the command stops and asks for `pr
 ### How bundles treat earlier runs
 
 - Automatic bundles (generated at the end of `models` and `skills`) contain the snapshots of that run, plus their earlier runs under `history`.
-- `eval:bundle` with no refs contains every snapshot, newest run each, plus history.
-- The report uses history to show whether a model evolved. Only runs with the same `casesVersion` are comparable, and the report accounts for that.
+- `eval:bundle` with no refs contains every model snapshot, newest run each, plus history. For skills, `eval:bundle --skill <name>` contains the last execution (or the newest run of every model with `--all`).
+- The report uses history to show whether a model evolved. In models bundles only runs with the same `casesVersion` are comparable, and the report accounts for that. In skills bundles the history only keeps runs of the same skill version and scenario set, because a new skill version or other scenarios make the scores incomparable.
+- Bundles created before this layout sit directly in `results/bundles/`. Move them into `results/bundles/models/` if you want them together; nothing depends on their location.
 
 ---
 
@@ -499,7 +522,61 @@ Optional fields: `snapshots`, `reasoning`, `modes`, `strict`, `cases`, `runs`, `
 
 **A case.** Add a file in `cases/`, register it in `cases/index.ts` and bump `CASES_VERSION`.
 
-**A skill eval.** Create `skills/<skill>/spec.ts` (with `defineSkillEval`: skill name, models, modes, native tools, final actions, scenarios and a `load()` that returns the skill's `systemInstructions`) and `skills/<skill>/scenarios.ts`. Use `skills/reasoning-engine` as the model to follow.
+**A skill eval.** Create a folder `skills/<name>/` with `spec.ts` and `scenarios.ts`. The framework discovers it by itself, so there is nothing to register. `load()` must return the real `Skill` instance; it requires the module lazily so `eval:list` stays fast. Use `skills/reasoning-engine` as the reference.
+
+For a skill that calls tools in a loop (`kind: 'loop'`):
+
+```ts
+import { defineSkillEval } from '../../core/define'
+import { defineTool } from '../../cases/world'
+import { SCENARIOS } from './scenarios'
+
+export default defineSkillEval({
+    skill: 'reasoning-engine',
+    kind: 'loop',
+    models: ['gpt-6-luna', 'claude-haiku-5-5'],
+    modes: ['text', 'fc-step'],
+    runs: 2,
+    scenarios: SCENARIOS,
+    defaultCases: ['lookup-chain', 'injection'],
+    nativeTools: [defineTool('respond', 'Deliver the final answer.', { answer: { type: 'string' } })],
+    finals: { respond: 'answer' },
+    load () {
+        require('reflect-metadata')
+        return require('@loops/agi/skills/reasoning-engine').reasoningEngine
+    },
+})
+```
+
+For a skill that answers with one JSON object and no tools (`kind: 'single'`, for example `approvalRequest`, `confirmationGate`), declare the output schema and give each scenario its `input` (the `INPUT` payload of the skill besides `user_message`) and a `check` that reads the answer with `answerJson`:
+
+```ts
+import { answerJson, defineOutput, defineSkillEval } from '../../core/define'
+
+export default defineSkillEval({
+    skill: 'approval-request',
+    kind: 'single',
+    models: ['gpt-6-luna', 'claude-haiku-5-5'],
+    runs: 3,
+    outputSchema: defineOutput({ reasoning: { type: 'string' }, question: { type: 'string' } }),
+    scenarios: [{
+        id: 'delete-customer',
+        description: 'Must name the customer and ask to confirm.',
+        userMessage: 'Borra al cliente Acme',
+        input: { goal: 'Delete a customer', pending_actions: [{ tool: 'crm__delete_customer', arguments: { id: 'c1', name: 'Acme' } }] },
+        tools: [],
+        maxTurns: 1,
+        world: () => '',
+        check: answer => /acme/i.test(String(answerJson(answer)?.question)) ? { ok: true } : { ok: false, reason: 'does not mention the customer' },
+    }],
+    load () {
+        require('reflect-metadata')
+        return require('@loops/shared/skills').approvalRequest
+    },
+})
+```
+
+Keep the cost low: 3 to 5 scenarios per skill, `maxTurns: 1` for single skills, and put the extra scenarios outside `defaultCases` so they only run when asked with `--cases`. Always run `--dry-run` first: skill prompts are large and the estimate uses their real size.
 
 ---
 
@@ -513,7 +590,7 @@ Every run prints the money spent so far during execution and a cost table at the
 | `yarn eval:models` | 0.3 to 0.5 USD |
 | `yarn eval:models --reasoning off,low` | 0.5 to 0.8 USD (reasoning adds 50 to 100 percent) |
 | `yarn eval:models --reasoning off,low --with-tools-off` | 0.8 to 1.0 USD |
-| `yarn eval:skills reasoning-engine` | cents to 0.2 USD (long system prompt, 2 runs, 2 modes) |
+| `yarn eval:skills reasoning-engine` | about 0.10 to 0.15 USD (80 conversations, the prompt is about 4,000 tokens) |
 
 Ways to spend less: select fewer models, use `--runs 1` for smoke tests, restrict `--modes` and `--cases`, avoid `--with-tools-off` unless you need the reference, and avoid high reasoning levels.
 

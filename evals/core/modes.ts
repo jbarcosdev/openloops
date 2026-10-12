@@ -293,4 +293,4 @@ const fcStep: ModeDef = {
     },
 }
 
-export const MODES: Record<ModeId, ModeDef> = { 'tools-off': toolsOff, text, 'fc-split': fcSplit, 'fc-step': fcStep }
+export const MODES: Partial<Record<ModeId, ModeDef>> = { 'tools-off': toolsOff, text, 'fc-split': fcSplit, 'fc-step': fcStep }

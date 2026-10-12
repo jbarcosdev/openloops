@@ -8,6 +8,7 @@ export interface SkillDefinition {
     systemInstructions: Record<string, any>
     nativeTools: ToolSpec[]
     finals: Record<string, string>
+    outputSchema?: ToolSpec['parameters']
     context?: Record<string, any>
     maxTurns?: number
     maxToolCalls?: number
@@ -26,7 +27,7 @@ function resolveName (written: string, declared: string[]) {
     return suffixed.length === 1 ? suffixed[0] : undefined
 }
 
-function matches (schema: any, value: any) {
+export function matches (schema: any, value: any) {
     if (Array.isArray(schema.enum) && !schema.enum.includes(value)) return false
     switch (schema.type) {
         case 'string': return typeof value === 'string'

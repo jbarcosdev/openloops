@@ -1,5 +1,5 @@
 import { mkdirSync, statSync, writeFileSync } from 'fs'
-import { join } from 'path'
+import { dirname, join } from 'path'
 import { renderHtml } from './html'
 import { listSnapshots, loadRef, readEntry, RESULTS_DIR } from './store'
 import { stamp } from './util'
@@ -83,6 +83,9 @@ const digestResult = (label: string, result: any, full: boolean, light: boolean)
 export const groupKey = (result: any) => `${result.kind ?? 'model'}|${result.skill ?? ''}|${result.provider}|${result.snapshot}`
 
 export interface BundleOptions {
+    kind?: 'model' | 'skill'
+    skill?: string
+    last?: boolean
     stamp?: string
     full: boolean
     out?: string
@@ -90,11 +93,14 @@ export interface BundleOptions {
     only?: any[]
 }
 
-function loadEverything () {
+const LAST_WINDOW_MS = 10 * 60 * 1000
+
+function loadEverything (kind: 'model' | 'skill') {
     const seen = new Set<string>()
     const found: Array<{ label: string, result: any }> = []
 
     for (const item of listSnapshots()) {
+        if (item.kind !== kind) continue
         for (const name of item.stamps) {
             const entry = readEntry(item, name)
             const key = `${groupKey(entry.result)}|${entry.result.startedAt}`
@@ -107,48 +113,62 @@ function loadEverything () {
     return found.sort((a, b) => String(a.result.startedAt).localeCompare(String(b.result.startedAt)))
 }
 
+const sameSetup = (a: any, b: any) => JSON.stringify(a.config?.cases) === JSON.stringify(b.config?.cases) && a.skillVersion === b.skillVersion
+
 export function buildBundle (refs: string[], options: BundleOptions) {
     let latest: Array<{ label: string, result: any }>
     let previous: Array<{ label: string, result: any }> = []
+    let kind: 'model' | 'skill' = options.kind ?? 'model'
+    let skill = options.skill
 
     if (refs.length) {
         latest = refs.map(loadRef)
+        kind = latest[0].result.kind === 'skill' ? 'skill' : 'model'
+        skill = latest[0].result.skill
     } else {
         const wanted = options.only ? new Set(options.only.map(groupKey)) : undefined
         const groups = new Map<string, Array<{ label: string, result: any }>>()
+        const everything = loadEverything(kind).filter(entry => !skill || entry.result.skill === skill)
 
-        for (const entry of loadEverything()) {
+        for (const entry of everything) {
             const key = groupKey(entry.result)
             if (wanted && !wanted.has(key)) continue
             groups.set(key, [...(groups.get(key) ?? []), entry])
         }
 
+        const newest = everything.length ? Math.max(...everything.map(entry => Date.parse(entry.result.startedAt))) : 0
         latest = []
 
         for (const runs of groups.values()) {
-            const candidates = options.stamp ? runs.filter(entry => entry.label.split('@')[1]?.startsWith(options.stamp as string)) : runs
+            let candidates = options.stamp ? runs.filter(entry => entry.label.split('@')[1]?.startsWith(options.stamp as string)) : runs
+            if (options.last) candidates = candidates.filter(entry => Date.parse(entry.result.startedAt) >= newest - LAST_WINDOW_MS)
             if (!candidates.length) continue
             const chosen = candidates[candidates.length - 1]
             latest.push(chosen)
-            if (options.history !== false) previous.push(...runs.filter(entry => entry !== chosen && entry.result.startedAt < chosen.result.startedAt))
+            if (options.history !== false) previous.push(...runs.filter(entry => entry !== chosen && entry.result.startedAt < chosen.result.startedAt && (kind === 'model' || sameSetup(entry.result, chosen.result))))
         }
     }
 
-    if (!latest.length) throw new Error('no results to bundle, run eval:models or eval:skills first')
+    if (!latest.length) throw new Error(kind === 'skill' ? `no results to bundle for skill "${skill ?? ''}", run eval:skills first` : 'no results to bundle, run eval:models first')
 
     const bundle = {
         schema: 2,
         kind: 'bundle',
+        scope: kind,
+        ...(skill ? { skill } : {}),
         generatedAt: new Date().toISOString(),
         full: options.full,
-        note: 'results holds the newest run of every model or skill snapshot. cells.summary has aggregates; failedRuns lists every failed conversation with its answer, reason and per-turn detail; passedSamples has one passing conversation per case. history holds older runs of the same snapshots, aggregates only, to compare evolution over time (compare only entries with the same casesVersion).',
+        note: kind === 'skill'
+            ? 'results holds the run of every model of one skill, each with its modes. cells.summary has aggregates; failedRuns lists every failed conversation with its answer, reason and per-turn detail; passedSamples has one passing conversation per scenario. history holds older runs of the same skill version and scenarios, aggregates only.'
+            : 'results holds the newest run of every model snapshot. cells.summary has aggregates; failedRuns lists every failed conversation with its answer, reason and per-turn detail; passedSamples has one passing conversation per case. history holds older runs of the same snapshots, aggregates only, to compare evolution over time (compare only entries with the same casesVersion).',
         results: latest.map(({ label, result }) => digestResult(label, result, options.full, false)),
         history: previous.map(({ label, result }) => digestResult(label, result, options.full, true)),
     }
 
-    const directory = join(RESULTS_DIR, 'bundles')
+    const directory = join(RESULTS_DIR, 'bundles', kind === 'skill' ? 'skills' : 'models')
     mkdirSync(directory, { recursive: true })
-    const file = options.out ?? join(directory, `bundle-${stamp()}.json`)
+    const file = options.out ?? join(directory, `${kind === 'skill' ? skill ?? 'skill' : 'bundle'}-${stamp()}.json`)
+    mkdirSync(dirname(file), { recursive: true })
     writeFileSync(file, JSON.stringify(bundle, null, 1))
     const html = file.replace(/\.json$/, '') + '.html'
     writeFileSync(html, renderHtml(bundle))

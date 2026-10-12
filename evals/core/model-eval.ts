@@ -8,7 +8,7 @@ import { MODES } from './modes'
 import { cellName, logDone, runCell, type PlanItem, type Progress } from './runner'
 import { writeResult } from './store'
 import { DEFAULT_MODES, type CaseDef, type ModeDef, type ModeId, type Strict } from './types'
-import { formatTime } from './util'
+import { formatTime, usd } from './util'
 
 export interface Overrides {
     snapshots?: string[]
@@ -20,6 +20,7 @@ export interface Overrides {
     runs?: number
     callTimeoutMs?: number
     concurrency?: number
+    dryRun?: boolean
 }
 
 export interface LoadedSpec {
@@ -34,9 +35,10 @@ export interface Suite {
     casesVersion: number
     modes: Partial<Record<ModeId, ModeDef>>
     defaultModes: ModeId[]
+    estimate?: { promptTokens: number, turnsPerRun: number, outputTokens: number }
 }
 
-export const MODEL_SUITE: Suite = { kind: 'model', cases: CASES, casesVersion: CASES_VERSION, modes: MODES, defaultModes: DEFAULT_MODES }
+export const MODEL_SUITE: Suite = { kind: 'model', cases: CASES, casesVersion: CASES_VERSION, modes: MODES, defaultModes: DEFAULT_MODES, estimate: { promptTokens: 600, turnsPerRun: 2.4, outputTokens: 200 } }
 
 export function loadSpecs (): LoadedSpec[] {
     const directory = join(__dirname, '..', 'models')
@@ -74,11 +76,11 @@ export async function runSuite (suite: Suite, selected: LoadedSpec[], overrides:
     const resolved = await Promise.all(targets.map(async target => {
         const model = findModel(models, target.spec.provider, target.snapshot)
         if (!model) return { target, error: 'not in the pi-ai catalog (update pi-ai?)' }
-        const problem = await checkAccess(models, model)
+        const problem = overrides.dryRun ? undefined : await checkAccess(models, model)
         return problem ? { target, error: `no access: ${problem}` } : { target, model }
     }))
 
-    for (const item of resolved) console.error(item.error ? `skip   ${item.target.spec.provider}/${item.target.snapshot}: ${item.error}` : `access ${item.target.spec.provider}/${item.target.snapshot}: ok`)
+    for (const item of resolved) console.error(item.error ? `skip   ${item.target.spec.provider}/${item.target.snapshot}: ${item.error}` : `${overrides.dryRun ? 'found ' : 'access'} ${item.target.spec.provider}/${item.target.snapshot}: ${overrides.dryRun ? 'in catalog' : 'ok'}`)
 
     const runnable = resolved.filter(item => item.model) as Array<{ target: Target, model: Model<Api> }>
 
@@ -123,6 +125,21 @@ export async function runSuite (suite: Suite, selected: LoadedSpec[], overrides:
     const conversations = plans.reduce((sum, plan) => sum + plan.planned.length * plan.cases.length * plan.runs, 0)
     const progress: Progress = { done: 0, total, started: Date.now(), cost: 0 }
     console.error(`plan: ${plans.length} snapshots, ${total} cells, ${conversations} conversations`)
+
+    if (overrides.dryRun) {
+        const guess = suite.estimate ?? { promptTokens: 600, turnsPerRun: 2.4, outputTokens: 200 }
+        const rows = plans.flatMap(plan => plan.planned.map(item => {
+            const price = (plan.model as any).cost ?? {}
+            const calls = plan.cases.length * plan.runs * guess.turnsPerRun
+            const thinking = item.level === 'off' || item.level === 'n/a' ? 1 : 3
+            const cost = calls * ((guess.promptTokens + 700) * (price.input ?? 0) + guess.outputTokens * thinking * (price.output ?? 0)) / 1e6
+            return { model: `${plan.target.spec.provider}/${plan.target.snapshot}`, mode: item.mode.id, reasoning: item.level, strict: item.mode.usesStrict ? (item.strict ? 'on' : 'off') : '-', conversations: plan.cases.length * plan.runs, estimate: usd(cost), cost }
+        }))
+        console.table(rows.map(({ cost, ...row }) => row))
+        console.log(`dry run, nothing was sent. Rough estimate ${usd(rows.reduce((sum, row) => sum + row.cost, 0))} without prompt caching (real cost is usually lower). Prompt size used: ~${guess.promptTokens} tokens plus ~700 of conversation per call.`)
+        for (const plan of plans) for (const note of plan.skipped) console.log(`skipped ${plan.target.snapshot} ${note}`)
+        return { results: [] as Array<{ result: any, file: string }>, elapsed: '00:00' }
+    }
 
     const results = await Promise.all(plans.map(async plan => {
         const { target, model } = plan
