@@ -9,7 +9,7 @@ async function createUserExample () {
             firstName: 'Jose',
             lastName: 'Barcos',
             email: 'jose@openloops.xyz',
-            password: 'openloops.xyz'
+            password: 'openloops!'
         }
     })
 
