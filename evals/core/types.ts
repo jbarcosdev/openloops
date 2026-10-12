@@ -51,6 +51,7 @@ export interface Parsed {
     detail?: string
     raw?: unknown
     recovered?: boolean
+    blocks?: number
 }
 
 export interface Built {
@@ -85,6 +86,7 @@ export interface TurnReport {
     thinkingBlocks: number
     actions?: string[]
     recovered?: boolean
+    blocks?: number
     detail?: string
     raw?: string
     error?: string

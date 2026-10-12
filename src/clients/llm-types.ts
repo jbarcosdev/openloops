@@ -32,6 +32,8 @@ export interface LLMUsage {
 
 export interface LLMResponse {
     text: string
+    textBlocks?: string[]
+    provider?: string
     toolCalls: LLMToolCall[]
     stopReason: LLMStopReason
     usage: LLMUsage

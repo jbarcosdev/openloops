@@ -94,10 +94,12 @@ function mapStopReason (reason: string): LLMStopReason {
 }
 
 export function fromPiMessage (message: AssistantMessage): LLMResponse {
-    const text = message.content
+    const textBlocks = message.content
         .filter(block => block.type === 'text')
         .map(block => (block as { text: string }).text)
-        .join('')
+        .filter(Boolean)
+
+    const text = textBlocks.join('')
 
     const toolCalls = message.content
         .filter(block => block.type === 'toolCall')
@@ -110,6 +112,8 @@ export function fromPiMessage (message: AssistantMessage): LLMResponse {
 
     return {
         text,
+        textBlocks,
+        provider: message.provider,
         toolCalls,
         stopReason: mapStopReason(message.stopReason),
         usage: {

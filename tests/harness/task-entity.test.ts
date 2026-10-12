@@ -14,6 +14,15 @@ function turn (task: AgentTask, tools: string[], extra: Record<string, any> = {}
 }
 
 describe('addTurn', () => {
+    it('stores the metadata of the call with the turn and skips the undefined ones', () => {
+        const task = newTask()
+        task.addTurn({ reasoning: 'r', actions: [{ tool: 'ext', arguments: {} }] }, { declaredTools: declared, meta: { model: 'm', provider: 'p', mode: 'plain_chat', skillVersion: '1', loopVersion: '2', costInUsd: 0.5, blocks: undefined } })
+        task.addTurn({ reasoning: 'r2', actions: [{ tool: 'ext', arguments: {} }] }, { declaredTools: declared })
+
+        expect(task.turns[0]).toEqual({ turn: 1, reasoning: 'r', state: undefined, model: 'm', provider: 'p', mode: 'plain_chat', skillVersion: '1', loopVersion: '2', costInUsd: 0.5 })
+        expect(Object.keys(task.turns[1])).toEqual(['turn', 'reasoning', 'state'])
+    })
+
     it('numbers turns and gives each action a step id', () => {
         const task = newTask()
         const first = turn(task, ['ext', 'other_ext'])

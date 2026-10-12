@@ -137,19 +137,25 @@ export function skillModes (def: SkillDefinition): Partial<Record<ModeId, ModeDe
 
         if (calls.length) return { ...base, kind: 'invalid', detail: `native tool call in text mode: ${base.calls.join(',')}` }
 
-        const text = textOf(message)
-        if (!text) return { ...base, kind: 'empty', detail: 'empty text' }
+        const blocks = message.content.filter((block: any) => block.type === 'text').map((block: any) => String(block.text ?? '').trim()).filter(Boolean)
+        if (!blocks.length) return { ...base, kind: 'empty', detail: 'empty text' }
 
-        const object = firstJson(text)
-        if (!object) return { ...base, kind: 'invalid', detail: 'no JSON object found', raw: text.slice(0, 300) }
+        const objects = blocks.map(block => firstJson(block))
+        const isComplete = (candidate: any) => Boolean(candidate) && !checkEnvelope(candidate) && Array.isArray(candidate.actions) && candidate.actions.length > 0
+        const completeAt = objects.findIndex(isComplete)
+        const chosen = completeAt !== -1 ? completeAt : Math.max(objects.findIndex(Boolean), 0)
+        const object = objects[chosen]
+        const counted = { ...base, blocks: blocks.length }
+
+        if (!object) return { ...counted, kind: 'invalid', detail: 'no JSON object found', raw: blocks[0].slice(0, 300) }
 
         const envelope = checkEnvelope(object)
-        if (envelope) return { ...base, kind: 'invalid', detail: envelope, raw: object }
+        if (envelope) return { ...counted, kind: 'invalid', detail: envelope, raw: object }
 
         const { actions, issue } = resolveActions(toolsOf(caseDef), Array.isArray(object.actions) ? object.actions : [])
-        if (issue) return { ...base, actions, kind: 'invalid', detail: issue, raw: object }
+        if (issue) return { ...counted, actions, kind: 'invalid', detail: issue, raw: object }
 
-        return { ...base, actions, kind: 'complete' }
+        return { ...counted, actions, kind: 'complete' }
     }
 
     const feedbackFor = (caseDef: CaseDef, ctx: WorldCtx, turnOf: () => number) => (parsed: Parsed): string => {

@@ -39,6 +39,13 @@ describe('AgiLoop', () => {
             expect(env.fast.calls).toBe(1)
         })
 
+        it('records on every turn the mode, the versions and the cost of the call that produced it', () => {
+            const [task] = env.tasks()
+
+            expect(task.turns).toHaveLength(3)
+            expect(task.turns.every(turn => turn.mode === 'plain_chat' && turn.loopVersion === '1.4.0' && turn.skill === 'reasoning_engine' && turn.skillVersion === '2.1.0' && turn.costInUsd === 0)).toBe(true)
+        })
+
         it('uses the reasoning engine as the only skill that talks to the model', () => {
             expect(llm.calls).toHaveLength(3)
             expect(llm.calls.every(call => call.origin === 'reasoning_engine')).toBe(true)

@@ -70,6 +70,7 @@ export async function runConversation (models: any, model: Model<Api>, item: Pla
             thinkingBlocks,
             ...(parsed.actions.length ? { actions: parsed.actions.map(action => `${action.tool}(${JSON.stringify(action.arguments ?? {}).slice(0, 120)})`) } : {}),
             ...(parsed.recovered ? { recovered: true } : {}),
+            ...(parsed.blocks && parsed.blocks > 1 ? { blocks: parsed.blocks } : {}),
             ...(parsed.detail ? { detail: parsed.detail } : {}),
             ...(raw ? { raw } : {}),
         })
@@ -114,6 +115,7 @@ export function summarize (runs: RunReport[]) {
         empty: count('empty'),
         errors: count('error'),
         recovered: turns.filter(turn => turn.recovered).length,
+        multiBlock: turns.filter(turn => (turn.blocks ?? 1) > 1).length,
         thinkingTurns: turns.filter(turn => turn.thinkingBlocks > 0 || (turn.reasoningTokens ?? 0) > 0).length,
         avgTurnsPerRun: runs.length ? Number((turns.length / runs.length).toFixed(2)) : 0,
         avgMsPerCall: average(callTimes),

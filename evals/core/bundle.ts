@@ -23,6 +23,7 @@ const digestRun = (run: any, full: boolean) => ({
         reasoningTokens: turn.reasoningTokens,
         thinkingBlocks: turn.thinkingBlocks || undefined,
         recovered: turn.recovered,
+        blocks: turn.blocks,
         detail: turn.detail,
         error: turn.error,
         raw: trim(turn.raw, full ? 700 : 250),

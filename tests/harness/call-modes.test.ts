@@ -32,7 +32,7 @@ describe('call modes', () => {
         })
 
         it('reads the text as is', () => {
-            expect(readModeResponse('plain_chat', 's', reply({ text: '{"a":1}' }))).toBe('{"a":1}')
+            expect(readModeResponse('plain_chat', 's', reply({ text: '{"a":1}' }))).toEqual({ text: '{"a":1}', blocks: 1, chosen: 0 })
         })
     })
 
@@ -71,7 +71,7 @@ describe('call modes', () => {
         })
 
         it('turns the step call back into the JSON object of the text modes', () => {
-            const text = readModeResponse('function_calling', 's', reply({
+            const { text } = readModeResponse('function_calling', 's', reply({
                 toolCalls: [{ id: 'c', name: 'step', arguments: { reasoning: 'r', state: { next: 'n' }, learned: [], actions: [{ tool: 'respond', arguments_json: '{"answer":"done"}' }] } }],
             }))
 
@@ -81,7 +81,7 @@ describe('call modes', () => {
         it('recovers arguments wrapped in extra text and rejects ones that are not JSON', () => {
             const make = (arguments_json: string) => reply({ toolCalls: [{ id: 'c', name: 'step', arguments: { reasoning: 'r', state: {}, learned: [], actions: [{ tool: 'respond', arguments_json }] } }] })
 
-            expect(JSON.parse(readModeResponse('function_calling', 's', make('Here: {"answer":"x"}'))).actions[0].arguments).toEqual({ answer: 'x' })
+            expect(JSON.parse(readModeResponse('function_calling', 's', make('Here: {"answer":"x"}')).text).actions[0].arguments).toEqual({ answer: 'x' })
             expect(() => readModeResponse('function_calling', 's', make('nope'))).toThrow('not valid JSON')
         })
 
@@ -127,11 +127,45 @@ describe('call modes', () => {
         })
 
         it('folds reflect and the action calls back into the JSON object', () => {
-            const text = readModeResponse('function_calling_split', 's', reply({
+            const { text } = readModeResponse('function_calling_split', 's', reply({
                 toolCalls: [{ id: '1', name: 'reflect', arguments: { reasoning: 'r', state: { next: 'n' }, learned: [] } }, { id: '2', name: 't_search', arguments: { q: 'z' } }],
             }))
 
             expect(JSON.parse(text)).toEqual({ reasoning: 'r', state: { next: 'n' }, learned: [], actions: [{ tool: 't_search', arguments: { q: 'z' } }] })
+        })
+    })
+
+    describe('responses with several text blocks', () => {
+        const search = JSON.stringify({ reasoning: 'search', state: { next: 'n' }, actions: [{ tool: 'web_search', arguments: { query: 'btc' } }] })
+        const invented = JSON.stringify({ reasoning: 'no results', state: { next: 'n' }, actions: [{ tool: 'respond', arguments: { answer: 'I could not search' } }] })
+        const analysis = JSON.stringify({ reasoning: 'I read the results', state: { next: 'answer' }, actions: [] })
+        const answer = JSON.stringify({ reasoning: 'done', state: { next: 'none' }, actions: [{ tool: 'respond', arguments: { answer: 'About 83,800 USD' } }] })
+        const read = (blocks: string[], expectActions = true) => readModeResponse('plain_chat', 's', reply({ text: blocks.join(''), textBlocks: blocks }), { expectActions })
+
+        it('uses the first block when two complete ones arrive, since the second is an invented continuation', () => {
+            expect(read([search, invented])).toEqual({ text: search, blocks: 2, chosen: 0 })
+        })
+
+        it('uses the first block and ignores a plain text final_answer after two commentary blocks', () => {
+            expect(read([search, invented, 'I could not verify the price'])).toEqual({ text: search, blocks: 3, chosen: 0 })
+        })
+
+        it('skips a first block that has no actions and uses the one that does', () => {
+            expect(read([analysis, answer])).toEqual({ text: answer, blocks: 2, chosen: 1 })
+        })
+
+        it('falls back to the first block with a JSON object when none has actions', () => {
+            expect(read(['thinking out loud', analysis, analysis]).chosen).toBe(1)
+            expect(read(['one', 'two']).chosen).toBe(0)
+        })
+
+        it('accepts any JSON object when the skill does not expect actions', () => {
+            const verdict = JSON.stringify({ can_answer: false, answer: '' })
+            expect(read(['note', verdict], false)).toEqual({ text: verdict, blocks: 2, chosen: 1 })
+        })
+
+        it('reads a response without block information as one block', () => {
+            expect(readModeResponse('legacy_tools_off', 's', reply({ text: search }), { expectActions: true })).toEqual({ text: search, blocks: 1, chosen: 0 })
         })
     })
 

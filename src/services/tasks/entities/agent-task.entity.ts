@@ -38,7 +38,18 @@ export interface ToolSchemaSummary {
 	optional: string[]
 }
 
-export interface TurnRecord {
+export interface TurnMeta {
+	provider?: string
+	model?: string
+	mode?: string
+	skill?: string
+	skillVersion?: string
+	loopVersion?: string
+	costInUsd?: number
+	blocks?: number
+}
+
+export interface TurnRecord extends TurnMeta {
 	turn: number
 	reasoning?: string
 	state?: Record<string, any>
@@ -204,6 +215,10 @@ function findToolSchemas (value: any): Record<string, ToolSchemaSummary> {
 
 function isNativeTool (name?: string): boolean {
 	return NATIVE_TOOL_NAMES.includes(name as string)
+}
+
+function definedOnly<T extends Record<string, any>> (value?: T): Partial<T> {
+	return Object.fromEntries(Object.entries(value ?? {}).filter(([, item]) => item !== undefined)) as Partial<T>
 }
 
 function capState (state: any): Record<string, any> | undefined {
@@ -590,12 +605,12 @@ export class AgentTask extends BaseEntity {
 		this.schemas = schemas
 	}
 
-	addTurn (output: TurnOutput, opts?: { author?: string; declaredTools?: string[]; invoker?: string }): AgentAction[] {
+	addTurn (output: TurnOutput, opts?: { author?: string; declaredTools?: string[]; invoker?: string; meta?: TurnMeta }): AgentAction[] {
 		const turn = this.turns.reduce((max, t) => Math.max(max, t.turn), 0) + 1
 
 		this.remember(output.learned)
 
-		this.turns.push({ turn, reasoning: output.reasoning?.toString().trim().slice(0, REASONING_CHARS) || undefined, state: capState(output.state) })
+		this.turns.push({ turn, reasoning: output.reasoning?.toString().trim().slice(0, REASONING_CHARS) || undefined, state: capState(output.state), ...definedOnly(opts?.meta) })
 
 		const requests = Array.isArray(output.actions) ? output.actions : []
 

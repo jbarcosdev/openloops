@@ -237,35 +237,72 @@ function parseArguments (skill: string, tool: string, value: unknown): Record<st
     throw new Error(`[SKILL:${skill}] arguments of ${tool} are not valid JSON`)
 }
 
+export interface ModeReading {
+    text: string
+    blocks: number
+    chosen: number
+}
+
+export interface ReadOptions {
+    expectActions?: boolean
+}
+
+function isComplete (object: Record<string, any> | undefined, expectActions: boolean) {
+    if (!object || !Object.keys(object).length) return false
+    if (!expectActions) return true
+
+    return typeof object.reasoning === 'string' && Array.isArray(object.actions) && object.actions.length > 0
+}
+
 /**
- * Turns the model response into the text the skill parses. For the text modes it is the response text itself; for
- * the function calling modes the tool calls are folded back into the same JSON object the text modes produce.
+ * Some models (for example gpt-6-luna through the OpenAI Responses API) answer with several text blocks in one
+ * message: a "commentary" block and a "final_answer" block. They are not alternatives of the same answer: a later
+ * block can be an invented continuation written before the actions of the first one ran. The first block that is a
+ * complete response is used and the rest are discarded; when none is complete, the first block with a JSON object.
  */
-export function readModeResponse (mode: SkillMode, skill: string, response: LLMResponse): string {
-    if (mode === 'plain_chat' || mode === 'legacy_tools_off') return response.text
+function pickBlock (response: LLMResponse, expectActions: boolean): ModeReading {
+    const blocks = response.textBlocks?.length ? response.textBlocks : [response.text]
+    if (blocks.length === 1) return { text: blocks[0] ?? '', blocks: 1, chosen: 0 }
+
+    const objects = blocks.map(block => extractJSON(block))
+    const complete = objects.findIndex(object => isComplete(object, expectActions))
+    const chosen = complete !== -1 ? complete : Math.max(objects.findIndex(object => isComplete(object, false)), 0)
+
+    return { text: blocks[chosen], blocks: blocks.length, chosen }
+}
+
+/**
+ * Turns the model response into the text the skill parses. For the text modes it is the response text itself (the
+ * first complete block when the model sends several); for the function calling modes the tool calls are folded back
+ * into the same JSON object the text modes produce.
+ */
+export function readModeResponse (mode: SkillMode, skill: string, response: LLMResponse, options: ReadOptions = {}): ModeReading {
+    if (mode === 'plain_chat' || mode === 'legacy_tools_off') return pickBlock(response, options.expectActions ?? false)
+
+    const single = (text: string): ModeReading => ({ text, blocks: 1, chosen: 0 })
 
     if (mode === 'function_calling') {
         const call = response.toolCalls.find(item => item.name === STEP_TOOL)
-        if (!call) return response.text
+        if (!call) return single(response.text)
 
         const actions = Array.isArray(call.arguments.actions) ? call.arguments.actions : []
 
-        return JSON.stringify({
+        return single(JSON.stringify({
             reasoning: call.arguments.reasoning,
             state: call.arguments.state,
             learned: call.arguments.learned,
             actions: actions.map((action: any) => ({ tool: action?.tool, arguments: parseArguments(skill, String(action?.tool), action?.arguments_json) })),
-        })
+        }))
     }
 
     const reflect = response.toolCalls.find(item => item.name === REFLECT_TOOL)
     const actions = response.toolCalls.filter(item => item.name !== REFLECT_TOOL)
-    if (!reflect && !actions.length) return response.text
+    if (!reflect && !actions.length) return single(response.text)
 
-    return JSON.stringify({
+    return single(JSON.stringify({
         reasoning: reflect?.arguments.reasoning ?? '',
         state: reflect?.arguments.state ?? {},
         learned: reflect?.arguments.learned ?? [],
         actions: actions.map(action => ({ tool: action.name, arguments: action.arguments })),
-    })
+    }))
 }

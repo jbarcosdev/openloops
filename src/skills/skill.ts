@@ -3,6 +3,7 @@ import { extractJSON } from '@common/helpers'
 import { LLMClient } from '@clients/llm-client'
 import { LLMMessage, LLMToolDefinition } from '@clients/llm-types'
 import { CurrentUser, CurrentSession } from '@common/base'
+import { Logger } from '@common/logger'
 import type { Chat } from '@services/chats/entities/chat.entity'
 import { buildRuntimeContext } from './runtime-context'
 import { SkillMode, DEFAULT_SKILL_MODE, buildModeCall, readModeResponse } from './call-modes'
@@ -48,6 +49,15 @@ export interface SkillRunOptions<TInput = Record<string, any>> {
     mode?: SkillMode
 }
 
+export interface SkillCallInfo {
+    skill: string
+    skillVersion?: string
+    mode: SkillMode
+    model?: string
+    provider?: string
+    blocks: number
+}
+
 export class Skill<TResponse = Record<string, any>> {
     readonly name: string
     readonly version?: string
@@ -67,7 +77,7 @@ export class Skill<TResponse = Record<string, any>> {
         this.mode = props.mode ?? DEFAULT_SKILL_MODE
     }
 
-    async run (options: SkillRunOptions): Promise<TResponse & { responseId: string, costInUsd: number, opening?: string }> {
+    async run (options: SkillRunOptions): Promise<TResponse & { responseId: string, costInUsd: number, opening?: string, callInfo: SkillCallInfo }> {
         const { provider, modelName, sessionId, answerId, userMessage, currentUser, currentSession, contextInjection = {}, input = {}, chat, history = [], chatHistory = [], tools, mode = this.mode } = options
 
         const misplaced = RESERVED_CONTEXT_KEYS.filter(key => key in contextInjection)
@@ -112,13 +122,22 @@ export class Skill<TResponse = Record<string, any>> {
                 temperature: this.temperature ?? 0.7,
             })
 
-            const parsed = this.parseJsonResponse<TResponse>(readModeResponse(mode, this.name, response))
+            const reading = readModeResponse(mode, this.name, response, { expectActions: Boolean(tools?.length) })
+
+            if (reading.blocks > 1) {
+                const note = `The model sent ${reading.blocks} text blocks; block ${reading.chosen + 1} was used and the rest were discarded`
+                new Logger().warn({ skill: this.name, model: response.model, blocks: reading.blocks, chosen: reading.chosen }, `[SKILL:${this.name}] ${note}`)
+                chat?.addTrace({ node: this.name, reasoning: note })
+            }
+
+            const parsed = this.parseJsonResponse<TResponse>(reading.text)
 
             const result = {
                 ...parsed,
                 responseId: response.responseId ?? '',
                 costInUsd: response.usage.costInUsd,
                 ...(opening ? { opening } : {}),
+                callInfo: { skill: this.name, skillVersion: this.version, mode, model: response.model, provider: response.provider ?? provider, blocks: reading.blocks },
             }
 
             const reasoning = (result as any)?.reasoning

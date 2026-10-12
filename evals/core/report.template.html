@@ -222,7 +222,7 @@ function toRows (results) {
         runs: s.runs, correct: s.correctRuns, accuracy: s.runs ? s.correctRuns / s.runs : 0,
         calls: s.turns, secPerRun: s.avgMsPerRun, msPerCall: s.avgMsPerCall, maxMs: s.maxMsPerCall, turnsPerRun: s.avgTurnsPerRun,
         cost: s.cost, costPerCorrect: s.costPerCorrect, costPerRun: s.runs ? s.cost / s.runs : undefined,
-        errors: s.errors, empty: s.empty, invalid: s.invalid, recovered: s.recovered,
+        errors: s.errors, empty: s.empty, invalid: s.invalid, recovered: s.recovered, multiBlock: s.multiBlock || 0,
         inTok: s.inputTokens, outTok: s.outputTokens, thinkTok: s.reasoningTokens,
         hasCache, cacheRead, cacheWrite, inputAll, hitRate: inputAll ? Math.min(1, cacheRead / inputAll) : 0, saved, costNoCache: hasCache ? s.cost + saved : undefined,
         byCase: cell.byCase, issues: cell.issues || [],
@@ -508,6 +508,7 @@ const COLS = [
   ['empty', 'Empty responses', r => r.empty, r => r.empty],
   ['invalid', 'Invalid responses', r => r.invalid, r => r.invalid],
   ['recovered', 'Recovered JSON', r => r.recovered, r => r.recovered],
+  ['multiBlock', 'Multi-block responses', r => r.multiBlock, r => r.multiBlock],
   ['casesVersion', 'Cases version', r => r.casesVersion, r => r.casesVersion],
 ];
 const ASC_FIRST = ['model', 'mode', 'reasoning', 'strict', 'cost', 'secPerRun', 'msPerCall', 'maxMs', 'costPerRun', 'costPerCorrect'];
