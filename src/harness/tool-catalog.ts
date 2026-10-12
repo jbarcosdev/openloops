@@ -20,6 +20,8 @@ export interface ToolDescription {
     description: string
     requires_confirmation: boolean
     parameters: Record<string, any>
+    origin?: string
+    notice?: string
 }
 
 export function isDeclarable (tool: Tool): boolean {
@@ -36,6 +38,7 @@ export function describeTool (tool: Tool, chars = TOOL_DESCRIPTION_CHARS): ToolD
         description: tool.description.slice(0, chars),
         requires_confirmation: tool.destructive,
         parameters: tool.parameters,
+        ...(tool.notice ? { origin: tool.origin, notice: tool.notice } : {}),
     }
 }
 
