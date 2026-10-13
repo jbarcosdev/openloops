@@ -5,6 +5,8 @@ import { UpdateMcpServerUseCase, Params as UParams, Output as UOutput } from './
 import { GetMcpServerByIdUseCase, Params as GParams, Output as GOutput } from './lambdas/get-mcpserver-by-id'
 import { ListMcpServersByUserUseCase, Params as LParams, Output as LOutput } from './lambdas/list-mcpservers-by-user'
 import { DeleteMcpServerUseCase, Params as DParams, Output as DOutput } from './lambdas/delete-mcpserver'
+import { DecideMcpServerTrustUseCase, Params as TParams, Output as TOutput } from './lambdas/decide-trust'
+import { VerifyMcpServerConnectionUseCase, Params as VParams, Output as VOutput } from './lambdas/verify-connection'
 
 export async function createMcpServer (props: CParams): Promise<COutput> {
     const createMcpServerUseCase = container.resolve(CreateMcpServerUseCase)
@@ -29,4 +31,14 @@ export async function listMcpServersByUser (props: LParams): Promise<LOutput> {
 export async function deleteMcpServer (props: DParams): Promise<DOutput> {
     const deleteMcpServerUseCase = container.resolve(DeleteMcpServerUseCase)
     return deleteMcpServerUseCase.execute(props)
+}
+
+export async function decideMcpServerTrust (props: TParams): Promise<TOutput> {
+    const decideMcpServerTrustUseCase = container.resolve(DecideMcpServerTrustUseCase)
+    return decideMcpServerTrustUseCase.execute(props)
+}
+
+export async function verifyMcpServerConnection (props: VParams): Promise<VOutput> {
+    const verifyMcpServerConnectionUseCase = container.resolve(VerifyMcpServerConnectionUseCase)
+    return verifyMcpServerConnectionUseCase.execute(props)
 }
