@@ -16,7 +16,7 @@ const sites = {
 
 function setup (seed: Record<string, unknown> = {}, ranked: ScoredTool[] = []) {
     const workspace = new MemoryWorkspace(seed)
-    const tools = new NativeTools({ workspace, searchTools: () => ranked })
+    const tools = new NativeTools({ workspace, searchTools: async () => ranked })
     const task = newTask()
     let step = 0
 

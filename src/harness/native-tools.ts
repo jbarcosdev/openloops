@@ -59,7 +59,7 @@ function findRecords (root: any, query: string): { path: string; record: any }[]
 export const NATIVE_TOOLS: LLMToolDefinition[] = [
     {
         name: 'search_tools',
-        description: 'Find external tools by capability. Pass a few keywords, written in the language of the tool descriptions in CONTEXT.tool_sources, each with a weight from 0.1 (marginal) to 1.0 (essential). Returns the matching tools; from your next turn they are in your tool list and you run them by naming them in an action.',
+        description: 'Find external tools by capability. Pass a few keywords, written in the language of the tool descriptions in CONTEXT.tool_sources or of the server, each with a weight from 0.1 (marginal) to 1.0 (essential). Pass "server" with a name from CONTEXT.mcp_servers to look only in that server; with "server" the keywords are optional and the call lists its tools. Returns the matching tools; from your next turn they are in your tool list and you run them by naming them in an action.',
         parameters: {
             type: 'object',
             properties: {
@@ -75,10 +75,11 @@ export const NATIVE_TOOLS: LLMToolDefinition[] = [
                         required: ['keyword', 'weight'],
                     },
                 },
+                server: { type: 'string', description: 'Name of a server from CONTEXT.mcp_servers, to search only its tools' },
                 page: { type: 'integer', description: 'Result page, starting at 1' },
                 limit: { type: 'integer', description: `Tools per page (default ${DEFAULT_SEARCH_LIMIT}, max ${MAX_SEARCH_LIMIT})` },
             },
-            required: ['keywords'],
+            required: [],
         },
     },
     {
@@ -135,7 +136,7 @@ export const NATIVE_TOOLS: LLMToolDefinition[] = [
 
 interface NativeToolsDeps {
     workspace: Workspace
-    searchTools: (keywords: WeightedKeyword[], opts?: { page?: number; limit?: number }) => ScoredTool[]
+    searchTools: (keywords: WeightedKeyword[], opts?: { page?: number; limit?: number; server?: string }) => Promise<ScoredTool[]>
 }
 
 export class NativeTools {
@@ -162,14 +163,14 @@ export class NativeTools {
 
     private async execute (task: AgentTask, name: string, args: Record<string, any>): Promise<any> {
         switch (name) {
-            case 'search_tools': return this.searchTools(args)
+            case 'search_tools': return await this.searchTools(args)
             case 'read_context': return this.readContext(task, args)
             case 'save_context': return this.saveContext(task, args)
             default: throw new Error(`"${name}" is interpreted by the runtime and cannot be executed`)
         }
     }
 
-    private searchTools (args: Record<string, any>) {
+    private async searchTools (args: Record<string, any>) {
         const keywords: WeightedKeyword[] = (Array.isArray(args.keywords) ? args.keywords : []).map((item: any) => (
             typeof item === 'string'
                 ? { keyword: item, weight: 1 }
@@ -179,10 +180,14 @@ export class NativeTools {
         const limit = Math.min(Math.max(Number(args.limit) || DEFAULT_SEARCH_LIMIT, 1), MAX_SEARCH_LIMIT)
         const page = Math.max(Number(args.page) || 1, 1)
 
+        const server = typeof args.server === 'string' && args.server.trim() ? args.server.trim() : undefined
+
+        if (!keywords.length && !server) throw new Error('Pass keywords, or a "server" to list its tools')
+
         const tools: any[] = []
         let size = 0
 
-        for (const { tool } of this.deps.searchTools(keywords, { page, limit })) {
+        for (const { tool } of await this.deps.searchTools(keywords, { page, limit, server })) {
             const { parameters, ...entry } = describeTool(tool, SEARCH_DESCRIPTION_CHARS)
 
             size += JSON.stringify(entry).length
@@ -191,7 +196,7 @@ export class NativeTools {
             tools.push(entry)
         }
 
-        return tools.length ? { page, tools, note: 'These tools are now in your tool list: run them by naming them in an action.' } : { page, tools, hint: 'No tool matched. Retry with synonyms written in the language of the tool descriptions shown in CONTEXT.tool_sources.' }
+        return tools.length ? { page, tools, note: 'These tools are now in your tool list: run them by naming them in an action.' } : { page, tools, hint: 'No tool matched. Retry with synonyms written in the language of the tool descriptions shown in CONTEXT.tool_sources or CONTEXT.mcp_servers.' }
     }
 
     private async readContext (task: AgentTask, args: Record<string, any>) {

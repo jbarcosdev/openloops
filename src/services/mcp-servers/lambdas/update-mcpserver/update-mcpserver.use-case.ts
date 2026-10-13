@@ -30,26 +30,24 @@ export class UpdateMcpServerUseCase extends BaseUseCase<Params, Output> {
 			throw new Error('Payload is required for updating Mcp Server')
 		}
 
-		const clean = McpServer.stripSystemFields({ ...payload })
-
 		const existing = await this.mcpServerRepository?.findById(id)
 
 		if (!existing) {
 			throw new Error('Mcp Server not found or update failed')
 		}
 
-		if (clean.__v !== undefined && clean.__v !== existing.__v) {
+		if (payload.__v !== undefined && payload.__v !== existing.__v) {
 			throw new VersionConflictError()
 		}
 
-		const endpointChanged = (clean.url !== undefined && clean.url !== existing.url) || (clean.type !== undefined && clean.type !== existing.type)
-		const headersChanged = clean.headers !== undefined && JSON.stringify(clean.headers) !== JSON.stringify(existing.headers)
+		const endpointChanged = (payload.url !== undefined && payload.url !== existing.url) || (payload.type !== undefined && payload.type !== existing.type)
+		const headersChanged = payload.headers !== undefined && JSON.stringify(payload.headers) !== JSON.stringify(existing.headers)
 
-		const mcpServer = McpServer.fromJSON({ ...existing, ...clean, _id: id })
+		const mcpServer = McpServer.fromJSON({ ...existing, ...payload, _id: id, status: existing.status, lastError: existing.lastError, history: existing.history })
 		mcpServer.setUpdatedBy(currentUser)
 
 		if (endpointChanged) {
-			mcpServer.lockForNewEndpoint(existing.url)
+			mcpServer.lockForNewEndpoint()
 		}
 
 		const result = await this.mcpServerRepository?.update(mcpServer, { checkVersion: true })

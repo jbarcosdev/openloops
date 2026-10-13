@@ -5,11 +5,13 @@ import { newTask, makeTool, structured, bigListing, MemoryWorkspace, REAL_ID, IN
 
 const logger: any = { error () {}, debug () {}, warn () {}, info () {} }
 
-function build (tools: Tool[], workspace = new MemoryWorkspace(), options?: ConstructorParameters<typeof ToolPipeline>[1]) {
+function build (tools: Tool[], workspace = new MemoryWorkspace(), options?: ConstructorParameters<typeof ToolPipeline>[1], isGated: (tool: Tool) => boolean = () => false) {
     const pipeline = new ToolPipeline({
         workspace,
         tools: () => tools,
-        searchTools: () => [],
+        searchTools: async () => [],
+        searchEnabled: () => false,
+        isGated,
         baseParams: { answerId: new ObjectId().toString(), sessionId: 's', currentUser: undefined as any },
         logger,
     }, options)
@@ -347,5 +349,34 @@ describe('a plan-execute loop on top of the pipeline', () => {
 
         expect(second.map(a => a.status)).toEqual(['completed', 'completed'])
         expect(got).toEqual(['id1'])
+    })
+})
+
+describe('tools of a server that is not approved', () => {
+    const external = makeTool({ name: 'srv__read', handler: async () => ({ v: 1 }) })
+    const gated = (tool: Tool) => tool.name === 'srv__read'
+
+    it('requires approval whether or not the action was approved before', () => {
+        const { pipeline, task } = build([external], new MemoryWorkspace(), undefined, gated)
+        const action = task.addAction({ name: 'srv__read', args: {}, stepId: '1_1', turn: 1 })
+
+        expect(pipeline.requiresApproval(action)).toBe(true)
+        action.approve()
+        expect(pipeline.requiresApproval(action)).toBe(true)
+    })
+
+    it('never runs the tool even if it is asked to', async () => {
+        const { run } = build([external], new MemoryWorkspace(), undefined, gated)
+        const action = await run('srv__read')
+
+        expect(action.status).toBe('failed')
+        expect(action.error?.message).toContain('has not approved')
+    })
+
+    it('does not touch the other tools', () => {
+        const other = makeTool({ name: 'other' })
+        const { pipeline, task } = build([external, other], new MemoryWorkspace(), undefined, gated)
+
+        expect(pipeline.requiresApproval(task.addAction({ name: 'other', args: {}, stepId: '1_1', turn: 1 }))).toBe(false)
     })
 })

@@ -46,7 +46,7 @@ export class VerifyMcpServerConnectionUseCase extends BaseUseCase<Params, Output
 				return { data: current.toJSON() }
 			}
 
-			if (manifest) current.applyManifest(manifest)
+			if (manifest) current.addManifest(manifest)
 			else current.markError(failure)
 
 			try {

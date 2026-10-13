@@ -1,54 +1,38 @@
 import { createHash } from 'node:crypto'
 
-export type McpTrust = 'locked' | 'approved' | 'pending' | 'blocked'
+export type McpTrust = 'locked' | 'approved' | 'blocked'
 export type McpStatus = 'ok' | 'error' | 'unknown'
-export type McpChangeType = 'tool_added' | 'tool_removed' | 'tool_changed' | 'instructions_changed' | 'server_changed'
 
 export interface McpToolSnapshot {
     name: string
     description?: string
-    inputSchema?: unknown
+    inputSchema?: any
     annotations?: unknown
-    hash: string
 }
 
 export interface McpManifest {
-    serverName?: string
-    serverVersion?: string
     instructions?: string
     tools: McpToolSnapshot[]
     hash: string
     fetchedAt: Date
 }
 
-export interface McpChange {
-    type: McpChangeType
-    tool?: string
-    fields?: string[]
+export interface McpToolChange {
+    name: string
+    change: 'added' | 'removed' | 'modified'
+    description?: { from?: string, to?: string }
+    parameters?: { added: string[], removed: string[] }
+    annotations?: { from?: unknown, to?: unknown }
 }
 
-export type McpEventType = 'manifest_changed' | 'endpoint_changed' | 'approved' | 'blocked'
-export type McpSource = 'web' | 'chat' | 'system'
-
-export interface McpHistoryEntry {
-    type: McpEventType
-    at: Date
-    source: McpSource
-    fromHash?: string
-    toHash?: string
-    changes?: McpChange[]
-    fromHost?: string
-    toHost?: string
+export interface McpManifestDiff {
+    tools: McpToolChange[]
+    instructions?: { from?: string, to?: string }
 }
 
-export interface RawMcpManifest {
-    serverName?: string
-    serverVersion?: string
-    instructions?: string
-    tools: Array<{ name: string, description?: string, inputSchema?: unknown, annotations?: unknown }>
-}
-
-const TOOL_FIELDS = ['description', 'inputSchema', 'annotations'] as const
+const MAX_TEXT_CHARS = 300
+const MAX_DIFF_TOOLS = 50
+const MAX_PARAMETERS = 30
 
 const canonical = (value: unknown): unknown => {
     if (Array.isArray(value)) return value.map(canonical)
@@ -59,38 +43,49 @@ const canonical = (value: unknown): unknown => {
     return value
 }
 
-export const sha256 = (value: unknown): string => createHash('sha256').update(JSON.stringify(canonical(value)) ?? '').digest('hex')
+const sha256 = (value: unknown): string => createHash('sha256').update(JSON.stringify(canonical(value)) ?? '').digest('hex')
 
-export const buildManifest = (raw: RawMcpManifest, fetchedAt: Date = new Date()): McpManifest => {
+const same = (a: unknown, b: unknown): boolean => sha256(a) === sha256(b)
+
+const cut = (text?: string): string | undefined => text?.slice(0, MAX_TEXT_CHARS)
+
+const parameterNames = (tool?: McpToolSnapshot): string[] => Object.keys(tool?.inputSchema?.properties ?? {})
+
+export const buildManifest = (raw: { instructions?: string, tools: McpToolSnapshot[] }, fetchedAt: Date = new Date()): McpManifest => {
     const tools = raw.tools
-        .map(tool => ({
-            name: tool.name,
-            description: tool.description,
-            inputSchema: tool.inputSchema,
-            annotations: tool.annotations,
-            hash: sha256({ name: tool.name, description: tool.description, inputSchema: tool.inputSchema, annotations: tool.annotations }),
-        }))
+        .map(({ name, description, inputSchema, annotations }) => ({ name, description, inputSchema, annotations }))
         .sort((a, b) => a.name.localeCompare(b.name))
-    const hash = sha256({ serverName: raw.serverName, instructions: raw.instructions, tools: tools.map(tool => [tool.name, tool.hash]) })
-    return { serverName: raw.serverName, serverVersion: raw.serverVersion, instructions: raw.instructions, tools, hash, fetchedAt }
+    return { instructions: raw.instructions, tools, hash: sha256({ instructions: raw.instructions, tools }), fetchedAt }
 }
 
-export const diffManifests = (from: McpManifest | null | undefined, to: McpManifest): McpChange[] => {
-    const changes: McpChange[] = []
+export const diffManifests = (from: McpManifest | undefined, to: McpManifest): McpManifestDiff => {
     const before = new Map((from?.tools ?? []).map(tool => [tool.name, tool]))
     const after = new Map(to.tools.map(tool => [tool.name, tool]))
-    if (from && from.serverName !== to.serverName) changes.push({ type: 'server_changed' })
-    if (from && sha256(from.instructions) !== sha256(to.instructions)) changes.push({ type: 'instructions_changed' })
+    const tools: McpToolChange[] = []
+
     for (const [name, tool] of after) {
         const previous = before.get(name)
         if (!previous) {
-            changes.push({ type: 'tool_added', tool: name })
+            tools.push({ name, change: 'added', description: { to: cut(tool.description) }, parameters: { added: parameterNames(tool).slice(0, MAX_PARAMETERS), removed: [] } })
             continue
         }
-        if (previous.hash === tool.hash) continue
-        const fields = TOOL_FIELDS.filter(field => sha256(previous[field]) !== sha256(tool[field]))
-        changes.push({ type: 'tool_changed', tool: name, fields })
+        const change: McpToolChange = { name, change: 'modified' }
+        if (!same(previous.description, tool.description)) change.description = { from: cut(previous.description), to: cut(tool.description) }
+        if (!same(previous.inputSchema, tool.inputSchema)) {
+            const was = parameterNames(previous)
+            const now = parameterNames(tool)
+            change.parameters = { added: now.filter(key => !was.includes(key)).slice(0, MAX_PARAMETERS), removed: was.filter(key => !now.includes(key)).slice(0, MAX_PARAMETERS) }
+        }
+        if (!same(previous.annotations, tool.annotations)) change.annotations = { from: previous.annotations, to: tool.annotations }
+        if (change.description || change.parameters || change.annotations) tools.push(change)
     }
-    for (const name of before.keys()) if (!after.has(name)) changes.push({ type: 'tool_removed', tool: name })
-    return changes
+
+    for (const name of before.keys()) if (!after.has(name)) tools.push({ name, change: 'removed' })
+
+    const diff: McpManifestDiff = { tools: tools.slice(0, MAX_DIFF_TOOLS) }
+    if (from && !same(from.instructions, to.instructions)) diff.instructions = { from: cut(from.instructions), to: cut(to.instructions) }
+    return diff
 }
+
+export const needsUserReview = (diff: McpManifestDiff): boolean =>
+    !!diff.instructions || diff.tools.some(tool => tool.change === 'added' || !!tool.parameters || !!tool.annotations)

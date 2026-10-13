@@ -15,6 +15,12 @@ export interface ToolCatalog {
     context: Record<string, any>
 }
 
+export interface McpIndexEntry {
+    name: string
+    description?: string
+    state: 'approved' | 'not_approved' | 'blocked'
+}
+
 export interface ToolDescription {
     name: string
     description: string
@@ -29,7 +35,7 @@ export function isDeclarable (tool: Tool): boolean {
 }
 
 export function needsSearch (allTools: Tool[]): boolean {
-    return allTools.filter(isDeclarable).length > FULL_CATALOG_LIMIT
+    return allTools.filter(tool => isDeclarable(tool) && tool.origin !== 'mcp').length > FULL_CATALOG_LIMIT
 }
 
 export function describeTool (tool: Tool, chars = TOOL_DESCRIPTION_CHARS): ToolDescription {
@@ -46,35 +52,38 @@ function declare (tool: Tool): LLMToolDefinition {
     return { name: tool.name, description: tool.description.slice(0, DECLARED_DESCRIPTION_CHARS), parameters: tool.parameters }
 }
 
-export function buildToolCatalog (allTools: Tool[], nativeTools: LLMToolDefinition[], discovered: string[]): ToolCatalog {
-    const tools = allTools.filter(isDeclarable)
+export function buildToolCatalog (allTools: Tool[], nativeTools: LLMToolDefinition[], discovered: string[], mcps: McpIndexEntry[] = []): ToolCatalog {
+    const declarable = allTools.filter(isDeclarable)
+    const local = declarable.filter(tool => tool.origin !== 'mcp')
+    const found = discovered.map(name => declarable.find(tool => tool.name === name)).filter((tool): tool is Tool => !!tool)
+    const searchable = needsSearch(allTools)
+    const mcpContext = mcps.length ? { mcp_servers: mcps } : {}
 
-    if (!needsSearch(allTools)) {
-        return {
-            tools: [...nativeTools.filter(tool => tool.name !== SEARCH_TOOLS), ...tools.map(declare)],
-            context: {},
-        }
+    if (!searchable) {
+        const natives = mcps.length ? nativeTools : nativeTools.filter(tool => tool.name !== SEARCH_TOOLS)
+        const direct = [...local, ...found.filter(tool => tool.origin === 'mcp')]
+
+        return { tools: [...natives, ...direct.map(declare)], context: mcpContext }
     }
 
     const sources = new Map<string, Tool[]>()
 
-    for (const tool of tools) {
+    for (const tool of local) {
         const separator = tool.name.indexOf('__')
         const source = separator > 0 ? tool.name.slice(0, separator) : LOCAL_SOURCE
         sources.set(source, [...(sources.get(source) ?? []), tool])
     }
 
-    const found = discovered.map(name => tools.find(tool => tool.name === name)).filter((tool): tool is Tool => !!tool)
-
     return {
         tools: [...nativeTools, ...found.map(declare)],
         context: {
-            total_tools: tools.length,
+            total_tools: local.length,
             tool_sources: [...sources.entries()].map(([name, items]) => ({
                 name,
                 tool_count: items.length,
                 sample: items.slice(0, SAMPLES_PER_SOURCE).map(tool => ({ name: tool.name, description: tool.description.slice(0, SAMPLE_DESCRIPTION_CHARS) })),
             })),
+            ...mcpContext,
         },
     }
 }

@@ -4,7 +4,6 @@ import { Tool, BaseParams } from '@tools/tool'
 import { AgentAction, truncateForPrompt } from '@services/tasks/entities/agent-action.entity'
 import { AgentTask, RefSources, NATIVE_TOOL_NAMES, SEARCH_TOOLS } from '@services/tasks/entities/agent-task.entity'
 import { Workspace } from './workspace'
-import { needsSearch } from './tool-catalog'
 import { NativeTools } from './native-tools'
 import { WeightedKeyword, ScoredTool } from './utils/rank-tools-by-keywords'
 import { describeShapeWithin } from './utils/describe-shape'
@@ -36,7 +35,9 @@ export interface ToolPipelineRunOptions {
 interface ToolPipelineDeps {
     workspace: Workspace
     tools: () => Tool[]
-    searchTools: (keywords: WeightedKeyword[], opts?: { page?: number; limit?: number }) => ScoredTool[]
+    searchTools: (keywords: WeightedKeyword[], opts?: { page?: number; limit?: number; server?: string }) => Promise<ScoredTool[]>
+    searchEnabled: () => boolean
+    isGated: (tool: Tool) => boolean
     baseParams: BaseParams
     logger: Logger
 }
@@ -84,11 +85,12 @@ export class ToolPipeline {
 
     requiresApproval (action: AgentAction): boolean {
         const tool = this.findTool(action.name)
-        return Boolean(tool?.destructive) && !action.approved
+        if (!tool) return false
+        return (tool.destructive && !action.approved) || this.deps.isGated(tool)
     }
 
     async run (task: AgentTask, action: AgentAction, opts?: ToolPipelineRunOptions): Promise<AgentAction> {
-        if (action.name === SEARCH_TOOLS && !needsSearch(this.deps.tools())) {
+        if (action.name === SEARCH_TOOLS && !this.deps.searchEnabled()) {
             action.markFailed({ message: this.searchUnavailableMessage(), retryable: false })
             return action
         }
@@ -108,6 +110,11 @@ export class ToolPipeline {
 
         if (tool.destructive && !action.approved) {
             action.markFailed({ message: `Tool "${tool.name}" is destructive and needs explicit user confirmation before it can run`, retryable: false })
+            return action
+        }
+
+        if (this.deps.isGated(tool)) {
+            action.markFailed({ message: `Tool "${tool.name}" belongs to a server that the user has not approved yet, so it cannot run`, retryable: false })
             return action
         }
 

@@ -1,7 +1,7 @@
 import { ObjectId } from 'mongodb'
 import { Agent, AgentLoop } from '@harness/index'
 import { AgiLoop } from '@loops/agi/loop'
-import { fastResponder, confirmationGate, approvalRequest } from '@loops/shared/skills'
+import { fastResponder, confirmationGate, approvalRequest, mcpChangeReview } from '@loops/shared/skills'
 import type { Tool } from '@tools/tool'
 import type { Guard } from '@guardrails/guard'
 import type { CurrentUser } from '@common/base'
@@ -21,6 +21,7 @@ export class HarnessEnv {
     readonly fast = { canAnswer: false, calls: 0 }
     readonly gate = { decision: 'CONFIRMED', calls: [] as Record<string, any>[] }
     readonly approval = { question: 'Do you confirm?', calls: [] as Record<string, any>[] }
+    readonly review = { decision: 'ASK' as 'APPROVE' | 'ASK', question: 'Do you approve this server?', calls: [] as Record<string, any>[] }
     private spies: jest.SpyInstance[] = []
 
     start (): void {
@@ -35,6 +36,9 @@ export class HarnessEnv {
         this.gate.calls = []
         this.approval.question = 'Do you confirm?'
         this.approval.calls = []
+        this.review.decision = 'ASK'
+        this.review.question = 'Do you approve this server?'
+        this.review.calls = []
 
         this.spies = [
             jest.spyOn(fastResponder as any, 'run').mockImplementation(async () => {
@@ -49,6 +53,10 @@ export class HarnessEnv {
                 this.approval.calls.push(options)
                 return { question: this.approval.question }
             }),
+            jest.spyOn(mcpChangeReview as any, 'run').mockImplementation(async (options: any) => {
+                this.review.calls.push(options)
+                return { decision: this.review.decision, question: this.review.decision === 'ASK' ? this.review.question : '' }
+            }),
         ]
     }
 
@@ -58,8 +66,8 @@ export class HarnessEnv {
         this.spies = []
     }
 
-    agent (tools: Tool[] = [], guards: Guard[] = []): Agent {
-        return new Agent({ loop: new AgiLoop(), tools, guards })
+    agent (tools: Tool[] = [], guards: Guard[] = [], options: { strictMode?: boolean } = {}): Agent {
+        return new Agent({ loop: new AgiLoop(), tools, guards, ...options })
     }
 
     async send (agent: Agent, message: string, chatId?: string): Promise<RunResult> {

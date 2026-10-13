@@ -28,7 +28,7 @@ export interface RunContext {
 
 export interface Harness {
     ensureTools: () => Promise<Tool[]>
-    searchTools: (keywords: WeightedKeyword[], opts?: { page?: number; limit?: number }) => ScoredTool[]
+    searchTools: (keywords: WeightedKeyword[], opts?: { page?: number; limit?: number; server?: string }) => Promise<ScoredTool[]>
     toolCatalog: () => Promise<ToolCatalog>
     workspace: Workspace
     runAction: (action: AgentAction, opts?: ToolPipelineRunOptions) => Promise<AgentAction>

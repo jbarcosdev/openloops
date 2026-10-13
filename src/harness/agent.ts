@@ -2,7 +2,7 @@ import 'reflect-metadata'
 import { ObjectId } from 'mongodb'
 import { Logger } from '@common/logger'
 import { CurrentUser, CurrentSession } from '@common/base'
-import { McpServer } from '@services/mcp-servers/entities'
+import { McpServer, McpServerProps, McpManifest, McpManifestDiff, needsUserReview } from '@services/mcp-servers/entities'
 import { createChat, updateChat, getChatById } from '@services/chats'
 import { Chat, ChatProps } from '@services/chats/entities/chat.entity'
 import { ChatMessage } from '@services/chats/entities/chat-message.entity'
@@ -22,20 +22,35 @@ import { createAgentTraces } from '@services/traces'
 import { Tool } from '@tools/tool'
 import { Guard, GuardResult, InputGuardContext } from '@guardrails/guard'
 import { DEFAULT_MAX_INPUT_LENGTH, GUARD_FAILURE_REPLY } from '@common/constants'
-import { approvalRequest, confirmationGate } from '@loops/shared/skills'
+import { approvalRequest, confirmationGate, mcpChangeReview } from '@loops/shared/skills'
 import { inputCheck } from '@guardrails/input/input-check'
 import { createBlockInputOversize } from '@guardrails/input/create-block-input-oversize'
-import { listMcpServersByUser } from '@services/mcp-servers'
+import { listMcpServersByUser, verifyMcpServerConnection, decideMcpServerTrust } from '@services/mcp-servers'
 import { rankToolsByKeywords, WeightedKeyword, ScoredTool } from './utils/rank-tools-by-keywords'
 import { AgentLoop, AgentLoopNode, Harness, RunContext } from './agent-loop'
 import { AgentStatus } from './agent-state'
 import { AgentWorkspace } from './workspace'
 import { ToolPipeline, ToolPipelineRunOptions } from './tool-pipeline'
 import { NATIVE_TOOLS } from './native-tools'
-import { buildToolCatalog, isDeclarable } from './tool-catalog'
+import { buildToolCatalog, isDeclarable, needsSearch, McpIndexEntry } from './tool-catalog'
 import { LLMError } from '@clients/llm-error'
 
 const MCP_CONNECT_RETRY_DELAYS_MS = [1000, 2000]
+const MCP_DESCRIPTION_CHARS = 300
+
+type McpAccess = 'blocked' | 'not_connected' | 'unavailable' | 'ready' | 'first_use' | 'changed'
+
+interface McpEntry {
+    id: string
+    name: string
+    server: McpServer
+    tools: Tool[]
+    access: McpAccess
+    hash?: string
+    diff?: McpManifestDiff
+    question?: string
+    connection?: Promise<void>
+}
 
 export const AGENT_ERROR_CODES = {
     NODE_NOT_FOUND: 'AGENT_NODE_NOT_FOUND',
@@ -56,6 +71,7 @@ export interface AgentOptions {
     maxInputLength?: number
     identity?: AgentIdentity
     maxIterations?: number
+    strictMode?: boolean
 }
 
 interface ChatInput {
@@ -74,11 +90,11 @@ export class Agent {
     private readonly _loop: AgentLoop
     private readonly _identity?: AgentIdentity
     private readonly maxIterations: number
+    private readonly strictMode: boolean
     private _tools: Tool[]
-    private _mcpTools: Tool[] = []
-    private _mcps: McpServer[] = []
-    private mcpLoading?: Promise<void>
-    private _unavailableSources: string[] = []
+    private _mcps: McpEntry[] = []
+    private mcpListing?: Promise<void>
+    private mcpListingFailed = false
     private _preHooks: Function[] = []
     private _postHooks: Function[] = []
     private _guards: Guard[] = []
@@ -135,6 +151,7 @@ export class Agent {
         this._tools = agentOptions.tools ?? []
         this._identity = agentOptions.identity
         this.maxIterations = agentOptions.maxIterations ?? DEFAULT_MAX_ITERATIONS
+        this.strictMode = agentOptions.strictMode ?? false
 
         this.addGuard(createBlockInputOversize(agentOptions.maxInputLength ?? DEFAULT_MAX_INPUT_LENGTH))
         this.addGuard(inputCheck)
@@ -145,11 +162,11 @@ export class Agent {
     }
 
     get tools () {
-        return [...this._tools, ...this._mcpTools]
+        return [...this._tools, ...this._mcps.flatMap(entry => entry.tools)]
     }
 
     get mcps () {
-        return this._mcps
+        return this._mcps.map(entry => entry.server)
     }
 
     get notifyOnCompletion () {
@@ -175,9 +192,9 @@ export class Agent {
             this.stopRequested = false
             this.pendingNextNode = undefined
             this.replyCount = 0
-            this.mcpLoading = undefined
-            this._mcpTools = []
-            this._unavailableSources = []
+            this.mcpListing = undefined
+            this.mcpListingFailed = false
+            this._mcps = []
             this.workspace = undefined
             this.pipeline = undefined
             this.snapshots.clear()
@@ -335,20 +352,34 @@ export class Agent {
         if (!task) throw new Error('[AGENT] An active task is required to request approval')
 
         const ctx = this.buildRunContext()
+        const gated = Array.from(new Set(actions.map(action => this.entryOf(action.name)).filter((entry): entry is McpEntry => !!entry && this.isGatedEntry(entry))))
+        const destructive = actions.filter(action => this.tools.find(tool => tool.name === action.name)?.destructive && !action.approved)
+        const questions: string[] = []
 
-        const result = await approvalRequest.run({
-            ...ctx.skillParams,
-            input: { goal: task.goal, pending_actions: actions.map(action => action.promptView()) },
-        })
+        for (const entry of gated) questions.push(entry.question || await this.askMcpReview(entry))
 
-        const question = typeof result.question === 'string' && result.question.trim()
-            ? result.question
-            : `Do you confirm that I run ${actions.map(action => action.name).join(', ')}?`
+        for (const action of actions) {
+            const entry = this.entryOf(action.name)
+            if (entry && gated.includes(entry)) action.reviewedHash = entry.hash
+        }
+
+        if (destructive.length || !gated.length) {
+            const pending = destructive.length ? destructive : actions
+
+            const result = await approvalRequest.run({
+                ...ctx.skillParams,
+                input: { goal: task.goal, pending_actions: pending.map(action => action.promptView()) },
+            })
+
+            questions.push(typeof result.question === 'string' && result.question.trim()
+                ? result.question
+                : `Do you confirm that I run ${pending.map(action => action.name).join(', ')}?`)
+        }
 
         task.setNextNode(this.resolveNodeName(resumeAt))
         this.currentChat.state?.setStatus(AgentStatus.AWAITING_USER_CONFIRMATION)
         this.currentChat.addTrace({ node: 'approval_request', kind: 'agent', reasoning: `Asked for confirmation of ${actions.map(action => action.name).join(', ')}`, taskId: task.id })
-        this.reply(question)
+        this.reply(questions.join('\n\n'))
     }
 
     private async resolveConfirmation (): Promise<boolean> {
@@ -364,12 +395,16 @@ export class Agent {
         })
 
         switch (result.decision) {
-            case 'CONFIRMED':
+            case 'CONFIRMED': {
+                const pendingActions = task.actions.filter(action => action.status === 'pending')
                 task.approvePending()
+                await this.approveReviewedServers(pendingActions)
                 this.currentChat.state?.setStatus(AgentStatus.PROCESSING)
                 return true
+            }
 
             case 'DECLINED':
+                await this.blockReviewedServers(task.actions.filter(action => action.status === 'pending'))
                 this.currentChat.cancelTask(task.id)
                 this.currentChat.state?.setStatus(AgentStatus.IDLE)
                 this.reply(result.acknowledgement)
@@ -527,76 +562,212 @@ export class Agent {
     }
 
     private ensureTools (): Promise<Tool[]> {
-        this.mcpLoading ??= this.loadMcpServers()
-        return this.mcpLoading.then(() => this.tools)
+        this.mcpListing ??= this.listMcps()
+        return this.mcpListing.then(() => this.tools)
     }
 
-    private async loadMcpServers (): Promise<void> {
+    private async listMcps (): Promise<void> {
         if (!this.currentUser) return
-
-        let servers: any[] = []
 
         try {
             const response = await listMcpServersByUser({ currentUser: this.currentUser })
-            servers = response?.data ?? []
+            this._mcps = (response?.data ?? []).map(props => this.toMcpEntry(props))
         } catch (error: any) {
             this.logger.error({ error: error?.message ?? error }, '[AGENT] Failed to list MCP servers')
-            this._unavailableSources.push('configured tool servers')
+            this.mcpListingFailed = true
+        }
+    }
+
+    private toMcpEntry (props: McpServerProps): McpEntry {
+        const server = McpServer.fromJSON(props)
+
+        return { id: String(props._id ?? ''), name: props.name ?? 'mcp', server, tools: [], access: server.trust === 'blocked' ? 'blocked' : 'not_connected' }
+    }
+
+    private mcpIndex (): McpIndexEntry[] {
+        return this._mcps.map(entry => {
+            if (entry.access === 'blocked') return { name: entry.name, state: 'blocked' }
+
+            const approved = entry.access === 'ready' || (['not_connected', 'unavailable'].includes(entry.access) && entry.server.trust === 'approved')
+            const description = entry.server.latest?.instructions?.slice(0, MCP_DESCRIPTION_CHARS)
+
+            return { name: entry.name, ...(description ? { description } : {}), state: approved ? 'approved' : 'not_approved' }
+        })
+    }
+
+    private entryOf (toolName?: string): McpEntry | undefined {
+        return this._mcps
+            .filter(entry => toolName?.startsWith(`${entry.name}__`))
+            .sort((a, b) => b.name.length - a.name.length)[0]
+    }
+
+    private isGatedEntry (entry: McpEntry): boolean {
+        return entry.access === 'first_use' || entry.access === 'changed'
+    }
+
+    private isGated (tool: Tool): boolean {
+        if (tool.origin !== 'mcp') return false
+        const entry = this._mcps.find(candidate => candidate.name === tool.server)
+        return !!entry && this.isGatedEntry(entry)
+    }
+
+    private async connectOwnersOf (toolNames: Array<string | undefined>): Promise<void> {
+        const entries = new Set(toolNames.map(name => this.entryOf(name)).filter((entry): entry is McpEntry => !!entry))
+        await Promise.all([...entries].map(entry => this.connectMcp(entry)))
+    }
+
+    private connectMcp (entry: McpEntry): Promise<void> {
+        if (entry.access === 'blocked') return Promise.resolve()
+
+        entry.connection ??= this.openMcp(entry)
+
+        return entry.connection
+    }
+
+    private async openMcp (entry: McpEntry): Promise<void> {
+        for (let attempt = 0; attempt <= MCP_CONNECT_RETRY_DELAYS_MS.length; attempt++) {
+            try {
+                const client = await entry.server.connect()
+                const { manifest, tools } = await entry.server.inspect(client)
+
+                entry.tools = tools.map(tool => Tool.fromMcp(tool, client, { namespace: entry.name }))
+                await this.reviewMcp(entry, manifest)
+
+                return
+            } catch (error) {
+                this.logger.error({ error, mcpServer: entry.name, attempt: attempt + 1 }, '[AGENT] Failed to connect MCP server')
+                await Promise.resolve().then(() => entry.server.disconnect()).catch(() => undefined)
+
+                const delay = MCP_CONNECT_RETRY_DELAYS_MS[attempt]
+                if (delay === undefined) break
+
+                await new Promise(resolve => setTimeout(resolve, delay))
+            }
+        }
+
+        entry.tools = []
+        entry.access = 'unavailable'
+        this.currentChat?.addTrace({ node: 'agent', kind: 'agent', reasoning: `Tool source unavailable: ${entry.name}` })
+    }
+
+    private async reviewMcp (entry: McpEntry, live: McpManifest): Promise<void> {
+        entry.hash = live.hash
+
+        if (entry.server.latest?.hash !== live.hash) {
+            try {
+                const { data } = await verifyMcpServerConnection({ id: entry.id, currentUser: this.currentUser })
+                this.refreshMcpServer(entry, data)
+            } catch (error: any) {
+                this.logger.error({ error: error?.message ?? error, mcpServer: entry.name }, '[AGENT] Failed to verify MCP server')
+            }
+        }
+
+        const { server } = entry
+
+        if (server.trust === 'approved' && server.approvedHash === live.hash) {
+            entry.access = 'ready'
             return
         }
 
-        const results = await Promise.allSettled(servers.map(async props => {
-            const mcpServer = McpServer.fromJSON(props)
+        entry.diff = server.diffAgainst(live)
 
-            for (let attempt = 0; attempt <= MCP_CONNECT_RETRY_DELAYS_MS.length; attempt++) {
-                try {
-                    const mcpClient = await mcpServer.connect()
-                    const { tools: mcpTools } = await mcpClient.listTools()
-                    const tools = mcpTools.map(mcpTool => Tool.fromMcp(mcpTool, mcpClient, { namespace: mcpServer.name ?? 'mcp' }))
+        if (server.trust !== 'approved' || !server.approvedHash) {
+            entry.access = 'first_use'
+            return
+        }
 
-                    return { mcpServer, tools }
-                } catch (error) {
-                    this.logger.error({ error, mcpServer: mcpServer.name, attempt: attempt + 1 }, '[AGENT] Failed to connect MCP server')
-                    await Promise.resolve().then(() => mcpServer.disconnect()).catch(() => undefined)
+        entry.access = 'changed'
 
-                    const delay = MCP_CONNECT_RETRY_DELAYS_MS[attempt]
-                    if (delay === undefined) break
+        if (this.strictMode || needsUserReview(entry.diff)) return
 
-                    await new Promise(resolve => setTimeout(resolve, delay))
-                }
-            }
+        const review = await this.runMcpReview(entry, false)
 
-            this._unavailableSources.push(mcpServer.name ?? 'mcp')
-            this.currentChat?.addTrace({ node: 'agent', kind: 'agent', reasoning: `Tool source unavailable: ${mcpServer.name ?? 'mcp'}` })
+        if (review?.decision === 'APPROVE' && await this.decideMcp(entry, 'approve', live.hash)) {
+            entry.access = 'ready'
+            this.currentChat?.addTrace({ node: 'mcp_change_review', kind: 'agent', reasoning: `Approved a harmless change of tool source on behalf of the user: ${entry.name}` })
+            return
+        }
 
+        if (review?.question?.trim()) entry.question = review.question
+    }
+
+    private async runMcpReview (entry: McpEntry, firstUse: boolean) {
+        try {
+            return await mcpChangeReview.run({
+                ...this.buildRunContext().skillParams,
+                input: { server_name: entry.name, first_use: firstUse, changes: entry.diff },
+            })
+        } catch (error: any) {
+            this.logger.error({ error: error?.message ?? error, mcpServer: entry.name }, '[AGENT] Failed to review MCP server changes')
             return undefined
-        }))
+        }
+    }
 
-        for (const result of results) {
-            if (result.status === 'rejected') {
-                this.logger.error({ error: result.reason }, '[AGENT] Failed to load MCP server')
-                continue
-            }
+    private async askMcpReview (entry: McpEntry): Promise<string> {
+        const firstUse = entry.access === 'first_use'
+        const review = await this.runMcpReview(entry, firstUse)
 
-            if (!result.value) continue
+        return review?.question?.trim() || `The tool server "${entry.name}" ${firstUse ? 'has not been approved yet' : 'changed since you approved it'}. Do you approve using it?`
+    }
 
-            this._mcpTools.push(...result.value.tools)
-            this._mcps.push(result.value.mcpServer)
+    private refreshMcpServer (entry: McpEntry, data: McpServerProps): void {
+        const next = McpServer.fromJSON(data)
+        next.mcpClient = entry.server.mcpClient
+        entry.server = next
+    }
+
+    private async decideMcp (entry: McpEntry, decision: 'approve' | 'block', manifestHash?: string): Promise<boolean> {
+        try {
+            const { data } = await decideMcpServerTrust({ id: entry.id, decision, manifestHash, currentUser: this.currentUser })
+            this.refreshMcpServer(entry, data)
+            return true
+        } catch (error: any) {
+            this.logger.error({ error: error?.message ?? error, mcpServer: entry.name, decision }, '[AGENT] Failed to decide MCP server trust')
+            return false
+        }
+    }
+
+    private reviewedEntries (actions: AgentAction[]): Array<{ entry: McpEntry, hash: string }> {
+        const found = new Map<McpEntry, string>()
+
+        for (const action of actions) {
+            const entry = this.entryOf(action.name)
+            if (entry && action.reviewedHash && !found.has(entry)) found.set(entry, action.reviewedHash)
+        }
+
+        return [...found].map(([entry, hash]) => ({ entry, hash }))
+    }
+
+    private async approveReviewedServers (pending: AgentAction[]): Promise<void> {
+        await this.ensureTools()
+
+        for (const { entry, hash } of this.reviewedEntries(pending)) await this.decideMcp(entry, 'approve', hash)
+
+        await this.connectOwnersOf(pending.map(action => action.name))
+    }
+
+    private async blockReviewedServers (pending: AgentAction[]): Promise<void> {
+        await this.ensureTools()
+
+        for (const { entry } of this.reviewedEntries(pending)) {
+            if (await this.decideMcp(entry, 'block')) entry.access = 'blocked'
         }
     }
 
     private async disconnectMcpServers (): Promise<void> {
-        await this.mcpLoading?.catch(() => undefined)
+        await this.mcpListing?.catch(() => undefined)
 
-        const servers = this._mcps
+        const entries = this._mcps
 
         this._mcps = []
-        this._mcpTools = []
-        this.mcpLoading = undefined
+        this.mcpListing = undefined
 
-        await Promise.allSettled(servers.map(mcpServer => mcpServer.disconnect().catch(error => {
-            this.logger.error({ error, mcpServer: mcpServer.name }, '[AGENT] Failed to disconnect MCP server')
-        })))
+        await Promise.allSettled(entries.map(async entry => {
+            await entry.connection?.catch(() => undefined)
+            await entry.server.disconnect().catch(error => {
+                this.logger.error({ error, mcpServer: entry.name }, '[AGENT] Failed to disconnect MCP server')
+            })
+        }))
     }
 
     private async saveChat (props?: { resetStop: boolean }) {
@@ -715,12 +886,33 @@ export class Agent {
         return Object.entries(this._loop.nodes).find(([, fn]) => fn === node)?.[0]
     }
 
-    private searchTools (keywords: WeightedKeyword[], opts?: { page?: number; limit?: number }): ScoredTool[] {
+    private async searchTools (keywords: WeightedKeyword[], opts?: { page?: number; limit?: number; server?: string }): Promise<ScoredTool[]> {
         this.logger.debug({ opts }, '[AGENT] Searching tools')
+        await this.ensureTools()
+
         const page = opts?.page ?? 1
         const limit = opts?.limit ?? 5
+        let pool: Tool[]
 
-        const matchedTools = rankToolsByKeywords(keywords, this.tools.filter(isDeclarable))
+        if (opts?.server) {
+            const entry = this._mcps.find(candidate => candidate.name === opts.server)
+
+            if (!entry) throw new Error(`There is no server named "${opts.server}". Available servers: ${this._mcps.map(candidate => candidate.name).join(', ') || 'none'}`)
+            if (entry.access === 'blocked') throw new Error(`The server "${entry.name}" is blocked by the user: its tools cannot be listed or used`)
+
+            await this.connectMcp(entry)
+
+            if (entry.access === 'unavailable') throw new Error(`The server "${entry.name}" is unavailable right now, try again later`)
+
+            pool = entry.tools.filter(isDeclarable)
+        } else {
+            await Promise.all(this._mcps.map(entry => this.connectMcp(entry)))
+            pool = this.tools.filter(isDeclarable)
+        }
+
+        const matchedTools = keywords.length
+            ? rankToolsByKeywords(keywords, pool)
+            : pool.map(tool => ({ toolName: tool.name, score: 0, matchedKeywords: [], tool }))
 
         const startIndex = (page - 1) * limit
         return matchedTools.slice(startIndex, startIndex + limit)
@@ -751,6 +943,8 @@ export class Agent {
             workspace: this.getWorkspace(),
             tools: () => this.tools,
             searchTools: (keywords, opts) => this.searchTools(keywords, opts),
+            searchEnabled: () => needsSearch(this.tools) || this._mcps.length > 0,
+            isGated: tool => this.isGated(tool),
             baseParams: this.baseParams,
             logger: this.logger,
         })
@@ -760,6 +954,7 @@ export class Agent {
 
     private async runAction (action: AgentAction, opts?: ToolPipelineRunOptions): Promise<AgentAction> {
         await this.ensureTools()
+        await this.connectOwnersOf([action.name])
 
         const task = this.currentChat.activeTask
         if (!task) throw new Error('[AGENT] There is no active task to run the action in')
@@ -812,9 +1007,15 @@ export class Agent {
             ensureTools: () => this.ensureTools(),
             searchTools: this.searchTools.bind(this),
             toolCatalog: async () => {
-                const catalog = buildToolCatalog(await this.ensureTools(), NATIVE_TOOLS, this.currentChat.activeTask?.discoveredToolNames ?? [])
+                await this.ensureTools()
 
-                return this._unavailableSources.length ? { ...catalog, context: { ...catalog.context, unavailable_sources: this._unavailableSources } } : catalog
+                const discovered = this.currentChat.activeTask?.discoveredToolNames ?? []
+                await this.connectOwnersOf(discovered)
+
+                const catalog = buildToolCatalog(this.tools, NATIVE_TOOLS, discovered, this.mcpIndex())
+                const unavailable = [...(this.mcpListingFailed ? ['configured tool servers'] : []), ...this._mcps.filter(entry => entry.access === 'unavailable').map(entry => entry.name)]
+
+                return unavailable.length ? { ...catalog, context: { ...catalog.context, unavailable_sources: unavailable } } : catalog
             },
             workspace: this.getWorkspace(),
             runAction: (action, opts) => this.runAction(action, opts),

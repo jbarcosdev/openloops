@@ -24,7 +24,7 @@ export class CreateMcpServerUseCase extends BaseUseCase<Params, Output> {
 	async execute (params: Params): Promise<Output> {
 		const { payload, currentUser } = params
 
-		const mcpServer = McpServer.fromJSON(McpServer.stripSystemFields({ ...payload }))
+		const mcpServer = McpServer.fromJSON({ ...payload })
 		mcpServer.setCreatedBy(currentUser)
 		mcpServer.setOwner(currentUser)
 		mcpServer.initialize()
