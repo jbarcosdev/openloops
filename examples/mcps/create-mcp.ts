@@ -8,9 +8,9 @@ async function createMcp () {
 
     const result = await createMcpServer({
         payload: {
-            name: 'test-mcp',
+            name: 'gemini_demo_mcp',
             type: 'http',
-            url: 'https://agentaddress.dev/api/mcp',
+            url: 'https://gemini-api-demos.uc.r.appspot.com/mcp',
             headers: {
                 'Accept': 'text/event-stream'
             }
