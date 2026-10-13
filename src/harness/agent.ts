@@ -25,7 +25,7 @@ import { DEFAULT_MAX_INPUT_LENGTH, GUARD_FAILURE_REPLY } from '@common/constants
 import { approvalRequest, confirmationGate, mcpChangeReview } from '@loops/shared/skills'
 import { inputCheck } from '@guardrails/input/input-check'
 import { createBlockInputOversize } from '@guardrails/input/create-block-input-oversize'
-import { listMcpServersByUser, verifyMcpServerConnection, decideMcpServerTrust } from '@services/mcp-servers'
+import { listAllMcpServersByUser, verifyMcpServerConnection, decideMcpServerTrust } from '@services/mcp-servers'
 import { rankToolsByKeywords, WeightedKeyword, ScoredTool } from './utils/rank-tools-by-keywords'
 import { AgentLoop, AgentLoopNode, Harness, RunContext } from './agent-loop'
 import { AgentStatus } from './agent-state'
@@ -570,7 +570,7 @@ export class Agent {
         if (!this.currentUser) return
 
         try {
-            const response = await listMcpServersByUser({ currentUser: this.currentUser })
+            const response = await listAllMcpServersByUser({ currentUser: this.currentUser })
             this._mcps = (response?.data ?? []).map(props => this.toMcpEntry(props))
         } catch (error: any) {
             this.logger.error({ error: error?.message ?? error }, '[AGENT] Failed to list MCP servers')

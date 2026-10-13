@@ -1,4 +1,5 @@
 import { autoInjectable } from 'tsyringe'
+import { ObjectId } from 'mongodb'
 import { MongoRepository, QueryOptions } from '@common/repositories'
 import { secretManager } from '@common/utils/secret-manager'
 import { McpServer, McpServerProps } from '../entities'
@@ -27,6 +28,13 @@ export class McpServerRepository {
 
 	public async findById(id: string): Promise<McpServerProps | null> {
 		return await this._.findOne({ where: { _id: this._.parseId(id) } })
+	}
+
+	public async findAllByOwner (ownerId: string): Promise<McpServerProps[]> {
+		return await this._.findAll({
+			where: { ownerId: new ObjectId(ownerId) },
+			options: { sortBy: { createdAt: 1, _id: 1 } },
+		})
 	}
 
 	public async deleteById (id: string): Promise<number> {

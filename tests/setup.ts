@@ -34,7 +34,7 @@ jest.mock('@services/llmcalls', () => ({
 }))
 
 jest.mock('@services/mcp-servers', () => ({
-    listMcpServersByUser: (params: unknown) => require('./support/fake-mcp').fakeMcp.list(params),
+    listAllMcpServersByUser: (params: unknown) => require('./support/fake-mcp').fakeMcp.list(params),
     verifyMcpServerConnection: (params: any) => require('./support/fake-mcp').fakeMcp.verify(params),
     decideMcpServerTrust: (params: any) => require('./support/fake-mcp').fakeMcp.decide(params),
 }))
