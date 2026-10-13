@@ -43,7 +43,7 @@ export class UpdateMcpServerUseCase extends BaseUseCase<Params, Output> {
 		const endpointChanged = (payload.url !== undefined && payload.url !== existing.url) || (payload.type !== undefined && payload.type !== existing.type)
 		const headersChanged = payload.headers !== undefined && JSON.stringify(payload.headers) !== JSON.stringify(existing.headers)
 
-		const mcpServer = McpServer.fromJSON({ ...existing, ...payload, _id: id, status: existing.status, lastError: existing.lastError, history: existing.history })
+		const mcpServer = McpServer.fromJSON({ ...existing, ...payload, _id: id, trust: existing.trust, approvedHash: existing.approvedHash, status: existing.status, lastError: existing.lastError, history: existing.history })
 		mcpServer.setUpdatedBy(currentUser)
 
 		if (endpointChanged) {
