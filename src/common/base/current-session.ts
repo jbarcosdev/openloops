@@ -111,7 +111,7 @@ export interface CurrentSessionProps {
 
 	// 2. Información de la Aplicación
 	app?: {
-		id?: string // e.g., "cash.sofi.app"
+		id?: string // e.g., "com.example.app"
 		name?: string // e.g., "user_app", "admin_app"
 		version?: string // e.g., "1.0.0 (100)"
 	},

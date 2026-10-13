@@ -11,7 +11,7 @@ type ResponseSchema = {
 export const fastResponder = new Skill<ResponseSchema>({
     name: 'fast_responder',
     version: '2.3.2',
-    description: 'Handles general conversations and multipurpose user assistance in SofiApp.',
+    description: 'Handles general conversations and multipurpose user assistance.',
     temperature: 0.7,
     systemInstructions: {
         instruction_set: {
