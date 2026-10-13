@@ -5,6 +5,16 @@ import { MongoClient, getMongoDBClient } from './mongo-db.client'
 
 const DEFAULT_LIMIT = 10
 
+export class VersionConflictError extends Error {
+	readonly code = 'VERSION_CONFLICT'
+	readonly statusCode = 409
+
+	constructor (message = '[Mongo Repository] The document was modified by someone else, reload and try again') {
+		super(message)
+		this.name = 'VersionConflictError'
+	}
+}
+
 export class MongoRepository<T> {
 	private readonly database
 	private readonly collection
@@ -118,9 +128,11 @@ export class MongoRepository<T> {
 		}
 	}
 
-	public async updateOne ({ where, payload, options }: CommandParams<T>): Promise<T> {
+	public async updateOne ({ where, payload, options, expectedVersion }: CommandParams<T>): Promise<T> {
 		if (!where || Object.keys(where).length === 0) throw new Error('[Mongo Repository] Where is required for updateOne operation')
 		if (!payload || Object.keys(payload).length === 0) throw new Error('[Mongo Repository] Payload is required for updateOne operation')
+
+		const checkVersion = typeof expectedVersion === 'number'
 
 		try {
 			const db = await this.dbClient.db(this.database)
@@ -133,7 +145,7 @@ export class MongoRepository<T> {
 			}
 
 			const result = await collection.findOneAndUpdate(
-				{ ...where, ...this._where },
+				{ ...where, ...(checkVersion ? { __v: expectedVersion } : {}), ...this._where },
 				{
 					$inc: { __v: 1 },
 					...__payload
@@ -143,9 +155,14 @@ export class MongoRepository<T> {
 				}
 			)
 
+			if (!result && checkVersion) {
+				const exists = await collection.findOne({ ...where, ...this._where }, { projection: { _id: 1 } })
+				if (exists) throw new VersionConflictError()
+			}
+
 			return result as unknown as T
 		} catch (error: any) {
-			await this.report(error as Error)
+			if (!(error instanceof VersionConflictError)) await this.report(error as Error)
 			throw error
 		}
 	}
@@ -267,4 +284,5 @@ export interface CommandParams<T> {
 	where?: Partial<T>
 	payload?: Partial<T> | Partial<T>[]
 	options?: Record<string, unknown>
+	expectedVersion?: number
 }
