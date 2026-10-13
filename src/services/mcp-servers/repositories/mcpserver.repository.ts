@@ -16,12 +16,12 @@ export class McpServerRepository {
 		return mcpServer
 	}
 
-	public async update(mcpServer: McpServer, options?: { checkVersion?: boolean }): Promise<McpServerProps | null> {
-		if (options?.checkVersion && typeof mcpServer.__v !== 'number') throw new Error('[McpServerRepository] The entity version is required to check for conflicts')
+	public async update(mcpServer: McpServer, options?: { expectedVersion?: number }): Promise<McpServerProps | null> {
+		if (options && typeof options.expectedVersion !== 'number') throw new Error('[McpServerRepository] The expected version is required to check for conflicts')
 		return await this._.updateOne({
 			where: { _id: mcpServer._id },
 			payload: mcpServer.toFlatDocument(),
-			expectedVersion: options?.checkVersion ? mcpServer.__v : undefined,
+			expectedVersion: options?.expectedVersion,
 		})
 	}
 

@@ -50,7 +50,7 @@ export class UpdateMcpServerUseCase extends BaseUseCase<Params, Output> {
 			mcpServer.lockForNewEndpoint()
 		}
 
-		const result = await this.mcpServerRepository?.update(mcpServer, { checkVersion: true })
+		const result = await this.mcpServerRepository?.update(mcpServer, { expectedVersion: existing.__v })
 
 		if (!result) {
 			throw new Error('Mcp Server not found or update failed')

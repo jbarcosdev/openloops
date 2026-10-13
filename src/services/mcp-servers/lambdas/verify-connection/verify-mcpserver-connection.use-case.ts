@@ -50,7 +50,7 @@ export class VerifyMcpServerConnectionUseCase extends BaseUseCase<Params, Output
 			else current.markError(failure)
 
 			try {
-				const saved = await this.mcpServerRepository?.update(current, { checkVersion: true })
+				const saved = await this.mcpServerRepository?.update(current, { expectedVersion: current.__v })
 				return { data: saved ?? current.toJSON() }
 			} catch (error) {
 				if (!(error instanceof VersionConflictError) || attempt === MAX_ATTEMPTS) throw error

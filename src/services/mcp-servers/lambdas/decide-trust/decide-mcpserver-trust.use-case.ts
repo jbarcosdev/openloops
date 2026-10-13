@@ -39,7 +39,7 @@ export class DecideMcpServerTrustUseCase extends BaseUseCase<Params, Output> {
 
 		mcpServer.setUpdatedBy(params.currentUser)
 
-		const saved = await this.mcpServerRepository?.update(mcpServer, { checkVersion: true })
+		const saved = await this.mcpServerRepository?.update(mcpServer, { expectedVersion: found.__v })
 
 		return { data: saved ?? mcpServer.toJSON() }
 	}
