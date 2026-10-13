@@ -90,11 +90,12 @@ export class MongoRepository<T> {
 		}
 	}
 
-	public async findAll ({ where, select }: QueryParams<T>): Promise<T[]> {
+	public async findAll ({ where, select, options }: QueryParams<T>): Promise<T[]> {
 		try {
 			const db = await this.dbClient.db(this.database)
 			const collection = db.collection(this.collection)
-			const result = await collection.find({ ...where, ...this._where }, { projection: select }).toArray()
+			const cursor = collection.find({ ...where, ...this._where }, { projection: select })
+			const result = await (options?.sortBy ? cursor.sort(options.sortBy) : cursor).toArray()
 			return result as unknown as T[]
 		} catch (error: any) {
 			await this.report(error as Error)
