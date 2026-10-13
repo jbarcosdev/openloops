@@ -1,7 +1,7 @@
 import { Agent } from 'openloops/core'
 import { Logger } from 'openloops/common'
 import { CurrentUser } from 'openloops/base'
-import { PlanExecuteLoop } from 'openloops/loops'
+import { AgiLoop } from 'openloops/loops'
 
 async function runAgentWithHooks () {
     const logger = new Logger()
@@ -9,7 +9,7 @@ async function runAgentWithHooks () {
 
     if (!currentUser) throw new Error('[Demo] current user is not defined')
 
-    const loop = new PlanExecuteLoop()
+    const loop = new AgiLoop()
     const agent = new Agent({ loop })
 
     agent.addHook('pre_execution', () => {

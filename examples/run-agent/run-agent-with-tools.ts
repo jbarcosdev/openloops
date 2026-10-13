@@ -1,7 +1,7 @@
 import { Agent } from 'openloops/core'
 import { Logger } from 'openloops/common'
 import { CurrentUser } from 'openloops/base'
-import { PlanExecuteLoop } from 'openloops/loops'
+import { AgiLoop } from 'openloops/loops'
 import { webSearchTool } from 'openloops/tools'
 
 async function runAgentWithTools () {
@@ -10,7 +10,7 @@ async function runAgentWithTools () {
 
     if (!currentUser) throw new Error('[Demo] current user is not defined')
 
-    const loop = new PlanExecuteLoop()
+    const loop = new AgiLoop()
     const agent = new Agent({ loop })
     agent.addTool(webSearchTool) // requires a serper api key (add SERPER_API_KEY to your .env file)
 

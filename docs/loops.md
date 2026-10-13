@@ -1,16 +1,29 @@
 # Building an `AgentLoop`
 
-This is the one piece of `openloops` you're expected to write yourself, and the only one that matters for what your agent actually does.
+An `AgentLoop` decides how your agent thinks and acts: when it answers directly, when it uses tools, when it asks the user. `openloops` ships `AgiLoop`, which is the one to use for general agents, and you can write your own for anything else.
 
 ```typescript
-import { AgentLoop, RunContext } from 'openloops/core'
+import { AgentLoop, AgentStatus, Harness, RunContext } from 'openloops/core'
+import { AgiLoop } from 'openloops/loops'
 ```
 
-## The mental model
+## `AgiLoop`
 
-An `AgentLoop` is a small state machine. It has a handful of **nodes** (plain async functions), and each node decides which node runs next. There's no graph to declare ahead of time, no edges to wire up: a node just calls `ctx.setNextNode(...)` with whichever node should run after it, and the runtime takes it from there.
+`AgiLoop` is a reasoning loop. It answers directly when it can, and otherwise works in cycles of think, act and observe until it can give a final answer.
 
-Read a loop top to bottom and you should understand exactly what your agent does, without needing to trace through a separate graph definition.
+| Node | What it does |
+| --- | --- |
+| `fast_responder` | Initial node. Detects the language and answers directly when no tools or memory are needed. |
+| `reasoning_engine` | Reads the situation or the results of the last actions, rewrites its working state and decides the next actions. |
+| `action_engine` | Runs the actions the reasoning engine asked for, asks the user for confirmation when needed, delivers the final answer. |
+
+The loop works within a budget per task (20 reasoning turns and 40 tool calls) and stops with an honest answer when the model repeats itself, keeps only reading notes, or runs out of budget. It also rejects final answers that cite identifiers that never appeared in a result or in the user's words.
+
+```typescript
+const agent = new Agent({ loop: new AgiLoop() })
+```
+
+`PlanExecuteLoop` (`openloops/loops`) is deprecated and will be removed. Do not build on it.
 
 ## The contract
 
@@ -38,102 +51,94 @@ export class MyLoop extends AgentLoop {
         return { name: 'You', email: 'you@example.com', website: 'https://example.com' }
     }
 
-    private async respond (ctx: RunContext): Promise<void> {
-        ctx.reply('Hello!')
+    private async respond (ctx: RunContext, harness: Harness): Promise<void> {
+        harness.reply('Hello!')
+        ctx.chat.state?.setStatus(AgentStatus.IDLE)
     }
 }
 ```
 
-`nodes` is a getter, not a plain field. Declaring it as a getter means it can be the very first thing in the class, before the node methods it references even exist yet, without any initialization-order issues.
+- `nodes` is a getter, so it can reference node methods declared later in the class.
+- `initialNode` is where a new task starts. Return a direct reference such as `this.nodes.respond` so a typo is caught by TypeScript.
+- `name` is stored on the chat so `openloops` knows which loop drives it. Bump `version` every time the loop or its prompts change; it is recorded in the metadata of every turn.
+- A node decides what runs next with `harness.setNextNode(...)`. The loop stops when a node leaves the status as `idle`, `failed`, `awaiting_user_input` or `awaiting_user_confirmation`.
 
-`initialNode` is where a brand-new task starts. You can return either the node's key as a string, or (recommended) a direct reference such as `this.nodes.respond`, so a typo is caught by TypeScript instead of failing silently at runtime.
-
-`name` and `version` identify the loop. `name` is what gets stored on a chat so `openloops` knows which loop is driving it. `version` is yours to bump however you version your own releases.
+Nodes are called with the loop as `this`, so private helpers work as usual.
 
 ## `RunContext`
 
-Every node receives a single `ctx: RunContext` argument. This is the entire surface area a node needs. Everything else the framework handles for you.
+The first argument of a node is everything it needs to read:
 
 ```typescript
-ctx.currentMessage      // the user's message for this turn
-ctx.currentUser         // the CurrentUser running this turn
-ctx.task                // the active AgentTask, if one exists yet
-ctx.chat                // the full Chat entity: state, tasks, context, messages
-
-ctx.reply('...')                    // send a message back to the user
-ctx.setNextNode(this.nodes.other)   // move to another node, or undefined to pause the turn
-
-ctx.tools                           // Tool[] available this turn (native + MCP)
-ctx.searchTools(keywords)           // rank available tools by keyword relevance
-
-ctx.skillParams                     // pre-built params for calling a Skill.run()
-ctx.baseParams                      // pre-built params for calling a Tool.run()
-
-ctx.identity                        // the Agent's identity, if one was configured
+ctx.currentMessage
+ctx.currentUser
+ctx.currentSession
+ctx.identity
+ctx.chat
+ctx.task
+ctx.chatOptions
+ctx.tools
+ctx.skillParams
+ctx.baseParams
+ctx.logger
 ```
 
-### Tasks
+- `ctx.chat` is the `Chat` entity: state, settings, messages and tasks.
+- `ctx.task` is the active `AgentTask`, if one exists.
+- `ctx.skillParams` is what you spread into `Skill.run`. See [skills](skills.md).
+- `ctx.baseParams` is what a `Tool` receives next to its arguments.
 
-A **task** represents one thing the user asked the agent to do. "Check the price of Bitcoin" and a later "actually, search the web instead" are two different tasks, even in the same chat. `ctx.chat` exposes everything you need to manage them:
+## `Harness`
+
+The second argument is the runtime services the loop can call:
+
+| Member | What it does |
+| --- | --- |
+| `reply(content)` | Sends a message to the user. |
+| `setNextNode(node)` | Chooses the next node. `undefined` falls back to the initial node on the next message. |
+| `toolCatalog()` | Returns the tools to declare to the model and the context that describes the rest. Handles discovery and MCP servers. |
+| `searchTools(keywords, opts)` | Ranks the available tools by keyword. `opts.server` limits it to one MCP server. |
+| `ensureTools()` | Loads the list of MCP servers and returns the tools known so far. |
+| `runAction(action, opts)` | Runs an action through the tool pipeline. |
+| `requiresApproval(action)` | Tells whether an action needs the user's confirmation before it can run. |
+| `requestApproval(actions, { resumeAt })` | Asks the user to confirm and resumes at `resumeAt` once they answer. |
+| `reopenTask(taskId)` | Continues a task that was already completed. |
+| `workspace` | Saves and reads notes and large outputs of the task. |
+
+Always go through `runAction`. It applies validation, grounding checks, duplicate protection, output offloading and the approval rules described in [harness](harness.md#tool-pipeline). Do not call `tool.run` yourself.
+
+## Tasks
+
+A task is one thing the user asked the agent to do. A later "actually, search the web instead" starts a different task in the same chat.
 
 ```typescript
-ctx.chat.createTask(goal)                 // start a new task, pausing whichever one was active
-ctx.chat.reopenTask(taskId)               // resume a previously completed task
-ctx.chat.completeTask(taskId, summary)    // mark a task done
-ctx.chat.failTask(taskId)                 // mark a task failed
-ctx.chat.cancelTask(taskId)               // mark a task cancelled by the user
-ctx.chat.lastCompletedTask()              // the most recently completed task in this loop
+const task = ctx.task ?? ctx.chat.createTask(ctx.currentMessage)
+
+ctx.chat.completeTask(task.id, 'summary')
+ctx.chat.failTask(task.id)
+ctx.chat.cancelTask(task.id)
+ctx.chat.lastCompletedTask()
 ```
 
-A task carries its own ledger of actions (tool calls). See below.
+A task carries its ledger of actions (tool calls), the turns of the model, what the model learned and the schemas of the tools it has seen.
 
-### Running tools
-
-```typescript
-const tool = ctx.tools.find(t => t.name === 'web_search')
-const action = await ctx.task.runTool({ name: 'web_search', args: { query: '...' } }, tool, ctx.chat.context, ctx.baseParams)
-```
-
-For a plan made of several steps with dependencies between them, enqueue them all first and let the runtime resolve which ones are ready to run:
-
-```typescript
-task.addAction({ name: 'get_price', stepId: '1', args: { symbol: 'BTC' } })
-task.addAction({ name: 'convert', stepId: '2', args: { amount: '{{step_1.output}}' }, dependsOn: ['1'] })
-
-const [next] = task.readyActions
-await task.runReadyAction(next.id, tool, ctx.chat.context, ctx.baseParams)
-```
-
-`{{step_1.output}}` and `{{context.someName}}` placeholders inside `args` are resolved automatically against the task's own ledger and `ctx.chat.context`.
-
-### Running skills
-
-A `Skill` is a typed, structured call to an LLM. See [Skills](skills.md). Run one and branch on its result directly:
+## Running skills
 
 ```typescript
 const result = await mySkill.run({ ...ctx.skillParams, contextInjection: { goal: ctx.task?.goal } })
-
-if (result.canAnswer) {
-    ctx.reply(result.answer)
-}
 ```
 
-The call is automatically traced. You don't need to log anything yourself.
+Every skill run is traced automatically. See [skills](skills.md).
 
-### Workspace (`ctx.chat.context`)
+## Shared skills
 
-Anything your loop learns that another node (or a later task) might need, such as an extracted entity, a strategy, or a tool's output, can be stored and looked up by name:
+`openloops/loops` also exports the skills that every loop can reuse:
 
-```typescript
-ctx.chat.context.addContext({
-    taskId: task.id,
-    meta: { name: 'strategy', type: 'artifact', shortDescription: '...' },
-    content: someResult,
-})
+| Skill | Purpose |
+| --- | --- |
+| `fastResponder` | Answers general conversation directly or says it cannot. |
+| `approvalRequest` | Writes the question that asks the user to confirm pending actions. |
+| `confirmationGate` | Reads the user's answer and decides confirmed, declined or unclear. |
+| `mcpChangeReview` | Reviews what changed in an MCP server and writes the approval question. |
 
-ctx.chat.context.selectContext({ taskId: task.id, name: 'strategy' })
-```
-
-## A complete example
-
-`openloops` ships `PlanExecuteLoop` (`openloops/loops`) as a full reference implementation. It's a loop that tries to answer directly first, falls back to planning a sequence of tool calls when it can't, asks for confirmation before anything destructive, and replans if a step doesn't go as expected. Reading its source is the fastest way to see every piece above working together in a real loop.
+`Agent` already runs the last three for you when you use `harness.requestApproval`.

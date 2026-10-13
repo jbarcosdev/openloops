@@ -1,26 +1,41 @@
 # The `Agent` runtime
 
-`Agent` is the runtime that drives an `AgentLoop`. It owns everything a loop shouldn't have to think about: loading and saving the chat, dispatching to the right node, resolving tools (native and MCP), handling interruption requests, and tracking usage.
+`Agent` is the runtime that drives an `AgentLoop`. It owns everything a loop shouldn't have to think about: loading and saving the chat, dispatching to the right node, running guardrails, resolving tools (native and MCP), asking for confirmation, handling interruption requests, and tracking usage.
 
 ```typescript
 import { Agent } from 'openloops/core'
+import { AgiLoop } from 'openloops/loops'
 ```
 
 ## Creating an agent
 
 ```typescript
 const agent = new Agent({
-    loop: new MyLoop(),
-    tools: [],       // optional, additional native Tool instances
-    identity: {      // optional, see "Identity" below
+    loop: new AgiLoop(),
+    tools: [],
+    guards: [],
+    identity: {
         name: 'Sofi',
         gender: 'Female',
         role: 'Personal assistant and daily companion',
     },
+    maxInputLength: 100_000,
+    maxIterations: 50,
+    strictMode: false,
 })
 ```
 
-`loop` is the only required option. It must be an instance of a class extending `AgentLoop` (see [Building an `AgentLoop`](loops.md)).
+| Option | Required | Default | What it does |
+| --- | --- | --- | --- |
+| `loop` | yes | none | An instance of a class extending `AgentLoop`. Use `AgiLoop` unless you wrote your own. See [loops](loops.md). |
+| `tools` | no | `[]` | Extra native `Tool` instances. See [tools](tools.md). |
+| `guards` | no | `[]` | Input guards that run before the model sees a message. See [guardrails](guardrails.md). |
+| `identity` | no | none | Name, gender and role injected into every skill. |
+| `maxInputLength` | no | `100000` | Longest message accepted, in characters. Longer messages are blocked by a built-in guard. |
+| `maxIterations` | no | `50` | Hard limit of loop iterations in one run. When reached, the run fails with `AGENT_MAX_ITERATIONS_REACHED`. |
+| `strictMode` | no | `false` | When `true`, the user is always asked before the agent uses an MCP server whose tools changed after being approved. See [MCP servers](mcp-servers.md#how-the-agent-uses-the-servers). |
+
+An `Agent` instance holds the state of the run it is executing, so run one conversation at a time per instance and create another instance for concurrent runs.
 
 ## Running a turn
 
@@ -28,52 +43,99 @@ const agent = new Agent({
 const result = await agent.run({
     input: {
         message: 'hi, how are you?',
-        chatId: undefined,   // optional, omit to start a new chat
-        messageId: undefined,
+        chatId: undefined,
     },
     options: {
         notifyOnCompletion: true,
-        isPrivateSession: false,
-        modelName: undefined,
-        loopName: undefined,
+        modelProvider: 'google',
+        modelName: 'gemini-2.5-flash',
     },
     currentUser,
-    currentSession, // optional
+    currentSession,
 })
 ```
 
-Omit `chatId` to start a brand-new chat. Pass an existing `chatId` to continue a conversation: `openloops` loads it, appends the new message, and resumes the loop exactly where it left off, including mid-plan, mid-confirmation, or mid-clarification.
+Omit `chatId` to start a brand-new chat. Pass an existing `chatId` to continue a conversation: `openloops` loads it, appends the new message, and resumes the loop exactly where it left off, including mid-confirmation or mid-question.
 
-`result.data` is the full `Chat` instance after the turn finished. The most common thing you'll want from it:
+`options` are stored in the chat settings, so they stick for the following turns of that chat:
+
+| Option | What it does |
+| --- | --- |
+| `modelProvider`, `modelName` | Model used for this chat. Defaults to `openai` and `gpt-4o-mini`. See [configuration](configuration.md). |
+| `loopName` | Name of the loop driving the chat. Set automatically from the loop. |
+| `notifyOnCompletion` | Exposed as `agent.notifyOnCompletion` so a post execution hook can notify the user. |
+| `isPrivateSession` | Stored in the chat settings for your application to use. |
+
+`currentSession` is optional. It carries device, location and locale, which skills use to answer in the right time zone and language.
+
+## The result
+
+`agent.run` does not throw for failures inside the run. It returns:
 
 ```typescript
-result.data.lastAnswer   // the assistant's latest reply, as a string
-result.data.messages     // the full message history
-result.data.tasks        // every task this chat has worked on, with its ledger of actions
+const { data, error } = await agent.run({ input, currentUser })
+
+data?.lastAnswer
+data?.messages
+data?.tasks
+data?.state?.status
 ```
+
+- `data` is the `Chat` after the turn, or `undefined` if the chat could not even be created.
+- `error` is a message you can show to the user, present only when the run failed. The chat is marked as `failed` and saved.
+
+`data.state.status` tells you where the conversation is:
+
+| Status | Meaning |
+| --- | --- |
+| `idle` | The task finished and the agent is ready for a new request. |
+| `processing` | A run is in progress. |
+| `awaiting_user_input` | The agent asked a question. Send the answer as the next message. |
+| `awaiting_user_confirmation` | The agent asked the user to approve an action. Send the answer as the next message. |
+| `failed` | The run failed. `data.state.lastError` has the code and message. |
+
+## Confirmations
+
+When the loop is about to run a tool that is destructive, or a tool from an MCP server the user has not approved yet, the agent stops, asks the user in the chat and leaves the status as `awaiting_user_confirmation`. The user's next message is read by the `confirmation_gate` skill:
+
+- A yes runs the pending actions. For an MCP server, the harness records the approval on behalf of the user.
+- A no cancels the task. For an MCP server, it is blocked.
+- An unclear answer makes the agent ask again.
+
+You do not implement any of this. See [harness](harness.md#approvals).
 
 ## Identity
 
-Pass `identity` once when constructing the `Agent`, and it's injected into every skill's context automatically. There's no need to hardcode a name, gender, or role inside any skill's prompt. This is how you reskin an agent (change its name, personality framing, etc.) without touching a single line of loop or skill code.
+Pass `identity` once when constructing the `Agent` and it is injected into every skill's context. This is how you reskin an agent (name, personality framing) without touching a single line of loop or skill code.
 
 ## Tools
 
 ```typescript
 agent.addTool(myCustomTool)
-agent.tools // Tool[] currently registered
+agent.tools
 ```
 
-Tools you add here are available to the loop for the entire turn, alongside anything auto-loaded from the user's connected MCP servers. See [Tools](tools.md) and [MCP servers](mcp-servers.md).
+Tools you add are available for the whole run, next to the tools of the user's MCP servers. `agent.tools` also includes the MCP tools that have been loaded so far in the current run. See [tools](tools.md) and [MCP servers](mcp-servers.md).
 
 ## MCP servers
 
-You never call anything MCP-related directly on `Agent`. At the start of every turn, `openloops` looks up the current user's configured MCP servers, connects to each one, and converts their exposed tools into regular `Tool` instances. The loop never knows the difference. See [MCP servers](mcp-servers.md) for how a user registers one.
+You never call anything MCP-related on `Agent`. At the start of a turn the agent looks up the user's registered servers and shows them to the model as an index (name, description, state). It connects to a server only when the model asks for its tools, checks that its manifest is the one the user approved, and disconnects every session at the end of the turn, including when the turn fails.
 
 ```typescript
-agent.mcps // McpServer[] connected during this turn
+agent.mcps
 ```
 
-Connections are closed automatically at the end of the turn, including if the turn throws.
+`agent.mcps` is the list of `McpServer` entities known during the current turn. See [MCP servers](mcp-servers.md).
+
+## Guardrails
+
+```typescript
+import { inputGuards } from 'openloops/guardrails'
+
+agent.addGuard(inputGuards.blockCard)
+```
+
+Guards run on the user message before any model call. See [guardrails](guardrails.md).
 
 ## Hooks
 
@@ -83,25 +145,28 @@ agent.addHook('pre_execution', () => {
 })
 
 agent.addHook('post_execution', async () => {
-    // runs once, right after the loop finishes (success or failure)
     if (agent.notifyOnCompletion) {
         // send a push notification, etc.
     }
 })
 ```
 
-`agent.notifyOnCompletion` reflects whatever was passed in `options.notifyOnCompletion` for this turn.
+Hooks do not run when a guard blocks the message, because the loop never starts.
 
-## Interrupting a running turn
+## Stopping a running turn
 
 ```typescript
-import { Agent } from 'openloops/core'
-
 await Agent.interruptExecution(chatId, currentUser)
 ```
 
-This is designed to be called from a separate request while `agent.run()` is still executing elsewhere, for example when the user hits "stop" in your UI. The running loop checks for this request between every node and stops cleanly, resuming from the beginning of the current task the next time the user sends a message.
+Call it from a separate request while `agent.run()` is still executing, for example when the user presses stop. The running loop checks for the request before every node and stops cleanly. The next message in that chat starts again from the initial node of the loop.
+
+`agent.stopAgent()` stops the loop of the same instance from your own code.
+
+## What gets stored
+
+For every chat, `openloops` persists the chat and its messages, the tasks, every action (tool call) with its result, the traces of each node and skill, and the workspace items that hold large tool outputs and notes. Every LLM call is recorded with its cost, see [usage](usage.md).
 
 ## Error handling
 
-If a turn throws for any reason, `Agent` marks the chat as failed, saves it, and disconnects any open MCP sessions before the error propagates. You don't need a `try`/`finally` around `agent.run()` to avoid leaking connections. It's already handled.
+If a turn fails for any reason, `Agent` marks the chat as failed, saves it, closes any open MCP session and returns the error in `result.error`. LLM failures such as rate limits or exhausted quota carry a user-facing message and a retryable flag in `data.state.lastError`.

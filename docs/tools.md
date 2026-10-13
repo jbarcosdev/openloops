@@ -1,6 +1,6 @@
 # Tools
 
-A `Tool` is a single capability your agent can call, such as searching the web, creating a record, or sending a message. Loops never care whether a tool is native to your code or came from a connected MCP server; both are the same `Tool` instance by the time a loop sees them.
+A `Tool` is a single capability your agent can call, such as searching the web, creating a record, or sending a message. Loops never care whether a tool is native to your code or came from a connected MCP server; both are the same `Tool` class by the time a loop sees them.
 
 ```typescript
 import { Tool, BaseParams } from 'openloops/tools'
@@ -35,20 +35,33 @@ export const greetUserTool = new Tool({
 })
 ```
 
-`BaseParams` (`currentUser`, `sessionId`, `answerId`) is always merged into whatever arguments your handler receives. Destructure and ignore the ones you don't need.
+| Prop | What it does |
+| --- | --- |
+| `name` | Letters, numbers, `_` and `-`, up to 64 characters. This is the name the model writes in an action. |
+| `description` | What the tool does. Write it for the model. |
+| `parameters` | JSON schema of the arguments. |
+| `destructive` | `true` makes the agent ask the user to confirm before it runs. Defaults to `false`, so set it explicitly for anything that changes or deletes data. |
+| `handler` | Receives the arguments plus `BaseParams` and returns `{ data }`. |
 
-`destructive: true` means the agent will ask the user to confirm before running it. Default it to `true` for anything that isn't obviously safe and read-only.
+`BaseParams` (`currentUser`, `sessionId`, `answerId`) is always merged into the arguments your handler receives. Destructure and ignore the ones you don't need.
 
-A `Tool` instance is stateless and shared. Never write to `this` inside a handler. Everything that varies between calls comes in through `params`.
+A `Tool` instance is shared. Never write to `this` inside a handler. Everything that varies between calls comes in through `params`.
+
+## Argument validation
+
+Arguments are validated against `parameters` before the handler runs: required arguments, types and `enum` values. An invalid call comes back to the model as a failed action with a message it can use to correct itself. Tools from MCP servers are validated strictly, so an argument that is not in the schema is rejected.
 
 ## Registering a tool
 
 ```typescript
 import { Agent } from 'openloops/core'
+import { AgiLoop } from 'openloops/loops'
 
-const agent = new Agent({ loop: new MyLoop() })
+const agent = new Agent({ loop: new AgiLoop() })
 agent.addTool(greetUserTool)
 ```
+
+When your agent has more than 15 local tools, the model no longer receives the whole catalog. It sees a summary per source and finds the tools it needs with the native `search_tools`. See [harness](harness.md#tool-discovery).
 
 ## Built-in tools
 
@@ -60,12 +73,18 @@ import { webSearchTool } from 'openloops/tools'
 agent.addTool(webSearchTool)
 ```
 
-Requires a [Serper](https://serper.dev) API key. Create a free one and set `SERPER_API_KEY` in your `.env`.
+Requires a [Serper](https://serper.dev) API key. Set `SERPER_API_KEY` in your `.env`.
 
 ### `callAiTool`
 
-An LLM-backed tool for ad-hoc analysis, summarization, extraction, or transformation, useful as a fallback when no other tool fits a step.
+An LLM-backed tool for ad-hoc analysis, summarization, extraction or transformation. It is useful as a fallback when no other tool fits a step.
 
 ## MCP tools
 
-Tools exposed by a connected MCP server are converted to `Tool` instances automatically by `openloops`. See [MCP servers](mcp-servers.md). Their names are namespaced by the server's own name (e.g. `my-server__search`) so two servers can never collide, even if they expose a tool with the same name.
+Tools exposed by a connected MCP server are converted to `Tool` instances by `openloops`. See [MCP servers](mcp-servers.md). Their names are prefixed with the server's name (for example `my-server__search`) so two servers never collide.
+
+An MCP tool differs from a local one in three ways:
+
+- `origin` is `mcp`, `server` is the server's name and `notice` is set. The notice tells the model that the description was written by a third party and is not an instruction from the user.
+- `destructive` comes from the server's `destructiveHint` annotation and is `false` when the annotation is missing.
+- It cannot run until the user has approved its server.
