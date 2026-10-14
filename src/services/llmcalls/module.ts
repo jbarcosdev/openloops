@@ -1,8 +1,8 @@
 import 'reflect-metadata'
 import { container } from 'tsyringe'
-import { GetLLMUsageUseCase, Params as LParams, Output as LOutput} from './lambdas/get-llm-usage'
-import { GetLLMUsageStatsUseCase, Params as SParams, Output as SOutput } from './lambdas/get-llm-usage-stats'
-import { CreateLLMCallUseCase, Params as CParams, Output as COutput} from './lambdas/create-llmcall'
+import { GetLLMUsageUseCase, Params as LParams, Output as LOutput} from './use-cases/get-llm-usage.use-case'
+import { GetLLMUsageStatsUseCase, Params as SParams, Output as SOutput } from './use-cases/get-llm-usage-stats.use-case'
+import { CreateLLMCallUseCase, Params as CParams, Output as COutput} from './use-cases/create-llmcall.use-case'
 
 export async function getLLMUsage (props: LParams): Promise<LOutput> {
     const getLLMUsageUseCase = container.resolve(GetLLMUsageUseCase)

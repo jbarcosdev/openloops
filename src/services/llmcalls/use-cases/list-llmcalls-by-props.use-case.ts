@@ -1,8 +1,8 @@
 import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
-import { LLMCallRepository } from '../../repositories'
+import { LLMCallRepository } from '../repositories'
 import { QueryOptions } from '@common/repositories'
-import { LLMCallProps } from '../../entities'
+import { LLMCallProps } from '../entities'
 
 export interface Params extends BaseUseCaseParams {
 	where: LLMCallProps
