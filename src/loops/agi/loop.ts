@@ -31,7 +31,7 @@ export class AgiLoop extends AgentLoop {
     }
 
     get version () {
-        return '1.6.0'
+        return '1.6.1'
     }
 
     get author () {
@@ -124,7 +124,7 @@ export class AgiLoop extends AgentLoop {
             declaredTools: catalog.tools.map(tool => tool.name),
             invoker: findInvoker(catalog.tools),
             notJson: Boolean(rawText),
-            meta: { ...callInfo, rawResponse: rawText, loopVersion: this.version, costInUsd: result.costInUsd, blocks: callInfo.blocks > 1 ? callInfo.blocks : undefined },
+            meta: { ...callInfo, rawResponse: rawText, loopVersion: this.version, executionMode: harness.executionMode, costInUsd: result.costInUsd, blocks: callInfo.blocks > 1 ? callInfo.blocks : undefined },
         })
 
         if (stopReason) {

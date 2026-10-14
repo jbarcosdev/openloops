@@ -45,6 +45,7 @@ export interface TurnMeta {
 	skill?: string
 	skillVersion?: string
 	loopVersion?: string
+	executionMode?: string
 	costInUsd?: number
 	blocks?: number
 	rawResponse?: string

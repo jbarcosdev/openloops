@@ -26,6 +26,20 @@ describe('autonomous mode', () => {
             expect(llm.opening(0).CONTEXT.execution_mode).toBe('autonomous')
         })
 
+        it('records the mode of the run on every turn', async () => {
+            llm.script(ask('Which color?'), say('done'))
+            await env.send(env.agent(), 'paint it', undefined, autonomous)
+
+            expect(env.task().turns.map((turn: any) => turn.executionMode)).toEqual(['autonomous', 'autonomous'])
+        })
+
+        it('records the mode of the turns of an interactive run', async () => {
+            llm.script(say('done'))
+            await env.send(env.agent(), 'hello')
+
+            expect(env.task().turns[0].executionMode).toBe('interactive')
+        })
+
         it('keeps the origin of the chat when the user continues it interactively', async () => {
             llm.script(say('done'), say('sure'))
             const first = await env.send(env.agent(), 'run the report', undefined, autonomous)
