@@ -156,9 +156,11 @@ OPENLOOPS_DB_NAME='openloops'
 
 SECRET_MANAGER_KEY=secret
 
-# Model providers, set the ones you use
-OPENAI_API_KEY=
+# Default model provider (anthropic, claude-haiku-5-5)
 ANTHROPIC_API_KEY=
+
+# Other providers, only if you choose them per chat
+OPENAI_API_KEY=
 GEMINI_API_KEY=
 
 # Required for login

@@ -61,7 +61,7 @@ Omit `chatId` to start a brand-new chat. Pass an existing `chatId` to continue a
 
 | Option | What it does |
 | --- | --- |
-| `modelProvider`, `modelName` | Model used for this chat. Defaults to `openai` and `gpt-4o-mini`. See [configuration](configuration.md). |
+| `modelProvider`, `modelName` | Model used for this chat. Defaults to `anthropic` and `claude-haiku-5-5`. See [configuration](configuration.md#default-model). |
 | `loopName` | Name of the loop driving the chat. Set automatically from the loop. |
 | `executionMode` | `interactive` (default) or `autonomous`. See [Autonomous mode](#autonomous-mode). |
 | `notifyOnCompletion` | Exposed as `agent.notifyOnCompletion` so a post execution hook can notify the user. |
