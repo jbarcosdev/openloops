@@ -2,6 +2,12 @@
 
 Start with the [README](../README.md) for what `openloops` is and how to run it. These pages go deeper, grouped by what you are trying to do.
 
+## Start here
+
+| Page | What it covers |
+| --- | --- |
+| [Integration guide](integration-guide.md) | What to write in a backend: which endpoint calls what, the authorization you own and a security checklist. |
+
 ## Run an agent
 
 | Page | What it covers |

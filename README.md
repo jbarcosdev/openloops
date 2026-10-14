@@ -22,6 +22,10 @@ logger.info(result.data.lastAnswer, '[Demo] Result')
 
 That's it. The agent is persisted, resumable, and scoped to that one user, with tool execution, guardrails, and observability already wired in. No message table to design, no state machine to debug by hand, no MCP adapter to write.
 
+## Building a backend with it
+
+If you or your coding agent are going to build the backend that uses `openloops`, start with the [integration guide](docs/integration-guide.md). It lists which endpoint calls which use case, what authorization is left to you (the package has no HTTP layer), how to run agents and scheduled jobs, and a security checklist. The whole documentation is also shipped inside the package, in `node_modules/openloops/docs`, with an index for tools in [`docs/llms.txt`](docs/llms.txt).
+
 ## Pick a loop, or write your own
 
 The logic that makes your agent *your* agent (how it reasons, when it asks for confirmation, whether it answers in one shot or works through a sequence of tools) lives in an `AgentLoop`. `openloops` ships `AgiLoop`, a reasoning loop that answers directly when it can and otherwise works in cycles of think, act and observe until it has a final answer. Any loop, yours or someone else's, is interchangeable.
@@ -227,6 +231,7 @@ Every pattern above, and a lot more, lives as a runnable example in [`examples/`
 
 ## Learn more
 
+- [Integration guide](docs/integration-guide.md)
 - [Documentation index](docs/README.md)
 - [The `Agent` runtime](docs/agent.md)
 - [Building an `AgentLoop`](docs/loops.md)

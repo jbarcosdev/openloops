@@ -1,0 +1,35 @@
+# openloops
+
+> A TypeScript runtime for AI agents that run in your backend. It persists chats, tasks and tool calls in MongoDB, scopes everything to a user, asks for approval before destructive tools and unapproved MCP servers, and can run agents on a schedule. It has no HTTP layer: your backend calls its use cases and owns authorization.
+
+Start with the integration guide, then read only the pages you need. All pages are in this folder.
+
+## Start here
+
+- [Integration guide](integration-guide.md): what to write in a backend, which endpoint calls what, and the security checklist
+- [README](../README.md): what it is, the quick start and the package structure
+
+## Run an agent
+
+- [The Agent runtime](agent.md): options, running a turn, statuses, confirmations, autonomous mode
+- [Configuration](configuration.md): environment variables, default model, timeouts
+- [Chats](chats.md): the chat record, message source, listing and deleting
+
+## Shape the agent
+
+- [Building an AgentLoop](loops.md): AgiLoop, the loop contract, RunContext and Harness
+- [Skills](skills.md): LLM-backed reasoning steps and call modes
+- [Tools](tools.md): writing tools, validation, built-in tools
+- [Guardrails](guardrails.md): input guards before the model
+- [The harness](harness.md): tool pipeline, workspace, approvals, language, limits
+
+## Connect and schedule
+
+- [MCP servers](mcp-servers.md): registering servers, the trust flow, approving and blocking
+- [Agentic jobs](agentic-jobs.md): scheduled agent runs, recurrence, history and the runner
+
+## Users and cost
+
+- [User management](users.md)
+- [Authentication](authentication.md)
+- [LLM usage tracking](usage.md)

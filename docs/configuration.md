@@ -25,7 +25,7 @@ Any value can be stored encrypted by prefixing it with `ENC:`. It is decrypted w
 
 The default provider is `anthropic` and the default model is `claude-haiku-5-5`. It is what a chat uses when you do not choose another one, so `ANTHROPIC_API_KEY` is the only model key you need to start.
 
-It was chosen with the project's own evals (see `evals/`, results of 2026-10-12), in the default `plain_chat` mode and next to `gpt-6-luna`, `gpt-4o-mini` and `gemini-2.5-flash`. The skill rows use the real prompt of the reasoning engine:
+It was chosen with the project's own evals (the `evals/` folder of the repository, results of 2026-10-12), in the default `plain_chat` mode and next to `gpt-6-luna`, `gpt-4o-mini` and `gemini-2.5-flash`. The skill rows use the real prompt of the reasoning engine:
 
 | | `claude-haiku-5-5` | Others in the same evals |
 | --- | --- | --- |
