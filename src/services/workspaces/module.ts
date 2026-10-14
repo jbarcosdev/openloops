@@ -1,10 +1,10 @@
 import 'reflect-metadata'
 import { container } from 'tsyringe'
-import { SaveWorkspaceItemUseCase, Params as SParams, Output as SOutput } from './lambdas/save-workspace-item'
-import { GetWorkspaceItemUseCase, Params as GParams, Output as GOutput } from './lambdas/get-workspace-item'
-import { ListWorkspaceItemsUseCase, Params as LParams, Output as LOutput } from './lambdas/list-workspace-items'
-import { SearchWorkspaceItemsUseCase, Params as QParams, Output as QOutput } from './lambdas/search-workspace-items'
-import { DeleteWorkspaceItemUseCase, Params as DParams, Output as DOutput } from './lambdas/delete-workspace-item'
+import { SaveWorkspaceItemUseCase, Params as SParams, Output as SOutput } from './use-cases/save-workspace-item.use-case'
+import { GetWorkspaceItemUseCase, Params as GParams, Output as GOutput } from './use-cases/get-workspace-item.use-case'
+import { ListWorkspaceItemsUseCase, Params as LParams, Output as LOutput } from './use-cases/list-workspace-items.use-case'
+import { SearchWorkspaceItemsUseCase, Params as QParams, Output as QOutput } from './use-cases/search-workspace-items.use-case'
+import { DeleteWorkspaceItemUseCase, Params as DParams, Output as DOutput } from './use-cases/delete-workspace-item.use-case'
 
 export async function saveWorkspaceItem (props: SParams): Promise<SOutput> {
     const saveWorkspaceItemUseCase = container.resolve(SaveWorkspaceItemUseCase)

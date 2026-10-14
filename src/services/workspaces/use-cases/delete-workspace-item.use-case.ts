@@ -1,7 +1,7 @@
 import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
 import { BaseEntity } from '@common/base/base.entity'
-import { WorkspaceItemRepository } from '../../repositories'
+import { WorkspaceItemRepository } from '../repositories'
 
 export interface Params extends BaseUseCaseParams {
 	chatId: string
