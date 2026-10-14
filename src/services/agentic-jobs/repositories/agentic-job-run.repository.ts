@@ -32,8 +32,8 @@ export class AgenticJobRunRepository {
 		return await this._.findMany({ where: { jobId: new ObjectId(jobId) }, options })
 	}
 
-	public async findByOwner (ownerId: string, options?: QueryOptions): Promise<AgenticJobRunProps[]> {
-		return await this._.findMany({ where: { ownerId: new ObjectId(ownerId) }, options })
+	public async findByOwner (ownerId: string, options?: QueryOptions, status?: AgenticJobRunStatus): Promise<AgenticJobRunProps[]> {
+		return await this._.findMany({ where: { ownerId: new ObjectId(ownerId), ...(status ? { status } : {}) }, options })
 	}
 
 	public async findByStatus (status: AgenticJobRunStatus, limit: number): Promise<AgenticJobRunProps[]> {

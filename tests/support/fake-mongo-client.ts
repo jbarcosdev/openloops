@@ -93,6 +93,14 @@ class FakeCollection {
         return cursor
     }
 
+    async deleteOne (filter: Doc) {
+        const index = this.docs.findIndex(doc => matches(doc, filter))
+        if (index === -1) return { deletedCount: 0 }
+
+        this.docs.splice(index, 1)
+        return { deletedCount: 1 }
+    }
+
     async findOneAndUpdate (filter: Doc, update: { $set?: Doc, $unset?: Doc, $inc?: Record<string, number> }) {
         this.beforeUpdate?.()
 

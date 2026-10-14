@@ -63,6 +63,10 @@
       "types": "./dist/services/mcp-servers/index.d.ts",
       "default": "./dist/services/mcp-servers/index.js"
     },
+    "./agentic-jobs": {
+      "types": "./dist/services/agentic-jobs/index.d.ts",
+      "default": "./dist/services/agentic-jobs/index.js"
+    },
     "./users": {
       "types": "./dist/services/users/index.d.ts",
       "default": "./dist/services/users/index.js"
