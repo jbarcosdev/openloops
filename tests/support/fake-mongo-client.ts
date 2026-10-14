@@ -51,6 +51,16 @@ function setPath (target: Doc, path: string, value: any): void {
     cursor[parts[parts.length - 1]] = value
 }
 
+function deletePath (target: Doc, path: string): void {
+    const parts = path.split('.')
+    let cursor: any = target
+    for (const part of parts.slice(0, -1)) {
+        cursor = cursor?.[part]
+        if (!cursor || typeof cursor !== 'object') return
+    }
+    delete cursor[parts[parts.length - 1]]
+}
+
 class FakeCollection {
     docs: Doc[] = []
     beforeUpdate?: () => void
@@ -108,7 +118,7 @@ class FakeCollection {
         if (!doc) return null
 
         for (const [path, value] of Object.entries(update.$set ?? {})) setPath(doc, path, clone(value))
-        for (const path of Object.keys(update.$unset ?? {})) delete doc[path]
+        for (const path of Object.keys(update.$unset ?? {})) deletePath(doc, path)
         for (const [path, amount] of Object.entries(update.$inc ?? {})) doc[path] = (doc[path] ?? 0) + amount
 
         return clone(doc)

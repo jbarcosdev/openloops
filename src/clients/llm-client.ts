@@ -14,10 +14,9 @@ import { createLLMCall } from '@services/llmcalls'
 import { LLMChatParams, LLMResponse } from './llm-types'
 import { toPiContext, fromPiMessage } from './pi-ai-adapter'
 import { numberSetting } from '@common/utils/number-setting'
+import { resolveModel, toModelRef } from './model-resolution'
 import { LLMError, retryDelayMs, rejectsSamplingParameter } from './llm-error'
 
-const DEFAULT_PROVIDER = 'anthropic'
-const DEFAULT_MODEL = 'claude-haiku-5-5'
 const DEFAULT_TEMPERATURE = 0.7
 const MAX_RETRIES = 4
 const MAX_RATE_LIMIT_WAITS = 2
@@ -84,10 +83,10 @@ export class LLMClient {
             messages,
             tools,
             toolChoice,
-            provider = DEFAULT_PROVIDER,
-            modelName = DEFAULT_MODEL,
             temperature = DEFAULT_TEMPERATURE,
         } = params
+
+        const { provider, model: modelName } = this.chooseModel(params)
 
         const { builtinModels } = await import('@earendil-works/pi-ai/providers/all')
         const models = builtinModels()
@@ -134,10 +133,10 @@ export class LLMClient {
             currentUser,
             systemPrompt,
             messages,
-            provider = DEFAULT_PROVIDER,
-            modelName = DEFAULT_MODEL,
             temperature = DEFAULT_TEMPERATURE
         } = params ?? {}
+
+        const { provider, model: modelName } = this.chooseModel(params)
 
         const model = models.getModel(provider, modelName as never)
 
@@ -153,6 +152,17 @@ export class LLMClient {
             context,
             () => this.withoutRejectedTemperature(`${provider}/${modelName}`, omitTemperature => this.withDeadline(signal => models.complete(model, context, { ...(omitTemperature ? {} : { temperature }), maxRetries: MAX_RETRIES, signal }))),
         )
+    }
+
+    private chooseModel (params: { provider?: string, modelName?: string, currentUser?: CurrentUser }) {
+        const { provider, modelName, currentUser } = params ?? {}
+
+        if (Boolean(provider) !== Boolean(modelName)) throw new Error('[LLM Client] provider and modelName must be given together')
+
+        return resolveModel({
+            run: toModelRef({ provider, model: modelName }),
+            user: toModelRef(currentUser?.preferences?.defaultModel),
+        })
     }
 
     private async withDeadline (call: (signal: AbortSignal) => Promise<AssistantMessage>): Promise<AssistantMessage> {

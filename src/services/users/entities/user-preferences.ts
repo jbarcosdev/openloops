@@ -4,6 +4,7 @@ import { Country, CountryProps } from './user-country'
 import { Currency, CurrencyProps } from './user-currency'
 import { Timezone, TimezoneProps } from './user-timezone'
 import { Language, LanguageProps } from './user-language'
+import { DefaultModel, DefaultModelProps } from './user-default-model'
 
 export interface UserPreferencesProps {
 	notifications?: NotificationPreferencesProps
@@ -12,6 +13,7 @@ export interface UserPreferencesProps {
 	currency?: CurrencyProps
 	timezone?: TimezoneProps
 	language?: LanguageProps
+	defaultModel?: DefaultModelProps
 }
 
 export class UserPreferences {
@@ -22,6 +24,7 @@ export class UserPreferences {
 		public currency?: Currency,
 		public timezone?: Timezone,
 		public language?: Language,
+		public defaultModel?: DefaultModel,
 	) {}
 
 	static fromJSON (props: UserPreferencesProps): UserPreferences {
@@ -32,6 +35,7 @@ export class UserPreferences {
 			props.currency && Currency.fromJSON(props.currency),
 			props.timezone && Timezone.fromJSON(props.timezone),
 			props.language && Language.fromJSON(props.language),
+			props.defaultModel && DefaultModel.fromJSON(props.defaultModel),
 		)
 	}
 
@@ -43,6 +47,7 @@ export class UserPreferences {
 			currency: this.currency?.toJSON(),
 			timezone: this.timezone?.toJSON(),
 			language: this.language?.toJSON(),
+			defaultModel: this.defaultModel?.toJSON(),
 		}
 	}
 }

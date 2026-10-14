@@ -2,6 +2,7 @@ import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
 import { UserRepository } from '../repositories'
 import { User, UserProps } from '../entities'
+import { readDefaultModel } from '../utils/default-model'
 
 export interface Params extends BaseUseCaseParams {
 	id: string
@@ -25,8 +26,12 @@ export class UpdateUserUseCase extends BaseUseCase<Params, Output> {
 			throw new Error('Payload is required for updating user')
 		}
 
-		const user = await User.create({ ...payload, _id: id })
+		const model = payload.preferences ? await readDefaultModel(payload.preferences) : undefined
+
+		const user = await User.create({ ...payload, ...(payload.preferences ? { preferences: model!.preferences } : {}), _id: id })
 		user.setUpdatedBy(currentUser)
+
+		if (model?.clear) user.unset(['preferences.defaultModel' as keyof User])
 
 		this.logger.info(`Updating user: ${user.stringify()}`)
 

@@ -34,6 +34,7 @@ import { ToolPipeline, ToolPipelineRunOptions } from './tool-pipeline'
 import { NATIVE_TOOLS } from './native-tools'
 import { buildToolCatalog, isDeclarable, needsSearch, McpIndexEntry } from './tool-catalog'
 import { LLMError } from '@clients/llm-error'
+import { ModelRef, resolveModel, toModelRef } from '@clients/model-resolution'
 
 const MCP_CONNECT_RETRY_DELAYS_MS = [1000, 2000]
 const MCP_DESCRIPTION_CHARS = 300
@@ -75,6 +76,7 @@ export interface AgentOptions {
     identity?: AgentIdentity
     maxIterations?: number
     strictMode?: boolean
+    fallbackModel?: { provider: string, model: string }
 }
 
 interface ChatInput {
@@ -94,6 +96,8 @@ export class Agent {
     private readonly _identity?: AgentIdentity
     private readonly maxIterations: number
     private readonly strictMode: boolean
+    private readonly fallbackModel?: ModelRef
+    private model?: ModelRef
     private _tools: Tool[]
     private _mcps: McpEntry[] = []
     private mcpListing?: Promise<void>
@@ -156,6 +160,11 @@ export class Agent {
         this.maxIterations = agentOptions.maxIterations ?? DEFAULT_MAX_ITERATIONS
         this.strictMode = agentOptions.strictMode ?? false
 
+        if (agentOptions.fallbackModel) {
+            this.fallbackModel = toModelRef(agentOptions.fallbackModel)
+            if (!this.fallbackModel) throw new Error('[AGENT] fallbackModel needs a provider and a model')
+        }
+
         this.addGuard(createBlockInputOversize(agentOptions.maxInputLength ?? DEFAULT_MAX_INPUT_LENGTH))
         this.addGuard(inputCheck)
 
@@ -213,6 +222,9 @@ export class Agent {
             this.currentSession = currentSession
             this.currentMessage = message
             this.chatOptions = options
+            this.model = undefined
+
+            if (Boolean(options?.modelProvider) !== Boolean(options?.modelName)) throw new Error('[AGENT] Set both modelProvider and modelName, or neither')
             this.answerId = new ObjectId().toString()
 
             const proceed = await this.preRunner(chatId)
@@ -290,8 +302,17 @@ export class Agent {
 
         if (this.chatOptions?.notifyOnCompletion) this.currentChat.settings?.setNotifyOnCompletion(true)
         if (this.chatOptions?.isPrivateSession) this.currentChat.settings?.setIsPrivateSession(true)
-        if (this.chatOptions?.modelProvider) this.currentChat.settings?.setModelProvider(this.chatOptions.modelProvider)
-        if (this.chatOptions?.modelName) this.currentChat.settings?.setModelName(this.chatOptions.modelName)
+
+        this.model = resolveModel({
+            run: toModelRef({ provider: this.chatOptions?.modelProvider, model: this.chatOptions?.modelName }),
+            chat: toModelRef({ provider: this.currentChat.settings?.modelProvider, model: this.currentChat.settings?.modelName }),
+            user: toModelRef(this.currentUser?.preferences?.defaultModel),
+            agent: this.fallbackModel,
+        })
+
+        this.currentChat.settings?.setModelProvider(this.model.provider)
+        this.currentChat.settings?.setModelName(this.model.model)
+
         if (this.chatOptions?.loopName) this.currentChat.settings?.setLoopName(this.chatOptions.loopName)
 
         this.awaitingConfirmation = this.currentChat.state?.status === AgentStatus.AWAITING_USER_CONFIRMATION
@@ -1046,8 +1067,8 @@ export class Agent {
             },
             baseParams: this.baseParams,
             skillParams: {
-                provider: this.chatOptions?.modelProvider,
-                modelName: this.chatOptions?.modelName,
+                provider: this.model?.provider,
+                modelName: this.model?.model,
                 sessionId,
                 answerId: this.answerId,
                 userMessage: this.currentMessage,
