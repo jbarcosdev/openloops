@@ -1,11 +1,10 @@
 import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
-import { ChatRepository } from '../../repositories'
-import { Chat, ChatProps } from '../../entities'
+import { Chat, ChatProps } from '../entities'
+import { ChatRepository } from '../repositories'
 
 export interface Params extends BaseUseCaseParams {
-	id: string
-	payload?: ChatProps
+	id?: string
 }
 
 export interface Output extends BaseUseCaseOutput {
@@ -13,31 +12,24 @@ export interface Output extends BaseUseCaseOutput {
 }
 
 @autoInjectable()
-export class UpdateChatUseCase extends BaseUseCase<Params, Output> {
+export class InterruptExecutionUseCase extends BaseUseCase<Params, Output> {
 	constructor (@inject(ChatRepository) private readonly chatRepository?: ChatRepository) {
 		super()
 	}
 
 	async execute (params: Params): Promise<Output> {
-		const { payload, id, currentUser } = params
+		const { id, currentUser } = params
 
 		if (!id) {
 			throw new Error('Id is required for updating Chat')
 		}
 
-		if (!payload || Object.keys(payload).length === 0) {
-			throw new Error('Payload is required for updating Chat')
-		}
-
-		const chat = Chat.fromJSON({ ...payload, _id: id })
+		const chat = Chat.fromJSON({ _id: id })
+		chat.setAgentState({} as any)
+		chat.state?.interruptExecution()
 		chat.setUpdatedBy(currentUser)
 
-		if (payload.toUnset) {
-			const flat = chat.toFlatDocument()
-			const fields = Object.keys(payload.toUnset).filter(field => flat[field] === undefined)
-			if (fields.length) chat.unset(fields as (keyof Chat)[])
-		}
-
+		this.logger.debug(chat, '[AGENT] Interrupting execution...')
 		const result = await this.chatRepository?.update(chat)
 
 		if (!result) {

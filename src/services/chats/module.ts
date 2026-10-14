@@ -1,10 +1,10 @@
 import 'reflect-metadata'
 import { container } from 'tsyringe'
-import { CreateChatUseCase, Params as CParams, Output as COutput } from './lambdas/create-chat'
-import { UpdateChatUseCase, Params as UParams, Output as UOutput } from './lambdas/update-chat'
-import { GetChatByIdUseCase, Params as GParams, Output as GOutput } from './lambdas/get-chat-by-id'
-import { ListChatsByUserUseCase, Params as LParams, Output as LOutput } from './lambdas/list-chats-by-user'
-import { DeleteChatUseCase, Params as DParams, Output as DOutput } from './lambdas/delete-chat'
+import { CreateChatUseCase, Params as CParams, Output as COutput } from './use-cases/create-chat.use-case'
+import { UpdateChatUseCase, Params as UParams, Output as UOutput } from './use-cases/update-chat.use-case'
+import { GetChatByIdUseCase, Params as GParams, Output as GOutput } from './use-cases/get-chat-by-id.use-case'
+import { ListChatsByUserUseCase, Params as LParams, Output as LOutput } from './use-cases/list-chats-by-user.use-case'
+import { DeleteChatUseCase, Params as DParams, Output as DOutput } from './use-cases/delete-chat.use-case'
 
 export async function createChat (props: CParams): Promise<COutput> {
     const createChatUseCase = container.resolve(CreateChatUseCase)

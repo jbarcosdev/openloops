@@ -1,5 +1,5 @@
 import { AgentStatus } from '@harness/agent-state'
-import { ListChatsByUserUseCase } from '@services/chats/lambdas/list-chats-by-user'
+import { ListChatsByUserUseCase } from '@services/chats/use-cases/list-chats-by-user.use-case'
 import { useHarness, warehouseTools, act, say, REAL_ID } from '../support'
 
 describe('autonomous mode', () => {

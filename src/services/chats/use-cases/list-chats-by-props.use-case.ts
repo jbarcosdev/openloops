@@ -1,8 +1,8 @@
 import { autoInjectable, inject } from 'tsyringe'
 import { QueryOptions } from '@common/repositories'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
-import { ChatRepository } from '../../repositories'
-import { ChatProps } from '../../entities'
+import { ChatRepository } from '../repositories'
+import { ChatProps } from '../entities'
 
 export interface Params extends BaseUseCaseParams {
 	where: Partial<ChatProps>
