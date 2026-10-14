@@ -13,6 +13,8 @@ import { StartAgenticJobRunUseCase, Params as SRParams, Output as SROutput } fro
 import { FinishAgenticJobRunUseCase, Params as FRParams, Output as FROutput } from './use-cases/finish-agentic-job-run.use-case'
 import { SyncAgenticJobRunUseCase, Params as SYParams, Output as SYOutput } from './use-cases/sync-agentic-job-run.use-case'
 import { SyncAgenticJobRunsUseCase, Params as SYSParams, Output as SYSOutput } from './use-cases/sync-agentic-job-runs.use-case'
+import { AttachAgenticJobRunChatUseCase, Params as ACParams, Output as ACOutput } from './use-cases/attach-agentic-job-run-chat.use-case'
+import { RenewAgenticJobLeaseUseCase, Params as RLParams, Output as RLOutput } from './use-cases/renew-agentic-job-lease.use-case'
 
 export async function createAgenticJob (props: CParams): Promise<COutput> {
     const createAgenticJobUseCase = container.resolve(CreateAgenticJobUseCase)
@@ -77,4 +79,14 @@ export async function syncAgenticJobRun (props: SYParams): Promise<SYOutput> {
 export async function syncAgenticJobRuns (props: SYSParams = {}): Promise<SYSOutput> {
     const syncAgenticJobRunsUseCase = container.resolve(SyncAgenticJobRunsUseCase)
     return syncAgenticJobRunsUseCase.execute(props)
+}
+
+export async function attachAgenticJobRunChat (props: ACParams): Promise<ACOutput> {
+    const attachAgenticJobRunChatUseCase = container.resolve(AttachAgenticJobRunChatUseCase)
+    return attachAgenticJobRunChatUseCase.execute(props)
+}
+
+export async function renewAgenticJobLease (props: RLParams): Promise<RLOutput> {
+    const renewAgenticJobLeaseUseCase = container.resolve(RenewAgenticJobLeaseUseCase)
+    return renewAgenticJobLeaseUseCase.execute(props)
 }

@@ -23,7 +23,7 @@ export interface ClaimedRun {
 }
 
 export interface Output extends BaseUseCaseOutput {
-	data: { claimed: ClaimedRun[], skipped: AgenticJobRunProps[] }
+	data: { claimed: ClaimedRun[], skipped: ClaimedRun[] }
 }
 
 @autoInjectable()
@@ -47,7 +47,7 @@ export class ClaimDueAgenticJobsUseCase extends BaseUseCase<Params, Output> {
 		const due = await this.agenticJobRepository!.findDue(now, params.limit ?? DEFAULT_LIMIT)
 
 		const claimed: ClaimedRun[] = []
-		const skipped: AgenticJobRunProps[] = []
+		const skipped: ClaimedRun[] = []
 
 		for (const candidate of due) {
 			const id = String(candidate._id)
@@ -70,7 +70,7 @@ export class ClaimDueAgenticJobsUseCase extends BaseUseCase<Params, Output> {
 			if (pending) {
 				const run = await openRun(this.agenticJobRunRepository!, { job, trigger: 'schedule', status: 'skipped', workerId, now, scheduledFor, skipReason: 'The previous run is still waiting for the user' })
 				await this.agenticJobRepository!.release(id, workerId, { activeRunId: pending._id as any })
-				skipped.push(run.toJSON())
+				skipped.push({ job, run: run.toJSON() })
 				continue
 			}
 
