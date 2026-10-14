@@ -24,7 +24,7 @@ The default provider is `openai` and the default model is `gpt-4o-mini`. Pick an
 ```typescript
 await agent.run({
     input: { message: 'hi' },
-    options: { modelProvider: 'google', modelName: 'gemini-2.5-flash' },
+    options: { modelProvider: 'anthropic', modelName: 'claude-haiku-5-5' },
     currentUser,
 })
 ```

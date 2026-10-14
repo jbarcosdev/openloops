@@ -11,8 +11,8 @@ async function getRangeStats () {
             fromDate: '2026-01-01',
             toDate: '2026-09-30',
             groupBy: 'month',
-            provider: 'openai',
-            model: 'gpt-4o-mini',
+            provider: 'anthropic',
+            model: 'claude-haiku-5-5',
         },
         currentUser,
     })

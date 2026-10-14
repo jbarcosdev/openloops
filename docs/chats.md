@@ -62,7 +62,7 @@ const state = await getChatById({ id: chatId, select: { state: 1 }, currentUser 
 ```typescript
 const created = await createChat({ payload: { settings: { loopName: 'agi' } }, currentUser })
 
-await updateChat({ id: chatId, payload: { settings: { modelName: 'gpt-4o' } }, currentUser })
+await updateChat({ id: chatId, payload: { settings: { modelProvider: 'anthropic', modelName: 'claude-haiku-5-5' } }, currentUser })
 ```
 
 You rarely need `createChat`: `agent.run` creates the chat when you omit `chatId`.

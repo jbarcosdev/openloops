@@ -47,8 +47,8 @@ const result = await agent.run({
     },
     options: {
         notifyOnCompletion: true,
-        modelProvider: 'google',
-        modelName: 'gemini-2.5-flash',
+        modelProvider: 'anthropic',
+        modelName: 'claude-haiku-5-5',
     },
     currentUser,
     currentSession,

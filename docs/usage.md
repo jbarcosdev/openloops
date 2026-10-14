@@ -52,8 +52,8 @@ const result = await getLLMUsageStats({
         fromDate: '2026-09-01',
         toDate: '2026-09-30',
         groupBy: 'day',
-        provider: 'openai',
-        model: 'gpt-4o-mini',
+        provider: 'anthropic',
+        model: 'claude-haiku-5-5',
     },
     currentUser,
 })

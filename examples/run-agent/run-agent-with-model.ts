@@ -18,8 +18,8 @@ async function runAgentWithModel () {
                 message: 'hi, how are you?',
             },
             options: {
-                modelProvider: 'google',
-                modelName: 'gemini-2.5-flash',
+                modelProvider: 'anthropic',
+                modelName: 'claude-haiku-5-5',
             },
             currentUser,
         })
