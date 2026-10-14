@@ -11,6 +11,8 @@
 | `OPENAI_API_KEY`, `GEMINI_API_KEY` | for those providers | API keys of the other providers you choose per chat. |
 | `JWT_SECRET` | for `login` | Secret that signs the tokens. See [authentication](authentication.md). |
 | `SERPER_API_KEY` | for `webSearchTool` | See [tools](tools.md#built-in-tools). |
+| `AGENTIC_JOBS_POLL_INTERVAL_MS` | no | How often the runner of [agentic jobs](agentic-jobs.md) checks what is due, in milliseconds. Defaults to `60000`. |
+| `AGENTIC_JOBS_LEASE_MS` | no | How long a job stays locked while it runs, in milliseconds. Defaults to `600000`. |
 | `LLM_CALL_TIMEOUT_MS` | no | Longest time to wait for one attempt of a model call, in milliseconds. Defaults to `60000`. See [Timeouts](#timeouts). |
 | `MCP_TOOL_TIMEOUT_MS` | no | Longest time to wait for a tool of an MCP server, in milliseconds. Defaults to `60000`. See [Timeouts](#timeouts). |
 | `SENTRY_DSN` | no | Errors are reported to Sentry when set, unless `IS_LOCAL` is `true` or `NODE_ENV` is `development`. |
