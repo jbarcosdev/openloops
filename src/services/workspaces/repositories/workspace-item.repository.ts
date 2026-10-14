@@ -1,7 +1,7 @@
 import { ObjectId } from 'mongodb'
 import { autoInjectable } from 'tsyringe'
 import { MongoRepository, QueryOptions, QueryParams } from '@common/repositories'
-import { secretManager } from '@common/utils/secret-manager'
+import { getDatabaseName } from '@common/utils/database-name'
 import { WorkspaceItem, WorkspaceItemProps } from '../entities'
 
 export interface WorkspaceItemLookup {
@@ -14,7 +14,7 @@ export interface WorkspaceItemLookup {
 @autoInjectable()
 export class WorkspaceItemRepository {
 	public readonly _ = new MongoRepository<WorkspaceItemProps>({
-		database: secretManager.get('OPENLOOPS_DB_NAME'),
+		database: getDatabaseName(),
 		collection: 'workspace_items',
 	})
 

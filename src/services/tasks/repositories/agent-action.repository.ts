@@ -1,12 +1,12 @@
 import { autoInjectable } from 'tsyringe'
 import { MongoRepository, QueryOptions } from '@common/repositories'
-import { secretManager } from '@common/utils/secret-manager'
+import { getDatabaseName } from '@common/utils/database-name'
 import { AgentAction, AgentActionProps } from '../entities'
 
 @autoInjectable()
 export class AgentActionRepository {
 	public readonly _ = new MongoRepository<AgentActionProps>({
-		database: secretManager.get('OPENLOOPS_DB_NAME'),
+		database: getDatabaseName(),
 		collection: 'agent_actions',
 	})
 

@@ -1,13 +1,13 @@
 import { autoInjectable } from 'tsyringe'
 import { ObjectId } from 'mongodb'
 import { MongoRepository, QueryOptions } from '@common/repositories'
-import { secretManager } from '@common/utils/secret-manager'
+import { getDatabaseName } from '@common/utils/database-name'
 import { McpServer, McpServerProps } from '../entities'
 
 @autoInjectable()
 export class McpServerRepository {
 	public readonly _ = new MongoRepository<McpServerProps>({
-		database: secretManager.get('OPENLOOPS_DB_NAME'),
+		database: getDatabaseName(),
 		collection: 'mcp_servers',
 	})
 

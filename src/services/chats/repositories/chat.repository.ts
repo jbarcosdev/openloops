@@ -1,12 +1,12 @@
 import { autoInjectable } from 'tsyringe'
 import { MongoRepository, QueryOptions, QueryParams } from '@common/repositories'
-import { secretManager } from '@common/utils/secret-manager'
+import { getDatabaseName } from '@common/utils/database-name'
 import { Chat, ChatProps } from '../entities'
 
 @autoInjectable()
 export class ChatRepository {
 	public readonly _ = new MongoRepository<ChatProps>({
-		database: secretManager.get('OPENLOOPS_DB_NAME'),
+		database: getDatabaseName(),
 		collection: 'chats',
 	})
 

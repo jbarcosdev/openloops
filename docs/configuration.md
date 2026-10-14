@@ -5,7 +5,7 @@
 | Variable | Required | What it is for |
 | --- | --- | --- |
 | `OPENLOOPS_DB_URI` | yes | MongoDB connection string. |
-| `OPENLOOPS_DB_NAME` | yes | Database name. |
+| `OPENLOOPS_DB_NAME` | no | Database name. Defaults to `openloops`. |
 | `SECRET_MANAGER_KEY` | yes | Key used to decrypt values that start with `ENC:`. The library throws when it loads without it. |
 | `OPENAI_API_KEY` | for OpenAI models | API key of the default provider. |
 | `ANTHROPIC_API_KEY`, `GEMINI_API_KEY` | for those providers | API keys of the other providers you choose per chat. |

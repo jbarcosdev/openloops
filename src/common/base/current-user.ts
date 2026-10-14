@@ -1,7 +1,7 @@
 import { ObjectId } from 'mongodb'
 import { getTimezone } from 'iso-data'
 import { getMongoDBClient } from '@common/repositories/mongo-db.client'
-import { secretManager } from '@common/utils/secret-manager'
+import { getDatabaseName } from '@common/utils/database-name'
 import { logger } from '@common/logger'
 import { User, UserProps, UserRole } from '@services/users/entities/user.entity'
 
@@ -12,7 +12,7 @@ export class CurrentUser extends User {
         if (!userId) return undefined
 
         const mongoDBClient = getMongoDBClient()
-        const db = await mongoDBClient.db(secretManager.get('OPENLOOPS_DB_NAME'))
+        const db = await mongoDBClient.db(getDatabaseName())
 
         let user: UserProps | null
 

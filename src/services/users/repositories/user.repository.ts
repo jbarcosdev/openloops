@@ -1,12 +1,12 @@
 import { autoInjectable } from 'tsyringe'
 import { MongoRepository, QueryOptions } from '@common/repositories'
-import { secretManager } from '@common/utils/secret-manager'
+import { getDatabaseName } from '@common/utils/database-name'
 import { User, UserProps } from '../entities'
 
 @autoInjectable()
 export class UserRepository {
 	public readonly _ = new MongoRepository<UserProps>({
-		database: secretManager.get('OPENLOOPS_DB_NAME'),
+		database: getDatabaseName(),
 		collection: 'users',
 	})
 
