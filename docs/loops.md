@@ -132,16 +132,8 @@ const result = await mySkill.run({ ...ctx.skillParams, contextInjection: { goal:
 
 Every skill run is traced automatically. See [skills](skills.md).
 
-## Shared skills
+## The shared skill
 
-`openloops/loops` also exports the skills that every loop can reuse:
+`openloops/loops` exports `fastResponder`, the skill that every loop can reuse as its first step: it answers general conversation directly, or says that it cannot and the loop continues with its reasoning.
 
-| Skill | Purpose |
-| --- | --- |
-| `fastResponder` | Answers general conversation directly or says it cannot. |
-| `approvalRequest` | Writes the question that asks the user to confirm pending actions. |
-| `confirmationGate` | Reads the user's answer and decides confirmed, declined or unclear. |
-| `mcpChangeReview` | Reviews what changed in an MCP server and writes the approval question. |
-| `autonomousAnswer` | Answers a question of the model on behalf of an absent user, only from the context of the task. |
-
-`Agent` already runs `approvalRequest`, `confirmationGate` and `mcpChangeReview` for you when you use `harness.requestApproval`, and `autonomousAnswer` through `harness.answerQuestion`.
+The approvals and the answers of autonomous runs are written by skills that belong to the harness. They are internal, and you do not need to call them: `Agent` runs them for you when you use `harness.requestApproval` and `harness.answerQuestion`.

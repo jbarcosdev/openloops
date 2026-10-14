@@ -137,7 +137,7 @@ describe('trust of MCP servers', () => {
         })
 
         it('falls back to a plain question when the review skill fails', async () => {
-            jest.spyOn(require('@loops/shared/skills').mcpChangeReview, 'run').mockRejectedValueOnce(new Error('llm down'))
+            jest.spyOn(require('@harness/skills').mcpChangeReview, 'run').mockRejectedValueOnce(new Error('llm down'))
             const { result } = await useTool()
 
             expect(result.data.state.status).toBe(AgentStatus.AWAITING_USER_CONFIRMATION)
