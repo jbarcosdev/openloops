@@ -6,11 +6,11 @@
 import { Agent } from 'openloops/core'
 import { Logger } from 'openloops/common'
 import { CurrentUser } from 'openloops/base'
-import { PlanExecuteLoop } from 'openloops/loops'
+import { AgiLoop } from 'openloops/loops'
 
 const logger = new Logger()
 const currentUser = await CurrentUser.asyncFromDB(userId)
-const agent = new Agent({ loop: new PlanExecuteLoop() })
+const agent = new Agent({ loop: new AgiLoop() })
 
 const result = await agent.run({
     input: { message: 'what is the current price of Bitcoin?' },
@@ -20,11 +20,11 @@ const result = await agent.run({
 logger.info(result.data.lastAnswer, '[Demo] Result')
 ```
 
-That's it. The agent is persisted, resumable, and scoped to that one user, with tool execution, retries, and observability already wired in. No message table to design, no state machine to debug by hand, no MCP adapter to write.
+That's it. The agent is persisted, resumable, and scoped to that one user, with tool execution, guardrails, and observability already wired in. No message table to design, no state machine to debug by hand, no MCP adapter to write.
 
 ## Pick a loop, or write your own
 
-The logic that makes your agent *your* agent (how it plans, when it asks for confirmation, whether it answers in one shot or works through a sequence of tools) lives in an `AgentLoop`. `openloops` ships `PlanExecuteLoop` today, and it's built so any loop, yours or someone else's, is interchangeable.
+The logic that makes your agent *your* agent (how it reasons, when it asks for confirmation, whether it answers in one shot or works through a sequence of tools) lives in an `AgentLoop`. `openloops` ships `AgiLoop`, a reasoning loop that answers directly when it can and otherwise works in cycles of think, act and observe until it has a final answer. Any loop, yours or someone else's, is interchangeable.
 
 Want a customer support agent?
 
@@ -38,15 +38,7 @@ Want a software development agent?
 const agent = new Agent({ loop: new CodeSpecialistLoop() })
 ```
 
-Want a reasoning agent for deep analysis?
-
-```typescript
-const agent = new Agent({ loop: new ReactLoop() })
-```
-
-Don't see what you need in the marketplace? Build it yourself. A loop is a single file with a handful of node functions. Most people have their first working loop in an afternoon, not a sprint. See [Building an `AgentLoop`](docs/loops.md).
-
-**Launching this week at [openloops.xyz/marketplace](https://openloops.xyz/marketplace):** a growing library of free, community-maintained loops, including `ReactLoop`, `CodeSpecialistLoop`, `CustomerSupportLoop`, and more on the way for domains like cybersecurity and finance. Building an agent for a new use case becomes a matter of picking the right loop, not writing a new framework underneath it every time.
+A loop is a single file with a handful of node functions, so writing your own is a matter of an afternoon, not a sprint. See [Building an `AgentLoop`](docs/loops.md).
 
 ## Built for products, not for one person
 
@@ -58,18 +50,22 @@ If you've stood up [OpenClaw](https://github.com/openclaw/openclaw), [Hermes Age
 
 You know the pattern: before you write a single line of what your agent actually *does*, you're declaring a graph, wiring a checkpointer, and figuring out how tool retries and error states are supposed to work. Weeks in, you have an agent that technically runs, and a mental model of *why* it does what it does that only lives in your head, because the framework itself is a black box the moment something goes wrong in production.
 
-`openloops` gives you one file to read to understand your agent's behavior: the loop itself. Persistence, retries, and tracing aren't something you configure. They're just already there. See the full comparison against LangGraph further down.
+`openloops` gives you one file to read to understand your agent's behavior: the loop itself. Persistence and tracing aren't something you configure. They're just already there. See the full comparison further down.
 
 ## What you get out of the box
 
 - **Multi-user by design.** Chat history, task state, and MCP server configuration are all scoped per user, so the same deployment safely serves every one of your customers.
-- **Zero-boilerplate persistence.** Messages, tasks, and every tool call your agent makes are saved automatically to MongoDB. You never write a `save()` call.
-- **Production-grade tool execution.** Retries on failed steps, confirmation prompts before destructive actions, and graceful resume after a crash are all built into the runtime.
-- **Native MCP support.** Connect any MCP server and its tools become regular tools instantly. No adapter package, no manual schema mapping.
-- **Sub-agent orchestration.** An agent can launch and coordinate other agents to split up a problem. Full guide coming soon.
-- **Any LLM provider, including local ones.** Built on [`@earendil-works/pi-ai`](https://www.npmjs.com/package/@earendil-works/pi-ai), so OpenAI, Anthropic, and self-hosted models (e.g. via Ollama) all work the same way.
-- **Observability without ceremony.** Sentry and Langfuse are built in. Set the environment variables and they turn on, no SDK wiring required.
-- **A loop marketplace.** Don't write a customer-support agent from scratch. Install one.
+- **Zero-boilerplate persistence.** Messages, tasks, and every tool call your agent makes are saved automatically to MongoDB, and a conversation resumes exactly where it stopped, including in the middle of a confirmation or a question. You never write a `save()` call.
+- **Safe tool execution.** Arguments are validated against the tool's schema, destructive tools wait for the user's confirmation, identical failing calls are blocked, identifiers the model invented are rejected before they reach a real system, and large outputs are kept out of the prompt. LLM calls retry with backoff and wait out rate limits.
+- **Native MCP support with a trust flow.** Connect any MCP server and its tools become regular tools. Each server must be approved by the user before its first tool runs, and a server that changes its tools is reviewed again, so a third party cannot quietly change what your agent does.
+- **Autonomous runs.** The same agent can work without a person in the chat, for scheduled tasks. Whatever needs the user pauses the run in the chat, and the user answers there to continue. See [autonomous mode](docs/agent.md#autonomous-mode).
+- **Guardrails.** Input guards block messages with card numbers, emails, code or anything you define, before the model sees them. See [guardrails](docs/guardrails.md).
+- **Usage and cost tracking.** Every LLM call is recorded. Get the tokens and cost of a chat or an answer, and per-user statistics by model and by period. See [usage](docs/usage.md).
+- **Users and authentication included.** User management and login with tokens, so you don't need a parallel system just to have an identity to hand the `Agent`.
+- **Any LLM provider, including local ones.** Built on [`@earendil-works/pi-ai`](https://www.npmjs.com/package/@earendil-works/pi-ai), so OpenAI, Anthropic, Google, and self-hosted models (e.g. via Ollama) all work the same way, chosen per chat.
+- **Observability without ceremony.** Sentry and Langfuse are built in. Set the environment variables and they turn on, no SDK wiring required. Every node, skill and guard also writes a trace you can read back.
+
+On the roadmap: **sub-agent orchestration**, where an agent launches and coordinates other agents to split up a problem. A guide will come with it.
 
 ## See how little code this actually takes
 
@@ -106,22 +102,30 @@ await createMcpServer({
 })
 ```
 
-The next time that user talks to *any* agent, its tools are already there.
+The next time that user talks to *any* agent, the server is there. The first time one of its tools is about to run, the agent asks the user to approve it.
+
+Blocking sensitive input:
+
+```typescript
+import { inputGuards } from 'openloops/guardrails'
+
+agent.addGuard(inputGuards.blockCard)
+agent.addGuard(inputGuards.blockEmail)
+```
 
 ## How it compares to other frameworks
 
-This is an honest comparison against the self-hosted, open-source versions of LangGraph and CrewAI, not their paid managed offerings, which do handle persistence and infrastructure for you the same way `openloops` does, at a cost.
+This is a comparison against the self-hosted, open-source versions of LangGraph and CrewAI, not their paid managed offerings, which do handle persistence and infrastructure for you the same way `openloops` does, at a cost. The columns for the other frameworks reflect their public documentation at the time of writing, so check their current docs before you decide.
 
 | | `openloops` | LangGraph (self-hosted OSS) | CrewAI (self-hosted OSS) |
 |---|---|---|---|
-| Persistence | Built in, zero config (MongoDB) | Requires configuring a checkpointer (e.g. Postgres) yourself | Local memory (ChromaDB + SQLite) by default, machine-bound and scoped to a single run |
-| Multi-user scoping | Built in: chats, context, and MCP servers are per-user from the start | Not a concept of the framework, you build it | Not natively supported by default |
-| Tool execution & retries | Built into the runtime | You write the retry/error-handling logic | Configured per task, not automatic |
-| MCP support | Native: MCP tools become `Tool` instances automatically | Requires a separate adapter package and manual wiring | Available through a separate tools integration, not automatic per-user loading |
-| User management | Included (`openloops/users`) | Not included, you build your own | Not included |
-| LLM usage/cost tracking | Included (`openloops/llmcalls`) | Not included in OSS, available via paid LangSmith | Not included as a first-class module |
-| Observability | Sentry + Langfuse, enabled via env vars | Requires your own tracing setup, or paid LangSmith | Requires a third-party tracing integration |
-| Pre-built agents | Growing marketplace of ready-to-use loops | You build every agent from primitives | No built-in agent marketplace |
+| Persistence | Built in, zero config (MongoDB) | You choose and configure a checkpointer: in-memory, SQLite or Postgres, the last two in separate packages | Memory is opt-in and stored as local files (ChromaDB and SQLite, or LanceDB in newer versions), tied to the machine |
+| Multi-user scoping | Built in: chats, tasks, context, and MCP servers are per-user from the start | Conversations are scoped by a `thread_id`. Mapping them to users, and scoping memory and tools per user, is up to you | Not a concept of the framework, you build it |
+| Tool execution & retries | Validation, confirmation of destructive tools, duplicate and invented-id protection, and LLM and MCP connection retries are built into the runtime. A failed step goes back to the model, which decides how to continue | Per-node `RetryPolicy` and error handling that you configure | Retry limits are configured per agent or task |
+| MCP support | Native: servers are a per-user record, tools load on demand, and every server goes through an approval flow | A separate package (`langchain-mcp-adapters`) with a client that you wire into the graph | Native `mcps` field on agents, or `MCPServerAdapter`. Servers are declared in code, not loaded per user |
+| User management | Included (`openloops/users`, `openloops/authentication`) | Not included, you build your own | Not included, you build your own |
+| LLM usage/cost tracking | Included (`openloops/llmcalls`): per answer, per chat, and per-user statistics | Not included in OSS, available via paid LangSmith | Third-party integrations such as OpenLIT report token usage and cost |
+| Observability | Sentry + Langfuse, enabled via env vars, plus traces stored per chat | Your own tracing setup, or paid LangSmith | Third-party integrations (Langfuse, OpenLIT, Arize Phoenix, Opik, Weave) that you set up |
 | What you write | Node functions (plain async functions) | Nodes and the graph's edges, explicitly | Agents, tasks, and crew orchestration, declared per role |
 | Mental model | A state machine your loop drives itself | A graph you declare and compile ahead of time | A crew of role-based agents coordinated for you |
 
@@ -152,7 +156,13 @@ OPENLOOPS_DB_NAME='openloops'
 
 SECRET_MANAGER_KEY=secret
 
+# Model providers, set the ones you use
 OPENAI_API_KEY=
+ANTHROPIC_API_KEY=
+GEMINI_API_KEY=
+
+# Required for login
+JWT_SECRET=
 
 # Optional, see "Observability" below
 SENTRY_DSN=
@@ -164,9 +174,11 @@ LANGFUSE_BASE_URL=
 SERPER_API_KEY=
 ```
 
+Every variable is described in [`docs/configuration.md`](docs/configuration.md).
+
 ### Database
 
-By default, `openloops` creates a database named `openloops` if `OPENLOOPS_DB_NAME` isn't set. You can point it at an existing database instead, but if that database already has other collections, we recommend using a **separate database** to avoid name collisions with your own collections. If you're starting a project from scratch, using a single unified database for everything (your app's data and `openloops`'s data together) is fine and often simpler.
+By default, `openloops` uses a database named `openloops` if `OPENLOOPS_DB_NAME` isn't set. You can point it at an existing database instead, but if that database already has other collections, we recommend using a **separate database** to avoid name collisions with your own collections. If you're starting a project from scratch, using a single unified database for everything (your app's data and `openloops`'s data together) is fine and often simpler.
 
 ### Web search
 
@@ -181,7 +193,7 @@ Neither requires any code changes. They're opt-in purely through environment var
 
 ## More examples
 
-Every pattern above, and a lot more, lives as a runnable example in [`examples/`](examples), organized by domain: `users`, `chats`, `run-agent`, `mcps`, `usage`.
+Every pattern above, and a lot more, lives as a runnable example in [`examples/`](examples), organized by domain: `run-agent`, `loops`, `tools`, `guardrails`, `mcps`, `chats`, `usage`, `users`, and `authentication`.
 
 ## Package structure
 
@@ -189,28 +201,35 @@ Every pattern above, and a lot more, lives as a runnable example in [`examples/`
 
 | Subpath | What's in it |
 |---|---|
-| `openloops/core` | `Agent`, `AgentLoop`, `RunContext`: the runtime |
-| `openloops/loops` | Built-in loops, starting with `PlanExecuteLoop` |
+| `openloops/core` | `Agent`, `AgentLoop`, `RunContext`, `Harness`: the runtime |
+| `openloops/loops` | Built-in loops (`AgiLoop`) and the skills shared by loops |
 | `openloops/tools` | `Tool`, `BaseParams`, and built-in tools |
 | `openloops/skills` | `Skill`, for writing LLM-backed reasoning steps inside a loop |
-| `openloops/mcps` | MCP server CRUD and connection handling |
+| `openloops/guardrails` | `Guard` and the ready-made input guards |
+| `openloops/mcps` | MCP server management, connection check and trust decisions |
+| `openloops/chats` | Chats and their messages: list, read, update, delete |
 | `openloops/users` | User management |
-| `openloops/llmcalls` | LLM usage/cost tracking |
+| `openloops/authentication` | Login and token issuing |
+| `openloops/llmcalls` | LLM usage and cost tracking |
 | `openloops/base` | `CurrentUser`, `CurrentSession` |
 | `openloops/common` | `Logger` and shared utilities |
-| `openloops/clients` | HTTP clients used by built-in tools (e.g. Serper) |
-| `openloops/authentication` | Authentication utilities |
-| `openloops/chats` | Chat/conversation persistence internals |
+| `openloops/clients` | `LLMClient` and the HTTP clients used by built-in tools (e.g. Serper) |
 
 ## Learn more
 
-- [Building an `AgentLoop`](docs/loops.md)
+- [Documentation index](docs/README.md)
 - [The `Agent` runtime](docs/agent.md)
+- [Building an `AgentLoop`](docs/loops.md)
+- [How the harness works](docs/harness.md)
 - [Tools](docs/tools.md)
 - [Skills](docs/skills.md)
+- [Guardrails](docs/guardrails.md)
 - [MCP servers](docs/mcp-servers.md)
+- [Chats](docs/chats.md)
 - [User management](docs/users.md)
+- [Authentication](docs/authentication.md)
 - [LLM usage tracking](docs/usage.md)
+- [Configuration](docs/configuration.md)
 
 ## License
 
