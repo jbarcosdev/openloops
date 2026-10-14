@@ -5,7 +5,7 @@ import { CurrentUser, CurrentSession } from '@common/base'
 import { McpServer, McpServerProps, McpManifest, McpManifestDiff, needsUserReview } from '@services/mcp-servers/entities'
 import { createChat, updateChat, getChatById } from '@services/chats'
 import { Chat, ChatProps } from '@services/chats/entities/chat.entity'
-import { ChatMessage } from '@services/chats/entities/chat-message.entity'
+import { ChatMessage, MessageSource } from '@services/chats/entities/chat-message.entity'
 import { ChatSettingsProps, ExecutionMode } from '@services/chats/entities/chat-settings.entity'
 import {
     createAgentTask,
@@ -284,6 +284,7 @@ export class Agent {
         const userMessage = this.currentChat.pushMessage({
             role: 'user',
             content: this.currentMessage,
+            source: 'user',
         })
         this.userMessageId = userMessage._id?.toString()
 
@@ -339,7 +340,7 @@ export class Agent {
             const reply = failed ? GUARD_FAILURE_REPLY : guard.reply
 
             userMessage.excludeFromContext = true
-            this.reply(`${reply}\n\nRef: ${guard.ref}`, true)
+            this.reply(`${reply}\n\nRef: ${guard.ref}`, { source: 'harness', excludeFromContext: true })
             this.currentChat.addTrace({ node: guard.name, kind: 'guard', reasoning: `${guard.type} guard, Ref ${guard.ref}: ${result.reason ?? 'Blocked'}` })
 
             return false
@@ -392,7 +393,7 @@ export class Agent {
         }
 
         this.currentChat.addTrace({ node: 'approval_request', kind: 'agent', reasoning: `Asked for confirmation of ${actions.map(action => action.name).join(', ')}`, taskId: task.id })
-        this.reply(questions.join('\n\n'))
+        this.reply(questions.join('\n\n'), { source: 'harness' })
     }
 
     private async resolveConfirmation (): Promise<boolean> {
@@ -420,13 +421,13 @@ export class Agent {
                 await this.blockReviewedServers(task.actions.filter(action => action.status === 'pending'))
                 this.currentChat.cancelTask(task.id)
                 this.currentChat.state?.setStatus(AgentStatus.IDLE)
-                this.reply(result.acknowledgement)
+                this.reply(result.acknowledgement, { source: 'harness' })
                 return false
 
             case 'UNCLEAR':
             default:
                 this.currentChat.state?.setStatus(AgentStatus.AWAITING_USER_CONFIRMATION)
-                this.reply(result.clarification_prompt)
+                this.reply(result.clarification_prompt, { source: 'harness' })
                 return false
         }
     }
@@ -756,6 +757,10 @@ export class Agent {
 
             if (result.decision === 'ANSWER' && answer) {
                 trace('The question was answered automatically on behalf of the absent user')
+
+                this.currentChat.pushMessage({ answerId: this.answerId, role: 'assistant', content: question, excludeFromContext: true, source: 'model' })
+                this.currentChat.pushMessage({ answerId: this.answerId, role: 'user', content: answer, excludeFromContext: true, source: 'harness' })
+
                 return answer
             }
 
@@ -970,11 +975,11 @@ export class Agent {
         return matchedTools.slice(startIndex, startIndex + limit)
     }
 
-    private reply (content: string, excludeFromContext?: boolean): void {
+    private reply (content: string, opts: { source: MessageSource, excludeFromContext?: boolean }): void {
         const isFirstReply = this.replyCount === 0
 
         this.replyCount++
-        this.currentChat.pushMessage({ _id: isFirstReply ? this.answerId : undefined, answerId: this.answerId, role: 'assistant', content, excludeFromContext })
+        this.currentChat.pushMessage({ _id: isFirstReply ? this.answerId : undefined, answerId: this.answerId, role: 'assistant', content, excludeFromContext: opts.excludeFromContext, source: opts.source })
     }
 
     private get baseParams () {
@@ -1076,7 +1081,7 @@ export class Agent {
             requiresApproval: action => this.getPipeline().requiresApproval(action),
             requestApproval: (actions, opts) => this.requestApproval(actions, opts.resumeAt),
             reopenTask: taskId => this.reopenTask(taskId),
-            reply: content => this.reply(content),
+            reply: content => this.reply(content, { source: 'model' }),
             setNextNode: node => {
                 const resolved = this.resolveNodeName(node)
                 const active = this.currentChat.activeTask

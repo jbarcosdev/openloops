@@ -31,9 +31,9 @@ export const SKILL_MODES: SkillMode[] = ['plain_chat', 'function_calling', 'func
 export const STEP_TOOL = 'step'
 export const REFLECT_TOOL = 'reflect'
 
-const STEP_ADDENDUM = 'DELIVERY: instead of printing the JSON object, deliver every response by calling the tool "step" exactly once with the same content: reasoning, state (objective, progress, tried, expecting, next), learned and actions. Each action has "tool" and "arguments_json", which is the arguments object serialized as a JSON string.'
+const STEP_ADDENDUM = 'DELIVERY: instead of printing the JSON object, deliver every response by calling the tool "step" exactly once with the same content: reasoning, language, state (objective, progress, tried, expecting, next), learned and actions. Each action has "tool" and "arguments_json", which is the arguments object serialized as a JSON string.'
 
-const SPLIT_ADDENDUM = 'DELIVERY: instead of printing the JSON object, deliver every response with tool calls. Call the tool "reflect" first with reasoning, state (objective, progress, tried, expecting, next) and learned, and in the same turn call natively each tool of your actions with its arguments.'
+const SPLIT_ADDENDUM = 'DELIVERY: instead of printing the JSON object, deliver every response with tool calls. Call the tool "reflect" first with reasoning, language, state (objective, progress, tried, expecting, next) and learned, and in the same turn call natively each tool of your actions with its arguments.'
 
 const STATE_SCHEMA = {
     type: 'object',
@@ -77,6 +77,7 @@ function stepTool (tools: LLMToolDefinition[]): LLMToolDefinition {
                 reasoning: { type: 'string' },
                 state: STATE_SCHEMA,
                 learned: LEARNED_SCHEMA,
+                language: { type: 'string' },
                 actions: {
                     type: 'array',
                     minItems: 1,
@@ -91,7 +92,7 @@ function stepTool (tools: LLMToolDefinition[]): LLMToolDefinition {
                     },
                 },
             },
-            required: ['reasoning', 'state', 'learned', 'actions'],
+            required: ['reasoning', 'language', 'state', 'learned', 'actions'],
             additionalProperties: false,
         },
     }
@@ -104,8 +105,8 @@ function reflectTool (): LLMToolDefinition {
         strict: true,
         parameters: {
             type: 'object',
-            properties: { reasoning: { type: 'string' }, state: STATE_SCHEMA, learned: LEARNED_SCHEMA },
-            required: ['reasoning', 'state', 'learned'],
+            properties: { reasoning: { type: 'string' }, language: { type: 'string' }, state: STATE_SCHEMA, learned: LEARNED_SCHEMA },
+            required: ['reasoning', 'language', 'state', 'learned'],
             additionalProperties: false,
         },
     }
@@ -289,6 +290,7 @@ export function readModeResponse (mode: SkillMode, skill: string, response: LLMR
 
         return single(JSON.stringify({
             reasoning: call.arguments.reasoning,
+            ...(call.arguments.language ? { language: call.arguments.language } : {}),
             state: call.arguments.state,
             learned: call.arguments.learned,
             actions: actions.map((action: any) => ({ tool: action?.tool, arguments: parseArguments(skill, String(action?.tool), action?.arguments_json) })),
@@ -301,6 +303,7 @@ export function readModeResponse (mode: SkillMode, skill: string, response: LLMR
 
     return single(JSON.stringify({
         reasoning: reflect?.arguments.reasoning ?? '',
+        ...(reflect?.arguments.language ? { language: reflect.arguments.language } : {}),
         state: reflect?.arguments.state ?? {},
         learned: reflect?.arguments.learned ?? [],
         actions: actions.map(action => ({ tool: action.name, arguments: action.arguments })),

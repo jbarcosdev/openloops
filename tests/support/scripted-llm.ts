@@ -11,6 +11,7 @@ export interface ScriptedTurn {
     state?: Record<string, any>
     actions?: ScriptedAction[]
     learned?: { key?: string; value?: unknown }[]
+    language?: string
     raw?: string
     throws?: Error
 }
@@ -84,6 +85,7 @@ export class ScriptedLLM {
             state: turn.state ?? { next: 'continue' },
             actions: turn.actions,
             ...(turn.learned ? { learned: turn.learned } : {}),
+            ...(turn.language !== undefined ? { language: turn.language } : {}),
         }
 
         return {

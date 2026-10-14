@@ -78,6 +78,16 @@ describe('call modes', () => {
             expect(JSON.parse(text)).toEqual({ reasoning: 'r', state: { next: 'n' }, learned: [], actions: [{ tool: 'respond', arguments: { answer: 'done' } }] })
         })
 
+        it('asks for the language and carries it back into the JSON object', () => {
+            expect(call.tools![0].parameters.required).toContain('language')
+
+            const { text } = readModeResponse('function_calling', 's', reply({
+                toolCalls: [{ id: 'c', name: 'step', arguments: { reasoning: 'r', language: 'es', state: {}, learned: [], actions: [{ tool: 'respond', arguments_json: '{"answer":"hecho"}' }] } }],
+            }))
+
+            expect(JSON.parse(text).language).toBe('es')
+        })
+
         it('recovers arguments wrapped in extra text and rejects ones that are not JSON', () => {
             const make = (arguments_json: string) => reply({ toolCalls: [{ id: 'c', name: 'step', arguments: { reasoning: 'r', state: {}, learned: [], actions: [{ tool: 'respond', arguments_json }] } }] })
 
@@ -124,6 +134,14 @@ describe('call modes', () => {
             expect(results[0]).toBe('ok')
             expect(results[1]).toBe('ok')
             expect(JSON.parse(results[2])).toEqual({ OBSERVATIONS: [{ ref: '1_1', status: 'failed' }] })
+        })
+
+        it('carries the language of reflect back into the JSON object', () => {
+            const { text } = readModeResponse('function_calling_split', 's', reply({
+                toolCalls: [{ id: '1', name: 'reflect', arguments: { reasoning: 'r', language: 'fr', state: {}, learned: [] } }, { id: '2', name: 't_search', arguments: { q: 'z' } }],
+            }))
+
+            expect(JSON.parse(text).language).toBe('fr')
         })
 
         it('folds reflect and the action calls back into the JSON object', () => {

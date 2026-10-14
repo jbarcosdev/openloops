@@ -31,7 +31,7 @@ export class AgiLoop extends AgentLoop {
     }
 
     get version () {
-        return '1.6.1'
+        return '1.7.0'
     }
 
     get author () {
@@ -53,6 +53,11 @@ export class AgiLoop extends AgentLoop {
     }
 
     private async fastResponder (ctx: RunContext, harness: Harness): Promise<void> {
+        if (harness.executionMode === 'autonomous') {
+            harness.setNextNode(this.nodes.reasoning_engine)
+            return
+        }
+
         ctx.chat.state?.setCurrentActivity('Analyzing requirement...')
 
         const chat_history = ctx.chat.lastHistoryMessages()
@@ -116,6 +121,9 @@ export class AgiLoop extends AgentLoop {
         })
 
         if (result.opening) task.opening = result.opening
+
+        const language = typeof result.language === 'string' ? result.language.trim().toLowerCase() : ''
+        if (/^[a-z]{2}$/.test(language)) ctx.chat.state?.setLanguage(language)
 
         const { rawText, ...callInfo } = result.callInfo
 

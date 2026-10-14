@@ -120,6 +120,83 @@ describe('autonomous mode', () => {
         })
     })
 
+    describe('messages in the history', () => {
+        it('marks who produced every message', async () => {
+            llm.script(say('hi there'))
+            const { data } = await env.send(env.agent(), 'hello')
+
+            expect(data.messages.map((message: any) => [message.role, message.source])).toEqual([['user', 'user'], ['assistant', 'model']])
+        })
+
+        it('keeps the question and the automatic answer in the history, out of the context of the model', async () => {
+            llm.script(ask('Which color?'), say('Painted it blue.'))
+            const { data } = await env.send(env.agent(), 'paint it', undefined, autonomous)
+
+            expect(data.messages.map((message: any) => [message.role, message.source, message.excludeFromContext ?? false, message.content])).toEqual([
+                ['user', 'user', false, 'paint it'],
+                ['assistant', 'model', true, 'Which color?'],
+                ['user', 'harness', true, 'the blue one'],
+                ['assistant', 'model', false, 'Painted it blue.'],
+            ])
+        })
+
+        it('does not send the automatic exchange to the model as part of the conversation', async () => {
+            llm.script(ask('Which color?'), say('Painted it blue.'), say('anything else?'))
+            const first = await env.send(env.agent(), 'paint it', undefined, autonomous)
+            await env.send(env.agent(), 'thanks', first.data._id.toString())
+
+            const sent = JSON.stringify(llm.calls.slice(2).map(call => call.messages))
+            expect(sent).not.toContain('the blue one')
+        })
+
+        it('marks the message of a guard and the question of an approval as written by the harness', async () => {
+            const w = warehouseTools()
+            llm.script({ actions: [act('t_delete', { id: '9' })] })
+            const { data } = await env.send(env.agent(w.tools), 'delete 9')
+
+            expect(data.messages.at(-1).source).toBe('harness')
+        })
+    })
+
+    describe('language and the first node', () => {
+        it('goes straight to the reasoning engine in an autonomous run', async () => {
+            llm.script(say('done'))
+            await env.send(env.agent(), 'run the report', undefined, autonomous)
+
+            expect(env.fast.calls).toBe(0)
+            expect(llm.calls).toHaveLength(1)
+        })
+
+        it('still starts with the fast responder in an interactive run', async () => {
+            llm.script(say('done'))
+            await env.send(env.agent(), 'hello')
+
+            expect(env.fast.calls).toBe(1)
+        })
+
+        it('keeps the language that the reasoning engine reports', async () => {
+            llm.script(say('hecho', { language: 'ES' }))
+            const { data } = await env.send(env.agent(), 'ejecuta el reporte', undefined, autonomous)
+
+            expect(data.state.language).toBe('es')
+        })
+
+        it('ignores a language that is not a two letter code', async () => {
+            llm.script(say('done', { language: 'spanish, with some english' }))
+            const { data } = await env.send(env.agent(), 'run the report', undefined, autonomous)
+
+            expect(data.state.language).toBeUndefined()
+        })
+
+        it('lets the reasoning engine correct the language of the fast responder', async () => {
+            llm.script(say('bonjour', { language: 'fr' }))
+            const { data } = await env.send(env.agent(), 'hola')
+
+            expect(env.fast.calls).toBe(1)
+            expect(data.state.language).toBe('fr')
+        })
+    })
+
     describe('actions that need approval', () => {
         it('pauses the run and leaves the question for the user in the chat', async () => {
             const w = warehouseTools()
