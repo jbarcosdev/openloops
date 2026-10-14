@@ -2,7 +2,7 @@ import { autoInjectable } from 'tsyringe'
 import { ObjectId } from 'mongodb'
 import { MongoRepository, QueryOptions } from '@common/repositories'
 import { getDatabaseName } from '@common/utils/database-name'
-import { AgenticJob, AgenticJobProps } from '../entities'
+import { AgenticJob, AgenticJobProps, AgenticJobRunStatus } from '../entities'
 
 export interface ClaimParams {
 	id: string
@@ -76,6 +76,20 @@ export class AgenticJobRepository {
 		})
 	}
 
+	public async setActiveRun (id: string, workerId: string, runId: string): Promise<AgenticJobProps | null> {
+		return await this._.updateOne({
+			where: { _id: this._.parseId(id), lockedBy: workerId } as any,
+			payload: { activeRunId: this._.parseId(runId) } as any,
+		})
+	}
+
+	public async settleRun (id: string, runId: string, status: AgenticJobRunStatus, at: Date): Promise<AgenticJobProps | null> {
+		return await this._.updateOne({
+			where: { _id: this._.parseId(id), activeRunId: this._.parseId(runId) } as any,
+			payload: { lastRunStatus: status, lastRunAt: at, toUnset: { activeRunId: '' } } as any,
+		})
+	}
+
 	public async renewLease (id: string, workerId: string, until: Date): Promise<AgenticJobProps | null> {
 		return await this._.updateOne({
 			where: { _id: this._.parseId(id), lockedBy: workerId } as any,
@@ -84,12 +98,13 @@ export class AgenticJobRepository {
 	}
 
 	public async release (id: string, workerId: string, result: Pick<AgenticJobProps, 'lastRunAt' | 'lastRunStatus' | 'activeRunId'>): Promise<AgenticJobProps | null> {
-		const { activeRunId, ...fields } = result
+		const { activeRunId, lastRunAt, lastRunStatus } = result
 
 		return await this._.updateOne({
 			where: { _id: this._.parseId(id), lockedBy: workerId } as any,
 			payload: {
-				...fields,
+				...(lastRunAt ? { lastRunAt } : {}),
+				...(lastRunStatus ? { lastRunStatus } : {}),
 				...(activeRunId ? { activeRunId } : {}),
 				toUnset: { lockedBy: '', lockedUntil: '', ...(activeRunId ? {} : { activeRunId: '' }) },
 			} as any,
