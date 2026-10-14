@@ -6,7 +6,7 @@ import { McpServer, McpServerProps, McpManifest, McpManifestDiff, needsUserRevie
 import { createChat, updateChat, getChatById } from '@services/chats'
 import { Chat, ChatProps } from '@services/chats/entities/chat.entity'
 import { ChatMessage } from '@services/chats/entities/chat-message.entity'
-import { ChatSettingsProps } from '@services/chats/entities/chat-settings.entity'
+import { ChatSettingsProps, ExecutionMode } from '@services/chats/entities/chat-settings.entity'
 import {
     createAgentTask,
     updateAgentTask,
@@ -22,7 +22,7 @@ import { createAgentTraces } from '@services/traces'
 import { Tool } from '@tools/tool'
 import { Guard, GuardResult, InputGuardContext } from '@guardrails/guard'
 import { DEFAULT_MAX_INPUT_LENGTH, GUARD_FAILURE_REPLY } from '@common/constants'
-import { approvalRequest, confirmationGate, mcpChangeReview } from '@loops/shared/skills'
+import { approvalRequest, confirmationGate, mcpChangeReview, autonomousAnswer } from '@loops/shared/skills'
 import { inputCheck } from '@guardrails/input/input-check'
 import { createBlockInputOversize } from '@guardrails/input/create-block-input-oversize'
 import { listAllMcpServersByUser, verifyMcpServerConnection, decideMcpServerTrust } from '@services/mcp-servers'
@@ -37,6 +37,9 @@ import { LLMError } from '@clients/llm-error'
 
 const MCP_CONNECT_RETRY_DELAYS_MS = [1000, 2000]
 const MCP_DESCRIPTION_CHARS = 300
+const MAX_AUTOMATIC_ANSWERS = 3
+const AUTOMATIC_ANSWER_RESULTS = 5
+const AUTOMATIC_ANSWER_RESULT_CHARS = 1500
 
 type McpAccess = 'blocked' | 'not_connected' | 'unavailable' | 'ready' | 'first_use' | 'changed'
 
@@ -169,6 +172,10 @@ export class Agent {
         return this._mcps.map(entry => entry.server)
     }
 
+    private get executionMode (): ExecutionMode {
+        return this.chatOptions?.executionMode ?? 'interactive'
+    }
+
     get notifyOnCompletion () {
         return this.currentChat?.settings?.notifyOnCompletion
     }
@@ -263,6 +270,7 @@ export class Agent {
             if (!this.currentUser) throw new Error('[AGENT] CurrentUser params is required')
 
             this.currentChat = await Agent.createChatSession(this.currentUser, this._loop)
+            this.currentChat.settings?.setExecutionMode(this.executionMode)
         } else {
             this.logger.debug('[AGENT] Existing chat found')
             this.currentChat = Chat.fromJSON(chatData)
@@ -378,6 +386,11 @@ export class Agent {
 
         task.setNextNode(this.resolveNodeName(resumeAt))
         this.currentChat.state?.setStatus(AgentStatus.AWAITING_USER_CONFIRMATION)
+
+        if (this.executionMode === 'autonomous') {
+            this.currentChat.addTrace({ node: 'autonomous_mode', kind: 'agent', reasoning: `Autonomous run paused until the user answers: ${actions.map(action => action.name).join(', ')} need approval`, taskId: task.id })
+        }
+
         this.currentChat.addTrace({ node: 'approval_request', kind: 'agent', reasoning: `Asked for confirmation of ${actions.map(action => action.name).join(', ')}`, taskId: task.id })
         this.reply(questions.join('\n\n'))
     }
@@ -716,6 +729,45 @@ export class Agent {
         entry.server = next
     }
 
+    private async answerAutonomously (question: string): Promise<string | undefined> {
+        const task = this.currentChat.activeTask
+        if (this.executionMode !== 'autonomous' || !task) return undefined
+
+        const trace = (reasoning: string) => this.currentChat.addTrace({ node: 'autonomous_answer', kind: 'agent', reasoning, taskId: task.id })
+
+        if (task.automaticAnswers >= MAX_AUTOMATIC_ANSWERS) {
+            trace(`The limit of ${MAX_AUTOMATIC_ANSWERS} automatic answers was reached, the task waits for the user`)
+            return undefined
+        }
+
+        try {
+            const result = await autonomousAnswer.run({
+                ...this.buildRunContext().skillParams,
+                input: {
+                    goal: task.goal,
+                    task_message: this.currentMessage,
+                    known: task.known ?? {},
+                    recent_results: task.executionHistory(AUTOMATIC_ANSWER_RESULT_CHARS).slice(-AUTOMATIC_ANSWER_RESULTS),
+                    question,
+                },
+            })
+
+            const answer = typeof result.answer === 'string' ? result.answer.trim() : ''
+
+            if (result.decision === 'ANSWER' && answer) {
+                trace('The question was answered automatically on behalf of the absent user')
+                return answer
+            }
+
+            trace('The question cannot be answered from the context, the task waits for the user')
+        } catch (error: any) {
+            this.logger.error({ error: error?.message ?? error }, '[AGENT] Failed to answer a question automatically')
+            trace('The automatic answer failed, the task waits for the user')
+        }
+
+        return undefined
+    }
+
     private async decideMcp (entry: McpEntry, decision: 'approve' | 'block', manifestHash?: string): Promise<boolean> {
         try {
             const { data } = await decideMcpServerTrust({ id: entry.id, decision, manifestHash, currentUser: this.currentUser })
@@ -1004,6 +1056,8 @@ export class Agent {
 
     private buildHarness (): Harness {
         return {
+            executionMode: this.executionMode,
+            answerQuestion: question => this.answerAutonomously(question),
             ensureTools: () => this.ensureTools(),
             searchTools: this.searchTools.bind(this),
             toolCatalog: async () => {

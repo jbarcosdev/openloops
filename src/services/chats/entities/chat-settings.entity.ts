@@ -1,9 +1,12 @@
+export type ExecutionMode = 'interactive' | 'autonomous'
+
 export interface ChatSettingsProps {
     notifyOnCompletion?: boolean
     isPrivateSession?: boolean
     modelProvider?: string
     modelName?: string,
     loopName?: string,
+    executionMode?: ExecutionMode,
 }
 
 export class ChatSettings {
@@ -14,6 +17,7 @@ export class ChatSettings {
         public modelProvider?: string,
         public modelName?: string,
         public loopName?: string,
+        public executionMode?: ExecutionMode,
     ) {}
 
     static fromJSON (props: ChatSettingsProps) {
@@ -24,6 +28,7 @@ export class ChatSettings {
             props.modelProvider,
             props.modelName,
             props.loopName,
+            props.executionMode,
         )
     }
 
@@ -34,11 +39,16 @@ export class ChatSettings {
             modelProvider: this.modelProvider,
             modelName: this.modelName,
             loopName: this.loopName,
+            executionMode: this.executionMode,
         }
     }
 
     setLoopName (loopName: string): void {
         this.loopName = loopName
+    }
+
+    setExecutionMode (executionMode: ExecutionMode): void {
+        this.executionMode = executionMode
     }
 
     setModelProvider (modelProvider: string): void {

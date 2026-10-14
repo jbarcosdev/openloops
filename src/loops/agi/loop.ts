@@ -31,7 +31,7 @@ export class AgiLoop extends AgentLoop {
     }
 
     get version () {
-        return '1.5.0'
+        return '1.6.0'
     }
 
     get author () {
@@ -110,6 +110,7 @@ export class AgiLoop extends AgentLoop {
             contextInjection: {
                 ...this.context(ctx),
                 ...catalog.context,
+                ...(harness.executionMode === 'autonomous' ? { execution_mode: 'autonomous' } : {}),
                 ...(lastCompletedTask ? { last_completed_task: { goal: lastCompletedTask.goal, summary: lastCompletedTask.summary } } : {}),
             },
         })
@@ -159,6 +160,13 @@ export class AgiLoop extends AgentLoop {
         const question = task.pendingQuestion
 
         if (question) {
+            const answer = await harness.answerQuestion(question)
+
+            if (answer !== undefined && task.answerQuestion(answer, { automatic: true })) {
+                harness.setNextNode(this.nodes.reasoning_engine)
+                return
+            }
+
             ctx.chat.state?.setStatus(AgentStatus.AWAITING_USER_INPUT)
             harness.setNextNode(this.nodes.reasoning_engine)
             harness.reply(question)

@@ -1,4 +1,4 @@
-import { AgentTask } from '@services/tasks/entities/agent-task.entity'
+import { AgentTask, isAutomaticAnswer } from '@services/tasks/entities/agent-task.entity'
 import { Workspace } from '../workspace'
 
 const IDENTIFIER_IN_TEXT = /\b(?:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|[0-9a-f]{16,64})\b/gi
@@ -38,7 +38,7 @@ async function groundingCorpus (task: AgentTask, workspace: Workspace): Promise<
 
     for (const action of task.actions) {
         if (action.error?.message && !String(action.error.message).includes(UNGROUNDED_PHRASE)) parts.push(String(action.error.message))
-        if (action.output !== undefined) parts.push(JSON.stringify(action.output))
+        if (action.output !== undefined && !isAutomaticAnswer(action)) parts.push(JSON.stringify(action.output))
 
         if (action.outputRef) {
             try {

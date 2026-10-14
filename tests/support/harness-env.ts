@@ -1,7 +1,7 @@
 import { ObjectId } from 'mongodb'
 import { Agent, AgentLoop } from '@harness/index'
 import { AgiLoop } from '@loops/agi/loop'
-import { fastResponder, confirmationGate, approvalRequest, mcpChangeReview } from '@loops/shared/skills'
+import { fastResponder, confirmationGate, approvalRequest, mcpChangeReview, autonomousAnswer } from '@loops/shared/skills'
 import type { Tool } from '@tools/tool'
 import type { Guard } from '@guardrails/guard'
 import type { CurrentUser } from '@common/base'
@@ -22,6 +22,7 @@ export class HarnessEnv {
     readonly gate = { decision: 'CONFIRMED', calls: [] as Record<string, any>[] }
     readonly approval = { question: 'Do you confirm?', calls: [] as Record<string, any>[] }
     readonly review = { decision: 'ASK' as 'APPROVE' | 'ASK', question: 'Do you approve this server?', calls: [] as Record<string, any>[] }
+    readonly autonomy = { decision: 'ANSWER' as 'ANSWER' | 'CANNOT_DETERMINE', answer: 'the blue one', fails: false, calls: [] as Record<string, any>[] }
     private spies: jest.SpyInstance[] = []
 
     start (): void {
@@ -39,6 +40,10 @@ export class HarnessEnv {
         this.review.decision = 'ASK'
         this.review.question = 'Do you approve this server?'
         this.review.calls = []
+        this.autonomy.decision = 'ANSWER'
+        this.autonomy.answer = 'the blue one'
+        this.autonomy.fails = false
+        this.autonomy.calls = []
 
         this.spies = [
             jest.spyOn(fastResponder as any, 'run').mockImplementation(async () => {
@@ -57,6 +62,11 @@ export class HarnessEnv {
                 this.review.calls.push(options)
                 return { decision: this.review.decision, question: this.review.decision === 'ASK' ? this.review.question : '' }
             }),
+            jest.spyOn(autonomousAnswer as any, 'run').mockImplementation(async (options: any) => {
+                this.autonomy.calls.push(options)
+                if (this.autonomy.fails) throw new Error('evaluator down')
+                return { decision: this.autonomy.decision, answer: this.autonomy.decision === 'ANSWER' ? this.autonomy.answer : '' }
+            }),
         ]
     }
 
@@ -70,8 +80,8 @@ export class HarnessEnv {
         return new Agent({ loop: new AgiLoop(), tools, guards, ...options })
     }
 
-    async send (agent: Agent, message: string, chatId?: string): Promise<RunResult> {
-        return agent.run({ input: { message, ...(chatId ? { chatId } : {}) }, currentUser: this.user }) as Promise<RunResult>
+    async send (agent: Agent, message: string, chatId?: string, options?: { executionMode?: 'interactive' | 'autonomous' }): Promise<RunResult> {
+        return agent.run({ input: { message, ...(chatId ? { chatId } : {}) }, ...(options ? { options } : {}), currentUser: this.user }) as Promise<RunResult>
     }
 
     tasks (): Record<string, any>[] {

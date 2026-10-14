@@ -1,7 +1,7 @@
 import { CurrentUser, CurrentSession } from '@common/base'
 import { Logger } from '@common/logger'
 import { Chat } from '@services/chats/entities/chat.entity'
-import { ChatSettingsProps } from '@services/chats/entities/chat-settings.entity'
+import { ChatSettingsProps, ExecutionMode } from '@services/chats/entities/chat-settings.entity'
 import { AgentTask } from '@services/tasks/entities/agent-task.entity'
 import { AgentAction } from '@services/tasks/entities/agent-action.entity'
 import { Tool, BaseParams } from '@tools/tool'
@@ -27,6 +27,8 @@ export interface RunContext {
 }
 
 export interface Harness {
+    executionMode: ExecutionMode
+    answerQuestion: (question: string) => Promise<string | undefined>
     ensureTools: () => Promise<Tool[]>
     searchTools: (keywords: WeightedKeyword[], opts?: { page?: number; limit?: number; server?: string }) => Promise<ScoredTool[]>
     toolCatalog: () => Promise<ToolCatalog>

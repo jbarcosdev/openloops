@@ -90,6 +90,12 @@ export const ASK_USER = 'ask_user'
 export const SEARCH_TOOLS = 'search_tools'
 export const RESPOND = 'respond'
 export const NATIVE_TOOL_NAMES = [SEARCH_TOOLS, 'read_context', 'save_context', ASK_USER, RESPOND]
+export const AUTOMATIC_ANSWER = 'automatic'
+const AUTOMATIC_ANSWER_NOTE = 'The user is not available. This answer was written by an automatic evaluator from the context of the task, not by the user. Use your judgment and do not take it as certain.'
+
+export function isAutomaticAnswer (action: AgentAction): boolean {
+	return action.name === ASK_USER && action.structuredOutput?.answered_by === AUTOMATIC_ANSWER
+}
 
 const TOOL_NAMESPACE = /^functions\./
 const INVALID_RESPONSE = 'invalid_response'
@@ -523,9 +529,18 @@ export class AgentTask extends BaseEntity {
 		return this.actions.filter(a => a.turn !== undefined && a.isTerminal && a.name !== ASK_USER && a.name !== RESPOND).length
 	}
 
-	answerQuestion (answer: string): boolean {
+	get automaticAnswers (): number {
+		return this.actions.filter(isAutomaticAnswer).length
+	}
+
+	answerQuestion (answer: string, opts?: { automatic?: boolean }): boolean {
 		const ask = this.actions.find(a => a.name === ASK_USER && a.status === 'pending')
 		if (!ask) return false
+
+		if (opts?.automatic) {
+			ask.markCompleted({ answer, answered_by: AUTOMATIC_ANSWER, note: AUTOMATIC_ANSWER_NOTE })
+			return true
+		}
 
 		ask.markCompleted({ answer })
 		this.remember([{ key: `user_answer_${ask.stepId ?? ask.id}`, value: `${answer} | in answer to: ${String(ask.args?.question ?? '')}` }])
