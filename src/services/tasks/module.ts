@@ -1,12 +1,12 @@
 import 'reflect-metadata'
 import { container } from 'tsyringe'
-import { CreateAgentTaskUseCase, Params as CTParams, Output as CTOutput } from './lambdas/create-agent-task'
-import { UpdateAgentTaskUseCase, Params as UTParams, Output as UTOutput } from './lambdas/update-agent-task'
-import { GetAgentTaskByIdUseCase, Params as GTParams, Output as GTOutput } from './lambdas/get-agent-task-by-id'
-import { ListAgentTasksByChatUseCase, Params as LTParams, Output as LTOutput } from './lambdas/list-agent-tasks-by-chat'
-import { CreateAgentActionUseCase, Params as CAParams, Output as CAOutput } from './lambdas/create-agent-action'
-import { UpdateAgentActionUseCase, Params as UAParams, Output as UAOutput } from './lambdas/update-agent-action'
-import { ListAgentActionsByTaskUseCase, Params as LAParams, Output as LAOutput } from './lambdas/list-agent-actions-by-task'
+import { CreateAgentTaskUseCase, Params as CTParams, Output as CTOutput } from './use-cases/create-agent-task.use-case'
+import { UpdateAgentTaskUseCase, Params as UTParams, Output as UTOutput } from './use-cases/update-agent-task.use-case'
+import { GetAgentTaskByIdUseCase, Params as GTParams, Output as GTOutput } from './use-cases/get-agent-task-by-id.use-case'
+import { ListAgentTasksByChatUseCase, Params as LTParams, Output as LTOutput } from './use-cases/list-agent-tasks-by-chat.use-case'
+import { CreateAgentActionUseCase, Params as CAParams, Output as CAOutput } from './use-cases/create-agent-action.use-case'
+import { UpdateAgentActionUseCase, Params as UAParams, Output as UAOutput } from './use-cases/update-agent-action.use-case'
+import { ListAgentActionsByTaskUseCase, Params as LAParams, Output as LAOutput } from './use-cases/list-agent-actions-by-task.use-case'
 
 export async function createAgentTask (props: CTParams): Promise<CTOutput> {
     const createAgentTaskUseCase = container.resolve(CreateAgentTaskUseCase)

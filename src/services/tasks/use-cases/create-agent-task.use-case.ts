@@ -1,7 +1,7 @@
 import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
-import { AgentTaskRepository } from '../../repositories'
-import { AgentTask, AgentTaskProps } from '../../entities'
+import { AgentTaskRepository } from '../repositories'
+import { AgentTask, AgentTaskProps } from '../entities'
 
 export interface Params extends BaseUseCaseParams {
 	payload?: AgentTaskProps

@@ -2,8 +2,8 @@ import { autoInjectable, inject } from 'tsyringe'
 import { QueryOptions } from '@common/repositories'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
 import { BaseEntity } from '@common/base/base.entity'
-import { AgentTaskRepository } from '../../repositories'
-import { AgentTaskProps } from '../../entities'
+import { AgentTaskRepository } from '../repositories'
+import { AgentTaskProps } from '../entities'
 
 const DEFAULT_LIMIT = 10
 
