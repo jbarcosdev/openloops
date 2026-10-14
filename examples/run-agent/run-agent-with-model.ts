@@ -3,7 +3,7 @@ import { Logger } from 'openloops/common'
 import { CurrentUser } from 'openloops/base'
 import { AgiLoop } from 'openloops/loops'
 
-async function runAgent () {
+async function runAgentWithModel () {
     const logger = new Logger()
     const currentUser = await CurrentUser.asyncFromDB('6ab56894eb20887d1ef7942c')
 
@@ -30,4 +30,4 @@ async function runAgent () {
     }
 }
 
-runAgent()
+runAgentWithModel()
