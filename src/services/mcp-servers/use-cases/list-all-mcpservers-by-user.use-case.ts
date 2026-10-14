@@ -1,7 +1,7 @@
 import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
-import { McpServerRepository } from '../../repositories'
-import { McpServerProps } from '../../entities'
+import { McpServerRepository } from '../repositories'
+import { McpServerProps } from '../entities'
 
 export interface Params extends BaseUseCaseParams {}
 

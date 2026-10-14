@@ -1,13 +1,13 @@
 import 'reflect-metadata'
 import { container } from 'tsyringe'
-import { CreateMcpServerUseCase, Params as CParams, Output as COutput } from './lambdas/create-mcpserver'
-import { UpdateMcpServerUseCase, Params as UParams, Output as UOutput } from './lambdas/update-mcpserver'
-import { GetMcpServerByIdUseCase, Params as GParams, Output as GOutput } from './lambdas/get-mcpserver-by-id'
-import { ListMcpServersByUserUseCase, Params as LParams, Output as LOutput } from './lambdas/list-mcpservers-by-user'
-import { ListAllMcpServersByUserUseCase, Params as AParams, Output as AOutput } from './lambdas/list-all-mcpservers-by-user'
-import { DeleteMcpServerUseCase, Params as DParams, Output as DOutput } from './lambdas/delete-mcpserver'
-import { DecideMcpServerTrustUseCase, Params as TParams, Output as TOutput } from './lambdas/decide-trust'
-import { VerifyMcpServerConnectionUseCase, Params as VParams, Output as VOutput } from './lambdas/verify-connection'
+import { CreateMcpServerUseCase, Params as CParams, Output as COutput } from './use-cases/create-mcpserver.use-case'
+import { UpdateMcpServerUseCase, Params as UParams, Output as UOutput } from './use-cases/update-mcpserver.use-case'
+import { GetMcpServerByIdUseCase, Params as GParams, Output as GOutput } from './use-cases/get-mcpserver-by-id.use-case'
+import { ListMcpServersByUserUseCase, Params as LParams, Output as LOutput } from './use-cases/list-mcpservers-by-user.use-case'
+import { ListAllMcpServersByUserUseCase, Params as AParams, Output as AOutput } from './use-cases/list-all-mcpservers-by-user.use-case'
+import { DeleteMcpServerUseCase, Params as DParams, Output as DOutput } from './use-cases/delete-mcpserver.use-case'
+import { DecideMcpServerTrustUseCase, Params as TParams, Output as TOutput } from './use-cases/decide-mcpserver-trust.use-case'
+import { VerifyMcpServerConnectionUseCase, Params as VParams, Output as VOutput } from './use-cases/verify-mcpserver-connection.use-case'
 
 export async function createMcpServer (props: CParams): Promise<COutput> {
     const createMcpServerUseCase = container.resolve(CreateMcpServerUseCase)
