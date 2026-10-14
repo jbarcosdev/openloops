@@ -1,7 +1,7 @@
 import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
-import { AgentTraceRepository } from '../../repositories'
-import { AgentTraceEntry, AgentTraceEntryProps } from '../../entities'
+import { AgentTraceRepository } from '../repositories'
+import { AgentTraceEntry, AgentTraceEntryProps } from '../entities'
 
 export interface Params extends BaseUseCaseParams {
 	payload?: AgentTraceEntryProps[]
