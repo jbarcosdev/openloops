@@ -95,6 +95,8 @@ The mode is saved in `chat.settings.executionMode` when the chat is created and 
 
 Only `AgiLoop` supports autonomous mode.
 
+To run an agent on a schedule, see [agentic jobs](agentic-jobs.md).
+
 ## The result
 
 `agent.run` does not throw for failures inside the run. It returns:
