@@ -10,8 +10,38 @@ function clone<T> (value: T): T {
     return value
 }
 
+const comparable = (value: any): any => value instanceof Date ? value.getTime() : value instanceof ObjectId ? value.toHexString() : value
+
+function isOperators (value: any): boolean {
+    return Boolean(value) && typeof value === 'object' && !(value instanceof Date) && !(value instanceof ObjectId) && Object.keys(value).length > 0 && Object.keys(value).every(key => key.startsWith('$'))
+}
+
+function matchesValue (actual: any, wanted: any): boolean {
+    if (isOperators(wanted)) {
+        return Object.entries(wanted).every(([operator, expected]: [string, any]) => {
+            const present = actual !== undefined && actual !== null
+
+            switch (operator) {
+                case '$exists': return expected ? actual !== undefined : actual === undefined
+                case '$ne': return comparable(actual) !== comparable(expected)
+                case '$lte': return present && comparable(actual) <= comparable(expected)
+                case '$lt': return present && comparable(actual) < comparable(expected)
+                case '$gte': return present && comparable(actual) >= comparable(expected)
+                case '$gt': return present && comparable(actual) > comparable(expected)
+                case '$in': return (expected as any[]).some(item => String(comparable(item)) === String(comparable(actual)))
+                default: throw new Error(`The fake mongo client does not support ${operator}`)
+            }
+        })
+    }
+
+    return wanted === null ? actual == null : String(comparable(actual)) === String(comparable(wanted))
+}
+
 function matches (doc: Doc, filter: Doc): boolean {
-    return Object.entries(filter).every(([key, wanted]) => wanted === null ? doc[key] == null : String(doc[key]) === String(wanted))
+    return Object.entries(filter).every(([key, wanted]) => {
+        if (key === '$or') return (wanted as Doc[]).some(branch => matches(doc, branch))
+        return matchesValue(doc[key], wanted)
+    })
 }
 
 function setPath (target: Doc, path: string, value: any): void {
@@ -39,11 +69,19 @@ class FakeCollection {
     find (filter: Doc) {
         let found = this.docs.filter(doc => matches(doc, filter)).map(doc => clone(doc))
         const cursor = {
+            skip: (count: number) => {
+                found = found.slice(count)
+                return cursor
+            },
+            limit: (count: number) => {
+                found = found.slice(0, count)
+                return cursor
+            },
             sort: (spec: Record<string, 1 | -1>) => {
                 found = found.sort((a, b) => {
                     for (const [key, direction] of Object.entries(spec)) {
-                        const left = a[key] instanceof Date ? a[key].getTime() : String(a[key])
-                        const right = b[key] instanceof Date ? b[key].getTime() : String(b[key])
+                        const left = comparable(a[key]) ?? ''
+                        const right = comparable(b[key]) ?? ''
                         if (left !== right) return (left < right ? -1 : 1) * direction
                     }
                     return 0
