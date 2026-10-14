@@ -139,7 +139,7 @@ await decideMcpServerTrust({ id: mcpServerId, decision: 'block', currentUser })
    - The server changed after being approved: asks if a tool was added, a parameter or annotation changed, or the instructions changed. A review skill decides the harmless cases (a description rewritten, a tool removed) and approves them on behalf of the user. With `strictMode: true` it always asks.
 5. The question is written from what changed, not from the whole server. A yes approves the manifest the user was shown, once per server and version, not once per tool. A no blocks the server.
 
-A server that cannot be reached after a few retries is reported as unavailable for that run and the others keep working.
+A server that cannot be reached after a few retries is reported as unavailable for that run and the others keep working. A tool that does not answer within `MCP_TOOL_TIMEOUT_MS` (60 seconds by default, restarted by progress notifications) fails without being repeated, and the model is told that the result is unknown. See [configuration](configuration.md#timeouts).
 
 Connections are closed at the end of every turn, including when the turn fails.
 

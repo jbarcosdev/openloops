@@ -11,6 +11,8 @@
 | `OPENAI_API_KEY`, `GEMINI_API_KEY` | for those providers | API keys of the other providers you choose per chat. |
 | `JWT_SECRET` | for `login` | Secret that signs the tokens. See [authentication](authentication.md). |
 | `SERPER_API_KEY` | for `webSearchTool` | See [tools](tools.md#built-in-tools). |
+| `LLM_CALL_TIMEOUT_MS` | no | Longest time to wait for one attempt of a model call, in milliseconds. Defaults to `60000`. See [Timeouts](#timeouts). |
+| `MCP_TOOL_TIMEOUT_MS` | no | Longest time to wait for a tool of an MCP server, in milliseconds. Defaults to `60000`. See [Timeouts](#timeouts). |
 | `SENTRY_DSN` | no | Errors are reported to Sentry when set, unless `IS_LOCAL` is `true` or `NODE_ENV` is `development`. |
 | `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`, `LANGFUSE_BASE_URL` | no | Traces every LLM call in Langfuse when all three are set. |
 | `IS_LOCAL`, `NODE_ENV` | no | Local development switches. |
@@ -32,6 +34,16 @@ It was chosen with the project's own evals (see `evals/`, results of 2026-10-12)
 
 It is in the low price tier, it makes the most of the prompt cache, which matters because the prompt of an agent is large and repeats in every cycle, and it was among the most accurate. These are small samples (10 runs per setup in the skill evals, 3 repetitions per case in the model suite) and results change as providers update their models, so run the evals again before relying on the numbers for another prompt or model.
 
+## Timeouts
+
+A model call that never answers would block the whole run, so every attempt has a time limit:
+
+- **Model calls.** An attempt that does not answer within `LLM_CALL_TIMEOUT_MS` (60 seconds by default) is cancelled and the same call is made again, up to 3 attempts in total. When all of them time out, the run fails with the error code `LLM_TIMEOUT` and a message for the user, and the chat is left as `failed` so the user can send the message again. Waiting for a provider that asks to slow down is a separate mechanism and is not affected.
+- **Tools of MCP servers.** A tool that does not answer within `MCP_TOOL_TIMEOUT_MS` (60 seconds by default) fails. The time starts again every time the server reports progress, so a long tool that is alive is not cut off. A tool call is never repeated automatically, because it may have changed something. The model is told that the result is unknown and that it must check before repeating it.
+- **Langfuse.** Sending the trace of a call to Langfuse waits at most 5 seconds. If it takes longer or fails, the run continues without it.
+
+A value that is not a positive whole number is ignored and the default is used.
+
 ## Choosing the model
 
 Pick another one for a chat when you run it:
@@ -46,7 +58,7 @@ await agent.run({
 
 The choice is stored in the chat settings and used for the rest of that chat. Set the API key variable that the provider expects.
 
-The model call goes through a single client that retries, waits when the provider asks to slow down, drops a temperature setting the model rejects and turns provider errors into messages that are safe to show to the user.
+The model call goes through a single client that retries, cancels and repeats an attempt that does not answer in time, waits when the provider asks to slow down, drops a temperature setting the model rejects and turns provider errors into messages that are safe to show to the user.
 
 ## What is recorded
 

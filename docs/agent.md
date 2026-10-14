@@ -196,4 +196,4 @@ For every chat, `openloops` persists the chat and its messages, the tasks, every
 
 ## Error handling
 
-If a turn fails for any reason, `Agent` marks the chat as failed, saves it, closes any open MCP session and returns the error in `result.error`. LLM failures such as rate limits or exhausted quota carry a user-facing message and a retryable flag in `data.state.lastError`.
+If a turn fails for any reason, `Agent` marks the chat as failed, saves it, closes any open MCP session and returns the error in `result.error`. LLM failures such as rate limits, exhausted quota or a model that does not answer in time (`LLM_TIMEOUT`) carry a user-facing message and a retryable flag in `data.state.lastError`.

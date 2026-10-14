@@ -166,6 +166,10 @@ GEMINI_API_KEY=
 # Required for login
 JWT_SECRET=
 
+# Optional timeouts in milliseconds (default 60000), see docs/configuration.md
+LLM_CALL_TIMEOUT_MS=
+MCP_TOOL_TIMEOUT_MS=
+
 # Optional, see "Observability" below
 SENTRY_DSN=
 LANGFUSE_SECRET_KEY=
