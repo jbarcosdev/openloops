@@ -60,6 +60,10 @@ When a run is autonomous (`executionMode: 'autonomous'`, see [agent](agent.md#au
 - Questions the model asks with `ask_user` go to a small evaluator skill. It sees the goal, the message that created the task, what the agent learned and its latest results. It answers only when that context settles the question and never grants permissions. Its answer reaches the model with a note that it is automatic, it is not stored as something the user said and it does not count as a source for identifiers, so an id it invents is still rejected by the grounding check.
 - Approvals are never given automatically beyond what an interactive run already does. When something needs the user, the task is paused in the chat and resumes when the user answers.
 
+## Language
+
+The reasoning engine reports in every turn the language in which it talks to the user, and the harness keeps it in `chat.state.language`. It is what every skill receives as `detected_language`. The model keeps the language of the conversation, changes it only when the user explicitly asks for another one, and ignores the language of pasted text, documents and tool results. A value that is not a two letter code is discarded and the previous language stays.
+
 ## Limits
 
 | Limit | Value |

@@ -13,8 +13,8 @@ import { AgiLoop } from 'openloops/loops'
 
 | Node | What it does |
 | --- | --- |
-| `fast_responder` | Initial node. Detects the language and answers directly when no tools or memory are needed. |
-| `reasoning_engine` | Reads the situation or the results of the last actions, rewrites its working state and decides the next actions. |
+| `fast_responder` | Initial node. Answers directly when no tools or memory are needed. It is skipped in an autonomous run. |
+| `reasoning_engine` | Reads the situation or the results of the last actions, rewrites its working state, decides the next actions and reports the language of the conversation. |
 | `action_engine` | Runs the actions the reasoning engine asked for, asks the user for confirmation when needed, delivers the final answer. |
 
 The loop works within a budget per task (20 reasoning turns and 40 tool calls) and stops with an honest answer when the model repeats itself, keeps only reading notes, or runs out of budget. It also rejects final answers that cite identifiers that never appeared in a result or in the user's words.

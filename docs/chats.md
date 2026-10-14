@@ -12,11 +12,21 @@ import { createChat, getChatById, listChatsByUser, updateChat, deleteChat } from
 | --- | --- |
 | `state` | `status`, detected `language`, `activeTaskId`, `currentActivity`, `lastError` and `stopRequested`. See [agent](agent.md#the-result) for the statuses. |
 | `settings` | `modelProvider`, `modelName`, `loopName`, `executionMode`, `notifyOnCompletion` and `isPrivateSession`. |
-| `messages` | The conversation. Each message has `role` (`user` or `assistant`), `content`, `answerId` and `excludeFromContext`. |
+| `messages` | The conversation. Each message has `role` (`user` or `assistant`), `source`, `content`, `answerId` and `excludeFromContext`. |
 
 Every assistant message of one answer shares an `answerId`. It is the id you pass as `messageId` to [usage](usage.md).
 
-Messages blocked by a [guardrail](guardrails.md) have `excludeFromContext` set, so you can decide whether to show them.
+`role` says on which side of the conversation a message is, and `source` says who produced it:
+
+| `source` | Meaning |
+| --- | --- |
+| `user` | Written by the person. |
+| `model` | Written by the model: the answers and questions of the agent. |
+| `harness` | Written by the harness: the reply of a [guardrail](guardrails.md), the question that asks for an approval, the acknowledgement of a cancelled task and, in an autonomous run, the answer of the automatic evaluator, which has `role: 'user'`. |
+
+A message saved before `source` existed has none.
+
+Messages with `excludeFromContext` are shown in the history but never sent to the model. They are the ones blocked by a guardrail and, in an autonomous run, the questions of the model together with the automatic answers.
 
 ## Listing a user's chats
 

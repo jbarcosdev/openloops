@@ -90,6 +90,9 @@ await agent.run({
 
 The mode is saved in `chat.settings.executionMode` when the chat is created and is not changed later. Each run takes its mode only from its own `executionMode` option and is interactive when it is not given, so a user who continues an autonomous chat by hand is working interactively and the chat is still listed as autonomous. See [chats](chats.md#listing-a-users-chats).
 
+- The first step of the loop, the one that answers conversation directly, is skipped: the task goes straight to the reasoning engine.
+- Each question of the model and its automatic answer are saved in the chat history so the user can see them later, marked with `source` and excluded from the context of the model.
+
 Only `AgiLoop` supports autonomous mode.
 
 ## The result
