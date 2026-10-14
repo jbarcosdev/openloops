@@ -95,6 +95,8 @@ The second argument is the runtime services the loop can call:
 | Member | What it does |
 | --- | --- |
 | `reply(content)` | Sends a message to the user. |
+| `executionMode` | `interactive` or `autonomous`, taken from the run. |
+| `answerQuestion(question)` | In an autonomous run, answers a question of the model on behalf of the absent user and returns the answer, or `undefined` when it cannot. In an interactive run it always returns `undefined`, and the loop pauses and asks the user. |
 | `setNextNode(node)` | Chooses the next node. `undefined` falls back to the initial node on the next message. |
 | `toolCatalog()` | Returns the tools to declare to the model and the context that describes the rest. Handles discovery and MCP servers. |
 | `searchTools(keywords, opts)` | Ranks the available tools by keyword. `opts.server` limits it to one MCP server. |
@@ -140,5 +142,6 @@ Every skill run is traced automatically. See [skills](skills.md).
 | `approvalRequest` | Writes the question that asks the user to confirm pending actions. |
 | `confirmationGate` | Reads the user's answer and decides confirmed, declined or unclear. |
 | `mcpChangeReview` | Reviews what changed in an MCP server and writes the approval question. |
+| `autonomousAnswer` | Answers a question of the model on behalf of an absent user, only from the context of the task. |
 
-`Agent` already runs the last three for you when you use `harness.requestApproval`.
+`Agent` already runs `approvalRequest`, `confirmationGate` and `mcpChangeReview` for you when you use `harness.requestApproval`, and `autonomousAnswer` through `harness.answerQuestion`.

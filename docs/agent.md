@@ -63,10 +63,34 @@ Omit `chatId` to start a brand-new chat. Pass an existing `chatId` to continue a
 | --- | --- |
 | `modelProvider`, `modelName` | Model used for this chat. Defaults to `openai` and `gpt-4o-mini`. See [configuration](configuration.md). |
 | `loopName` | Name of the loop driving the chat. Set automatically from the loop. |
+| `executionMode` | `interactive` (default) or `autonomous`. See [Autonomous mode](#autonomous-mode). |
 | `notifyOnCompletion` | Exposed as `agent.notifyOnCompletion` so a post execution hook can notify the user. |
 | `isPrivateSession` | Stored in the chat settings for your application to use. |
 
 `currentSession` is optional. It carries device, location and locale, which skills use to answer in the right time zone and language.
+
+## Autonomous mode
+
+An autonomous run is one where nobody is in the chat while the agent works, for example a scheduled task. Pass the mode in the run:
+
+```typescript
+await agent.run({
+    input: { message: 'Every morning, summarize my open tickets' },
+    options: { executionMode: 'autonomous' },
+    currentUser,
+})
+```
+
+`currentUser` is still required: it owns the chat and the MCP servers. What changes while a run is autonomous:
+
+- The model is told that nobody is present, so it plans the whole task and writes a complete final answer.
+- Questions the model sends with `ask_user` are answered by an automatic evaluator, a skill that only knows the context of the task. The model receives the answer marked as automatic and is told to use its judgment. The evaluator never grants permissions and says it cannot decide when the context does not settle the question. At most 3 questions per task are answered this way.
+- Whatever needs the user (a destructive tool, an MCP server that was not approved or that changed in a way that needs review, a question the evaluator cannot answer) pauses the run. The chat stays in `awaiting_user_confirmation` or `awaiting_user_input` with the question as its last message. The user opens the chat and answers, and the task continues where it stopped.
+- Small changes in an approved MCP server are still approved by the review skill, as in an interactive run. A server used for the first time, or any change with `strictMode: true`, always pauses the run.
+
+The mode is saved in `chat.settings.executionMode` when the chat is created and is not changed later. Each run takes its mode only from its own `executionMode` option and is interactive when it is not given, so a user who continues an autonomous chat by hand is working interactively and the chat is still listed as autonomous. See [chats](chats.md#listing-a-users-chats).
+
+Only `AgiLoop` supports autonomous mode.
 
 ## The result
 

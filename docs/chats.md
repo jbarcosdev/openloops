@@ -11,7 +11,7 @@ import { createChat, getChatById, listChatsByUser, updateChat, deleteChat } from
 | Field | Meaning |
 | --- | --- |
 | `state` | `status`, detected `language`, `activeTaskId`, `currentActivity`, `lastError` and `stopRequested`. See [agent](agent.md#the-result) for the statuses. |
-| `settings` | `modelProvider`, `modelName`, `loopName`, `notifyOnCompletion` and `isPrivateSession`. |
+| `settings` | `modelProvider`, `modelName`, `loopName`, `executionMode`, `notifyOnCompletion` and `isPrivateSession`. |
 | `messages` | The conversation. Each message has `role` (`user` or `assistant`), `content`, `answerId` and `excludeFromContext`. |
 
 Every assistant message of one answer shares an `answerId`. It is the id you pass as `messageId` to [usage](usage.md).
@@ -28,6 +28,14 @@ const result = await listChatsByUser({
 ```
 
 Sorted by last update, newest first. Defaults to page 1 and 10 chats.
+
+```typescript
+const autonomous = await listChatsByUser({ executionMode: 'autonomous', currentUser })
+
+const interactive = await listChatsByUser({ executionMode: 'interactive', currentUser })
+```
+
+`executionMode` is optional. `autonomous` returns the chats that were created by an autonomous run and `interactive` returns the rest, including the chats saved before the mode existed. Combine it with `state.status` to show the autonomous runs that need attention: `awaiting_user_confirmation` or `awaiting_user_input` mean the run is paused until the user answers in the chat, and `failed` means it failed.
 
 ## Getting one chat
 

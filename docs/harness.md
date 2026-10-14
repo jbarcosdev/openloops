@@ -53,12 +53,20 @@ The harness pauses the task, writes the question with a skill, stores the pendin
 
 Approving an MCP server through the chat records the decision on behalf of the user for that version of the server's manifest. If the server changes between the question and the answer, the approval is not applied and the user is asked again.
 
+## Autonomous runs
+
+When a run is autonomous (`executionMode: 'autonomous'`, see [agent](agent.md#autonomous-mode)) the harness stands in for the user in one place and refuses to in the rest:
+
+- Questions the model asks with `ask_user` go to a small evaluator skill. It sees the goal, the message that created the task, what the agent learned and its latest results. It answers only when that context settles the question and never grants permissions. Its answer reaches the model with a note that it is automatic, it is not stored as something the user said and it does not count as a source for identifiers, so an id it invents is still rejected by the grounding check.
+- Approvals are never given automatically beyond what an interactive run already does. When something needs the user, the task is paused in the chat and resumes when the user answers.
+
 ## Limits
 
 | Limit | Value |
 | --- | --- |
 | Loop iterations per run | `maxIterations`, 50 by default |
 | Reasoning turns per task (`AgiLoop`) | 20 |
+| Automatic answers per autonomous task | 3 |
 | Tool calls per task (`AgiLoop`) | 40 |
 | Message length | `maxInputLength`, 100000 characters by default |
 
