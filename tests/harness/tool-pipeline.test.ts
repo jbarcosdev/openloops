@@ -301,7 +301,7 @@ describe('identifiers in arguments', () => {
     })
 })
 
-describe('a plan-execute loop on top of the pipeline', () => {
+describe('steps that depend on each other on top of the pipeline', () => {
     const got: string[] = []
     const search = makeTool({ name: 'p_search', required: ['q'], properties: { q: { type: 'string' } }, handler: async () => structured({ results: [{ id: 'id1' }, { id: 'id2' }] }) })
     const fetch = makeTool({ name: 'p_get', required: ['id'], properties: { id: { type: 'string' } }, handler: async (params: any) => { got.push(params.id); return { got: params.id } } })

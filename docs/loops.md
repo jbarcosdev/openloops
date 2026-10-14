@@ -23,8 +23,6 @@ The loop works within a budget per task (20 reasoning turns and 40 tool calls) a
 const agent = new Agent({ loop: new AgiLoop() })
 ```
 
-`PlanExecuteLoop` (`openloops/loops`) is deprecated and will be removed. Do not build on it.
-
 ## The contract
 
 ```typescript
