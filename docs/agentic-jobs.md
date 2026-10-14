@@ -43,7 +43,7 @@ result.data.nextRunAt
 | `recurrence` | yes | When it runs. See below. |
 | `timezone` | yes | An IANA timezone. The local time of the recurrence and the days are those of this timezone, and daylight saving time is respected. |
 | `enabled` | no | `true` by default. A job that is off never runs, and can be turned on again. |
-| `modelProvider`, `modelName` | no | The model of the job, both or none. Without them the default model is used. |
+| `modelProvider`, `modelName` | no | The model of the job, both or none. Without them, the default model of the owner is used, then the fallbacks. See [configuration](configuration.md#which-model-a-chat-uses). |
 
 `nextRunAt` is calculated when the job is created and it is what you show to the user. The fields that the system manages (`nextRunAt`, `lastRunAt`, `lastRunStatus`, `lockedBy`, `lockedUntil`, `activeRunId`) are ignored if they come in the payload.
 

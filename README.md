@@ -180,7 +180,11 @@ GEMINI_API_KEY=
 # Required for login
 JWT_SECRET=
 
-# Optional, in milliseconds, see docs/configuration.md
+# Optional, see docs/configuration.md
+LLM_FALLBACK_PROVIDER=
+LLM_FALLBACK_MODEL=
+
+# Optional, in milliseconds
 AGENTIC_JOBS_POLL_INTERVAL_MS=
 AGENTIC_JOBS_LEASE_MS=
 LLM_CALL_TIMEOUT_MS=

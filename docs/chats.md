@@ -11,7 +11,7 @@ import { createChat, getChatById, listChatsByUser, updateChat, deleteChat } from
 | Field | Meaning |
 | --- | --- |
 | `state` | `status`, detected `language`, `activeTaskId`, `currentActivity`, `lastError` and `stopRequested`. See [agent](agent.md#the-result) for the statuses. |
-| `settings` | `modelProvider`, `modelName`, `loopName`, `executionMode`, `notifyOnCompletion` and `isPrivateSession`. |
+| `settings` | `modelProvider` and `modelName` (the model the chat uses, saved on every run), `loopName`, `executionMode`, `notifyOnCompletion` and `isPrivateSession`. |
 | `messages` | The conversation. Each message has `role` (`user` or `assistant`), `source`, `content`, `answerId` and `excludeFromContext`. |
 
 Every assistant message of one answer shares an `answerId`. It is the id you pass as `messageId` to [usage](usage.md).

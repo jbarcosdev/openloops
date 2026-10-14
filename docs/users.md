@@ -65,6 +65,29 @@ const result = await updateUser({
 })
 ```
 
+## Default model
+
+A user can have a preferred model, which is used for the chats they start when no model is chosen in the run.
+
+```typescript
+await updateUser({
+    id: userId,
+    payload: {
+        preferences: {
+            defaultModel: { provider: 'anthropic', model: 'claude-haiku-5-5' },
+        },
+    },
+    currentUser,
+})
+
+await updateUser({ id: userId, payload: { preferences: { defaultModel: null } }, currentUser })
+```
+
+- The provider and the model are required together, and the model must exist in the catalog of providers. Otherwise the call fails with an error that says why.
+- It does not change the other preferences of the user.
+- Sending `null` removes it.
+- It only applies to chats that start afterwards, because every chat saves the model it uses. See [configuration](configuration.md#which-model-a-chat-uses).
+
 ## Deleting a user
 
 ```typescript

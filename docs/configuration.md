@@ -13,6 +13,7 @@
 | `SERPER_API_KEY` | for `webSearchTool` | See [tools](tools.md#built-in-tools). |
 | `AGENTIC_JOBS_POLL_INTERVAL_MS` | no | How often the runner of [agentic jobs](agentic-jobs.md) checks what is due, in milliseconds. Defaults to `60000`. |
 | `AGENTIC_JOBS_LEASE_MS` | no | How long a job stays locked while it runs, in milliseconds. Defaults to `600000`. |
+| `LLM_FALLBACK_PROVIDER`, `LLM_FALLBACK_MODEL` | no | The model to use when nothing else chooses one, for the whole deployment. Set both or neither. See [Which model a chat uses](#which-model-a-chat-uses). |
 | `LLM_CALL_TIMEOUT_MS` | no | Longest time to wait for one attempt of a model call, in milliseconds. Defaults to `60000`. See [Timeouts](#timeouts). |
 | `MCP_TOOL_TIMEOUT_MS` | no | Longest time to wait for a tool of an MCP server, in milliseconds. Defaults to `60000`. See [Timeouts](#timeouts). |
 | `SENTRY_DSN` | no | Errors are reported to Sentry when set, unless `IS_LOCAL` is `true` or `NODE_ENV` is `development`. |
@@ -21,9 +22,22 @@
 
 Any value can be stored encrypted by prefixing it with `ENC:`. It is decrypted with `SECRET_MANAGER_KEY` when it is read.
 
-## Default model
+## Which model a chat uses
 
-The default provider is `anthropic` and the default model is `claude-haiku-5-5`. It is what a chat uses when you do not choose another one, so `ANTHROPIC_API_KEY` is the only model key you need to start.
+Every time an agent runs, the model is the first one of this list that exists:
+
+1. **The model sent in that run** (`modelProvider` and `modelName`, always together). It is saved in the chat as the last one used.
+2. **The model saved in the chat.** If a run does not send one, the chat keeps using the last one that was sent, even if the user changed it between runs.
+3. **The default model of the user** (`preferences.defaultModel`, see [users](users.md#default-model)). It is used when the chat has no model yet, and it is saved in the chat.
+4. **The `fallbackModel` of the agent** (`new Agent({ fallbackModel: { provider, model } })`).
+5. **The fallback of the backend**: the variables `LLM_FALLBACK_PROVIDER` and `LLM_FALLBACK_MODEL`, which must be set together.
+6. **The fallback of the client**: `anthropic` with `claude-haiku-5-5`.
+
+The model that is chosen is always saved in the chat, so changing the preference of a user or a fallback only affects the chats that start afterwards. Calls that are not made by an agent, such as the `call_ai` tool, use the default model of the user, then the fallback of the backend, then the one of the client.
+
+### The fallback of the client
+
+The last fallback is `anthropic` with `claude-haiku-5-5`, so `ANTHROPIC_API_KEY` is the only model key you need to start.
 
 It was chosen with the project's own evals (the `evals/` folder of the repository, results of 2026-10-12), in the default `plain_chat` mode and next to `gpt-6-luna`, `gpt-4o-mini` and `gemini-2.5-flash`. The skill rows use the real prompt of the reasoning engine:
 
@@ -48,7 +62,7 @@ A value that is not a positive whole number is ignored and the default is used.
 
 ## Choosing the model
 
-Pick another one for a chat when you run it:
+Choose the model of a chat when you run it:
 
 ```typescript
 await agent.run({
@@ -58,7 +72,7 @@ await agent.run({
 })
 ```
 
-The choice is stored in the chat settings and used for the rest of that chat. Set the API key variable that the provider expects.
+The provider and the model go together: sending only one of them is an error. The choice is saved in the chat and used for its next runs until you send another one. Set the API key variable that the provider expects.
 
 The model call goes through a single client that retries, cancels and repeats an attempt that does not answer in time, waits when the provider asks to slow down, drops a temperature setting the model rejects and turns provider errors into messages that are safe to show to the user.
 

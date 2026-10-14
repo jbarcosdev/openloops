@@ -33,6 +33,7 @@ const agent = new Agent({
 | `identity` | no | none | Name, gender and role injected into every skill. |
 | `maxInputLength` | no | `100000` | Longest message accepted, in characters. Longer messages are blocked by a built-in guard. |
 | `maxIterations` | no | `50` | Hard limit of loop iterations in one run. When reached, the run fails with `AGENT_MAX_ITERATIONS_REACHED`. |
+| `fallbackModel` | no | none | `{ provider, model }` used when neither the run, the chat nor the user chose a model. See [configuration](configuration.md#which-model-a-chat-uses). |
 | `strictMode` | no | `false` | When `true`, the user is always asked before the agent uses an MCP server whose tools changed after being approved. See [MCP servers](mcp-servers.md#how-the-agent-uses-the-servers). |
 
 An `Agent` instance holds the state of the run it is executing, so run one conversation at a time per instance and create another instance for concurrent runs.
@@ -61,7 +62,7 @@ Omit `chatId` to start a brand-new chat. Pass an existing `chatId` to continue a
 
 | Option | What it does |
 | --- | --- |
-| `modelProvider`, `modelName` | Model used for this chat. Defaults to `anthropic` and `claude-haiku-5-5`. See [configuration](configuration.md#default-model). |
+| `modelProvider`, `modelName` | Model for this run, always together. It is saved in the chat and used by the next runs that do not send one. Without it, the model comes from the chat, the preference of the user and the fallbacks. See [configuration](configuration.md#which-model-a-chat-uses). |
 | `loopName` | Name of the loop driving the chat. Set automatically from the loop. |
 | `executionMode` | `interactive` (default) or `autonomous`. See [Autonomous mode](#autonomous-mode). |
 | `notifyOnCompletion` | Exposed as `agent.notifyOnCompletion` so a post execution hook can notify the user. |
