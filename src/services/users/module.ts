@@ -1,10 +1,10 @@
 import 'reflect-metadata'
 import { container } from 'tsyringe'
-import { CreateUserUseCase, Params as CParams, Output as COutput } from './lambdas/create-user'
-import { UpdateUserUseCase, Params as UParams, Output as UOutput } from './lambdas/update-user'
-import { GetUserByIdUseCase, Params as GParams, Output as GOutput } from './lambdas/get-user-by-id'
-import { ListUsersByPropsUseCase, Params as LParams, Output as LOutput } from './lambdas/list-users-by-props'
-import { DeleteUserUseCase, Params as DParams, Output as DOutput } from './lambdas/delete-user'
+import { CreateUserUseCase, Params as CParams, Output as COutput } from './use-cases/create-user.use-case'
+import { UpdateUserUseCase, Params as UParams, Output as UOutput } from './use-cases/update-user.use-case'
+import { GetUserByIdUseCase, Params as GParams, Output as GOutput } from './use-cases/get-user-by-id.use-case'
+import { ListUsersByPropsUseCase, Params as LParams, Output as LOutput } from './use-cases/list-users-by-props.use-case'
+import { DeleteUserUseCase, Params as DParams, Output as DOutput } from './use-cases/delete-user.use-case'
 
 export async function createUser (props: CParams): Promise<COutput> {
     const createUserUseCase = container.resolve(CreateUserUseCase)
