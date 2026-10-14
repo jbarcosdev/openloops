@@ -8,6 +8,17 @@ This page is for whoever builds the backend that uses `openloops`, a person or a
 
 Requirements: Node 22 or newer and a MongoDB database. Install it with `npm install openloops` or `yarn add openloops`, set the environment variables of [configuration](configuration.md), and import from the subpaths (`openloops/core`, `openloops/mcps`, and so on).
 
+## Tell your coding agent where this is
+
+A coding agent only finds this documentation if something points it here. Add this to the `CLAUDE.md` or `AGENTS.md` of your backend, once:
+
+```
+This project uses the `openloops` package. Before writing code that uses it, read
+`node_modules/openloops/docs/integration-guide.md`. Its full documentation is in
+`node_modules/openloops/docs` and its examples are in `node_modules/openloops/examples`.
+The package has no controllers: the authorization of every endpoint is the responsibility of this backend.
+```
+
 ## The rule that matters most: authorization is yours
 
 The use cases trust the `currentUser` you pass and the ids you give them.
