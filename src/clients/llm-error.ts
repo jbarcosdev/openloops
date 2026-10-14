@@ -1,9 +1,10 @@
-export type LLMErrorCode = 'LLM_RATE_LIMITED' | 'LLM_QUOTA_EXCEEDED' | 'LLM_UNAVAILABLE' | 'LLM_UNSUPPORTED_PARAMETER' | 'LLM_FAILED'
+export type LLMErrorCode = 'LLM_RATE_LIMITED' | 'LLM_QUOTA_EXCEEDED' | 'LLM_UNAVAILABLE' | 'LLM_TIMEOUT' | 'LLM_UNSUPPORTED_PARAMETER' | 'LLM_FAILED'
 
 const USER_MESSAGES: Record<LLMErrorCode, string> = {
     LLM_RATE_LIMITED: 'The model is receiving too many requests right now. Please try again in a few seconds.',
     LLM_QUOTA_EXCEEDED: 'The usage quota of the model provider has been exhausted. Please check the plan and billing of the provider.',
     LLM_UNAVAILABLE: 'The model provider is temporarily unavailable. Please try again in a moment.',
+    LLM_TIMEOUT: 'The model did not answer in time. Please try again.',
     LLM_UNSUPPORTED_PARAMETER: 'The model does not accept one of the request settings. Please try again.',
     LLM_FAILED: 'The model request failed. Please try again.',
 }
@@ -12,6 +13,7 @@ const RETRYABLE: Record<LLMErrorCode, boolean> = {
     LLM_RATE_LIMITED: true,
     LLM_QUOTA_EXCEEDED: false,
     LLM_UNAVAILABLE: true,
+    LLM_TIMEOUT: true,
     LLM_UNSUPPORTED_PARAMETER: true,
     LLM_FAILED: true,
 }

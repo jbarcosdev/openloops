@@ -196,12 +196,14 @@ describe('LLMClient.chat', () => {
     })
 
     describe('rate limits', () => {
+        const rateLimitWaits = () => waits.filter(ms => ms !== 60000)
+
         it('waits the delay the provider asks for and tries again', async () => {
             mockModels.complete.mockResolvedValueOnce(failure('429 rate limit. Please retry in 2s')).mockResolvedValueOnce(reply())
             const response = await new LLMClient().chat(params())
 
             expect(response.stopReason).toBe('stop')
-            expect(waits).toEqual([3000])
+            expect(rateLimitWaits()).toEqual([3000])
         })
 
         it('gives up after two waits', async () => {
@@ -209,17 +211,17 @@ describe('LLMClient.chat', () => {
 
             await expect(new LLMClient().chat(params())).rejects.toMatchObject({ code: 'LLM_RATE_LIMITED' })
             expect(mockModels.complete).toHaveBeenCalledTimes(3)
-            expect(waits).toEqual([2000, 2000])
+            expect(rateLimitWaits()).toEqual([2000, 2000])
         })
 
         it('does not wait when the provider gives no delay or a very long one', async () => {
             mockModels.complete.mockResolvedValue(failure('429 rate limit exceeded'))
             await expect(new LLMClient().chat(params())).rejects.toMatchObject({ code: 'LLM_RATE_LIMITED' })
-            expect(waits).toEqual([])
+            expect(rateLimitWaits()).toEqual([])
 
             mockModels.complete.mockResolvedValue(failure('429 rate limit. Please retry in 600s'))
             await expect(new LLMClient().chat(params())).rejects.toMatchObject({ code: 'LLM_RATE_LIMITED' })
-            expect(waits).toEqual([])
+            expect(rateLimitWaits()).toEqual([])
         })
     })
 })

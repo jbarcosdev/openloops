@@ -13,6 +13,7 @@ import { extractJSON } from '@common/helpers'
 import { createLLMCall } from '@services/llmcalls'
 import { LLMChatParams, LLMResponse } from './llm-types'
 import { toPiContext, fromPiMessage } from './pi-ai-adapter'
+import { numberSetting } from '@common/utils/number-setting'
 import { LLMError, retryDelayMs, rejectsSamplingParameter } from './llm-error'
 
 const DEFAULT_PROVIDER = 'anthropic'
@@ -20,6 +21,9 @@ const DEFAULT_MODEL = 'claude-haiku-5-5'
 const DEFAULT_TEMPERATURE = 0.7
 const MAX_RETRIES = 4
 const MAX_RATE_LIMIT_WAITS = 2
+const DEFAULT_CALL_TIMEOUT_MS = 60000
+const MAX_TIMEOUT_RETRIES = 2
+const LANGFUSE_FLUSH_TIMEOUT_MS = 5000
 
 const REQUIRED_TOOL_CHOICE: Record<string, string> = {
     'anthropic-messages': 'any',
@@ -49,10 +53,13 @@ export class LLMClient {
     private readonly logger = new Logger()
     private readonly langfuse?: Langfuse
     private readonly langfuseEnabled: boolean
+    private readonly callTimeoutMs: number
 
     constructor () {
         process.env.OPENAI_API_KEY = secretManager.get('OPENAI_API_KEY')
         process.env.ANTHROPIC_API_KEY = secretManager.get('ANTHROPIC_API_KEY')
+
+        this.callTimeoutMs = numberSetting('LLM_CALL_TIMEOUT_MS', DEFAULT_CALL_TIMEOUT_MS)
 
         const publicKey = secretManager.get('LANGFUSE_PUBLIC_KEY')
         const secretKey = secretManager.get('LANGFUSE_SECRET_KEY')
@@ -92,13 +99,13 @@ export class LLMClient {
         if (toolChoice === 'required' && !resolvedChoice) throw new Error(`[LLM Client] forced tool choice is not supported for api ${model.api}`)
 
         const context = toPiContext({ messages, tools }, model)
-        const send = (omitTemperature: boolean) => {
-            const options = { ...(omitTemperature ? {} : { temperature }), maxRetries: MAX_RETRIES, ...(sessionId ? { sessionId } : {}) }
+        const send = (omitTemperature: boolean) => this.withDeadline(signal => {
+            const options = { ...(omitTemperature ? {} : { temperature }), maxRetries: MAX_RETRIES, signal, ...(sessionId ? { sessionId } : {}) }
 
             return resolvedChoice
                 ? models.completeSimple(model, context, { ...options, toolChoice: resolvedChoice as never })
                 : models.complete(model, context, options)
-        }
+        })
 
         const raw = await this.traced(
             { origin, sessionId, answerId, currentUser, modelName, provider, temperature },
@@ -144,8 +151,51 @@ export class LLMClient {
         return this.traced(
             { origin, sessionId, answerId, currentUser, modelName, provider, temperature },
             context,
-            () => this.withoutRejectedTemperature(`${provider}/${modelName}`, omitTemperature => models.complete(model, context, { ...(omitTemperature ? {} : { temperature }), maxRetries: MAX_RETRIES })),
+            () => this.withoutRejectedTemperature(`${provider}/${modelName}`, omitTemperature => this.withDeadline(signal => models.complete(model, context, { ...(omitTemperature ? {} : { temperature }), maxRetries: MAX_RETRIES, signal }))),
         )
+    }
+
+    private async withDeadline (call: (signal: AbortSignal) => Promise<AssistantMessage>): Promise<AssistantMessage> {
+        for (let attempt = 1; attempt <= MAX_TIMEOUT_RETRIES + 1; attempt++) {
+            const controller = new AbortController()
+            let timer: NodeJS.Timeout | undefined
+
+            const deadline = new Promise<undefined>(resolve => {
+                timer = setTimeout(() => {
+                    controller.abort()
+                    resolve(undefined)
+                }, this.callTimeoutMs)
+            })
+
+            const pending = call(controller.signal)
+            pending.catch(() => undefined)
+
+            const response = await Promise.race([pending, deadline]).finally(() => clearTimeout(timer))
+
+            if (response) return response
+
+            this.logger.warn({ attempt, timeoutMs: this.callTimeoutMs }, '[LLM Service] The model did not answer in time')
+        }
+
+        throw new LLMError('LLM_TIMEOUT', `the model did not answer within ${this.callTimeoutMs} ms in ${MAX_TIMEOUT_RETRIES + 1} attempts`)
+    }
+
+    private async flushLangfuse (): Promise<void> {
+        if (!this.langfuseEnabled) return
+
+        let timer: NodeJS.Timeout | undefined
+        const deadline = new Promise<'timeout'>(resolve => {
+            timer = setTimeout(() => resolve('timeout'), LANGFUSE_FLUSH_TIMEOUT_MS)
+        })
+
+        try {
+            const outcome = await Promise.race([this.langfuse!.flushAsync().then(() => 'flushed' as const), deadline])
+            if (outcome === 'timeout') this.logger.warn({ timeoutMs: LANGFUSE_FLUSH_TIMEOUT_MS }, '[LLM Service] Langfuse did not flush in time, continuing')
+        } catch (error: any) {
+            this.logger.warn({ error: error?.message ?? error }, '[LLM Service] Langfuse flush failed, continuing')
+        } finally {
+            clearTimeout(timer)
+        }
     }
 
     private async withoutRejectedTemperature (key: string, send: (omitTemperature: boolean) => Promise<AssistantMessage>): Promise<AssistantMessage> {
@@ -217,7 +267,7 @@ export class LLMClient {
                 } : undefined,
             })
 
-            if (this.langfuseEnabled) await this.langfuse!.flushAsync()
+            await this.flushLangfuse()
 
             this.logger.debug({
                 origin,
@@ -235,7 +285,7 @@ export class LLMClient {
                 level: 'ERROR',
                 statusMessage: (error as Error).message,
             })
-            if (this.langfuseEnabled) await this.langfuse!.flushAsync()
+            await this.flushLangfuse()
             throw error
         }
     }
