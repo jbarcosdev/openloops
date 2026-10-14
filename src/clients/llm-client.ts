@@ -15,8 +15,8 @@ import { LLMChatParams, LLMResponse } from './llm-types'
 import { toPiContext, fromPiMessage } from './pi-ai-adapter'
 import { LLMError, retryDelayMs, rejectsSamplingParameter } from './llm-error'
 
-const DEFAULT_PROVIDER = 'openai'
-const DEFAULT_MODEL = 'gpt-4o-mini'
+const DEFAULT_PROVIDER = 'anthropic'
+const DEFAULT_MODEL = 'claude-haiku-5-5'
 const DEFAULT_TEMPERATURE = 0.7
 const MAX_RETRIES = 4
 const MAX_RATE_LIMIT_WAITS = 2
@@ -52,6 +52,7 @@ export class LLMClient {
 
     constructor () {
         process.env.OPENAI_API_KEY = secretManager.get('OPENAI_API_KEY')
+        process.env.ANTHROPIC_API_KEY = secretManager.get('ANTHROPIC_API_KEY')
 
         const publicKey = secretManager.get('LANGFUSE_PUBLIC_KEY')
         const secretKey = secretManager.get('LANGFUSE_SECRET_KEY')

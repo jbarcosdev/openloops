@@ -118,6 +118,14 @@ describe('LLMClient.chat', () => {
         expect(mockModels.completeSimple.mock.calls[0][2]).toMatchObject({ toolChoice: expected })
     })
 
+    it('uses claude-haiku-5-5 of anthropic when no model is given', async () => {
+        mockModels.complete.mockResolvedValue(reply())
+        const { provider, modelName, ...withoutModel } = params()
+        await new LLMClient().chat(withoutModel)
+
+        expect(mockModels.getModel).toHaveBeenCalledWith('anthropic', 'claude-haiku-5-5')
+    })
+
     it('fails when the api has no forced tool choice', async () => {
         mockModels.getModel.mockReturnValue({ api: 'unknown-api', id: 'm', provider: 'p' })
         await expect(new LLMClient().chat(params({ toolChoice: 'required' }))).rejects.toThrow('forced tool choice is not supported')
