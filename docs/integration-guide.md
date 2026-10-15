@@ -4,7 +4,7 @@ This page is for whoever builds the backend that uses `openloops`, a person or a
 
 ## What the package is, and what it is not
 
-`openloops` gives you a runtime for agents and a set of use cases that read and write MongoDB. It does **not** include an HTTP server, routes, controllers, sessions or authorization. Your backend owns those, and calls `openloops` from its own handlers.
+`openloops` is a harness for agents, and it gives you a set of use cases that read and write MongoDB. It does **not** include an HTTP server, routes, controllers, sessions or authorization. Your backend owns those, and calls `openloops` from its own handlers.
 
 Requirements: Node 22 or newer and a MongoDB database. Install it with `npm install openloops` or `yarn add openloops`, set the environment variables of [configuration](configuration.md), and import from the subpaths (`openloops/core`, `openloops/mcps`, and so on).
 

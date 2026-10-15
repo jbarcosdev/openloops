@@ -11,7 +11,7 @@ Start with the integration guide, then read only the pages you need. All pages a
 
 ## Run an agent
 
-- [The Agent runtime](agent.md): options, running a turn, statuses, confirmations, autonomous mode
+- [The Agent](agent.md): options, running a turn, statuses, confirmations, autonomous mode
 - [Configuration](configuration.md): environment variables, default model, timeouts
 - [Chats](chats.md): the chat record, message source, listing and deleting
 

@@ -1,6 +1,17 @@
 # The harness
 
-The harness is everything between a loop and the outside world. A loop decides what to do. The harness makes sure it is done safely, remembers it and shows the result back to the model in a form it can use. You get all of this by using `Agent` with any loop.
+An agent is three things: a **model** that thinks, a **harness** that gives it hands, memory and rules, and a **loop** that decides what it is for. `openloops` is the harness, and it ships a loop. You can change the model or the loop and the harness stays the same.
+
+The harness is everything between a loop and the outside world. A loop decides what to do. The harness makes sure it is done safely, remembers it and shows the result back to the model in a form it can use. You get all of this by using [`Agent`](agent.md) with any loop.
+
+## The parts of the harness
+
+| Part | What it does | Where it is explained |
+| --- | --- | --- |
+| **Transmission** | Takes the model to the outside world: the tools, found on demand and validated before they run. | [Tool pipeline](#tool-pipeline), [native tools](#native-tools), [tool discovery](#tool-discovery), [tools](tools.md), [MCP servers](mcp-servers.md) |
+| **Brakes** | Stops the agent when it should stop: approvals, guardrails, timeouts and limits. | [Approvals](#approvals), [limits](#limits), [guardrails](guardrails.md), [timeouts](configuration.md#timeouts) |
+| **Logbook** | Remembers and records: the workspace, the history of every task and the usage of every call. | [Workspace](#workspace), [observability](#observability), [chats](chats.md), [usage](usage.md) |
+| **Steering** | Decides how the agent is driven: interactive or autonomous, scheduled, and with which model. | [Autonomous runs](#autonomous-runs), [language](#language), [the Agent](agent.md), [agentic jobs](agentic-jobs.md) |
 
 ## Tool pipeline
 

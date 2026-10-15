@@ -1,6 +1,6 @@
-# The `Agent` runtime
+# The `Agent`
 
-`Agent` is the runtime that drives an `AgentLoop`. It owns everything a loop shouldn't have to think about: loading and saving the chat, dispatching to the right node, running guardrails, resolving tools (native and MCP), asking for confirmation, handling interruption requests, and tracking usage.
+`Agent` is the entry point of the [harness](harness.md), and it drives an `AgentLoop`. It owns everything a loop shouldn't have to think about: loading and saving the chat, dispatching to the right node, running guardrails, resolving tools (native and MCP), asking for confirmation, handling interruption requests, and tracking usage.
 
 ```typescript
 import { Agent } from 'openloops/core'

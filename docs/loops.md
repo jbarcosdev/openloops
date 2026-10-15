@@ -88,7 +88,7 @@ ctx.logger
 
 ## `Harness`
 
-The second argument is the runtime services the loop can call:
+The second argument is the services of the [harness](harness.md) that the loop can call:
 
 | Member | What it does |
 | --- | --- |

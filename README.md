@@ -2,6 +2,8 @@
 
 **Build production-grade enterprise agents in minutes, not days, weeks, or months.**
 
+`openloops` is an open source **harness** for AI agents. An agent is three things: a **model** that thinks (the engine), a **harness** that gives it hands, memory and rules (the chassis), and a **loop** that decides what it is for (the body). `openloops` is the harness, and it ships the loop. Change the model, or the loop, and the rest stays the same.
+
 ```typescript
 import { Agent } from 'openloops/core'
 import { Logger } from 'openloops/common'
@@ -21,6 +23,29 @@ logger.info(result.data.lastAnswer, '[Demo] Result')
 ```
 
 That's it. The agent is persisted, resumable, and scoped to that one user, with tool execution, guardrails, and observability already wired in. No message table to design, no state machine to debug by hand, no MCP adapter to write.
+
+## What the harness gives your agent
+
+A model alone only chats. The harness is what lets it act, safely, for many users:
+
+| Part | What it does | In `openloops` |
+| --- | --- | --- |
+| **Transmission** | Takes the model to the outside world | Your tools and MCP servers, found on demand and validated before they run. See [tools](docs/tools.md) and [MCP servers](docs/mcp-servers.md) |
+| **Brakes** | Stops the agent when it should stop | Confirmation of destructive tools, approval of MCP servers, input guardrails, timeouts and a budget per task. See [guardrails](docs/guardrails.md) and [the harness](docs/harness.md) |
+| **Logbook** | Remembers and records everything | Chats, tasks, every tool call, traces, and usage and cost per call. See [chats](docs/chats.md) and [usage](docs/usage.md) |
+| **Steering** | Decides how the agent is driven | Interactive and autonomous runs, scheduled jobs, stopping a run, and the model per chat and per user. See [the Agent](docs/agent.md), [agentic jobs](docs/agentic-jobs.md) and [configuration](docs/configuration.md) |
+
+## Why it is a good harness
+
+Not adjectives, mechanisms that you can read in the code and in the tests:
+
+- **It rejects what the model invents.** An identifier that is not in the messages of the user or in a previous result never reaches a real system, and the same check applies to the final answer.
+- **It does not let the model loop.** An identical call that already completed or failed is blocked, so the agent changes its approach.
+- **It keeps the prompt small.** Large tool outputs go to a workspace and the model reads them on demand.
+- **It keeps the prompt stable**, so the provider's cache is used. With the default model, about 70% of the prompt tokens were read from the cache in the project's evals. See [configuration](docs/configuration.md#which-model-a-chat-uses).
+- **Nobody changes what your agent does in silence.** An MCP server must be approved before its first tool runs, and a change in its tools is reviewed again.
+- **A call that never answers does not block a run.** It is cancelled and repeated, and a tool call that may have changed something is never repeated by itself.
+- **It is measured.** The `evals/` folder compares models, call modes and the prompts of the skills with the same cases.
 
 ## Building a backend with it
 
@@ -135,7 +160,7 @@ This is a comparison against the self-hosted, open-source versions of LangGraph 
 |---|---|---|---|
 | Persistence | Built in, zero config (MongoDB) | You choose and configure a checkpointer: in-memory, SQLite or Postgres, the last two in separate packages | Memory is opt-in and stored as local files (ChromaDB and SQLite, or LanceDB in newer versions), tied to the machine |
 | Multi-user scoping | Built in: chats, tasks, context, and MCP servers are per-user from the start | Conversations are scoped by a `thread_id`. Mapping them to users, and scoping memory and tools per user, is up to you | Not a concept of the framework, you build it |
-| Tool execution & retries | Validation, confirmation of destructive tools, duplicate and invented-id protection, and LLM and MCP connection retries are built into the runtime. A failed step goes back to the model, which decides how to continue | Per-node `RetryPolicy` and error handling that you configure | Retry limits are configured per agent or task |
+| Tool execution & retries | Validation, confirmation of destructive tools, duplicate and invented-id protection, and LLM and MCP connection retries are built into the harness. A failed step goes back to the model, which decides how to continue | Per-node `RetryPolicy` and error handling that you configure | Retry limits are configured per agent or task |
 | MCP support | Native: servers are a per-user record, tools load on demand, and every server goes through an approval flow | A separate package (`langchain-mcp-adapters`) with a client that you wire into the graph | Native `mcps` field on agents, or `MCPServerAdapter`. Servers are declared in code, not loaded per user |
 | User management | Included (`openloops/users`, `openloops/authentication`) | Not included, you build your own | Not included, you build your own |
 | LLM usage/cost tracking | Included (`openloops/llmcalls`): per answer, per chat, and per-user statistics | Not included in OSS, available via paid LangSmith | Third-party integrations such as OpenLIT report token usage and cost |
@@ -227,7 +252,7 @@ Every pattern above, and a lot more, lives as a runnable example in [`examples/`
 
 | Subpath | What's in it |
 |---|---|
-| `openloops/core` | `Agent`, `AgentLoop`, `RunContext`, `Harness`: the runtime |
+| `openloops/core` | `Agent`, `AgentLoop`, `RunContext`, `Harness`: the harness |
 | `openloops/loops` | Built-in loops (`AgiLoop`) and the skills shared by loops |
 | `openloops/tools` | `Tool`, `BaseParams`, and built-in tools |
 | `openloops/skills` | `Skill`, for writing LLM-backed reasoning steps inside a loop |
@@ -246,7 +271,7 @@ Every pattern above, and a lot more, lives as a runnable example in [`examples/`
 
 - [Integration guide](docs/integration-guide.md)
 - [Documentation index](docs/README.md)
-- [The `Agent` runtime](docs/agent.md)
+- [The `Agent`](docs/agent.md)
 - [Building an `AgentLoop`](docs/loops.md)
 - [How the harness works](docs/harness.md)
 - [Tools](docs/tools.md)
