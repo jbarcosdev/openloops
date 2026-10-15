@@ -119,7 +119,6 @@
     "@types/node": "^26.6.2",
     "@types/sanitize-html": "^2.16.1",
     "jest": "^30.5.2",
-    "prettier": "^3.9.9",
     "ts-jest": "^29.4.13",
     "tsc-alias": "^1.9.5",
     "tsconfig-paths": "^4.2.0",
