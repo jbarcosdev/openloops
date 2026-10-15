@@ -1,6 +1,6 @@
 import { ObjectId } from 'mongodb'
 import { AgentStatus } from '@harness/agent-state'
-import { LLMError } from '@clients/llm-error'
+import { LLMError } from '@clients/llm/llm-error'
 import { NATIVE_TOOL_NAMES } from '@services/tasks/entities/agent-task.entity'
 import { useHarness, warehouseTools, makeTool, structured, bigListing, act, say, type ScriptedTurn } from '../support'
 

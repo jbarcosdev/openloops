@@ -1,5 +1,5 @@
 import { Tool } from '@tools/tool'
-import { LLMToolDefinition } from '@clients/llm-types'
+import { LLMToolDefinition } from '@clients/llm/llm-types'
 import { SEARCH_TOOLS } from '@services/tasks/entities/agent-task.entity'
 
 const FULL_CATALOG_LIMIT = 15

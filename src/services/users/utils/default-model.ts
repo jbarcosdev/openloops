@@ -1,4 +1,4 @@
-import { isKnownModel, toModelRef } from '@clients/model-resolution'
+import { isKnownModel, toModelRef } from '@clients/llm/model-resolution'
 import { UserProps } from '../entities'
 
 export interface DefaultModelChange {

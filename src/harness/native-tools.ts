@@ -1,4 +1,4 @@
-import { LLMToolDefinition } from '@clients/llm-types'
+import { LLMToolDefinition } from '@clients/llm/llm-types'
 import { AgentTask, readPath } from '@services/tasks/entities/agent-task.entity'
 import { AgentAction } from '@services/tasks/entities/agent-action.entity'
 import { WeightedKeyword, ScoredTool } from './utils/rank-tools-by-keywords'

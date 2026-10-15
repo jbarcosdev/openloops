@@ -1,8 +1,8 @@
 import { secretManager } from '@common/utils/secret-manager'
 import { Agent } from '@harness/index'
 import { AgiLoop } from '@loops/agi/loop'
-import { LLMClient } from '@clients/llm-client'
-import { backendFallbackModel, resolveModel, toModelRef } from '@clients/model-resolution'
+import { LLMClient } from '@clients/llm/llm-client'
+import { backendFallbackModel, resolveModel, toModelRef } from '@clients/llm/model-resolution'
 import { useHarness, say, act } from '../support'
 
 const HAIKU = { provider: 'anthropic', model: 'claude-haiku-5-5' }
@@ -52,7 +52,7 @@ describe('resolving the model', () => {
             builtinModels: () => ({ getModel: (provider: string, model: string) => provider === 'anthropic' && model === 'claude-haiku-5-5' ? { id: model } : undefined }),
         }), { virtual: true })
 
-        const { isKnownModel: known } = jest.requireActual('@clients/model-resolution')
+        const { isKnownModel: known } = jest.requireActual('@clients/llm/model-resolution')
 
         expect(await known('anthropic', 'claude-haiku-5-5')).toBe(true)
         expect(await known('anthropic', 'no-such-model')).toBe(false)

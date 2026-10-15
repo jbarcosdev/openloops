@@ -1,6 +1,6 @@
 import { ObjectId } from 'mongodb'
 import { BaseEntity, BaseEntityProps } from '@common/base/base.entity'
-import type { LLMMessage } from '@clients/llm-types'
+import type { LLMMessage } from '@clients/llm/llm-types'
 import { AgentAction, ActionDescriptor, truncateForPrompt } from './agent-action.entity'
 
 export enum TaskStatus {

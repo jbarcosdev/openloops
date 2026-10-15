@@ -11,8 +11,8 @@ jest.mock('@common/repositories/mongo-db.client', () => ({
     MongoClient: class {},
     getMongoDBClient: () => require('../support/fake-mongo-client').fakeMongo,
 }))
-jest.mock('@clients/model-resolution', () => ({
-    ...jest.requireActual('@clients/model-resolution'),
+jest.mock('@clients/llm/model-resolution', () => ({
+    ...jest.requireActual('@clients/llm/model-resolution'),
     isKnownModel: jest.fn(async (provider: string, model: string) => provider === 'anthropic' && model.startsWith('claude')),
 }))
 

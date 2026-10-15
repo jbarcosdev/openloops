@@ -1,6 +1,6 @@
-import { LLMClient } from '@clients/llm-client'
-import { LLMError, rejectsSamplingParameter, retryDelayMs } from '@clients/llm-error'
-import { toPiContext, fromPiMessage } from '@clients/pi-ai-adapter'
+import { LLMClient } from '@clients/llm/llm-client'
+import { LLMError, rejectsSamplingParameter, retryDelayMs } from '@clients/llm/llm-error'
+import { toPiContext, fromPiMessage } from '@clients/llm/pi-ai-adapter'
 import { createLLMCall } from '@services/llmcalls'
 
 const mockModels = {

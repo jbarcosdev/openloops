@@ -1,5 +1,5 @@
 import { buildModeCall, readModeResponse } from '@skills/call-modes'
-import type { LLMMessage, LLMResponse } from '@clients/llm-types'
+import type { LLMMessage, LLMResponse } from '@clients/llm/llm-types'
 
 const tools = [
     { name: 't_search', description: 'search', parameters: { type: 'object', properties: { q: { type: 'string' } }, required: ['q'] } },

@@ -1,5 +1,5 @@
-import { LLMClient } from '@clients/llm-client'
-import type { LLMChatParams, LLMToolDefinition } from '@clients/llm-types'
+import { LLMClient } from '@clients/llm/llm-client'
+import type { LLMChatParams, LLMToolDefinition } from '@clients/llm/llm-types'
 
 export interface ScriptedAction {
     tool?: string

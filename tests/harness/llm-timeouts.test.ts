@@ -1,5 +1,5 @@
-import { LLMClient } from '@clients/llm-client'
-import { LLMError } from '@clients/llm-error'
+import { LLMClient } from '@clients/llm/llm-client'
+import { LLMError } from '@clients/llm/llm-error'
 import { secretManager } from '@common/utils/secret-manager'
 import { Tool } from '@tools/tool'
 

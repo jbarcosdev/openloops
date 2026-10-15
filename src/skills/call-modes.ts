@@ -1,5 +1,5 @@
 import { extractJSON } from '@common/helpers'
-import type { LLMMessage, LLMResponse, LLMToolCall, LLMToolChoice, LLMToolDefinition } from '@clients/llm-types'
+import type { LLMMessage, LLMResponse, LLMToolCall, LLMToolChoice, LLMToolDefinition } from '@clients/llm/llm-types'
 
 /**
  * How a skill that works with a tool catalog talks to the model. The mode only changes the transport: the

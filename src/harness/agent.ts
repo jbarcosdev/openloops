@@ -33,8 +33,8 @@ import { AgentWorkspace } from './workspace'
 import { ToolPipeline, ToolPipelineRunOptions } from './tool-pipeline'
 import { NATIVE_TOOLS } from './native-tools'
 import { buildToolCatalog, isDeclarable, needsSearch, McpIndexEntry } from './tool-catalog'
-import { LLMError } from '@clients/llm-error'
-import { ModelRef, resolveModel, toModelRef } from '@clients/model-resolution'
+import { LLMError } from '@clients/llm/llm-error'
+import { ModelRef, resolveModel, toModelRef } from '@clients/llm/model-resolution'
 
 const MCP_CONNECT_RETRY_DELAYS_MS = [1000, 2000]
 const MCP_DESCRIPTION_CHARS = 300

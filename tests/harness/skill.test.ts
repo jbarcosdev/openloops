@@ -1,5 +1,5 @@
 import { Skill } from '@skills/skill'
-import { LLMClient } from '@clients/llm-client'
+import { LLMClient } from '@clients/llm/llm-client'
 import { reasoningEngine } from '@loops/agi/skills/reasoning-engine'
 import { NATIVE_TOOLS } from '@harness/native-tools'
 
