@@ -99,7 +99,6 @@
     "@earendil-works/pi-ai": "^1.1.0",
     "@modelcontextprotocol/sdk": "^1.31.0",
     "@sentry/node": "^11.0.0",
-    "axios": "^1.20.0",
     "bcryptjs": "^3.0.3",
     "croner": "^10.0.1",
     "cryptr": "^6.4.0",

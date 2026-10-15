@@ -1,4 +1,3 @@
-import axios from 'axios'
 import { Logger } from '@common/logger'
 import { secretManager } from '@common/utils/secret-manager'
 
@@ -19,21 +18,22 @@ export class SerperClient {
             engine: "google",
         }
 
-        const config = {
-            method: 'post',
-            maxBodyLength: Infinity,
-            url: 'https://google.serper.dev/search',
-            headers: {
-                'X-API-KEY': apiKey,
-                'Content-Type': 'application/json',
-            },
-            data : inputData
-        }
-
         try {
             this.logger.debug({ ...inputData }, '[Serper Client] Searching on internet...')
 
-            const { data } = await axios.request(config)
+            const response = await fetch('https://google.serper.dev/search', {
+                method: 'POST',
+                headers: {
+                    'X-API-KEY': apiKey,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(inputData),
+            })
+            if (!response.ok) {
+                throw new Error(`Serper responded with status ${response.status}`)
+            }
+
+            const data = await response.json() as SerperSearchResponse
             this.logger.debug({ ...data }, '[Serper Client] Search results')
             return data
 
