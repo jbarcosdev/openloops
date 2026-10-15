@@ -40,7 +40,7 @@ Also note that `getChatById` returns `{}` in `data` when the chat does not exist
 | Poll the state of a chat | `getChatById({ id, select: { state: 1 } })` |
 | Manage MCP servers | `createMcpServer`, `listMcpServersByUser`, `getMcpServerById`, `updateMcpServer`, `deleteMcpServer`, `verifyMcpServerConnection` |
 | Approve or block an MCP server from a screen | `decideMcpServerTrust` |
-| Usage of a chat or an answer | `getLLMUsage` |
+| Usage of a chat or of an answer | `getLLMUsageByChat`, `getLLMUsageByMessage` |
 | Usage statistics of a user | `getLLMUsageStats` |
 | Create the schedule of an agent | `createAgenticJob`, `updateAgenticJob`, `listAgenticJobsByUser`, `getAgenticJobById`, `deleteAgenticJob`, `previewAgenticJobRuns` |
 | History of scheduled runs | `listAgenticJobRunsByJob`, `listAgenticJobRunsByUser` |

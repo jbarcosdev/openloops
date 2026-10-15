@@ -3,46 +3,51 @@
 Every LLM call `openloops` makes, including every skill run and every reasoning step, is recorded automatically with the raw response of the provider. Tokens, cache usage, reasoning tokens and cost are all read from that stored response, so nothing has to be instrumented.
 
 ```typescript
-import { getLLMUsage, getLLMUsageStats } from 'openloops/llmcalls'
+import { getLLMUsageByMessage, getLLMUsageByChat, getLLMUsageStats } from 'openloops/llmcalls'
 ```
 
-There are two functions:
+There are three functions:
 
-- `getLLMUsage` answers how much one chat or one answer used.
+- `getLLMUsageByMessage` answers how much one answer of the agent used.
+- `getLLMUsageByChat` answers how much a whole chat used.
 - `getLLMUsageStats` answers how much a user used in a period, by model and over time.
 
-## Usage of one chat or one answer
+## Usage of one answer and of one chat
 
 ```typescript
-const chat = await getLLMUsage({
-    filters: { sessionId: chatId },
+const answer = await getLLMUsageByMessage({
+    messageId: assistantMessageId,
     currentUser,
 })
 
-const answer = await getLLMUsage({
-    filters: { messageId: assistantMessageId },
+const chat = await getLLMUsageByChat({
+    chatId,
     currentUser,
 })
 ```
 
-`messageId` is the `answerId` of the assistant message. Everything the agent spent to produce that answer is added together. Pass `sessionId`, `messageId` or both. Without either, every value is zero.
+`messageId` is the `answerId` of the assistant message, and everything the agent spent to produce that answer is added together. Both functions only count the calls of `currentUser`, and both return the same shape:
 
 ```typescript
-result.data
-// {
-//     input, output, cacheRead, cacheWrite, reasoning, totalTokens, totalCost
-// }
+result.data.summary
+// { calls, input, output, cacheRead, cacheWrite, reasoning, totalTokens, totalCost }
+
+result.data.models
+// [{ provider, model, calls, input, output, cacheRead, cacheWrite, reasoning, totalTokens, totalCost }]
 ```
+
+`summary` is the total, and `models` has one entry for every provider and model that was used, with the same fields. A chat can use several models, because the user can change it between runs, so the detail by model tells how much each one cost. The answer of one message will usually have a single model. `summary` is always the sum of `models`, and `models` is sorted by tokens, highest first.
 
 | Field | Meaning |
 | --- | --- |
+| `calls` | Number of calls to the model. |
 | `input`, `output` | Tokens sent and generated. |
 | `cacheRead`, `cacheWrite` | Tokens read from and written to the provider's prompt cache. |
 | `reasoning` | Reasoning tokens, when the provider reports them. They are already inside `output`, so do not add them again. |
 | `totalTokens` | Total tokens as the provider counts them. |
 | `totalCost` | Cost in USD. |
 
-When there are no matching calls, every field is `0`.
+When there are no matching calls, `summary` has every field in `0` and `models` is empty. A call that was stored without provider or model appears as `unknown`. `messageId` and `chatId` are required, and the call fails if they are missing or are not valid ids.
 
 ## Usage statistics of a user
 
