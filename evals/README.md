@@ -66,7 +66,7 @@ evals/
 
 1. Run everything from the **repository root**, not from inside `evals/`.
 2. Provider credentials must be available as environment variables, the same ones `@earendil-works/pi-ai` reads for each provider (for example the OpenAI, Anthropic and Google keys). Before spending anything, the framework sends a tiny ping to each selected model and skips the ones it cannot reach (`skip ... no access`).
-3. Add these scripts to the root `package.json` (each one forwards its arguments to the CLI):
+3. The scripts to run it are already defined in the root `package.json`, and each one forwards its arguments to the CLI:
 
 ```json
 {
