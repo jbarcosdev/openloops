@@ -1,7 +1,7 @@
 {
   "name": "openloops",
   "version": "0.2.2",
-  "description": "Framework to build AI Agents",
+  "description": "Open source harness for AI agents: a TypeScript runtime with persistence, tools, MCP trust, approvals and autonomous jobs, where the loop is pluggable",
   "author": {
     "name": "Jose Barcos",
     "email": "jose@openloops.xyz",
@@ -132,26 +132,25 @@
     "url": "git+https://github.com/jbarcosdev/openloops.git"
   },
   "keywords": [
-    "ai-agent-framework",
+    "ai-agent",
+    "ai-agents",
+    "agent-harness",
+    "agent-framework",
     "agent-runtime",
     "agent-loop",
-    "agent-orchestration",
+    "agentic",
+    "autonomous-agents",
+    "llm",
+    "mcp",
+    "model-context-protocol",
+    "tool-calling",
+    "function-calling",
+    "human-in-the-loop",
+    "guardrails",
     "typescript",
     "nodejs",
     "mongodb",
-    "chatbot-framework",
-    "ai-assistant",
-    "langchain",
     "langchain-alternative",
-    "langgraph",
-    "langgraph-alternative",
-    "crewai",
-    "crewai-alternative",
-    "openclaw",
-    "openclaw-alternative",
-    "hermes",
-    "hermes-agent",
-    "zeroclaw",
-    "agent-marketplace"
+    "langgraph-alternative"
   ]
 }
