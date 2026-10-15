@@ -102,7 +102,6 @@ The second argument is the runtime services the loop can call:
 | `runAction(action, opts)` | Runs an action through the tool pipeline. |
 | `requiresApproval(action)` | Tells whether an action needs the user's confirmation before it can run. |
 | `requestApproval(actions, { resumeAt })` | Asks the user to confirm and resumes at `resumeAt` once they answer. |
-| `reopenTask(taskId)` | Continues a task that was already completed. |
 | `workspace` | Saves and reads notes and large outputs of the task. |
 
 Always go through `runAction`. It applies validation, grounding checks, duplicate protection, output offloading and the approval rules described in [harness](harness.md#tool-pipeline). Do not call `tool.run` yourself.

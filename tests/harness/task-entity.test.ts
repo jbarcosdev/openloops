@@ -315,10 +315,8 @@ describe('fields to unset', () => {
     it('reports the fields that were cleared so the database removes them', () => {
         const task = newTask()
         task.setNextNode(undefined)
-        task.setScratch('x', 1)
-        task.clearScratch('x')
 
-        expect(Object.keys(task.clearedFields)).toEqual(expect.arrayContaining(['nextNode', 'scratch']))
+        expect(Object.keys(task.clearedFields)).toEqual(['nextNode'])
 
         const action = newTask().addAction({ name: 't', stepId: '1_1' })
         action.markFailed({ message: 'e', retryable: false })
@@ -348,37 +346,5 @@ describe('thread id', () => {
         expect(task.threadId).toBeInstanceOf(ObjectId)
         expect(task.toJSON().threadId).toBeInstanceOf(ObjectId)
         expect(String(task.threadId)).toBe(id.toHexString())
-    })
-
-    it('does not persist the plan counters while they are zero', () => {
-        const json = newTask().toJSON()
-
-        expect(json.planCount).toBeUndefined()
-        expect(json.planOffset).toBeUndefined()
-        expect(json.executedOffset).toBeUndefined()
-    })
-})
-
-describe('plans', () => {
-    it('counts plans and persists the counters once they are used', () => {
-        const task = newTask()
-        task.addPlan([{ stepId: 1, name: 'a' }])
-        task.addPlan([{ stepId: 1, name: 'a' }])
-
-        expect(task.planCount).toBe(2)
-        expect(task.replanCount).toBe(1)
-        expect(task.toJSON().planCount).toBe(2)
-        expect(AgentTask.fromJSON(task.toJSON()).planCount).toBe(2)
-    })
-
-    it('starts counting again from the current point when the task is reopened', () => {
-        const task = newTask()
-        task.addPlan([{ stepId: 1, name: 'a' }])
-        task.addPlan([{ stepId: 1, name: 'a' }])
-        task.complete()
-        task.reopen()
-
-        expect(task.replanCount).toBe(0)
-        expect(task.executedSinceOpen).toBe(0)
     })
 })

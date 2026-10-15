@@ -1040,15 +1040,6 @@ export class Agent {
         return this.getPipeline().run(task, action, opts)
     }
 
-    private async reopenTask (taskId: string): Promise<AgentTask | undefined> {
-        const task = this.currentChat.getTask(taskId)
-        if (!task) return undefined
-
-        await this.hydrateTask(task)
-
-        return this.currentChat.reopenTask(taskId)
-    }
-
     private buildRunContext (): RunContext {
         const sessionId = this.currentChat._id?.toString() ?? ''
         const agent = this
@@ -1101,7 +1092,6 @@ export class Agent {
             runAction: (action, opts) => this.runAction(action, opts),
             requiresApproval: action => this.getPipeline().requiresApproval(action),
             requestApproval: (actions, opts) => this.requestApproval(actions, opts.resumeAt),
-            reopenTask: taskId => this.reopenTask(taskId),
             reply: content => this.reply(content, { source: 'model' }),
             setNextNode: node => {
                 const resolved = this.resolveNodeName(node)

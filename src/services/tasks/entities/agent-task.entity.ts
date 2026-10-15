@@ -23,10 +23,6 @@ export interface AgentTaskProps extends BaseEntityProps {
 	previousTaskId?: string
 	summary?: string
 	loopName?: string
-	planCount?: number
-	planOffset?: number
-	executedOffset?: number
-	scratch?: Record<string, any>
 	opening?: string
 	turns?: TurnRecord[]
 	known?: Record<string, string>
@@ -67,14 +63,6 @@ export interface TurnOutput {
 	state?: Record<string, any>
 	actions?: ActionRequest[]
 	learned?: { key?: string; value?: any }[]
-}
-
-export interface PlanStepDescriptor {
-	stepId: string | number
-	name: string
-	args?: Record<string, any>
-	dependsOn?: Array<string | number>
-	reasoning?: string
 }
 
 export interface RefSources {
@@ -121,7 +109,7 @@ const STEP_REF_GLOBAL = new RegExp(`\\{\\{step_([\\w-]+)\\.output${PATH}\\}\\}`,
 const CONTEXT_REF = new RegExp(`^\\{\\{context\\.([\\w-]+)${PATH}\\}\\}$`)
 const CONTEXT_REF_GLOBAL = new RegExp(`\\{\\{context\\.([\\w-]+)${PATH}\\}\\}`, 'g')
 const LEFTOVER_REF = /\{\{\s*(?:step_|context\.)/
-const CLEARABLE_FIELDS = ['nextNode', 'scratch'] as const
+const CLEARABLE_FIELDS = ['nextNode'] as const
 
 function normalizeToolName (name: string): string {
 	return name.toLowerCase().replace(/-/g, '_')
@@ -281,25 +269,6 @@ export function readPath (value: any, path?: string): any {
 	return current
 }
 
-function scopeStepRefs (value: any, scope: (id: string) => string | undefined): any {
-	if (typeof value === 'string') {
-		return value.replace(/\{\{step_([\w-]+)(?=\.output)/g, (match: string, id: string) => {
-			const scoped = scope(id)
-			return scoped ? `{{step_${scoped}` : match
-		})
-	}
-
-	if (Array.isArray(value)) return value.map(item => scopeStepRefs(item, scope))
-
-	if (value !== null && typeof value === 'object') {
-		const scoped: Record<string, any> = {}
-		for (const key of Object.keys(value)) scoped[key] = scopeStepRefs(value[key], scope)
-		return scoped
-	}
-
-	return value
-}
-
 function collectRefs (value: any, found: CollectedRefs = { steps: [], contexts: [] }): CollectedRefs {
 	if (typeof value === 'string') {
 		for (const match of value.matchAll(STEP_REF_GLOBAL)) found.steps.push(match[1])
@@ -343,10 +312,6 @@ export class AgentTask extends BaseEntity {
 			props.previousTaskId,
 			props.summary,
 			props.loopName,
-			props.planCount ?? 0,
-			props.planOffset ?? 0,
-			props.executedOffset ?? 0,
-			props.scratch,
 			props.opening,
 			props.turns ?? [],
 			props.known,
@@ -371,10 +336,6 @@ export class AgentTask extends BaseEntity {
 		public previousTaskId?: string,
 		public summary?: string,
 		public loopName?: string,
-		public planCount: number = 0,
-		public planOffset: number = 0,
-		public executedOffset: number = 0,
-		public scratch?: Record<string, any>,
 		public opening?: string,
 		public turns: TurnRecord[] = [],
 		public known?: Record<string, string>,
@@ -394,10 +355,6 @@ export class AgentTask extends BaseEntity {
 			previousTaskId: this.previousTaskId,
 			summary: this.summary,
 			loopName: this.loopName,
-			planCount: this.planCount || undefined,
-			planOffset: this.planOffset || undefined,
-			executedOffset: this.executedOffset || undefined,
-			scratch: this.scratch,
 			opening: this.opening,
 			turns: this.turns.length ? this.turns : undefined,
 			known: this.known && Object.keys(this.known).length ? this.known : undefined,
@@ -421,22 +378,6 @@ export class AgentTask extends BaseEntity {
 		this.hydrated = true
 	}
 
-	setScratch (key: string, value: any): void {
-		this.scratch = { ...this.scratch, [key]: value }
-	}
-
-	getScratch<T = any> (key: string): T | undefined {
-		return this.scratch?.[key] as T | undefined
-	}
-
-	clearScratch (key: string): void {
-		if (!this.scratch || !(key in this.scratch)) return
-
-		const rest = { ...this.scratch }
-		delete rest[key]
-		this.scratch = Object.keys(rest).length ? rest : undefined
-	}
-
 	addAction (descriptor: ActionDescriptor): AgentAction {
 		const action = AgentAction.factory({
 			chatId: this.chatId,
@@ -453,25 +394,6 @@ export class AgentTask extends BaseEntity {
 		})
 		this.actions.push(action)
 		return action
-	}
-
-	addPlan (steps: PlanStepDescriptor[], author?: string): AgentAction[] {
-		this.skipPending()
-		this.planCount += 1
-
-		const generation = this.planCount
-		const localIds = new Set(steps.map(step => String(step.stepId)))
-		const scopedId = (id: string | number) => `${generation}_${id}`
-		const scope = (id: string) => localIds.has(id) ? scopedId(id) : undefined
-
-		return steps.map(step => this.addAction({
-			name: step.name,
-			stepId: scopedId(step.stepId),
-			args: scopeStepRefs(step.args, scope),
-			dependsOn: step.dependsOn?.map(String).map(id => scope(id) ?? id),
-			reasoning: step.reasoning,
-			author,
-		}))
 	}
 
 	skipPending (): number {
@@ -782,14 +704,6 @@ export class AgentTask extends BaseEntity {
 		return this.actions.filter(a => a.isTerminal)
 	}
 
-	get replanCount (): number {
-		return Math.max(0, this.planCount - this.planOffset - 1)
-	}
-
-	get executedSinceOpen (): number {
-		return Math.max(0, this.executedActions.length - this.executedOffset)
-	}
-
 	get lastExecutedAction (): AgentAction | undefined {
 		return this.actions.slice().reverse().find(a => a.isTerminal)
 	}
@@ -822,15 +736,6 @@ export class AgentTask extends BaseEntity {
 		if (this.status === TaskStatus.IN_PROGRESS || this.status === TaskStatus.AWAITING_USER) {
 			this.status = TaskStatus.PAUSED
 		}
-	}
-
-	reopen (): void {
-		this.status = TaskStatus.IN_PROGRESS
-		this.nextNode = undefined
-		this.planOffset = this.planCount
-		this.executedOffset = this.executedActions.length
-		this.clearScratch('replan_feedback')
-		this.clearScratch('stop_reason')
 	}
 
 	findActionByRef (ref: string): AgentAction | undefined {

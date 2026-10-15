@@ -324,31 +324,12 @@ describe('steps that depend on each other on top of the pipeline', () => {
 
     it('runs the steps in dependency order and resolves references between them', async () => {
         const built = build([search, fetch])
-        built.task.addPlan([
-            { stepId: 2, name: 'p_get', args: { id: '{{step_1.output.results[1].id}}' }, dependsOn: [1] },
-            { stepId: 1, name: 'p_search', args: { q: 'x' } },
-        ])
+        built.task.addAction({ name: 'p_get', stepId: '2', args: { id: '{{step_1.output.results[1].id}}' }, dependsOn: ['1'] })
+        built.task.addAction({ name: 'p_search', stepId: '1', args: { q: 'x' } })
         await execute(built)
 
-        expect(built.task.actions.map(a => [a.stepId, a.status])).toEqual([['1_2', 'completed'], ['1_1', 'completed']])
+        expect(built.task.actions.map(a => [a.stepId, a.status])).toEqual([['2', 'completed'], ['1', 'completed']])
         expect(got).toEqual(['id2'])
-    })
-
-    it('keeps ids apart when the plan is replaced and skips what was pending', async () => {
-        const built = build([search, fetch])
-        const first = built.task.addPlan([{ stepId: 1, name: 'p_search', args: { q: 'x' } }, { stepId: 2, name: 'p_get', args: { id: '{{step_1.output.results[0].id}}' }, dependsOn: [1] }])
-        const second = built.task.addPlan([{ stepId: 1, name: 'p_search', args: { q: 'y' } }, { stepId: 2, name: 'p_get', args: { id: '{{step_1.output.results[0].id}}' }, dependsOn: [1] }])
-
-        expect(first.map(a => a.stepId)).toEqual(['1_1', '1_2'])
-        expect(second.map(a => a.stepId)).toEqual(['2_1', '2_2'])
-        expect(second[1].args?.id).toBe('{{step_2_1.output.results[0].id}}')
-        expect(second[1].dependsOn).toEqual(['2_1'])
-        expect(first.every(a => a.status === 'skipped')).toBe(true)
-
-        await execute(built)
-
-        expect(second.map(a => a.status)).toEqual(['completed', 'completed'])
-        expect(got).toEqual(['id1'])
     })
 })
 

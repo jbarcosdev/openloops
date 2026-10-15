@@ -119,41 +119,6 @@ export class LLMClient {
         return fromPiMessage(raw)
     }
 
-    /**
-     * @deprecated Use chat(). Kept so callers that still depend on the provider message shape keep working.
-     */
-    async complete (params: LLMCompletionParams): Promise<AssistantMessage> {
-        const { builtinModels } = await import('@earendil-works/pi-ai/providers/all')
-        const models = builtinModels()
-
-        const {
-            origin,
-            sessionId,
-            answerId,
-            currentUser,
-            systemPrompt,
-            messages,
-            temperature = DEFAULT_TEMPERATURE
-        } = params ?? {}
-
-        const { provider, model: modelName } = this.chooseModel(params)
-
-        const model = models.getModel(provider, modelName as never)
-
-        if (!model) throw new Error('[LLM Client] model not found')
-
-        const context: Context = {
-            systemPrompt,
-            messages,
-        }
-
-        return this.traced(
-            { origin, sessionId, answerId, currentUser, modelName, provider, temperature },
-            context,
-            () => this.withoutRejectedTemperature(`${provider}/${modelName}`, omitTemperature => this.withDeadline(signal => models.complete(model, context, { ...(omitTemperature ? {} : { temperature }), maxRetries: MAX_RETRIES, signal }))),
-        )
-    }
-
     private chooseModel (params: { provider?: string, modelName?: string, currentUser?: CurrentUser }) {
         const { provider, modelName, currentUser } = params ?? {}
 
@@ -344,18 +309,6 @@ export class LLMClient {
             content: Array.isArray(message?.content) ? this.formatContentForLog(message.content) : this.formatTextForLog(message?.content)
         }))
     }
-}
-
-export interface LLMCompletionParams {
-    origin: string
-    sessionId: string
-    answerId: string
-    currentUser?: CurrentUser
-    systemPrompt?: string
-    messages: Message[]
-    provider?: KnownProvider
-    modelName?: string
-    temperature?: number
 }
 
 export interface LLMPostResponseParams {

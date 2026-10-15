@@ -36,7 +36,6 @@ export interface Harness {
     runAction: (action: AgentAction, opts?: ToolPipelineRunOptions) => Promise<AgentAction>
     requiresApproval: (action: AgentAction) => boolean
     requestApproval: (actions: AgentAction[], opts: { resumeAt: string | AgentLoopNode }) => Promise<void>
-    reopenTask: (taskId: string) => Promise<AgentTask | undefined>
     reply: (content: string) => void
     setNextNode: (node?: string | AgentLoopNode) => void
 }
