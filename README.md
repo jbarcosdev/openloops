@@ -17,10 +17,9 @@ import { webSearchTool } from 'openloops/tools'
 
 const logger = new Logger()
 const currentUser = await CurrentUser.asyncFromDB(userId)
-const agent = new Agent({
-    loop: new AgiLoop(),
-    tools: [webSearchTool], // needs SERPER_API_KEY, see "Web search" below
-})
+const agent = new Agent({ loop: new AgiLoop() })
+
+agent.addTool(webSearchTool) // needs SERPER_API_KEY, see "Web search" below
 
 const result = await agent.run({
     input: { message: 'what is the current price of Bitcoin?' },
@@ -28,8 +27,6 @@ const result = await agent.run({
 })
 
 logger.info(result.data.lastAnswer, '[Demo] Result')
-// Example output (the price will be the one of the moment):
-// Bitcoin is trading at about $67,000 USD right now, according to the latest web search results.
 ```
 
 That's it. The agent is persisted, resumable, and scoped to that one user, with tool execution, guardrails, and observability already wired in. No message table to design, no state machine to debug by hand, no MCP adapter to write.
