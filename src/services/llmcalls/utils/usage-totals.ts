@@ -33,3 +33,50 @@ export const toUsageTotals = (doc?: Partial<UsageTotals>): UsageTotals => ({
 	totalTokens: doc?.totalTokens ?? 0,
 	totalCost: round(doc?.totalCost ?? 0),
 })
+
+export interface UsageSummary extends UsageTotals {
+	calls: number
+}
+
+export interface ModelUsage extends UsageSummary {
+	provider: string
+	model: string
+}
+
+export interface UsageReport {
+	summary: UsageSummary
+	models: ModelUsage[]
+}
+
+type ModelRow = { _id?: { provider?: string | null, model?: string | null } } & Partial<UsageSummary>
+
+export const usageReportPipeline = (match: Record<string, unknown>): Record<string, any>[] => [
+	{ $match: { deletedAt: null, ...match } },
+	{ $group: { _id: { provider: '$response.provider', model: '$response.model' }, calls: { $sum: 1 }, ...usageSums() } },
+	{ $sort: { totalTokens: -1, '_id.provider': 1, '_id.model': 1 } },
+]
+
+export const toUsageReport = (rows: ModelRow[] = []): UsageReport => {
+	const models: ModelUsage[] = rows.map(row => ({
+		provider: row._id?.provider ?? 'unknown',
+		model: row._id?.model ?? 'unknown',
+		calls: row.calls ?? 0,
+		...toUsageTotals(row),
+	}))
+
+	const sum = (field: keyof UsageSummary) => models.reduce((total, item) => total + item[field], 0)
+
+	return {
+		models,
+		summary: {
+			calls: sum('calls'),
+			input: sum('input'),
+			output: sum('output'),
+			cacheRead: sum('cacheRead'),
+			cacheWrite: sum('cacheWrite'),
+			reasoning: sum('reasoning'),
+			totalTokens: sum('totalTokens'),
+			totalCost: round(sum('totalCost')),
+		},
+	}
+}
