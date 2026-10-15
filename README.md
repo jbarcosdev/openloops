@@ -4,6 +4,10 @@
 
 `openloops` is an open source **harness** for AI agents. An agent is three things: a **model** that thinks (the engine), a **harness** that gives it hands, memory and rules (the chassis), and a **loop** that decides what it is for (the body). `openloops` is the harness, and it ships the loop. Change the model, or the loop, and the rest stays the same.
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/jbarcosdev/openloops/main/docs/assets/harness-car.svg" alt="A car made of an engine (the AI model), a chassis (the harness) and a body (the loop). The body changes between a personal assistant, an analyst, customer support and a programmer, while the engine and the chassis stay the same." width="560">
+</p>
+
 ```typescript
 import { Agent } from 'openloops/core'
 import { Logger } from 'openloops/common'
