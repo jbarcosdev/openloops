@@ -23,7 +23,7 @@ export const sendSlackMessageTool = new Tool({
             },
             text: {
                 type: 'string',
-                description: 'content of the message'
+                description: 'content of the message. Use Slack mrkdwn when it helps readability: *bold*, _italic_, ~strike~, `code`, <https://url|label> for links and "- " for lists. Do not use standard Markdown (no **bold**, no # headings, no [label](url))'
             },
         },
         required: ['channel', 'text'],
