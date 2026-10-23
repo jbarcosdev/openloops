@@ -33,7 +33,7 @@ describe('send_slack_message', () => {
         const [url, init] = fetchMock.mock.calls[0]
         expect(url).toBe('https://slack.com/api/chat.postMessage')
         expect(init.headers.Authorization).toBe('Bearer xoxb-token')
-        expect(JSON.parse(init.body)).toEqual({ channel: '#general', text: 'hello' })
+        expect(JSON.parse(init.body)).toEqual({ channel: '#general', text: 'hello', mrkdwn: true, unfurl_links: true, unfurl_media: true })
     })
 
     it('fails with the error code when slack answers ok false', async () => {

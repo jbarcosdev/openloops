@@ -28,7 +28,7 @@ export class SlackClient {
                 Authorization: `Bearer ${token}`,
                 'Content-Type': 'application/json; charset=utf-8',
             },
-            body: JSON.stringify({ channel, text }),
+            body: JSON.stringify({ channel, text, mrkdwn: true, unfurl_links: true, unfurl_media: true }),
         })
         if (!response.ok) {
             throw new Error(`[Slack Client] Slack responded with status ${response.status}`)
