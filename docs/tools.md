@@ -75,6 +75,18 @@ agent.addTool(webSearchTool)
 
 Requires a [Serper](https://serper.dev) API key. Set `SERPER_API_KEY` in your `.env`.
 
+### `sendSlackMessageTool`
+
+```typescript
+import { sendSlackMessageTool } from 'openloops/tools'
+
+agent.addTool(sendSlackMessageTool)
+```
+
+Sends a message to a Slack channel. The model gives a `channel` (an id such as `C0123456789`, or a name such as `#general`) and the `text`. It returns the `channel` id and the `ts` of the message in `data`.
+
+Requires a Slack app with the `chat:write` scope, installed in your workspace and invited to the channel. Set its bot token in `SLACK_BOT_TOKEN`. The token belongs to the deployment, so every agent can write to any channel where the bot is.
+
 ### `callAiTool`
 
 An LLM-backed tool for ad-hoc analysis, summarization, extraction or transformation. It is useful as a fallback when no other tool fits a step.

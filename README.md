@@ -228,8 +228,9 @@ LANGFUSE_SECRET_KEY=
 LANGFUSE_PUBLIC_KEY=
 LANGFUSE_BASE_URL=
 
-# Optional, see "Web search" below
+# Optional, see "Web search" and "Slack" below
 SERPER_API_KEY=
+SLACK_BOT_TOKEN=
 ```
 
 Every variable is described in [`docs/configuration.md`](docs/configuration.md).
@@ -241,6 +242,10 @@ By default, `openloops` uses a database named `openloops` if `OPENLOOPS_DB_NAME`
 ### Web search
 
 The built-in `webSearchTool` uses [Serper](https://serper.dev). Create a free API key there and set `SERPER_API_KEY` in your `.env`. See [`docs/tools.md`](docs/tools.md).
+
+### Slack
+
+The built-in `sendSlackMessageTool` posts a message to a channel. Create a Slack app with the `chat:write` scope, install it in your workspace, invite the bot to the channel and set `SLACK_BOT_TOKEN` in your `.env`. See [`docs/tools.md`](docs/tools.md).
 
 ### Observability
 
