@@ -12,6 +12,7 @@
 | `JWT_SECRET` | for `login` | Secret that signs the tokens. See [authentication](authentication.md). |
 | `SERPER_API_KEY` | for `webSearchTool` | See [tools](tools.md#built-in-tools). |
 | `SLACK_BOT_TOKEN` | for `sendSlackMessageTool` | See [tools](tools.md#built-in-tools). |
+| `INTERNAL_MCP_TOKEN` | for internal MCP servers in agentic jobs | Token sent to the internal MCP servers when a job runs without the session of its owner. See [agentic jobs](agentic-jobs.md#internal-mcp-servers-in-a-job). |
 | `AGENTIC_JOBS_POLL_INTERVAL_MS` | no | How often the runner of [agentic jobs](agentic-jobs.md) checks what is due, in milliseconds. Defaults to `60000`. |
 | `AGENTIC_JOBS_LEASE_MS` | no | How long a job stays locked while it runs, in milliseconds. Defaults to `600000`. |
 | `LLM_FALLBACK_PROVIDER`, `LLM_FALLBACK_MODEL` | no | The model to use when nothing else chooses one, for the whole deployment. Set both or neither. See [Which model a chat uses](#which-model-a-chat-uses). |

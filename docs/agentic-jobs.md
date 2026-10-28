@@ -172,6 +172,16 @@ A new `Agent` is created for every run, so the options are the same but nothing 
 - It gives the agent the timezone of the job, so the local time reaches the prompts.
 - Guards of the agent apply to the instructions. If one blocks them, the run is `failed`.
 
+### Internal MCP servers in a job
+
+A job runs without the session of its owner, so there is no token of theirs to send to your [internal MCP servers](mcp-servers.md#internal-mcp-servers). For jobs, the runner uses one token for the whole deployment, taken from `INTERNAL_MCP_TOKEN`. It replaces `{{token}}` in the headers of every internal server, and the runner also sends the id of the owner of the job in the header `X-User-Id`, so your MCP server knows on whose behalf it acts.
+
+- Your MCP server must accept `X-User-Id` only together with this service token. Never trust it on a request that carries the token of a user.
+- The header is added only in jobs and only to internal servers that use `{{token}}`. It replaces any `X-User-Id` you configured. It is never sent to the servers added by the user.
+- Without `INTERNAL_MCP_TOKEN`, the internal servers that need a token are unavailable in the jobs, and the run continues without them.
+- The value is read with the secret manager, so it can be encrypted with the `ENC:` prefix.
+- One variable serves all the internal servers. If two of them need different credentials, that is not supported yet.
+
 ### Running by hand
 
 ```typescript

@@ -143,6 +143,44 @@ A server that cannot be reached after a few retries is reported as unavailable f
 
 Connections are closed at the end of every turn, including when the turn fails.
 
+## Internal MCP servers
+
+An internal MCP server belongs to your solution, not to the user. The user never registers it and never sees it: they ask the agent for something, and the agent queries your own MCP server behind the scenes with the token of the user. It is declared in code, once, and it is not stored in the database.
+
+```typescript
+const agent = new Agent({
+    loop: new AgiLoop(),
+    internalMcps: [
+        {
+            name: 'sofi',
+            url: 'https://api.sofi.app/mcp',
+            headers: {
+                Authorization: 'Bearer {{token}}',
+                'X-App': 'sofi-agent',
+            },
+        },
+    ],
+})
+
+agent.addInternalMcp({ name: 'other', url: 'https://other.example.com/mcp' })
+
+await agent.run({
+    input: { message: 'how much did I spend on food this month?' },
+    currentUser,
+    mcpTokens: { sofi: sessionToken },
+})
+```
+
+- `name` and `url` are required, and the name must be unique among the internal servers. `headers` is optional.
+- `{{token}}` in a header value is replaced with `mcpTokens[name]` of the run. A header without the placeholder is sent as written, so the other headers are plain strings. If no header uses `{{token}}`, the server needs no token.
+- The token lives only in memory during the run. Do not put it in `options`, which is saved in the chat. It is masked in the connection errors the agent logs.
+- It is trusted: no approval is asked, the manifest is not reviewed or stored, and its tools are not marked as written by a third party. The tools still follow the rules of the tool pipeline, so a tool with `destructiveHint` asks the user before it runs.
+- If the token of a server is missing for a run, or it cannot be reached, the agent leaves it out for that run, writes a trace and a log, and tells the model that the source is unavailable, so it says it could not access that information. The run does not fail. It does not tell the user the details, only that the source was not reachable.
+- If a server of the user has the same name as an internal one, the one of the user is ignored for that run, so nobody can impersonate an internal server.
+- The tools are named `<name>__<tool>`, like any other MCP tool.
+
+In an agentic job there is no session of the user, so there is no token of theirs. See [agentic jobs](agentic-jobs.md#internal-mcp-servers-in-a-job).
+
 ## Tools of MCP servers
 
 Their names are prefixed with the server name, and they are marked as external so the model treats their descriptions as data. A tool is destructive when the server marks it with `destructiveHint`. A tool without that annotation is not treated as destructive, so rely on the server's approval and on your own review of what the server exposes.

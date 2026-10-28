@@ -34,6 +34,7 @@ const agent = new Agent({
 | `maxInputLength` | no | `100000` | Longest message accepted, in characters. Longer messages are blocked by a built-in guard. |
 | `maxIterations` | no | `50` | Hard limit of loop iterations in one run. When reached, the run fails with `AGENT_MAX_ITERATIONS_REACHED`. |
 | `fallbackModel` | no | none | `{ provider, model }` used when neither the run, the chat nor the user chose a model. See [configuration](configuration.md#which-model-a-chat-uses). |
+| `internalMcps` | no | none | MCP servers of your own solution that the user never registers. Also added with `agent.addInternalMcp(mcp)`. See [MCP servers](mcp-servers.md#internal-mcp-servers). |
 | `strictMode` | no | `false` | When `true`, the user is always asked before the agent uses an MCP server whose tools changed after being approved. See [MCP servers](mcp-servers.md#how-the-agent-uses-the-servers). |
 
 An `Agent` instance holds the state of the run it is executing, so run one conversation at a time per instance and create another instance for concurrent runs.
@@ -69,6 +70,8 @@ Omit `chatId` to start a brand-new chat. Pass an existing `chatId` to continue a
 | `isPrivateSession` | Stored in the chat settings for your application to use. |
 
 `currentSession` is optional. It carries device, location and locale, which skills use to answer in the right time zone and language.
+
+`mcpTokens` is optional. It gives the token of the user to each [internal MCP server](mcp-servers.md#internal-mcp-servers), by name. It is never saved. `serviceToken` is the token that the runner of [agentic jobs](agentic-jobs.md#internal-mcp-servers-in-a-job) passes when there is no session of the user. You do not need it unless you write your own scheduler.
 
 ## Autonomous mode
 

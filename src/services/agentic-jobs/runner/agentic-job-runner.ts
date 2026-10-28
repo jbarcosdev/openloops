@@ -1,6 +1,7 @@
 import { randomBytes } from 'node:crypto'
 import { hostname } from 'node:os'
 import { Logger } from '@common/logger'
+import { secretManager } from '@common/utils/secret-manager'
 import { CurrentUser, CurrentSession } from '@common/base'
 import { Agent, AgentOptions } from '@harness/agent'
 import { AgiLoop } from '@loops/agi/loop'
@@ -189,6 +190,7 @@ export class AgenticJobRunner {
 			options: { executionMode: 'autonomous', ...model },
 			currentUser,
 			currentSession: CurrentSession.fromJSON({ location: { timezone: job.timezone } } as any),
+			serviceToken: process.env.INTERNAL_MCP_TOKEN ? secretManager.get('INTERNAL_MCP_TOKEN') : undefined,
 		})
 
 		const chat = result.data as Chat | undefined

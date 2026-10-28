@@ -150,6 +150,8 @@ await createMcpServer({
 
 The next time that user talks to *any* agent, the server is there. The first time one of its tools is about to run, the agent asks the user to approve it.
 
+An MCP server of your own solution, one the user never sees, is declared in code with `internalMcps` and called with the token of the user in each run. See [MCP servers](docs/mcp-servers.md#internal-mcp-servers).
+
 Blocking sensitive input:
 
 ```typescript

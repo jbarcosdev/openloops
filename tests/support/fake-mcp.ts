@@ -34,6 +34,7 @@ class FakeMcpRegistry {
     live = new Map<string, { tools: FakeMcpToolSpec[]; failures: number; instructions?: string }>()
     listFails = false
     connectAttempts: Record<string, number> = {}
+    connectHeaders: Record<string, Record<string, string>> = {}
     calls: { server: string; tool: string; arguments: Record<string, any> }[] = []
     verifies: string[] = []
     decisions: { name: string; decision: string; manifestHash?: string }[] = []
@@ -43,6 +44,7 @@ class FakeMcpRegistry {
         this.live.clear()
         this.listFails = false
         this.connectAttempts = {}
+        this.connectHeaders = {}
         this.calls = []
         this.verifies = []
         this.decisions = []
@@ -71,6 +73,10 @@ class FakeMcpRegistry {
                 }),
             })
         }
+    }
+
+    setInternal (servers: FakeMcpServerSpec[]): void {
+        for (const spec of servers) this.live.set(spec.name, { tools: spec.tools ?? DEFAULT_TOOLS, failures: spec.failures ?? 0, instructions: spec.instructions })
     }
 
     changeLive (name: string, tools: FakeMcpToolSpec[]): void {
@@ -142,6 +148,7 @@ export class FakeMcpServer extends McpServer {
         const name = this.name!
         const live = fakeMcp.live.get(name)!
         fakeMcp.connectAttempts[name] = (fakeMcp.connectAttempts[name] ?? 0) + 1
+        fakeMcp.connectHeaders[name] = { ...this.headers }
 
         if (live.failures > 0) {
             live.failures--

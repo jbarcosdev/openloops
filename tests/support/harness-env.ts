@@ -3,6 +3,7 @@ import { Agent, AgentLoop } from '@harness/index'
 import { AgiLoop } from '@loops/agi/loop'
 import { fastResponder } from '@loops/shared/skills'
 import { confirmationGate, approvalRequest, mcpChangeReview, autonomousAnswer } from '@harness/skills'
+import type { InternalMcp } from '@harness/index'
 import type { Tool } from '@tools/tool'
 import type { Guard } from '@guardrails/guard'
 import type { CurrentUser } from '@common/base'
@@ -77,12 +78,12 @@ export class HarnessEnv {
         this.spies = []
     }
 
-    agent (tools: Tool[] = [], guards: Guard[] = [], options: { strictMode?: boolean } = {}): Agent {
+    agent (tools: Tool[] = [], guards: Guard[] = [], options: { strictMode?: boolean, internalMcps?: InternalMcp[] } = {}): Agent {
         return new Agent({ loop: new AgiLoop(), tools, guards, ...options })
     }
 
-    async send (agent: Agent, message: string, chatId?: string, options?: { executionMode?: 'interactive' | 'autonomous' }): Promise<RunResult> {
-        return agent.run({ input: { message, ...(chatId ? { chatId } : {}) }, ...(options ? { options } : {}), currentUser: this.user }) as Promise<RunResult>
+    async send (agent: Agent, message: string, chatId?: string, options?: { executionMode?: 'interactive' | 'autonomous' }, credentials: { mcpTokens?: Record<string, string>, serviceToken?: string } = {}): Promise<RunResult> {
+        return agent.run({ input: { message, ...(chatId ? { chatId } : {}) }, ...(options ? { options } : {}), currentUser: this.user, ...credentials }) as Promise<RunResult>
     }
 
     tasks (): Record<string, any>[] {

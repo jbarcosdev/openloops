@@ -131,7 +131,7 @@ export class Tool {
         return this.handler(...args)
     }
 
-    static fromMcp (mcpTool: McpTool, mcpClient: Client, opts: { namespace: string }): Tool {
+    static fromMcp (mcpTool: McpTool, mcpClient: Client, opts: { namespace: string, internal?: boolean }): Tool {
         return new Tool({
             name: `${opts.namespace}__${mcpTool.name}`,
             description: mcpTool.description ?? '',
@@ -140,7 +140,7 @@ export class Tool {
             parameters: mcpTool.inputSchema as unknown as InputSchema,
             origin: 'mcp',
             server: opts.namespace,
-            notice: externalToolNotice(opts.namespace),
+            notice: opts.internal ? undefined : externalToolNotice(opts.namespace),
             handler: async (params: any = {}) => {
                 const { currentUser, sessionId, answerId, ...args } = params
                 const timeoutMs = numberSetting('MCP_TOOL_TIMEOUT_MS', DEFAULT_MCP_TOOL_TIMEOUT_MS)

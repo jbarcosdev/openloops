@@ -5,10 +5,10 @@ import { inputGuards } from '@guardrails/index'
 import { createAgenticJobRunner } from '@services/agentic-jobs/runner/agentic-job-runner'
 import { CreateAgenticJobUseCase } from '@services/agentic-jobs/use-cases/create-agentic-job.use-case'
 import { SyncAgenticJobRunUseCase } from '@services/agentic-jobs/use-cases/sync-agentic-job-run.use-case'
-import { useHarness, warehouseTools, say, act } from '../support'
+import { useHarness, warehouseTools, fakeMcp, say, act } from '../support'
 import { fakeMongo } from '../support/fake-mongo-client'
 
-jest.mock('@common/utils/secret-manager', () => ({ secretManager: { get: (key: string): string => key === 'OPENLOOPS_DB_NAME' ? 'openloops-test' : '' } }))
+jest.mock('@common/utils/secret-manager', () => ({ secretManager: { get: (key: string): string => key === 'OPENLOOPS_DB_NAME' ? 'openloops-test' : key === 'INTERNAL_MCP_TOKEN' ? 'service-token' : '' } }))
 jest.mock('@common/repositories', () => jest.requireActual('@common/repositories'))
 jest.mock('@common/repositories/mongo-db.client', () => ({
     MongoClient: class {},
@@ -84,6 +84,40 @@ describe('the runner of agentic jobs', () => {
 
             expect(w.gets).toEqual(['a1'])
             expect(runs().docs[0].status).toBe('completed')
+        })
+
+        describe('with internal MCPs', () => {
+            const sofi = { name: 'sofi', url: 'https://api.sofi.app/mcp', headers: { Authorization: 'Bearer {{token}}' } }
+
+            afterEach(() => { delete process.env.INTERNAL_MCP_TOKEN })
+
+            it('gives them the service token and the id of the owner of the job', async () => {
+                process.env.INTERNAL_MCP_TOKEN = 'encrypted-or-not'
+                fakeMcp.setInternal([{ name: 'sofi' }])
+                env.llm.script({ actions: [act('search_tools', { server: 'sofi' })] }, say('done'))
+                await createJob()
+                const runner = createAgenticJobRunner({ agent: { internalMcps: [sofi] } })
+
+                await runner.tick()
+                await runner.stop()
+
+                expect(fakeMcp.connectHeaders.sofi).toEqual({ Authorization: 'Bearer service-token', 'X-User-Id': owner.userId })
+                expect(runs().docs[0].status).toBe('completed')
+            })
+
+            it('leaves them unavailable, without failing the run, when there is no service token', async () => {
+                fakeMcp.setInternal([{ name: 'sofi' }])
+                env.llm.script(say('done'))
+                await createJob()
+                const runner = createAgenticJobRunner({ agent: { internalMcps: [sofi] } })
+
+                await runner.tick()
+                await runner.stop()
+
+                expect(fakeMcp.connectAttempts).toEqual({})
+                expect(env.llm.opening(0).CONTEXT.unavailable_sources).toEqual(['sofi'])
+                expect(runs().docs[0].status).toBe('completed')
+            })
         })
 
         it('asks for the options of every job when they are given by a function', async () => {

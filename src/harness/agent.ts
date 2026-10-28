@@ -38,15 +38,24 @@ import { ModelRef, resolveModel, toModelRef } from '@clients/llm/model-resolutio
 
 const MCP_CONNECT_RETRY_DELAYS_MS = [1000, 2000]
 const MCP_DESCRIPTION_CHARS = 300
+const TOKEN_PLACEHOLDER = '{{token}}'
+const USER_ID_HEADER = 'X-User-Id'
 const MAX_AUTOMATIC_ANSWERS = 3
 const AUTOMATIC_ANSWER_RESULTS = 5
 const AUTOMATIC_ANSWER_RESULT_CHARS = 1500
 
 type McpAccess = 'blocked' | 'not_connected' | 'unavailable' | 'ready' | 'first_use' | 'changed'
 
+export interface InternalMcp {
+    name: string
+    url: string
+    headers?: Record<string, string>
+}
+
 interface McpEntry {
     id: string
     name: string
+    internal?: boolean
     server: McpServer
     tools: Tool[]
     access: McpAccess
@@ -71,6 +80,7 @@ interface AgentIdentity {
 export interface AgentOptions {
     loop: AgentLoop
     tools?: Tool[]
+    internalMcps?: InternalMcp[]
     guards?: Guard[]
     maxInputLength?: number
     identity?: AgentIdentity
@@ -99,7 +109,10 @@ export class Agent {
     private readonly fallbackModel?: ModelRef
     private model?: ModelRef
     private _tools: Tool[]
+    private _internalMcps: InternalMcp[] = []
     private _mcps: McpEntry[] = []
+    private mcpTokens: Record<string, string> = {}
+    private serviceToken?: string
     private mcpListing?: Promise<void>
     private mcpListingFailed = false
     private _preHooks: Function[] = []
@@ -160,6 +173,8 @@ export class Agent {
         this.maxIterations = agentOptions.maxIterations ?? DEFAULT_MAX_ITERATIONS
         this.strictMode = agentOptions.strictMode ?? false
 
+        for (const mcp of agentOptions.internalMcps ?? []) this.addInternalMcp(mcp)
+
         if (agentOptions.fallbackModel) {
             this.fallbackModel = toModelRef(agentOptions.fallbackModel)
             if (!this.fallbackModel) throw new Error('[AGENT] fallbackModel needs a provider and a model')
@@ -193,9 +208,9 @@ export class Agent {
         return this.currentChat.lastAnswer
     }
 
-    async run (props: { input: ChatInput; options?: ChatSettingsProps; currentUser: CurrentUser; currentSession?: CurrentSession }) {
+    async run (props: { input: ChatInput; options?: ChatSettingsProps; currentUser: CurrentUser; currentSession?: CurrentSession; mcpTokens?: Record<string, string>; serviceToken?: string }) {
         try {
-            const { input, options, currentUser, currentSession } = props || {}
+            const { input, options, currentUser, currentSession, mcpTokens, serviceToken } = props || {}
             const { chatId, message } = input || {}
 
             this.logger.debug(input, '[AGENT] Agent started')
@@ -222,6 +237,8 @@ export class Agent {
             this.currentSession = currentSession
             this.currentMessage = message
             this.chatOptions = options
+            this.mcpTokens = mcpTokens ?? {}
+            this.serviceToken = serviceToken
             this.model = undefined
 
             if (Boolean(options?.modelProvider) !== Boolean(options?.modelName)) throw new Error('[AGENT] Set both modelProvider and modelName, or neither')
@@ -257,6 +274,13 @@ export class Agent {
 
     addTool (tool: Tool) {
         this._tools.push(tool)
+    }
+
+    addInternalMcp (mcp: InternalMcp) {
+        if (!mcp?.name || !mcp?.url) throw new Error('[AGENT] An internal MCP needs a name and a url')
+        if (this._internalMcps.some(candidate => candidate.name === mcp.name)) throw new Error(`[AGENT] There is already an internal MCP named "${mcp.name}"`)
+
+        this._internalMcps.push(mcp)
     }
 
     addHook (type: HookType, fn: Function) {
@@ -604,9 +628,20 @@ export class Agent {
     private async listMcps (): Promise<void> {
         if (!this.currentUser) return
 
+        this._mcps = this._internalMcps.map(mcp => this.toInternalEntry(mcp))
+
         try {
             const response = await listAllMcpServersByUser({ currentUser: this.currentUser })
-            this._mcps = (response?.data ?? []).map(props => this.toMcpEntry(props))
+            const reserved = new Set(this._internalMcps.map(mcp => mcp.name))
+            const stored = (response?.data ?? []).filter(props => {
+                if (!reserved.has(props.name as string)) return true
+
+                this.logger.error({ mcpServer: props.name }, '[AGENT] A server of the user was ignored because its name belongs to an internal MCP')
+                this.currentChat?.addTrace({ node: 'agent', kind: 'agent', reasoning: `A server of the user was ignored because its name belongs to an internal MCP: ${props.name}` })
+                return false
+            })
+
+            this._mcps.push(...stored.map(props => this.toMcpEntry(props)))
         } catch (error: any) {
             this.logger.error({ error: error?.message ?? error }, '[AGENT] Failed to list MCP servers')
             this.mcpListingFailed = true
@@ -619,8 +654,49 @@ export class Agent {
         return { id: String(props._id ?? ''), name: props.name ?? 'mcp', server, tools: [], access: server.trust === 'blocked' ? 'blocked' : 'not_connected' }
     }
 
+    private toInternalEntry (mcp: InternalMcp): McpEntry {
+        const headers = this.resolveInternalHeaders(mcp)
+        const server = McpServer.fromJSON({ name: mcp.name, url: mcp.url, type: 'http', headers })
+        const entry: McpEntry = { id: '', name: mcp.name, internal: true, server, tools: [], access: 'not_connected' }
+
+        if (!headers) {
+            entry.access = 'unavailable'
+            entry.connection = Promise.resolve()
+            this.logger.error({ mcpServer: mcp.name }, '[AGENT] There is no token for the internal MCP')
+            this.currentChat?.addTrace({ node: 'agent', kind: 'agent', reasoning: `Tool source unavailable: ${mcp.name} (no token for this run)` })
+        }
+
+        return entry
+    }
+
+    private resolveInternalHeaders (mcp: InternalMcp): Record<string, string> | undefined {
+        const headers = { ...mcp.headers }
+        if (!Object.values(headers).some(value => value.includes(TOKEN_PLACEHOLDER))) return headers
+
+        const own = this.mcpTokens[mcp.name]
+        const token = own || this.serviceToken
+        const userId = this.currentUser?.userId
+        if (!token || !userId) return undefined
+
+        for (const [name, value] of Object.entries(headers)) headers[name] = value.split(TOKEN_PLACEHOLDER).join(token)
+
+        if (!own) {
+            for (const name of Object.keys(headers)) if (name.toLowerCase() === USER_ID_HEADER.toLowerCase()) delete headers[name]
+            headers[USER_ID_HEADER] = userId
+        }
+
+        return headers
+    }
+
+    private mask (error: unknown): string {
+        let text = error instanceof Error ? error.message : String(error)
+        for (const secret of [...Object.values(this.mcpTokens), this.serviceToken]) if (secret) text = text.split(secret).join('***')
+        return text
+    }
+
     private mcpIndex (): McpIndexEntry[] {
         return this._mcps.map(entry => {
+            if (entry.internal) return { name: entry.name, state: 'approved' }
             if (entry.access === 'blocked') return { name: entry.name, state: 'blocked' }
 
             const approved = entry.access === 'ready' || (['not_connected', 'unavailable'].includes(entry.access) && entry.server.trust === 'approved')
@@ -665,12 +741,19 @@ export class Agent {
                 const client = await entry.server.connect()
                 const { manifest, tools } = await entry.server.inspect(client)
 
-                entry.tools = tools.map(tool => Tool.fromMcp(tool, client, { namespace: entry.name }))
+                entry.tools = tools.map(tool => Tool.fromMcp(tool, client, { namespace: entry.name, internal: entry.internal }))
+
+                if (entry.internal) {
+                    entry.hash = manifest.hash
+                    entry.access = 'ready'
+                    return
+                }
+
                 await this.reviewMcp(entry, manifest)
 
                 return
             } catch (error) {
-                this.logger.error({ error, mcpServer: entry.name, attempt: attempt + 1 }, '[AGENT] Failed to connect MCP server')
+                this.logger.error({ error: entry.internal ? this.mask(error) : error, mcpServer: entry.name, attempt: attempt + 1 }, '[AGENT] Failed to connect MCP server')
                 await Promise.resolve().then(() => entry.server.disconnect()).catch(() => undefined)
 
                 const delay = MCP_CONNECT_RETRY_DELAYS_MS[attempt]
