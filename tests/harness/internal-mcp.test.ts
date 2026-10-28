@@ -2,7 +2,7 @@ import { useHarness, fakeMcp, say, act } from '../support'
 
 const list = (server: string) => act('search_tools', { server })
 
-const sofi = { name: 'sofi', url: 'https://api.sofi.app/mcp', headers: { Authorization: 'Bearer {{token}}', 'X-App': 'sofi-agent' } }
+const sofi = { name: 'sofi', url: 'https://api.sofi.cash/mcp', headers: { Authorization: 'Bearer {{token}}', 'X-App': 'sofi-agent' } }
 
 const erase = { name: 'erase', description: 'erase', inputSchema: { type: 'object', properties: {} }, annotations: { destructiveHint: true } }
 

@@ -14,7 +14,7 @@ async function runAgentWithInternalMcp (sessionToken: string) {
         internalMcps: [
             {
                 name: 'sofi',
-                url: 'https://api.sofi.app/mcp',
+                url: 'https://api.sofi.cash/mcp',
                 headers: { Authorization: 'Bearer {{token}}' },
             },
         ],

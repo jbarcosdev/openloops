@@ -87,7 +87,7 @@ describe('the runner of agentic jobs', () => {
         })
 
         describe('with internal MCPs', () => {
-            const sofi = { name: 'sofi', url: 'https://api.sofi.app/mcp', headers: { Authorization: 'Bearer {{token}}' } }
+            const sofi = { name: 'sofi', url: 'https://api.sofi.cash/mcp', headers: { Authorization: 'Bearer {{token}}' } }
 
             afterEach(() => { delete process.env.INTERNAL_MCP_TOKEN })
 

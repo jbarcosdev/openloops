@@ -153,7 +153,7 @@ const agent = new Agent({
     internalMcps: [
         {
             name: 'sofi',
-            url: 'https://api.sofi.app/mcp',
+            url: 'https://api.sofi.cash/mcp',
             headers: {
                 Authorization: 'Bearer {{token}}',
                 'X-App': 'sofi-agent',
