@@ -224,6 +224,9 @@ AGENTIC_JOBS_LEASE_MS=
 LLM_CALL_TIMEOUT_MS=
 MCP_TOOL_TIMEOUT_MS=
 
+# Optional, most MongoDB connections per process (default 3)
+OPENLOOPS_MONGO_MAX_POOL_SIZE=
+
 # Optional, see "Observability" below
 SENTRY_DSN=
 LANGFUSE_SECRET_KEY=

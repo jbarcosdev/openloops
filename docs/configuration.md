@@ -6,6 +6,7 @@
 | --- | --- | --- |
 | `OPENLOOPS_DB_URI` | yes | MongoDB connection string. |
 | `OPENLOOPS_DB_NAME` | no | Database name. Defaults to `openloops`. |
+| `OPENLOOPS_MONGO_MAX_POOL_SIZE` | no | Most connections each process keeps open to MongoDB. Defaults to `3`, which suits serverless functions, where every instance handles one request at a time. Raise it for a long-running server. |
 | `SECRET_MANAGER_KEY` | yes | Key used to decrypt values that start with `ENC:`. The library throws when it loads without it. |
 | `ANTHROPIC_API_KEY` | for the default model | API key of the default provider, `anthropic`. |
 | `OPENAI_API_KEY`, `GEMINI_API_KEY` | for those providers | API keys of the other providers you choose per chat. |

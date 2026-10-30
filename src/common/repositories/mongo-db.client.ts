@@ -17,6 +17,9 @@ export class MongoClient {
     constructor (uri: string, options?: MongoClientOptions) {
         if (!uri) throw new Error('[Mongo Client]: uri parameter is required')
         this.client = new BaseMongoCLient(uri, {
+            maxPoolSize: Number(secretManager.get('OPENLOOPS_MONGO_MAX_POOL_SIZE')) || 3,
+            minPoolSize: 0,
+            maxIdleTimeMS: 10000,
             ...options,
             connectTimeoutMS: 5000,
             serverSelectionTimeoutMS: 5000
