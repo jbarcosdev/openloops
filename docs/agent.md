@@ -186,6 +186,25 @@ agent.addHook('post_execution', async () => {
 
 Hooks do not run when a guard blocks the message, because the loop never starts.
 
+## Activity updates
+
+```typescript
+const stop = agent.onActivity(activity => {
+    stream.write(`event: activity\ndata: ${JSON.stringify({ activity })}\n\n`)
+})
+
+await agent.run({ input: { chatId, message }, currentUser })
+
+stop()
+```
+
+The listener receives every change of `state.currentActivity` while the run is in progress, such as `Starting...`, `Thinking...` or `Running search...`, and a last `stopped` when the run ends. It does not receive a value that repeats the previous one.
+
+- The listener belongs to that `Agent` instance and to the chat of its current run. Nothing is shared between instances, so concurrent runs in the same process, even of different users, never hear each other. As always, create one `Agent` per run and do not share it between concurrent requests.
+- It is called synchronously from the loop, so keep it fast and do not await inside it. An error thrown by a listener is logged and ignored, the run goes on and the other listeners still run.
+- `onActivity` returns a function that removes the listener.
+- Past values are not replayed. If a client connects late or loses its connection, read `state.currentActivity` of the chat, which is saved with it.
+
 ## Stopping a running turn
 
 ```typescript

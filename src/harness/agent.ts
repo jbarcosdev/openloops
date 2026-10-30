@@ -28,7 +28,7 @@ import { createBlockInputOversize } from '@guardrails/input/create-block-input-o
 import { listAllMcpServersByUser, verifyMcpServerConnection, decideMcpServerTrust } from '@services/mcp-servers'
 import { rankToolsByKeywords, WeightedKeyword, ScoredTool } from './utils/rank-tools-by-keywords'
 import { AgentLoop, AgentLoopNode, Harness, RunContext } from './agent-loop'
-import { AgentStatus } from './agent-state'
+import { AgentStatus, ActivityListener } from './agent-state'
 import { AgentWorkspace } from './workspace'
 import { ToolPipeline, ToolPipelineRunOptions } from './tool-pipeline'
 import { NATIVE_TOOLS } from './native-tools'
@@ -117,6 +117,7 @@ export class Agent {
     private mcpListingFailed = false
     private _preHooks: Function[] = []
     private _postHooks: Function[] = []
+    private _activityListeners: ActivityListener[] = []
     private _guards: Guard[] = []
     private awaitingConfirmation = false
 
@@ -288,6 +289,24 @@ export class Agent {
         if (type === 'post_execution') this._postHooks.push(fn)
     }
 
+    onActivity (listener: ActivityListener): () => void {
+        this._activityListeners.push(listener)
+
+        return () => {
+            this._activityListeners = this._activityListeners.filter(candidate => candidate !== listener)
+        }
+    }
+
+    private emitActivity (activity: string): void {
+        for (const listener of this._activityListeners) {
+            try {
+                listener(activity)
+            } catch (error: any) {
+                this.logger.warn({ error: error?.message ?? error }, '[AGENT] An activity listener failed')
+            }
+        }
+    }
+
     addGuard (guard: Guard) {
         this._guards.push(guard)
     }
@@ -316,6 +335,8 @@ export class Agent {
 
             await this.loadTasks()
         }
+
+        this.currentChat.state?.onActivityChange(activity => this.emitActivity(activity))
 
         const userMessage = this.currentChat.pushMessage({
             role: 'user',

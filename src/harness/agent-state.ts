@@ -15,6 +15,8 @@ export interface AgentError {
 
 type CurrentActivity = 'running' | 'stopped' | (string & {})
 
+export type ActivityListener = (activity: string) => void
+
 export interface AgentStateProps {
     status?: AgentStatus
     language?: string
@@ -25,6 +27,8 @@ export interface AgentStateProps {
 }
 
 export class AgentState {
+    private activityListener?: ActivityListener
+
     static fromJSON (props: AgentStateProps = {}): AgentState {
         return new AgentState(
             props.status,
@@ -60,8 +64,14 @@ export class AgentState {
         if (language) this.language = language
     }
 
+    onActivityChange (listener?: ActivityListener): void {
+        this.activityListener = listener
+    }
+
     setCurrentActivity (currentActivity: CurrentActivity): void {
+        const changed = this.currentActivity !== currentActivity
         this.currentActivity = currentActivity
+        if (changed) this.activityListener?.(currentActivity)
     }
 
     setStatus (status: AgentStatus): void {
