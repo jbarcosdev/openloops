@@ -13,9 +13,11 @@ import { AgiLoop } from 'openloops/loops'
 
 | Node | What it does |
 | --- | --- |
-| `fast_responder` | Initial node. Answers directly when no tools or memory are needed. It is skipped in an autonomous run. |
-| `reasoning_engine` | Reads the situation or the results of the last actions, rewrites its working state, decides the next actions and reports the language of the conversation. |
+| `fast_responder` | Initial node. Answers directly when no tools or memory are needed, and when it cannot, says in one sentence what the agent will do. It is skipped in an autonomous run. |
+| `reasoning_engine` | Reads the situation or the results of the last actions, rewrites its working state, decides the next actions, reports the language of the conversation and says in one sentence what is happening until its next answer. |
 | `action_engine` | Runs the actions the reasoning engine asked for, asks the user for confirmation when needed, delivers the final answer. |
+
+The sentences of both nodes become `state.currentActivity`, written in the language of the conversation, so a client can show what the agent is doing instead of a generic `Thinking...`. They are optional: when a node leaves it out or writes something unusable (not a text, empty, `running`, `stopped`), the loop shows the generic activity of that moment. The text is cleaned of markup and line breaks and cut at 80 characters, and each one is kept in the turn that produced it (`turns[].activity`) to audit what the user saw.
 
 The loop works within a budget per task (20 reasoning turns and 40 tool calls) and stops with an honest answer when the model repeats itself, keeps only reading notes, or runs out of budget. It also rejects final answers that cite identifiers that never appeared in a result or in the user's words.
 

@@ -7,11 +7,12 @@ export type ResponseSchema = {
     state: Record<string, any>
     actions: { tool: string, arguments?: Record<string, any> }[]
     learned?: { key: string, value: string }[]
+    activity?: string
 }
 
 export const reasoningEngine = new Skill<ResponseSchema>({
     name: 'reasoning_engine',
-    version: '2.4.0',
+    version: '2.5.0',
     description: 'Continuous reasoning cycle of the agent: reads the situation or the results of its last actions, rewrites its working state and decides the next actions, including the final answer.',
     temperature: 0.3,
     systemRole: true,
@@ -25,6 +26,7 @@ export const reasoningEngine = new Skill<ResponseSchema>({
                 "STATE: Your state is your working memory and the harness returns it to you in the next cycle. Rewrite it completely in every response, carrying forward what still matters. Use these keys, each a short text: 'objective' (what the user wants, in your own words), 'progress' (what is done and learned so far, citing refs), 'tried' (what you attempted that failed or gave nothing, so you never repeat it), 'expecting' (what you expect these actions to return) and 'next' (what you will do once you have it).",
                 "LEARNED: 'learned' is an optional list of {\"key\": \"...\", \"value\": \"...\"} with the facts you will need in later cycles and must not lose: entities with their exact identifiers (for example the customer or document the user chose, and its id), schemas of tools you will call, and decisions of the user. Add only what is new. The harness keeps it and returns all of it in HARNESS.known in every cycle, so you do not need to copy it into the state. Before an action that targets an entity, use the one in HARNESS.known, and never replace it with a different one unless the user asks. Before calling a tool, take its argument names from HARNESS.schemas when it is listed there.",
                 "ACTIONS: 'actions' is a list of objects like {\"tool\": \"<exact tool name>\", \"arguments\": {...}}. The tool must be one of the names in your tool list. Copy the name character by character, including the server prefix of external tools (like 'server__tool'), which is part of the name. The only thing you may drop is a leading 'functions.'. The arguments must match its schema. You cannot call tools natively: you only ask for them through actions. Independent actions in the same response run in parallel; dependent ones go in later responses. Never invent tool names or arguments.",
+                "ACTIVITY: 'activity' is optional. It is shown to the user while the actions you ask for run and while you think about their results, until your next response. Write one short sentence, around ten words, in the language of the conversation (the same as 'language'), in plain words that say what you are doing and what you will do with the results, for example 'Buscando tus gastos de vuelos de agosto' or 'Sumando los cargos para darte el total'. Never mention tool names, ids, refs or technical terms, never include amounts or personal data, and do not promise a result. Leave it out when your actions only deliver the final answer.",
                 "NEVER_EMPTY: 'actions' always has at least one action. 'reasoning' and 'state' are never shown to the user, so writing there that you will answer or summarize delivers nothing. As soon as you have what you need, your action is 'respond' with the complete final answer, written in that same response.",
                 "LOOP: After your actions run, the next message you receive is {\"OBSERVATIONS\": [...]} with one entry per action (ref, tool, status, output or error). Continue from there. You finish the task only with a 'respond' action, which delivers your final answer; use it alone or with actions whose results you no longer need.",
                 "HARNESS_NOTICES: A message may contain a 'HARNESS' key with notices from your body, such as the remaining budget, a warning, a stop reason, 'known' (the facts kept for you, including the answers of the user) or 'schemas' (the arguments of the tools you have already seen). Obey them.",
@@ -74,7 +76,8 @@ export const reasoningEngine = new Skill<ResponseSchema>({
                     next: "string"
                 },
                 actions: [{ tool: "string", arguments: "object" }],
-                learned: [{ key: "string", value: "string" }]
+                learned: [{ key: "string", value: "string" }],
+                activity: "string"
             }
         }
     }

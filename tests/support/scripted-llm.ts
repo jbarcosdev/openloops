@@ -12,6 +12,7 @@ export interface ScriptedTurn {
     actions?: ScriptedAction[]
     learned?: { key?: string; value?: unknown }[]
     language?: string
+    activity?: unknown
     raw?: string
     throws?: Error
 }
@@ -86,6 +87,7 @@ export class ScriptedLLM {
             actions: turn.actions,
             ...(turn.learned ? { learned: turn.learned } : {}),
             ...(turn.language !== undefined ? { language: turn.language } : {}),
+            ...(turn.activity !== undefined ? { activity: turn.activity } : {}),
         }
 
         return {

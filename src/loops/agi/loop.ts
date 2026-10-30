@@ -3,6 +3,7 @@ import { findInvoker } from '@services/tasks/entities/agent-task.entity'
 import { fastResponder } from '../shared/skills'
 import { ungroundedIdentifiers, UNGROUNDED_PHRASE } from '@harness/utils/grounding'
 import { reasoningEngine } from './skills/reasoning-engine'
+import { cleanActivity } from '@harness/utils/activity'
 
 const MAX_TURNS = 20
 const MAX_TOOL_CALLS = 40
@@ -31,7 +32,7 @@ export class AgiLoop extends AgentLoop {
     }
 
     get version () {
-        return '1.7.0'
+        return '1.8.0'
     }
 
     get author () {
@@ -74,6 +75,9 @@ export class AgiLoop extends AgentLoop {
         ctx.chat.state?.setLanguage(result.detected_language)
 
         if (!result.can_answer) {
+            const activity = cleanActivity(result.activity)
+            if (activity) ctx.chat.state?.setCurrentActivity(activity, 'model')
+
             harness.setNextNode(this.nodes.reasoning_engine)
         } else {
             ctx.chat.state?.setStatus(AgentStatus.IDLE)
@@ -83,7 +87,7 @@ export class AgiLoop extends AgentLoop {
     }
 
     private async reasoningEngine (ctx: RunContext, harness: Harness): Promise<void> {
-        ctx.chat.state?.setCurrentActivity('Thinking...')
+        if (!ctx.chat.state?.hasModelActivity) ctx.chat.state?.setCurrentActivity('Thinking...')
 
         const task = ctx.task ?? ctx.chat.createTask(ctx.currentMessage)
         task.answerQuestion(ctx.currentMessage)
@@ -127,7 +131,12 @@ export class AgiLoop extends AgentLoop {
 
         const { rawText, ...callInfo } = result.callInfo
 
-        task.addTurn(result, {
+        const activity = cleanActivity(result.activity)
+
+        if (activity) ctx.chat.state?.setCurrentActivity(activity, 'model')
+        else if (ctx.chat.state?.hasModelActivity) ctx.chat.state?.setCurrentActivity('Thinking...')
+
+        task.addTurn({ ...result, activity }, {
             author: 'reasoning_engine',
             declaredTools: catalog.tools.map(tool => tool.name),
             invoker: findInvoker(catalog.tools),
@@ -156,7 +165,7 @@ export class AgiLoop extends AgentLoop {
         const runnable = ready.filter(action => !blocked.includes(action))
 
         if (runnable.length) {
-            ctx.chat.state?.setCurrentActivity(`Running ${runnable.map(action => action.name).join(', ')}...`)
+            if (!ctx.chat.state?.hasModelActivity) ctx.chat.state?.setCurrentActivity(`Running ${runnable.map(action => action.name).join(', ')}...`)
             await Promise.all(runnable.map(action => harness.runAction(action, { blockDuplicates: BLOCK_DUPLICATES })))
         }
 

@@ -50,6 +50,7 @@ export interface TurnMeta {
 export interface TurnRecord extends TurnMeta {
 	turn: number
 	reasoning?: string
+	activity?: string
 	state?: Record<string, any>
 }
 
@@ -60,6 +61,7 @@ export interface ActionRequest {
 
 export interface TurnOutput {
 	reasoning?: string
+	activity?: string
 	state?: Record<string, any>
 	actions?: ActionRequest[]
 	learned?: { key?: string; value?: any }[]
@@ -551,7 +553,7 @@ export class AgentTask extends BaseEntity {
 
 		this.remember(output.learned)
 
-		this.turns.push({ turn, reasoning: output.reasoning?.toString().trim().slice(0, REASONING_CHARS) || undefined, state: capState(output.state), ...definedOnly(opts?.meta) })
+		this.turns.push({ turn, reasoning: output.reasoning?.toString().trim().slice(0, REASONING_CHARS) || undefined, ...(output.activity ? { activity: output.activity } : {}), state: capState(output.state), ...definedOnly(opts?.meta) })
 
 		const requests = Array.isArray(output.actions) ? output.actions : []
 

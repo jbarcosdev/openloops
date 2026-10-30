@@ -20,7 +20,7 @@ export class HarnessEnv {
     readonly db = new MemoryDb()
     readonly llm = new ScriptedLLM()
     readonly user = { userId: new ObjectId().toString(), email: 'tester@example.com', isAdmin: () => false } as unknown as CurrentUser
-    readonly fast = { canAnswer: false, calls: 0 }
+    readonly fast = { canAnswer: false, calls: 0, activity: undefined as unknown }
     readonly gate = { decision: 'CONFIRMED', calls: [] as Record<string, any>[] }
     readonly approval = { question: 'Do you confirm?', calls: [] as Record<string, any>[] }
     readonly review = { decision: 'ASK' as 'APPROVE' | 'ASK', question: 'Do you approve this server?', calls: [] as Record<string, any>[] }
@@ -35,6 +35,7 @@ export class HarnessEnv {
         fakeMcp.reset()
         this.fast.canAnswer = false
         this.fast.calls = 0
+        this.fast.activity = undefined
         this.gate.decision = 'CONFIRMED'
         this.gate.calls = []
         this.approval.question = 'Do you confirm?'
@@ -50,7 +51,7 @@ export class HarnessEnv {
         this.spies = [
             jest.spyOn(fastResponder as any, 'run').mockImplementation(async () => {
                 this.fast.calls++
-                return { can_answer: this.fast.canAnswer, answer: 'fast answer', detected_language: 'es' }
+                return { can_answer: this.fast.canAnswer, answer: 'fast answer', detected_language: 'es', ...(this.fast.activity !== undefined ? { activity: this.fast.activity } : {}) }
             }),
             jest.spyOn(confirmationGate as any, 'run').mockImplementation(async (options: any) => {
                 this.gate.calls.push(options)

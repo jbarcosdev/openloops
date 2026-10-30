@@ -198,7 +198,7 @@ await agent.run({ input: { chatId, message }, currentUser })
 stop()
 ```
 
-The listener receives every change of `state.currentActivity` while the run is in progress, such as `Starting...`, `Thinking...` or `Running search...`, and a last `stopped` when the run ends. It does not receive a value that repeats the previous one.
+The listener receives every change of `state.currentActivity` while the run is in progress, and a last `stopped` when the run ends. It does not receive a value that repeats the previous one. With `AgiLoop` the value is a short sentence written by the model in the language of the conversation, such as `Buscando tus gastos de vuelos de agosto`, shown from the answer that asked for the actions until the next answer. When the model gives none, the generic ones appear: `Starting...`, `Analyzing requirement...`, `Thinking...` or `Running search...`. See [loops](loops.md#agiloop).
 
 - The listener belongs to that `Agent` instance and to the chat of its current run. Nothing is shared between instances, so concurrent runs in the same process, even of different users, never hear each other. As always, create one `Agent` per run and do not share it between concurrent requests.
 - It is called synchronously from the loop, so keep it fast and do not await inside it. An error thrown by a listener is logged and ignored, the run goes on and the other listeners still run.
