@@ -1,6 +1,6 @@
 {
   "name": "openloops",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Open source harness for AI agents: a TypeScript runtime with persistence, tools, MCP trust, approvals and autonomous jobs, where the loop is pluggable",
   "author": {
     "name": "Jose Barcos",
