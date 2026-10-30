@@ -32,7 +32,7 @@ export class AgiLoop extends AgentLoop {
     }
 
     get version () {
-        return '1.8.0'
+        return '1.8.1'
     }
 
     get author () {
@@ -134,7 +134,6 @@ export class AgiLoop extends AgentLoop {
         const activity = cleanActivity(result.activity)
 
         if (activity) ctx.chat.state?.setCurrentActivity(activity, 'model')
-        else if (ctx.chat.state?.hasModelActivity) ctx.chat.state?.setCurrentActivity('Thinking...')
 
         task.addTurn({ ...result, activity }, {
             author: 'reasoning_engine',

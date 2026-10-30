@@ -32,7 +32,6 @@ describe('AgiLoop activity', () => {
             'Thinking...',
             'Buscando tus gastos de vuelos',
             'Sumando los cargos para darte el total',
-            'Thinking...',
             'stopped',
         ])
     })
@@ -47,7 +46,6 @@ describe('AgiLoop activity', () => {
             'Starting...',
             'Analyzing requirement...',
             'Voy a buscar tus gastos de vuelos de agosto',
-            'Thinking...',
             'stopped',
         ])
     })
@@ -59,6 +57,31 @@ describe('AgiLoop activity', () => {
         const seen = await run('hola')
 
         expect(seen).not.toContain('Voy a buscar algo')
+    })
+
+    it('keeps the last activity of the model when a later turn gives none, so the user does not go back to a generic one', async () => {
+        llm.script(
+            { activity: 'Buscando tus gastos de vuelos', actions: [act('t_search', { q: 'warehouse' })] },
+            { actions: [act('t_search', { q: 'warehouse' })] },
+            say('Listo'),
+        )
+
+        const seen = await run()
+
+        expect(seen).toEqual(['Starting...', 'Analyzing requirement...', 'Thinking...', 'Buscando tus gastos de vuelos', 'stopped'])
+    })
+
+    it('keeps the last activity of the model when the next response is not valid, while the model tries again', async () => {
+        llm.script(
+            { activity: 'Buscando tus gastos de vuelos', actions: [act('t_search', { q: 'warehouse' })] },
+            { raw: 'this is not a JSON object' },
+            say('Listo'),
+        )
+
+        const seen = await run()
+
+        expect(seen).toEqual(['Starting...', 'Analyzing requirement...', 'Thinking...', 'Buscando tus gastos de vuelos', 'stopped'])
+        expect(env.tasks()[0].turns).toHaveLength(3)
     })
 
     it('goes back to the generic activities when the model gives none or gives something unusable', async () => {
