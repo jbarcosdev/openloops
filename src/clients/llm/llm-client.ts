@@ -84,6 +84,7 @@ export class LLMClient {
             tools,
             toolChoice,
             temperature = DEFAULT_TEMPERATURE,
+            thinking,
         } = params
 
         const { provider, model: modelName } = this.chooseModel(params)
@@ -101,8 +102,10 @@ export class LLMClient {
         const send = (omitTemperature: boolean) => this.withDeadline(signal => {
             const options = { ...(omitTemperature ? {} : { temperature }), maxRetries: MAX_RETRIES, signal, ...(sessionId ? { sessionId } : {}) }
 
-            return resolvedChoice
-                ? models.completeSimple(model, context, { ...options, toolChoice: resolvedChoice as never })
+            const reasoning = thinking && thinking !== 'off' ? thinking : undefined
+
+            return resolvedChoice || thinking
+                ? models.completeSimple(model, context, { ...options, ...(resolvedChoice ? { toolChoice: resolvedChoice as never } : {}), ...(reasoning ? { reasoning } : {}) })
                 : models.complete(model, context, options)
         })
 

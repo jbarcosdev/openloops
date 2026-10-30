@@ -45,6 +45,8 @@ export interface LLMResponse {
 
 export type LLMToolChoice = 'auto' | 'none' | 'required'
 
+export type ThinkingEffort = 'off' | 'low' | 'medium' | 'high'
+
 export interface LLMChatParams {
     origin: string
     sessionId: string
@@ -56,4 +58,5 @@ export interface LLMChatParams {
     provider?: string
     modelName?: string
     temperature?: number
+    thinking?: ThinkingEffort
 }

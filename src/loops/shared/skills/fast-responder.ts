@@ -14,6 +14,7 @@ export const fastResponder = new Skill<ResponseSchema>({
     version: '2.4.0',
     description: 'Handles general conversations and multipurpose user assistance.',
     temperature: 0.7,
+    thinking: 'low',
     systemInstructions: {
         instruction_set: {
             goal: "Provide general assistance in a friendly, empathetic, and natural manner as a close companion.",

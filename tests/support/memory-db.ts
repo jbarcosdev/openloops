@@ -88,9 +88,11 @@ function project (doc: Doc, select?: Doc): Doc {
 
 export class MemoryCollection {
     private readonly docs = new Map<string, Doc>()
+    writes = 0
 
     clear (): void {
         this.docs.clear()
+        this.writes = 0
     }
 
     all (): Doc[] {
@@ -106,6 +108,8 @@ export class MemoryCollection {
     patch (id: ObjectId | string | undefined, doc: Doc, unset: string[] = [], options: { merge?: boolean } = {}): Doc | null {
         const current = id ? this.docs.get(String(id)) : undefined
         if (!current) return null
+
+        this.writes++
 
         for (const [key, value] of Object.entries(doc)) {
             if (key === 'toUnset' || key === '_id' || value === undefined) continue

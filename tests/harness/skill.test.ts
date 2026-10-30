@@ -1,6 +1,7 @@
 import { Skill } from '@skills/skill'
 import { LLMClient } from '@clients/llm/llm-client'
 import { reasoningEngine } from '@loops/agi/skills/reasoning-engine'
+import { fastResponder } from '@loops/shared/skills'
 import { NATIVE_TOOLS } from '@harness/native-tools'
 
 function respondWith (text: string, extra: Record<string, any> = {}) {
@@ -70,6 +71,27 @@ describe('Skill.run', () => {
             expect(messages[1].content).toBe('before')
             expect(messages[2].role).toBe('assistant')
             expect(result.opening).toBeUndefined()
+        })
+    })
+
+    describe('the thinking effort', () => {
+        it('is sent to the model when the skill sets it', async () => {
+            const chat = respondWith('{"reasoning":"r"}')
+            await new Skill({ name: 'quick', thinking: 'low', systemInstructions: {} }).run({ ...base, userMessage: 'hi' })
+
+            expect(chat.mock.calls[0][0]).toMatchObject({ thinking: 'low' })
+        })
+
+        it('is left out when the skill does not set it, so the provider default applies', async () => {
+            const chat = respondWith('{"reasoning":"r"}')
+            await new Skill({ name: 'plain', systemInstructions: {} }).run({ ...base, userMessage: 'hi' })
+
+            expect(chat.mock.calls[0][0]).not.toHaveProperty('thinking')
+        })
+
+        it('is low for the fast responder and not set for the reasoning engine', () => {
+            expect(fastResponder.thinking).toBe('low')
+            expect(reasoningEngine.thinking).toBeUndefined()
         })
     })
 

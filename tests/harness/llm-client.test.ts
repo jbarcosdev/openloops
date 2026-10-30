@@ -105,6 +105,41 @@ describe('LLMClient.chat', () => {
         expect(mockModels.completeSimple.mock.calls[0][2]).toMatchObject({ toolChoice: 'none', temperature: 0.3 })
     })
 
+    describe('the thinking effort', () => {
+        it('keeps the default completion, with no reasoning setting, when it is not given', async () => {
+            mockModels.complete.mockResolvedValue(reply())
+            await new LLMClient().chat(params())
+
+            expect(mockModels.completeSimple).not.toHaveBeenCalled()
+            expect(mockModels.complete.mock.calls[0][2]).not.toHaveProperty('reasoning')
+        })
+
+        it.each(['low', 'medium', 'high'])('asks the simple completion for %s reasoning and keeps the temperature', async effort => {
+            mockModels.completeSimple.mockResolvedValue(reply())
+            await new LLMClient().chat(params({ thinking: effort }))
+
+            expect(mockModels.complete).not.toHaveBeenCalled()
+            expect(mockModels.completeSimple.mock.calls[0][2]).toMatchObject({ reasoning: effort, temperature: 0.3 })
+            expect(mockModels.completeSimple.mock.calls[0][2]).not.toHaveProperty('toolChoice')
+        })
+
+        it('turns the thinking off by leaving the reasoning out of the simple completion', async () => {
+            mockModels.completeSimple.mockResolvedValue(reply())
+            await new LLMClient().chat(params({ thinking: 'off' }))
+
+            expect(mockModels.complete).not.toHaveBeenCalled()
+            expect(mockModels.completeSimple.mock.calls[0][2]).not.toHaveProperty('reasoning')
+        })
+
+        it('combines it with a forced tool choice', async () => {
+            mockModels.getModel.mockReturnValue({ api: 'anthropic-messages', id: 'm', provider: 'p' })
+            mockModels.completeSimple.mockResolvedValue(reply())
+            await new LLMClient().chat(params({ thinking: 'low', toolChoice: 'required' }))
+
+            expect(mockModels.completeSimple.mock.calls[0][2]).toMatchObject({ reasoning: 'low', toolChoice: 'any' })
+        })
+    })
+
     it.each([
         ['anthropic-messages', 'any'],
         ['openai-completions', 'required'],
