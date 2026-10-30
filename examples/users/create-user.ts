@@ -1,4 +1,4 @@
-import { createUser } from 'openloops/users'
+import { createUser, UserRole } from 'openloops/users'
 import { Logger } from 'openloops/common'
 
 async function createUserExample () {
@@ -9,8 +9,10 @@ async function createUserExample () {
             firstName: 'Jose',
             lastName: 'Barcos',
             email: 'jose@openloops.xyz',
-            password: 'openloops!'
-        }
+            password: 'openloops!',
+            role: UserRole.USER
+        },
+        sanitize: false
     })
 
     logger.info(result, '[Demo] Created user:')

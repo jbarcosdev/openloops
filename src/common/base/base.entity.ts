@@ -138,11 +138,10 @@ export class BaseEntity {
         this.ownerId = BaseEntity.toObjectId(currentUser.userId)
     }
 
-    public setCreatedBy (currentUser?: CurrentUser): void {
-        if (!currentUser) return
-        this.sanitize(currentUser)
+    public setCreatedBy (currentUser?: CurrentUser, sanitize = true): void {
+        if (sanitize) this.sanitize(currentUser)
         this.createdAt = new Date()
-        this.createdBy = BaseEntity.toObjectId(currentUser.userId)
+        this.createdBy = BaseEntity.toObjectId(currentUser?.userId)
         this.setDefaults()
     }
 

@@ -3,7 +3,7 @@
 `openloops` includes its own user management, so you don't need to build a parallel system just to have an identity to hand the `Agent`.
 
 ```typescript
-import { createUser, getUserById, updateUser, deleteUser, ListUsersByProps } from 'openloops/users'
+import { createUser, getUserById, updateUser, deleteUser, ListUsersByProps, UserRole } from 'openloops/users'
 import { CurrentUser } from 'openloops/base'
 ```
 
@@ -28,11 +28,19 @@ const result = await createUser({
         lastName: 'Barcos',
         email: 'jose@openloops.xyz',
         password: 'a-real-password',
+        role: UserRole.USER,
     },
+    sanitize: false,
 })
 ```
 
 `email` and `password` are required. Passwords are hashed before being stored and are never returned.
+
+### `sanitize`
+
+By default `createUser` removes the fields only admins can set, such as `role`, unless the `currentUser` is an admin. This is what protects you from someone escalating privileges through the payload.
+
+If you send `role`, pass `sanitize: false`, otherwise it is discarded. Do it only when your code builds the payload itself, with the fields you choose. Never pass the raw body of a request from an API.
 
 ## Getting a user
 
