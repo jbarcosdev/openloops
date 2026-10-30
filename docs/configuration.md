@@ -79,6 +79,22 @@ The provider and the model go together: sending only one of them is an error. Th
 
 The model call goes through a single client that retries, cancels and repeats an attempt that does not answer in time, waits when the provider asks to slow down, drops a temperature setting the model rejects and turns provider errors into messages that are safe to show to the user.
 
+## Indexes
+
+The collections of the package are queried by owner, chat, task and date, so they need indexes. Without them every query reads the whole collection. Create them once per deployment, and again after upgrading the package, with the helper that lists them all:
+
+```ts
+import { MongoClient } from 'mongodb'
+import { ensureIndexes } from 'openloops/db'
+
+const client = new MongoClient(process.env.OPENLOOPS_DB_URI as string)
+await client.connect()
+console.log(await ensureIndexes(client.db(process.env.OPENLOOPS_DB_NAME || 'openloops')))
+await client.close()
+```
+
+It covers `llm_calls`, `chats`, `agent_tasks`, `agent_actions`, `agent_traces`, `workspace_items`, `mcp_servers`, `agentic_jobs` and `agentic_job_runs`. It is safe to run again: an index that already exists is left as it is. Collections of your own application are not included.
+
 ## What is recorded
 
 - Every LLM call, with its response, tokens and cost. See [usage](usage.md).

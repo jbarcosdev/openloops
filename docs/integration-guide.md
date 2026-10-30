@@ -115,7 +115,7 @@ runner.start()
 
 - It is safe to start the worker in several instances: a due job is taken by one of them.
 - Stop it with `runner.stop()` when the process receives `SIGTERM`.
-- Create the indexes listed in [agentic jobs](agentic-jobs.md#indexes).
+- Create the indexes with `ensureIndexes` from `openloops/db`, see [configuration](configuration.md#indexes). The ones of the jobs are listed in [agentic jobs](agentic-jobs.md#indexes).
 - A job that needs the user (a destructive tool, an unapproved server, a question) pauses its run, and the user answers in the chat of that run. Show those runs, which you can list with `listAgenticJobRunsByUser({ status: 'paused' })`.
 
 ## Security checklist
@@ -136,3 +136,4 @@ runner.start()
 - Treating `error` as an exception that is thrown. It is returned.
 - Forgetting that a run in `awaiting_user_confirmation` is waiting for the next message of the user, and that the next message is the answer.
 - Starting the scheduled jobs worker without creating its indexes.
+- Running the package on a real database without calling `ensureIndexes`.

@@ -207,7 +207,7 @@ Someone answers a paused run in the chat, outside the runner. The runner checks 
 
 ## Indexes
 
-The collections are `agentic_jobs` and `agentic_job_runs`. For the queries of the runner and of the lists, create these indexes:
+The collections are `agentic_jobs` and `agentic_job_runs`. `ensureIndexes` from `openloops/db` creates the indexes of the queries of the runner and of the lists (see [configuration](configuration.md#indexes)). They are:
 
 - `agentic_jobs`: `{ enabled: 1, nextRunAt: 1 }` and `{ ownerId: 1, createdAt: -1 }`.
 - `agentic_job_runs`: `{ jobId: 1, createdAt: -1 }`, `{ ownerId: 1, createdAt: -1 }` and `{ status: 1, createdAt: 1 }`.

@@ -70,6 +70,10 @@
     "./users": {
       "types": "./dist/services/users/index.d.ts",
       "default": "./dist/services/users/index.js"
+    },
+    "./db": {
+      "types": "./dist/db/index.d.ts",
+      "default": "./dist/db/index.js"
     }
   },
   "files": [
