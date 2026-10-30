@@ -29,27 +29,21 @@ describe('Agent chat writes', () => {
         return { writes: env.db.chats.writes - before, result }
     }
 
-    it('writes the chat after every node when nobody listens, so the clients that poll see the activity', async () => {
-        const { writes } = await writesOf(false)
-
-        expect(writes).toBeGreaterThanOrEqual(8)
-    })
-
-    it('does not write the chat for an activity that a listener already received', async () => {
+    it('does not write the chat for an activity change, with or without a listener', async () => {
         const polled = await writesOf(false)
         const listened = await writesOf(true)
 
-        expect(listened.writes).toBeLessThanOrEqual(5)
-        expect(listened.writes).toBeLessThanOrEqual(polled.writes - 3)
+        expect(polled.writes).toBeLessThanOrEqual(5)
+        expect(listened.writes).toBe(polled.writes)
     })
 
-    it('leaves the chat complete in the database when the run ends, with the activity of the end', async () => {
+    it('does not save the activity with the chat', async () => {
         const { result } = await writesOf(true)
 
         const [chat] = env.db.chats.all()
         expect(result.error).toBeUndefined()
         expect(chat.state.status).toBe(AgentStatus.IDLE)
-        expect(chat.state.currentActivity).toBe('stopped')
+        expect(chat.state).not.toHaveProperty('currentActivity')
         expect(chat.messages.map((message: any) => `${message.role}:${message.content}`)).toEqual(['user:find item 3', 'assistant:Listo'])
     })
 

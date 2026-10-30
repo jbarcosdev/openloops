@@ -10,9 +10,15 @@ import { createChat, getChatById, listChatsByUser, updateChat, deleteChat } from
 
 | Field | Meaning |
 | --- | --- |
-| `state` | `status`, detected `language`, `activeTaskId`, `currentActivity`, `lastError` and `stopRequested`. See [agent](agent.md#the-result) for the statuses. |
+| `state` | `status`, detected `language`, `activeTaskId`, `lastError` and `stopRequested`. See [agent](agent.md#the-result) for the statuses. It also has `currentActivity`, which is deprecated (see below). |
 | `settings` | `modelProvider` and `modelName` (the model the chat uses, saved on every run), `loopName`, `executionMode`, `notifyOnCompletion` and `isPrivateSession`. |
 | `messages` | The conversation. Each message has `role` (`user` or `assistant`), `source`, `content`, `answerId` and `excludeFromContext`. |
+
+### `state.currentActivity` is deprecated
+
+Since 0.3.0 the activity of a run is no longer saved with the chat, and `currentActivity` will be removed in 0.4.0. Follow a run with [`agent.onActivity`](agent.md#activity-updates), which tells every change as it happens.
+
+For the clients that still poll the chat and read `state.currentActivity`, `getChatById` adds a generic word to it, such as `Thinking...` or `Cooking...`, only while the run is `processing`. It is one word per chat that changes every few seconds. It says nothing about what the agent is really doing, and it is not there in any other status. Move those clients to the listener before 0.4.0.
 
 Every assistant message of one answer shares an `answerId`. It is the id you pass as `messageId` to [usage](usage.md).
 

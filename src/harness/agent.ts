@@ -418,7 +418,7 @@ export class Agent {
     private async finishBlocked () {
         this.currentChat.state?.setStatus(this.awaitingConfirmation ? AgentStatus.AWAITING_USER_CONFIRMATION : AgentStatus.IDLE)
         this.currentChat.state?.setCurrentActivity('stopped')
-        await this.persist({ final: true })
+        await this.persist()
         await this.disconnectMcpServers()
     }
 
@@ -504,7 +504,7 @@ export class Agent {
         }
 
         this.currentChat.state?.setCurrentActivity('stopped')
-        await this.persist({ final: true })
+        await this.persist()
         await this.disconnectMcpServers()
     }
 
@@ -515,7 +515,7 @@ export class Agent {
             this.currentChat.state?.setLastError({ code: llmError?.code ?? AGENT_ERROR_CODES.RUN_FAILED, message, isRetryable: llmError?.isRetryable ?? true, timestamp: new Date() })
             this.currentChat.addTrace({ node: 'agent', kind: 'agent', reasoning: `Run failed: ${message}` })
             this.currentChat.failTask()
-            await this.persist({ final: true })
+            await this.persist()
         } catch (saveError: any) {
             this.logger.error({ error: saveError?.message ?? saveError }, '[AGENT] Failed to persist failed run state')
         } finally {
@@ -635,7 +635,7 @@ export class Agent {
         }
     }
 
-    private async persist (props?: { resetStop?: boolean, final?: boolean }): Promise<void> {
+    private async persist (props?: { resetStop: boolean }): Promise<void> {
         await this.persistTasks()
         await this.saveChat(props)
         await this.flushTraces()
@@ -952,7 +952,7 @@ export class Agent {
         }))
     }
 
-    private async saveChat (props?: { resetStop?: boolean, final?: boolean }) {
+    private async saveChat (props?: { resetStop: boolean }) {
         if (!this.currentChat?._id) return
 
         if (!props?.resetStop) {
@@ -963,7 +963,7 @@ export class Agent {
         const id = this.currentChat._id.toString()
         const payload = this.currentChat.toJSON()
         const key = `chat:${id}`
-        const current = props?.final ? JSON.stringify(payload) : this.chatFingerprint(payload)
+        const current = JSON.stringify(payload)
 
         if (this.snapshots.get(key) === current) return
 
@@ -974,24 +974,13 @@ export class Agent {
         this.snapshots.set(key, current)
     }
 
-    private chatFingerprint (payload: ChatProps): string {
-        if (!this._activityListeners.length || !payload.state) return JSON.stringify(payload)
-
-        const { currentActivity, ...state } = payload.state
-
-        return JSON.stringify({ ...payload, state })
-    }
-
     private async checkInterruptionRequest () {
         const chatId = this.currentChat?._id?.toString()
         if (!chatId) return
 
         const { data } = await getChatById({ id: chatId, select: { state: 1 }, currentUser: this.currentUser })
 
-        if (data?.state?.stopRequested) {
-            this.stopRequested = true
-            this.snapshots.delete(`chat:${chatId}`)
-        }
+        if (data?.state?.stopRequested) this.stopRequested = true
     }
 
     private async runLoop () {
