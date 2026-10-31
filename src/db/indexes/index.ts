@@ -8,6 +8,7 @@ import { workspaceItems } from './workspace-items'
 import { mcpServers } from './mcp-servers'
 import { automations } from './automations'
 import { automationRuns } from './automation-runs'
+import { revokedTokens } from './revoked-tokens'
 
 export const indexes: Record<string, IndexDescription[]> = {
 	llm_calls: llmCalls,
@@ -19,6 +20,7 @@ export const indexes: Record<string, IndexDescription[]> = {
 	mcp_servers: mcpServers,
 	automations,
 	automation_runs: automationRuns,
+	revoked_tokens: revokedTokens,
 }
 
 export async function ensureIndexes (db: Db): Promise<Record<string, string[]>> {
