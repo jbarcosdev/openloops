@@ -89,9 +89,9 @@ describe('Skill.run', () => {
             expect(chat.mock.calls[0][0]).not.toHaveProperty('thinking')
         })
 
-        it('is low for the fast responder and not set for the reasoning engine', () => {
+        it('is low for the fast responder and medium for the reasoning engine', () => {
             expect(fastResponder.thinking).toBe('low')
-            expect(reasoningEngine.thinking).toBeUndefined()
+            expect(reasoningEngine.thinking).toBe('medium')
         })
     })
 

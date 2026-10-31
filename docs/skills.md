@@ -44,7 +44,7 @@ export const myResponder = new Skill<ResponseSchema>({
 | `version` | no | Recorded in the metadata of every call. Bump it whenever the prompt changes. |
 | `description` | no | What the skill is for. |
 | `temperature` | no | Sampling temperature. Defaults to `0.7`. |
-| `thinking` | no | How much the model thinks before it answers: `off`, `low`, `medium` or `high`. Thinking costs time and output tokens, so a skill that only classifies or answers briefly can set it low. When it is left out the provider default applies, which is high for the Claude models. The bundled `fast_responder` uses `low`. |
+| `thinking` | no | How much the model thinks before it answers: `off`, `low`, `medium` or `high`. Thinking costs time and output tokens, so a skill that only classifies or answers briefly can set it low. When it is left out the provider default applies, which is high for the Claude models. The bundled `fast_responder` uses `low` and the `reasoning_engine` uses `medium`. |
 | `systemRole` | no | Default `true`: the instructions travel as a system message. |
 | `mode` | no | How the model is called when tools are given. Defaults to `plain_chat`. |
 
