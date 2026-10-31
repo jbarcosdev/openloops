@@ -12,9 +12,10 @@ export type ResponseSchema = {
 
 export const reasoningEngine = new Skill<ResponseSchema>({
     name: 'reasoning_engine',
-    version: '2.5.3',
+    version: '2.5.4',
     description: 'Continuous reasoning cycle of the agent: reads the situation or the results of its last actions, rewrites its working state and decides the next actions, including the final answer.',
     temperature: 0.3,
+    thinking: 'medium',
     systemRole: true,
     systemInstructions: {
         instruction_set: {

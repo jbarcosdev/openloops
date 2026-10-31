@@ -32,7 +32,7 @@ export class AgiLoop extends AgentLoop {
     }
 
     get version () {
-        return '1.8.5'
+        return '1.8.6'
     }
 
     get author () {
