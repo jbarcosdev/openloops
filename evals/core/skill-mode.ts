@@ -155,7 +155,7 @@ export function skillModes (def: SkillDefinition): Partial<Record<ModeId, ModeDe
         const { actions, issue } = resolveActions(toolsOf(caseDef), Array.isArray(object.actions) ? object.actions : [])
         if (issue) return { ...counted, actions, kind: 'invalid', detail: issue, raw: object }
 
-        return { ...counted, actions, kind: 'complete' }
+        return { ...counted, actions, kind: 'complete', activity: typeof object.activity === 'string' ? object.activity : undefined }
     }
 
     const feedbackFor = (caseDef: CaseDef, ctx: WorldCtx, turnOf: () => number) => (parsed: Parsed): string => {
@@ -221,6 +221,7 @@ export function skillModes (def: SkillDefinition): Partial<Record<ModeId, ModeDe
                     type: 'object',
                     properties: {
                         reasoning: { type: 'string' },
+                        activity: { type: 'string' },
                         state: STATE_SCHEMA,
                         learned: LEARNED_SCHEMA,
                         actions: {
@@ -273,7 +274,7 @@ export function skillModes (def: SkillDefinition): Partial<Record<ModeId, ModeDe
                     const { actions, issue } = resolveActions(toolsOf(caseDef), requests)
                     if (issue) return { ...base, actions, kind: 'invalid', detail: issue, raw: args, recovered }
 
-                    return { ...base, actions, kind: 'complete', recovered }
+                    return { ...base, actions, kind: 'complete', recovered, activity: typeof args.activity === 'string' ? args.activity : undefined }
                 },
                 feedback: (message, parsed): Message[] => toolCalls(message).map(call => toolResult(call, call.name === 'step' ? feedback(parsed) : 'not allowed')),
             }

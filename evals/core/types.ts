@@ -40,7 +40,7 @@ export interface CaseDef {
     tools: ToolSpec[]
     maxTurns?: number
     world: (tool: string, args: any, ctx: WorldCtx) => string
-    check: (answer: string, trace: Action[], finalTool?: string) => Verdict
+    check: (answer: string, trace: Action[], finalTool?: string, activities?: string[]) => Verdict
 }
 
 export interface Parsed {
@@ -48,6 +48,7 @@ export interface Parsed {
     calls: string[]
     actions: Action[]
     reflectFirst?: boolean
+    activity?: string
     detail?: string
     raw?: unknown
     recovered?: boolean
