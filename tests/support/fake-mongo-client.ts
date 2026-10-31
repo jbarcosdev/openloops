@@ -103,6 +103,10 @@ class FakeCollection {
         return cursor
     }
 
+    async countDocuments (filter: Doc) {
+        return this.docs.filter(doc => matches(doc, filter)).length
+    }
+
     async deleteOne (filter: Doc) {
         const index = this.docs.findIndex(doc => matches(doc, filter))
         if (index === -1) return { deletedCount: 0 }
