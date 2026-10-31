@@ -3,7 +3,7 @@ import { AgentState, AgentStatus } from '@harness/agent-state'
 describe('AgentState current activity', () => {
     it('is not part of what is saved with the chat', () => {
         const state = new AgentState(AgentStatus.PROCESSING, 'es')
-        state.setCurrentActivity('Buscando tus gastos', 'model')
+        state.setCurrentActivity('Buscando tus gastos')
 
         expect(state.toJSON()).toEqual({ language: 'es', status: AgentStatus.PROCESSING, activeTaskId: undefined, lastError: undefined, stopRequested: undefined })
         expect(JSON.stringify(state.toJSON())).not.toContain('Buscando')
@@ -23,9 +23,9 @@ describe('AgentState current activity', () => {
 
         state.setCurrentActivity('Running search...')
         state.setCurrentActivity('Running search...')
-        state.setCurrentActivity('stopped')
+        state.setCurrentActivity('Writing...')
 
-        expect(state.currentActivity).toBe('stopped')
-        expect(seen).toEqual(['Running search...', 'stopped'])
+        expect(state.currentActivity).toBe('Writing...')
+        expect(seen).toEqual(['Running search...', 'Writing...'])
     })
 })

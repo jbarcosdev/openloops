@@ -32,7 +32,7 @@ export class AgiLoop extends AgentLoop {
     }
 
     get version () {
-        return '1.8.3'
+        return '1.8.4'
     }
 
     get author () {
@@ -59,8 +59,6 @@ export class AgiLoop extends AgentLoop {
             return
         }
 
-        ctx.chat.state?.setCurrentActivity('Analyzing requirement...')
-
         const chat_history = ctx.chat.lastHistoryMessages()
         const agentIdentity = ctx.identity
 
@@ -76,7 +74,7 @@ export class AgiLoop extends AgentLoop {
 
         if (!result.can_answer) {
             const activity = cleanActivity(result.activity)
-            if (activity) ctx.chat.state?.setCurrentActivity(activity, 'model')
+            if (activity) ctx.chat.state?.setCurrentActivity(activity)
 
             harness.setNextNode(this.nodes.reasoning_engine)
         } else {
@@ -87,8 +85,6 @@ export class AgiLoop extends AgentLoop {
     }
 
     private async reasoningEngine (ctx: RunContext, harness: Harness): Promise<void> {
-        if (!ctx.chat.state?.hasModelActivity) ctx.chat.state?.setCurrentActivity('Thinking...')
-
         const task = ctx.task ?? ctx.chat.createTask(ctx.currentMessage)
         task.answerQuestion(ctx.currentMessage)
 
@@ -133,7 +129,7 @@ export class AgiLoop extends AgentLoop {
 
         const activity = cleanActivity(result.activity)
 
-        if (activity) ctx.chat.state?.setCurrentActivity(activity, 'model')
+        if (activity) ctx.chat.state?.setCurrentActivity(activity)
 
         task.addTurn({ ...result, activity }, {
             author: 'reasoning_engine',
@@ -164,7 +160,6 @@ export class AgiLoop extends AgentLoop {
         const runnable = ready.filter(action => !blocked.includes(action))
 
         if (runnable.length) {
-            if (!ctx.chat.state?.hasModelActivity) ctx.chat.state?.setCurrentActivity(`Running ${runnable.map(action => action.name).join(', ')}...`)
             await Promise.all(runnable.map(action => harness.runAction(action, { blockDuplicates: BLOCK_DUPLICATES })))
         }
 

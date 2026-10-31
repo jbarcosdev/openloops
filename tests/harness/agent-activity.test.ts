@@ -27,7 +27,7 @@ describe('Agent activity', () => {
 
         await env.send(agent, 'x')
 
-        expect(seen).toEqual(['Starting...', 'Thinking...', 'Running search...', 'Writing...', 'stopped'])
+        expect(seen).toEqual(['Thinking...', 'Running search...', 'Writing...'])
     })
 
     it('does not repeat an activity that did not change', async () => {
@@ -37,7 +37,7 @@ describe('Agent activity', () => {
 
         await env.send(agent, 'x')
 
-        expect(seen).toEqual(['Starting...', 'Thinking...', 'Writing...', 'stopped'])
+        expect(seen).toEqual(['Thinking...', 'Writing...'])
     })
 
     it('stops telling after the listener is removed', async () => {
@@ -61,7 +61,7 @@ describe('Agent activity', () => {
 
         expect(result.error).toBeUndefined()
         expect(result.data.state.status).toBe(AgentStatus.IDLE)
-        expect(seen).toEqual(['Starting...', 'Thinking...', 'stopped'])
+        expect(seen).toEqual(['Thinking...'])
     })
 
     it('keeps the activities of runs that happen at the same time apart', async () => {
@@ -74,8 +74,8 @@ describe('Agent activity', () => {
 
         await Promise.all([env.send(agentA, 'x'), env.send(agentB, 'y')])
 
-        expect(first).toEqual(['Starting...', 'A1', 'A2', 'A3', 'stopped'])
-        expect(second).toEqual(['Starting...', 'B1', 'B2', 'B3', 'stopped'])
+        expect(first).toEqual(['A1', 'A2', 'A3'])
+        expect(second).toEqual(['B1', 'B2', 'B3'])
     })
 
     it('starts again from the first activity in every run of the same agent', async () => {
@@ -86,7 +86,7 @@ describe('Agent activity', () => {
         await env.send(agent, 'first')
         await env.send(agent, 'second')
 
-        expect(seen).toEqual(['Starting...', 'Thinking...', 'stopped', 'Starting...', 'Thinking...', 'stopped'])
+        expect(seen).toEqual(['Thinking...', 'Thinking...'])
     })
 
     it('does not put the listener in the saved state of the chat', async () => {

@@ -33,7 +33,6 @@ export interface AgentStateProps {
 
 export class AgentState {
     private activityListener?: ActivityListener
-    private activityFromModel = false
 
     static fromJSON (props: AgentStateProps = {}): AgentState {
         return new AgentState(
@@ -73,14 +72,9 @@ export class AgentState {
         this.activityListener = listener
     }
 
-    get hasModelActivity (): boolean {
-        return this.activityFromModel
-    }
-
-    setCurrentActivity (currentActivity: CurrentActivity, source: 'system' | 'model' = 'system'): void {
+    setCurrentActivity (currentActivity: CurrentActivity): void {
         const changed = this.currentActivity !== currentActivity
         this.currentActivity = currentActivity
-        this.activityFromModel = source === 'model'
         if (changed) this.activityListener?.(currentActivity)
     }
 
