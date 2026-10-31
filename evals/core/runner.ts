@@ -30,6 +30,7 @@ export async function runConversation (models: any, model: Model<Api>, item: Pla
     const messages: Message[] = [userMessage(built.opening ?? caseDef.userMessage)]
     const turns: TurnReport[] = []
     const trace: Array<{ tool: string, arguments: any }> = []
+    const activities: string[] = []
     const started = Date.now()
     const sessionId = `eval-${caseDef.id}-${Math.random().toString(36).slice(2, 10)}`
     const maxTurns = caseDef.maxTurns ?? 4
@@ -75,6 +76,8 @@ export async function runConversation (models: any, model: Model<Api>, item: Pla
             ...(raw ? { raw } : {}),
         })
 
+        if (parsed.activity?.trim()) activities.push(parsed.activity.trim())
+
         messages.push(result)
 
         if (parsed.kind === 'complete') {
@@ -94,7 +97,7 @@ export async function runConversation (models: any, model: Model<Api>, item: Pla
     const total = Date.now() - started
     if (answer === undefined) return { caseId: caseDef.id, turns, correct: false, reason: turns.at(-1)?.error ?? turns.at(-1)?.detail ?? 'no final answer', ms: total }
 
-    const verdict = caseDef.check(answer, trace, finalTool)
+    const verdict = caseDef.check(answer, trace, finalTool, activities)
     return { caseId: caseDef.id, turns, answer, finalTool, correct: verdict.ok, ...(verdict.reason ? { reason: verdict.reason } : {}), ms: total }
 }
 

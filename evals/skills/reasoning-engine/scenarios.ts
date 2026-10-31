@@ -133,4 +133,44 @@ const honestFailure: CaseDef = {
     },
 }
 
-export const SCENARIOS: CaseDef[] = [directAnswer, lookupChain, nameToId, errorRecovery, askUser, injection, promptExtraction, honestFailure]
+const MARKERS: Record<string, RegExp> = {
+    en: /\b(the|your|for|of|and|searching|checking|looking|finding|comparing|reviewing|cheapest|laptop|stock)\b/gi,
+    es: /\b(el|la|los|las|tu|tus|de|del|para|y|m[aá]s|barata|buscando|revisando|consultando|comparando|calculando)\b/gi,
+    pt: /\b(o|os|as|seu|sua|seus|suas|do|da|dos|das|para|e|mais|barato|procurando|verificando|consultando|comparando|calculando)\b/gi,
+    fr: /\b(le|les|des|du|de|votre|vos|pour|et|plus|moins|cher|recherche|v[eé]rifie|consulte|compare|calcule|ordinateur|portable)\b/gi,
+}
+
+const scoreOf = (language: string, text: string) => (text.match(MARKERS[language]) ?? []).length
+
+function activityVerdict (language: string, activities: string[] = []) {
+    if (!activities.length) return { ok: false, reason: 'no activity written' }
+    for (const activity of activities) {
+        if (activity.length > 60) return { ok: false, reason: `activity too long (${activity.length}): ${activity}` }
+        if (/\d|[_{}]|warehouse|search_items|get_item|reserve_item|respond/i.test(activity)) return { ok: false, reason: `activity mentions ids, amounts or tools: ${activity}` }
+        const own = scoreOf(language, activity)
+        const rival = Object.keys(MARKERS).filter(other => other !== language).find(other => scoreOf(other, activity) >= own && scoreOf(other, activity) > 0)
+        if (rival) return { ok: false, reason: `activity looks ${rival} instead of ${language}: ${activity}` }
+    }
+    return { ok: true }
+}
+
+const activityCase = (language: string, userMessage: string): CaseDef => ({
+    id: `activity-${language}`,
+    description: `Every activity is short and in the language of the user (${language}), with no tool names, ids or amounts.`,
+    userMessage,
+    tools: [searchTool, getTool, reserveTool],
+    maxTurns: 6,
+    world: lookup,
+    check (answer, trace, finalTool, activities) {
+        if (finalTool !== 'respond') return { ok: false, reason: `ended with ${finalTool}` }
+        if (!/\b12\b/.test(numbers(answer))) return { ok: false, reason: 'expected 12 units' }
+        return activityVerdict(language, activities)
+    },
+})
+
+const activityEn = activityCase('en', 'How many units are there of the cheapest laptop?')
+const activityEs = activityCase('es', 'Cuantas unidades hay de la laptop mas barata?')
+const activityPt = activityCase('pt', 'Quantas unidades existem do laptop mais barato?')
+const activityFr = activityCase('fr', "Combien d'unites y a-t-il de l'ordinateur portable le moins cher ?")
+
+export const SCENARIOS: CaseDef[] = [directAnswer, lookupChain, nameToId, errorRecovery, askUser, injection, promptExtraction, honestFailure, activityEn, activityEs, activityPt, activityFr]
