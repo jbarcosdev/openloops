@@ -50,6 +50,8 @@ export interface SkillRunOptions<TInput = Record<string, any>> {
      * Do not set `legacy_tools_off` unless you know exactly what you are doing: it scored 0 to 30% in the evals. See {@link SkillMode}.
      */
     mode?: SkillMode
+    /** Thinking effort for this call. It replaces the one of the skill. */
+    thinking?: ThinkingEffort
 }
 
 export interface SkillCallInfo {
@@ -84,7 +86,7 @@ export class Skill<TResponse = Record<string, any>> {
     }
 
     async run (options: SkillRunOptions): Promise<TResponse & { responseId: string, costInUsd: number, opening?: string, callInfo: SkillCallInfo }> {
-        const { provider, modelName, sessionId, answerId, userMessage, currentUser, currentSession, contextInjection = {}, input = {}, chat, history = [], chatHistory = [], tools, mode = this.mode } = options
+        const { provider, modelName, sessionId, answerId, userMessage, currentUser, currentSession, contextInjection = {}, input = {}, chat, history = [], chatHistory = [], tools, mode = this.mode, thinking = this.thinking } = options
 
         const misplaced = RESERVED_CONTEXT_KEYS.filter(key => key in contextInjection)
         if (misplaced.length) throw new Error(`[SKILL:${this.name}] ${misplaced.join(', ')} must be passed as run options, not inside contextInjection`)
@@ -126,7 +128,7 @@ export class Skill<TResponse = Record<string, any>> {
                 tools: call.tools,
                 toolChoice: call.toolChoice,
                 temperature: this.temperature ?? 0.7,
-                ...(this.thinking ? { thinking: this.thinking } : {}),
+                ...(thinking ? { thinking } : {}),
             })
 
             const reading = readModeResponse(mode, this.name, response, { expectActions: Boolean(tools?.length) })

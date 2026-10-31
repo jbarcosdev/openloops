@@ -81,6 +81,41 @@ describe('timeout of the model call', () => {
         expect(mockModels.complete.mock.calls[1][2].signal.aborted).toBe(false)
     })
 
+    it('waits twice as long when the thinking effort is high', async () => {
+        mockModels.completeSimple.mockImplementationOnce(never).mockResolvedValueOnce(reply())
+
+        const pending = new LLMClient().chat({ ...params(), thinking: 'high' })
+        await jest.advanceTimersByTimeAsync(119999)
+        expect(mockModels.completeSimple).toHaveBeenCalledTimes(1)
+
+        await jest.advanceTimersByTimeAsync(1)
+        await pending
+        expect(mockModels.completeSimple).toHaveBeenCalledTimes(2)
+    })
+
+    it('keeps the normal time for the other thinking efforts', async () => {
+        mockModels.completeSimple.mockImplementationOnce(never).mockResolvedValueOnce(reply())
+
+        const pending = new LLMClient().chat({ ...params(), thinking: 'medium' })
+        await jest.advanceTimersByTimeAsync(60000)
+        await pending
+
+        expect(mockModels.completeSimple).toHaveBeenCalledTimes(2)
+    })
+
+    it('doubles the time set in LLM_CALL_TIMEOUT_MS when the thinking effort is high', async () => {
+        settings({ LLM_CALL_TIMEOUT_MS: '1000' })
+        mockModels.completeSimple.mockImplementationOnce(never).mockResolvedValueOnce(reply())
+
+        const pending = new LLMClient().chat({ ...params(), thinking: 'high' })
+        await jest.advanceTimersByTimeAsync(1999)
+        expect(mockModels.completeSimple).toHaveBeenCalledTimes(1)
+
+        await jest.advanceTimersByTimeAsync(1)
+        await pending
+        expect(mockModels.completeSimple).toHaveBeenCalledTimes(2)
+    })
+
     it('gives up after three attempts with a timeout error', async () => {
         mockModels.complete.mockImplementation(never)
 

@@ -34,6 +34,7 @@ import { ToolPipeline, ToolPipelineRunOptions } from './tool-pipeline'
 import { NATIVE_TOOLS } from './native-tools'
 import { buildToolCatalog, isDeclarable, needsSearch, McpIndexEntry } from './tool-catalog'
 import { LLMError } from '@clients/llm/llm-error'
+import { isSelectableThinkingEffort, SELECTABLE_THINKING_EFFORTS, SelectableThinkingEffort } from '@clients/llm/llm-types'
 import { ModelRef, resolveModel, toModelRef } from '@clients/llm/model-resolution'
 
 const MCP_CONNECT_RETRY_DELAYS_MS = [1000, 2000]
@@ -108,6 +109,7 @@ export class Agent {
     private readonly strictMode: boolean
     private readonly fallbackModel?: ModelRef
     private model?: ModelRef
+    private thinkingEffort?: SelectableThinkingEffort
     private _tools: Tool[]
     private _internalMcps: InternalMcp[] = []
     private _mcps: McpEntry[] = []
@@ -241,7 +243,9 @@ export class Agent {
             this.mcpTokens = mcpTokens ?? {}
             this.serviceToken = serviceToken
             this.model = undefined
+            this.thinkingEffort = undefined
 
+            if (options?.thinkingEffort !== undefined && !isSelectableThinkingEffort(options.thinkingEffort)) throw new Error(`[AGENT] thinkingEffort must be one of ${SELECTABLE_THINKING_EFFORTS.join(', ')}`)
             if (Boolean(options?.modelProvider) !== Boolean(options?.modelName)) throw new Error('[AGENT] Set both modelProvider and modelName, or neither')
             this.answerId = new ObjectId().toString()
 
@@ -357,6 +361,10 @@ export class Agent {
 
         this.currentChat.settings?.setModelProvider(this.model.provider)
         this.currentChat.settings?.setModelName(this.model.model)
+
+        if (this.chatOptions?.thinkingEffort) this.currentChat.settings?.setThinkingEffort(this.chatOptions.thinkingEffort)
+        const savedEffort = this.currentChat.settings?.thinkingEffort
+        this.thinkingEffort = this.chatOptions?.thinkingEffort ?? (isSelectableThinkingEffort(savedEffort) ? savedEffort : undefined)
 
         if (this.chatOptions?.loopName) this.currentChat.settings?.setLoopName(this.chatOptions.loopName)
 
@@ -1154,6 +1162,7 @@ export class Agent {
             task: this.currentChat.activeTask,
             chat: this.currentChat,
             chatOptions: this.chatOptions,
+            thinkingEffort: this.thinkingEffort,
             currentUser: this.currentUser!,
             currentSession: this.currentSession,
             currentMessage: this.currentMessage,

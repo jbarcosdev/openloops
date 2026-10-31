@@ -11,7 +11,7 @@ import { createChat, getChatById, listChatsByUser, updateChat, deleteChat } from
 | Field | Meaning |
 | --- | --- |
 | `state` | `status`, detected `language`, `activeTaskId`, `lastError` and `stopRequested`. See [agent](agent.md#the-result) for the statuses. It also has `currentActivity`, which is deprecated (see below). |
-| `settings` | `modelProvider` and `modelName` (the model the chat uses, saved on every run), `loopName`, `executionMode`, `notifyOnCompletion` and `isPrivateSession`. |
+| `settings` | `modelProvider` and `modelName` (the model the chat uses, saved on every run), `thinkingEffort` (only when a run sent it), `loopName`, `executionMode`, `notifyOnCompletion` and `isPrivateSession`. |
 | `messages` | The conversation. Each message has `role` (`user` or `assistant`), `source`, `content`, `answerId` and `excludeFromContext`. |
 
 ### `state.currentActivity` is deprecated
