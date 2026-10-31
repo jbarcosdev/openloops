@@ -10,11 +10,11 @@ describe('ensureIndexes', () => {
 		expect(Object.keys(created).sort()).toEqual(Object.keys(indexes).sort())
 		expect(collection).toHaveBeenCalledWith('llm_calls')
 		expect(createIndexes).toHaveBeenCalledTimes(Object.keys(indexes).length)
-		expect(created.agentic_job_runs).toEqual(['index_0', 'index_1', 'index_2'])
+		expect(created.automation_runs).toEqual(['index_0', 'index_1', 'index_2', 'index_3'])
 	})
 
 	it('covers the collections of the package that store data per owner', () => {
-		for (const name of ['llm_calls', 'chats', 'agent_tasks', 'agent_actions', 'agent_traces', 'workspace_items', 'mcp_servers', 'agentic_jobs', 'agentic_job_runs']) {
+		for (const name of ['llm_calls', 'chats', 'agent_tasks', 'agent_actions', 'agent_traces', 'workspace_items', 'mcp_servers', 'automations', 'automation_runs', 'revoked_tokens']) {
 			expect(indexes[name]?.length).toBeGreaterThan(0)
 		}
 	})

@@ -40,7 +40,7 @@ A model alone only chats. The harness is what lets it act, safely, for many user
 | **Transmission** | Takes the model to the outside world | Your tools and MCP servers, found on demand and validated before they run. See [tools](docs/tools.md) and [MCP servers](docs/mcp-servers.md) |
 | **Brakes** | Stops the agent when it should stop | Confirmation of destructive tools, approval of MCP servers, input guardrails, timeouts and a budget per task. See [guardrails](docs/guardrails.md) and [the harness](docs/harness.md) |
 | **Logbook** | Remembers and records everything | Chats, tasks, every tool call, traces, and usage and cost per call. See [chats](docs/chats.md) and [usage](docs/usage.md) |
-| **Steering** | Decides how the agent is driven | Interactive and autonomous runs, scheduled jobs, stopping a run, and the model per chat and per user. See [the Agent](docs/agent.md), [agentic jobs](docs/agentic-jobs.md) and [configuration](docs/configuration.md) |
+| **Steering** | Decides how the agent is driven | Interactive and autonomous runs, scheduled automations, stopping a run, and the model per chat and per user. See [the Agent](docs/agent.md), [automations](docs/automations.md) and [configuration](docs/configuration.md) |
 
 ## Why it is a good harness
 
@@ -56,7 +56,7 @@ Not adjectives, mechanisms that you can read in the code and in the tests:
 
 ## Building a backend with it
 
-If you or your coding agent are going to build the backend that uses `openloops`, start with the [integration guide](docs/integration-guide.md). It lists which endpoint calls which use case, what authorization is left to you (the package has no HTTP layer), how to run agents and scheduled jobs, and a security checklist. The whole documentation is also shipped inside the package, in `node_modules/openloops/docs`, with an index for tools in [`docs/llms.txt`](docs/llms.txt).
+If you or your coding agent are going to build the backend that uses `openloops`, start with the [integration guide](docs/integration-guide.md). It lists which endpoint calls which use case, what authorization is left to you (the package has no HTTP layer), how to run agents and scheduled automations, and a security checklist. The whole documentation is also shipped inside the package, in `node_modules/openloops/docs`, with an index for tools in [`docs/llms.txt`](docs/llms.txt).
 
 To make sure that your coding agent reads it in every session, add this to the `CLAUDE.md` or `AGENTS.md` of your backend:
 
@@ -104,7 +104,7 @@ You know the pattern: before you write a single line of what your agent actually
 - **Safe tool execution.** Arguments are validated against the tool's schema, destructive tools wait for the user's confirmation, identical failing calls are blocked, identifiers the model invented are rejected before they reach a real system, and large outputs are kept out of the prompt. LLM calls retry with backoff and wait out rate limits.
 - **Native MCP support with a trust flow.** Connect any MCP server and its tools become regular tools. Each server must be approved by the user before its first tool runs, and a server that changes its tools is reviewed again, so a third party cannot quietly change what your agent does.
 - **Autonomous runs.** The same agent can work without a person in the chat, for scheduled tasks. Whatever needs the user pauses the run in the chat, and the user answers there to continue. See [autonomous mode](docs/agent.md#autonomous-mode).
-- **Agentic jobs.** Schedule tasks that the agent runs by itself, daily, weekly, monthly or once, in the timezone of the user. A worker runs what is due, safely across several instances, and keeps a history of every run with its chat. See [agentic jobs](docs/agentic-jobs.md).
+- **Automations.** Tasks that the agent runs by itself, on a schedule (daily, weekly, monthly or once, in the timezone of the user) or when another system sends an event, with signed tokens that can be revoked and a queue per automation. A worker runs what is due, safely across several instances, and keeps a history of every run with its chat. See [automations](docs/automations.md).
 - **Guardrails.** Input guards block messages with card numbers, emails, code or anything you define, before the model sees them. See [guardrails](docs/guardrails.md).
 - **Usage and cost tracking.** Every LLM call is recorded. Get the tokens and cost of a chat or an answer, and per-user statistics by model and by period. See [usage](docs/usage.md).
 - **Users and authentication included.** User management and login with tokens, so you don't need a parallel system just to have an identity to hand the `Agent`.
@@ -219,8 +219,9 @@ LLM_FALLBACK_PROVIDER=
 LLM_FALLBACK_MODEL=
 
 # Optional, in milliseconds
-AGENTIC_JOBS_POLL_INTERVAL_MS=
-AGENTIC_JOBS_LEASE_MS=
+AUTOMATIONS_POLL_INTERVAL_MS=
+AUTOMATIONS_LEASE_MS=
+AUTOMATIONS_MAX_QUEUED_RUNS=
 LLM_CALL_TIMEOUT_MS=
 MCP_TOOL_TIMEOUT_MS=
 
@@ -261,7 +262,7 @@ Neither requires any code changes. They're opt-in purely through environment var
 
 ## More examples
 
-Every pattern above, and a lot more, lives as a runnable example in [`examples/`](examples), organized by domain: `run-agent`, `loops`, `tools`, `guardrails`, `agentic-jobs`, `mcps`, `chats`, `usage`, `users`, and `authentication`.
+Every pattern above, and a lot more, lives as a runnable example in [`examples/`](examples), organized by domain: `run-agent`, `loops`, `tools`, `guardrails`, `automations`, `mcps`, `chats`, `usage`, `users`, and `authentication`.
 
 ## Package structure
 
@@ -275,7 +276,7 @@ Every pattern above, and a lot more, lives as a runnable example in [`examples/`
 | `openloops/skills` | `Skill`, for writing LLM-backed reasoning steps inside a loop |
 | `openloops/guardrails` | `Guard` and the ready-made input guards |
 | `openloops/mcps` | MCP server management, connection check and trust decisions |
-| `openloops/agentic-jobs` | Scheduled tasks, their runs and the runner that executes them |
+| `openloops/automations` | Scheduled and event tasks, their runs and the runner that executes them |
 | `openloops/chats` | Chats and their messages: list, read, update, delete |
 | `openloops/users` | User management |
 | `openloops/authentication` | Login and token issuing |
@@ -295,7 +296,7 @@ Every pattern above, and a lot more, lives as a runnable example in [`examples/`
 - [Skills](docs/skills.md)
 - [Guardrails](docs/guardrails.md)
 - [MCP servers](docs/mcp-servers.md)
-- [Agentic jobs](docs/agentic-jobs.md)
+- [Automations](docs/automations.md)
 - [Chats](docs/chats.md)
 - [User management](docs/users.md)
 - [Authentication](docs/authentication.md)

@@ -6,8 +6,9 @@ import { agentActions } from './agent-actions'
 import { agentTraces } from './agent-traces'
 import { workspaceItems } from './workspace-items'
 import { mcpServers } from './mcp-servers'
-import { agenticJobs } from './agentic-jobs'
-import { agenticJobRuns } from './agentic-job-runs'
+import { automations } from './automations'
+import { automationRuns } from './automation-runs'
+import { revokedTokens } from './revoked-tokens'
 
 export const indexes: Record<string, IndexDescription[]> = {
 	llm_calls: llmCalls,
@@ -17,8 +18,9 @@ export const indexes: Record<string, IndexDescription[]> = {
 	agent_traces: agentTraces,
 	workspace_items: workspaceItems,
 	mcp_servers: mcpServers,
-	agentic_jobs: agenticJobs,
-	agentic_job_runs: agenticJobRuns,
+	automations,
+	automation_runs: automationRuns,
+	revoked_tokens: revokedTokens,
 }
 
 export async function ensureIndexes (db: Db): Promise<Record<string, string[]>> {

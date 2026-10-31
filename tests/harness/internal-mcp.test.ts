@@ -163,7 +163,7 @@ describe('internal MCPs', () => {
         })
     })
 
-    describe('with the token of the service, as in an agentic job', () => {
+    describe('with the token of the service, as in an automation', () => {
         it('uses it for the MCPs without a token of their own and sends the id of the user', async () => {
             fakeMcp.setInternal([{ name: 'sofi' }])
             env.llm.script({ actions: [list('sofi')] }, say('ok'))

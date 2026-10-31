@@ -23,8 +23,8 @@ The package has no controllers: the authorization of every endpoint is the respo
 
 The use cases trust the `currentUser` you pass and the ids you give them.
 
-- Functions that list by user (`listChatsByUser`, `listMcpServersByUser`, `listAgenticJobsByUser`, `listAgenticJobRunsByUser`) only return records of that user.
-- Functions that take an **id** (`getChatById`, `updateChat`, `deleteChat`, `getMcpServerById`, `updateMcpServer`, `deleteMcpServer`, `decideMcpServerTrust`, `getAgenticJobById`, `updateAgenticJob`, `deleteAgenticJob`, `listAgenticJobRunsByJob`, `runner.runNow`) **do not check who owns the record**.
+- Functions that list by user (`listChatsByUser`, `listMcpServersByUser`, `listAutomationsByUser`, `listAutomationRunsByUser`) only return records of that user.
+- Functions that take an **id** (`getChatById`, `updateChat`, `deleteChat`, `getMcpServerById`, `updateMcpServer`, `deleteMcpServer`, `decideMcpServerTrust`, `getAutomationById`, `updateAutomation`, `deleteAutomation`, `listAutomationRunsByAutomation`, `runner.runNow`) **do not check who owns the record**. The use cases that issue, revoke or rotate the tokens of an automation do check that the user is the owner or an admin.
 
 So, before calling any of the second kind, load the record and check that `ownerId` is the user of the request. Do it in one place, a middleware or a helper, and never pass an id from a request straight to a use case.
 
@@ -42,9 +42,11 @@ Also note that `getChatById` returns `{}` in `data` when the chat does not exist
 | Approve or block an MCP server from a screen | `decideMcpServerTrust` |
 | Usage of a chat or of an answer | `getLLMUsageByChat`, `getLLMUsageByMessage` |
 | Usage statistics of a user | `getLLMUsageStats` |
-| Create the schedule of an agent | `createAgenticJob`, `updateAgenticJob`, `listAgenticJobsByUser`, `getAgenticJobById`, `deleteAgenticJob`, `previewAgenticJobRuns` |
-| History of scheduled runs | `listAgenticJobRunsByJob`, `listAgenticJobRunsByUser` |
-| "Run now" | `runner.runNow({ jobId })` |
+| Create the schedule or the event trigger of an agent | `createAutomation`, `updateAutomation`, `listAutomationsByUser`, `getAutomationById`, `deleteAutomation`, `previewAutomationRuns` |
+| Receive an event from another system | `receiveAutomationEvent`, public endpoint, authenticated only by the token of the automation |
+| Tokens of an event automation | `issueAutomationEventToken`, `revokeAutomationEventToken`, `rotateAutomationEventTokens` |
+| History of runs | `listAutomationRunsByAutomation`, `listAutomationRunsByUser` |
+| "Run now" | `runner.runNow({ automationId })` |
 | Sign in, users | `login`, `createUser`, `getUserById`, `updateUser`, `deleteUser` |
 
 ## Running the agent for a message
@@ -95,28 +97,29 @@ Your users register their own servers, and every server must be approved before 
 
 **Do not send `headers` or `history` of an MCP server to the client as they are.** `headers` hold credentials and `history` holds the full manifests. Mask the header values and send only what the screen needs, such as the name, `trust`, `status`, `lastError` and the hash of the latest manifest.
 
-## Scheduled agents (agentic jobs)
+## Automations (scheduled and by event)
 
-Two parts, as described in [agentic jobs](agentic-jobs.md):
+Three parts, as described in [automations](automations.md):
 
-1. Endpoints that create and manage jobs and read their runs, from the table above.
-2. A worker process that you start once, with the options of the agent your jobs should use:
+1. Endpoints that create and manage automations and read their runs, from the table above.
+2. If you use event triggers, one public endpoint that calls `receiveAutomationEvent` with the token of the `Authorization` header. It answers 202 without running the agent, and it is the only call that does not need a `CurrentUser`.
+3. A worker process that you start once, with the options of the agent your automations should use:
 
 ```typescript
-import { createAgenticJobRunner } from 'openloops/agentic-jobs'
+import { createAutomationRunner } from 'openloops/automations'
 
-const runner = createAgenticJobRunner({
+const runner = createAutomationRunner({
     agent: { tools: yourTools, guards: yourGuards },
-    onRunFinished: async ({ job, run }) => { /* notify the owner */ },
+    onRunFinished: async ({ automation, run }) => { /* notify the owner */ },
 })
 
 runner.start()
 ```
 
-- It is safe to start the worker in several instances: a due job is taken by one of them.
+- It is safe to start the worker in several instances: a due automation or a queued event is taken by one of them.
 - Stop it with `runner.stop()` when the process receives `SIGTERM`.
-- Create the indexes with `ensureIndexes` from `openloops/db`, see [configuration](configuration.md#indexes). The ones of the jobs are listed in [agentic jobs](agentic-jobs.md#indexes).
-- A job that needs the user (a destructive tool, an unapproved server, a question) pauses its run, and the user answers in the chat of that run. Show those runs, which you can list with `listAgenticJobRunsByUser({ status: 'paused' })`.
+- Create the indexes with `ensureIndexes` from `openloops/db`, see [configuration](configuration.md#indexes). The ones of the automations are listed in [automations](automations.md#indexes).
+- An automation that needs the user (a destructive tool, an unapproved server, a question) pauses its run, and the user answers in the chat of that run. Show those runs, which you can list with `listAutomationRunsByUser({ status: 'paused' })`.
 
 ## Security checklist
 
@@ -126,14 +129,15 @@ runner.start()
 - Mark your own destructive tools with `destructive: true`. The agent asks for confirmation before running them. Do not rely on a tool being treated as destructive by default, because it is not.
 - Use `strictMode: true` in the agent when the tools of an MCP server must be reviewed by the user on every change.
 - Keep API keys and the secrets of [configuration](configuration.md) out of the code. Values can be stored encrypted with the `ENC:` prefix.
-- Set limits on how many scheduled jobs and how often they run in your own layer, since `openloops` does not limit them yet.
+- Set limits on how many automations and how often they run in your own layer, since `openloops` does not limit them yet.
 
 ## Common mistakes
 
 - Sharing one `Agent` between concurrent requests.
 - Waiting for `agent.run` inside a request with a short timeout.
-- Passing `chatId`, `jobId` or `mcpServerId` from the client without checking the owner.
+- Passing `chatId`, `automationId` or `mcpServerId` from the client without checking the owner.
 - Treating `error` as an exception that is thrown. It is returned.
 - Forgetting that a run in `awaiting_user_confirmation` is waiting for the next message of the user, and that the next message is the answer.
-- Starting the scheduled jobs worker without creating its indexes.
+- Starting the automations worker without creating its indexes.
+- Exposing the endpoint of events without logging the rejected ones, or sending the token in the URL instead of the `Authorization` header.
 - Running the package on a real database without calling `ensureIndexes`.
