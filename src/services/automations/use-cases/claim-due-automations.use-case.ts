@@ -1,12 +1,13 @@
 import { autoInjectable, inject } from 'tsyringe'
 import { Logger } from '@common/logger'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
-import { AutomationProps, AutomationRun, AutomationRunProps } from '../entities'
+import { AutomationProps, AutomationRunProps } from '../entities'
 import { AutomationRepository, AutomationRunRepository } from '../repositories'
 import { computeNextRun } from '../utils/next-run'
 import { openRun } from '../utils/open-run'
 import { leaseMs as defaultLeaseMs } from '../utils/settings'
-import { SyncAutomationRunUseCase, LOST_WORKER_MESSAGE } from './sync-automation-run.use-case'
+import { findPausedRun } from '../utils/previous-run'
+import { SyncAutomationRunUseCase } from './sync-automation-run.use-case'
 
 const DEFAULT_LIMIT = 10
 
@@ -68,7 +69,7 @@ export class ClaimDueAutomationsUseCase extends BaseUseCase<Params, Output> {
 			const automation = await this.automationRepository!.claim({ id, workerId, now, leaseMs, nextRunAt: nextRunAt ?? undefined })
 			if (!automation) continue
 
-			const pending = await this.previousRun(automation, now)
+			const pending = await findPausedRun(this.automationRunRepository!, this.syncRun!, automation, now)
 
 			if (pending) {
 				const run = await openRun(this.automationRunRepository!, { automation, trigger: 'schedule', status: 'skipped', workerId, now, scheduledFor, skipReason: 'The previous run is still waiting for the user' })
@@ -83,24 +84,5 @@ export class ClaimDueAutomationsUseCase extends BaseUseCase<Params, Output> {
 		}
 
 		return { data: { claimed, skipped } }
-	}
-
-	private async previousRun (automation: AutomationProps, now: Date): Promise<AutomationRunProps | null> {
-		if (!automation.activeRunId) return null
-
-		const previous = await this.automationRunRepository!.findById(String(automation.activeRunId))
-		if (!previous) return null
-
-		if (previous.status === 'running') {
-			const lost = AutomationRun.fromJSON({ ...previous, status: 'failed', finishedAt: now, error: { code: 'WORKER_LOST', message: LOST_WORKER_MESSAGE } })
-			await this.automationRunRepository!.update(lost)
-			return null
-		}
-
-		if (previous.status !== 'paused') return null
-
-		const { data } = await this.syncRun!.execute({ runId: String(previous._id), now })
-
-		return data?.status === 'paused' ? data : null
 	}
 }

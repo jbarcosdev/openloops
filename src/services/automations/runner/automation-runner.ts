@@ -8,8 +8,10 @@ import { AgiLoop } from '@loops/agi/loop'
 import { createChat } from '@services/chats'
 import { Chat } from '@services/chats/entities/chat.entity'
 import { AutomationProps, AutomationRunError, AutomationRunProps, AutomationRunStatus } from '../entities'
+import { buildMessage } from '../utils/event-message'
 import { leaseMs as defaultLeaseMs, pollIntervalMs as defaultPollIntervalMs } from '../utils/settings'
 import { ClaimDueAutomationsUseCase } from '../use-cases/claim-due-automations.use-case'
+import { ClaimQueuedAutomationRunsUseCase } from '../use-cases/claim-queued-automation-runs.use-case'
 import { StartAutomationRunUseCase } from '../use-cases/start-automation-run.use-case'
 import { FinishAutomationRunUseCase } from '../use-cases/finish-automation-run.use-case'
 import { AttachAutomationRunChatUseCase } from '../use-cases/attach-automation-run-chat.use-case'
@@ -54,7 +56,7 @@ export class AutomationRunner {
 	private running = false
 	private timer?: NodeJS.Timeout
 	private ticking?: Promise<void>
-	private wake?: () => void
+	private resolveSleep?: () => void
 
 	constructor (private readonly options: AutomationRunnerOptions = {}) {
 		this.workerId = options.workerId ?? newWorkerId()
@@ -67,10 +69,14 @@ export class AutomationRunner {
 		void this.loop()
 	}
 
+	wake (): void {
+		this.resolveSleep?.()
+	}
+
 	async stop (): Promise<void> {
 		this.running = false
 		if (this.timer) clearTimeout(this.timer)
-		this.wake?.()
+		this.resolveSleep?.()
 
 		await this.ticking
 
@@ -98,6 +104,15 @@ export class AutomationRunner {
 		for (const { automation, run } of data.skipped) await this.notify({ automation, run })
 
 		for (const { automation, run } of data.claimed) this.track(this.execute(automation, run))
+
+		const remaining = capacity - data.claimed.length
+		if (remaining <= 0) return
+
+		const { data: queued } = await container.resolve(ClaimQueuedAutomationRunsUseCase).execute({ workerId: this.workerId, limit: remaining, leaseMs: this.options.leaseMs ?? defaultLeaseMs() })
+
+		for (const { automation, run } of queued.skipped) await this.notify({ automation, run })
+
+		for (const { automation, run } of queued.claimed) this.track(this.execute(automation, run))
 	}
 
 	async runNow (params: { automationId: string }): Promise<{ run: AutomationRunProps }> {
@@ -119,7 +134,7 @@ export class AutomationRunner {
 			if (!this.running) break
 
 			await new Promise<void>(resolve => {
-				this.wake = resolve
+				this.resolveSleep = resolve
 				this.timer = setTimeout(resolve, this.options.intervalMs ?? defaultPollIntervalMs())
 			})
 		}
@@ -148,7 +163,7 @@ export class AutomationRunner {
 		let chat: Chat | undefined
 
 		try {
-			const outcome = await this.runAgent(automation, runId)
+			const outcome = await this.runAgent(automation, run)
 
 			status = outcome.status
 			error = outcome.error
@@ -165,7 +180,7 @@ export class AutomationRunner {
 		await this.notify({ automation, run: data ?? run, chat })
 	}
 
-	private async runAgent (automation: AutomationProps, runId: string): Promise<{ status: 'completed' | 'paused' | 'failed', error?: AutomationRunError, chat?: Chat }> {
+	private async runAgent (automation: AutomationProps, run: AutomationRunProps): Promise<{ status: 'completed' | 'paused' | 'failed', error?: AutomationRunError, chat?: Chat }> {
 		const currentUser = await CurrentUser.asyncFromDB(String(automation.ownerId))
 		if (!currentUser) return { status: 'failed', error: { code: 'OWNER_NOT_FOUND', message: 'The owner of the automation does not exist' } }
 
@@ -183,10 +198,10 @@ export class AutomationRunner {
 		const { data: created } = await createChat({ payload: draft.toJSON(), currentUser })
 		const chatId = String(created?._id)
 
-		await container.resolve(AttachAutomationRunChatUseCase).execute({ runId, chatId })
+		await container.resolve(AttachAutomationRunChatUseCase).execute({ runId: String(run._id), chatId })
 
 		const result = await agent.run({
-			input: { message: automation.instructions as string, chatId },
+			input: { message: buildMessage(automation.instructions as string, run.payload), chatId },
 			options: { executionMode: 'autonomous', ...model },
 			currentUser,
 			currentSession: CurrentSession.fromJSON({ location: { timezone: automation.trigger?.timezone } } as any),

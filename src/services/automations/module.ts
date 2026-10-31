@@ -15,6 +15,11 @@ import { SyncAutomationRunUseCase, Params as SYParams, Output as SYOutput } from
 import { SyncAutomationRunsUseCase, Params as SYSParams, Output as SYSOutput } from './use-cases/sync-automation-runs.use-case'
 import { AttachAutomationRunChatUseCase, Params as ACParams, Output as ACOutput } from './use-cases/attach-automation-run-chat.use-case'
 import { RenewAutomationLeaseUseCase, Params as RLParams, Output as RLOutput } from './use-cases/renew-automation-lease.use-case'
+import { IssueAutomationEventTokenUseCase, Params as ITParams, Output as ITOutput } from './use-cases/issue-automation-event-token.use-case'
+import { RevokeAutomationEventTokenUseCase, Params as RTParams, Output as RTOutput } from './use-cases/revoke-automation-event-token.use-case'
+import { RotateAutomationEventTokensUseCase, Params as ROParams, Output as ROOutput } from './use-cases/rotate-automation-event-tokens.use-case'
+import { ReceiveAutomationEventUseCase, Params as REParams, Output as REOutput } from './use-cases/receive-automation-event.use-case'
+import { ClaimQueuedAutomationRunsUseCase, Params as CQParams, Output as CQOutput } from './use-cases/claim-queued-automation-runs.use-case'
 
 export async function createAutomation (props: CParams): Promise<COutput> {
     const createAutomationUseCase = container.resolve(CreateAutomationUseCase)
@@ -89,4 +94,29 @@ export async function attachAutomationRunChat (props: ACParams): Promise<ACOutpu
 export async function renewAutomationLease (props: RLParams): Promise<RLOutput> {
     const renewAutomationLeaseUseCase = container.resolve(RenewAutomationLeaseUseCase)
     return renewAutomationLeaseUseCase.execute(props)
+}
+
+export async function issueAutomationEventToken (props: ITParams): Promise<ITOutput> {
+    const issueAutomationEventTokenUseCase = container.resolve(IssueAutomationEventTokenUseCase)
+    return issueAutomationEventTokenUseCase.execute(props)
+}
+
+export async function revokeAutomationEventToken (props: RTParams): Promise<RTOutput> {
+    const revokeAutomationEventTokenUseCase = container.resolve(RevokeAutomationEventTokenUseCase)
+    return revokeAutomationEventTokenUseCase.execute(props)
+}
+
+export async function rotateAutomationEventTokens (props: ROParams): Promise<ROOutput> {
+    const rotateAutomationEventTokensUseCase = container.resolve(RotateAutomationEventTokensUseCase)
+    return rotateAutomationEventTokensUseCase.execute(props)
+}
+
+export async function receiveAutomationEvent (props: REParams): Promise<REOutput> {
+    const receiveAutomationEventUseCase = container.resolve(ReceiveAutomationEventUseCase)
+    return receiveAutomationEventUseCase.execute(props)
+}
+
+export async function claimQueuedAutomationRuns (props: CQParams): Promise<CQOutput> {
+    const claimQueuedAutomationRunsUseCase = container.resolve(ClaimQueuedAutomationRunsUseCase)
+    return claimQueuedAutomationRunsUseCase.execute(props)
 }

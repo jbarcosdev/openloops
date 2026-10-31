@@ -1,9 +1,9 @@
 import { ObjectId } from 'mongodb'
 import { BaseEntity, BaseEntityProps } from '@common/base/base.entity'
 
-export type AutomationRunStatus = 'running' | 'completed' | 'paused' | 'failed' | 'skipped'
+export type AutomationRunStatus = 'queued' | 'running' | 'completed' | 'paused' | 'failed' | 'skipped'
 
-export type AutomationRunTrigger = 'schedule' | 'manual'
+export type AutomationRunTrigger = 'schedule' | 'manual' | 'event'
 
 export interface AutomationRunError {
 	code?: string
@@ -24,6 +24,8 @@ export interface AutomationRunProps extends BaseEntityProps {
 	error?: AutomationRunError
 	skipReason?: string
 	workerId?: string
+	payload?: string
+	idempotencyKey?: string
 }
 
 const toDate = (value?: string | Date): Date | undefined => {
@@ -52,6 +54,8 @@ export class AutomationRun extends BaseEntity {
 			props.error,
 			props.skipReason || undefined,
 			props.workerId || undefined,
+			props.payload || undefined,
+			props.idempotencyKey || undefined,
 		)
 	}
 
@@ -70,6 +74,8 @@ export class AutomationRun extends BaseEntity {
 		public error?: AutomationRunError,
 		public skipReason?: string,
 		public workerId?: string,
+		public payload?: string,
+		public idempotencyKey?: string,
 	) {
 		super(props)
 	}
@@ -90,6 +96,8 @@ export class AutomationRun extends BaseEntity {
 			error: this.error,
 			skipReason: this.skipReason,
 			workerId: this.workerId,
+			payload: this.payload,
+			idempotencyKey: this.idempotencyKey,
 		}
 	}
 }

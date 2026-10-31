@@ -10,7 +10,7 @@ describe('ensureIndexes', () => {
 		expect(Object.keys(created).sort()).toEqual(Object.keys(indexes).sort())
 		expect(collection).toHaveBeenCalledWith('llm_calls')
 		expect(createIndexes).toHaveBeenCalledTimes(Object.keys(indexes).length)
-		expect(created.automation_runs).toEqual(['index_0', 'index_1', 'index_2'])
+		expect(created.automation_runs).toEqual(['index_0', 'index_1', 'index_2', 'index_3'])
 	})
 
 	it('covers the collections of the package that store data per owner', () => {

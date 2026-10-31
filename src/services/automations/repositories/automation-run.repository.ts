@@ -39,4 +39,19 @@ export class AutomationRunRepository {
 	public async findByStatus (status: AutomationRunStatus, limit: number): Promise<AutomationRunProps[]> {
 		return await this._.findMany({ where: { status }, options: { page: 1, limit, sortBy: { createdAt: 1 } } })
 	}
+
+	public async findByIdempotencyKey (automationId: string, idempotencyKey: string): Promise<AutomationRunProps | null> {
+		return await this._.findOne({ where: { automationId: new ObjectId(automationId), idempotencyKey } })
+	}
+
+	public async countQueued (automationId: string): Promise<number> {
+		return await this._.count({ where: { automationId: new ObjectId(automationId), status: 'queued' } })
+	}
+
+	public async claimQueued (id: string, fields: Pick<AutomationRunProps, 'workerId' | 'startedAt' | 'instructions' | 'modelProvider' | 'modelName'>): Promise<AutomationRunProps | null> {
+		return await this._.updateOne({
+			where: { _id: this._.parseId(id), status: 'queued' } as any,
+			payload: { ...fields, status: 'running' },
+		})
+	}
 }
