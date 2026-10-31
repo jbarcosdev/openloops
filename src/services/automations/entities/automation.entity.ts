@@ -1,6 +1,6 @@
 import { ObjectId } from 'mongodb'
 import { BaseEntity, BaseEntityProps } from '@common/base/base.entity'
-import { Recurrence } from './recurrence'
+import { AutomationTrigger } from './trigger'
 import { computeNextRun } from '../utils/next-run'
 import type { AutomationRunStatus } from './automation-run.entity'
 
@@ -8,8 +8,7 @@ export interface AutomationProps extends BaseEntityProps {
 	name?: string
 	instructions?: string
 	enabled?: boolean
-	recurrence?: Recurrence
-	timezone?: string
+	trigger?: AutomationTrigger
 	modelProvider?: string
 	modelName?: string
 	nextRunAt?: string | Date | null
@@ -36,8 +35,7 @@ export class Automation extends BaseEntity {
 			props.name || undefined,
 			props.instructions || undefined,
 			props.enabled,
-			props.recurrence,
-			props.timezone || undefined,
+			props.trigger,
 			props.modelProvider || undefined,
 			props.modelName || undefined,
 			toDate(props.nextRunAt),
@@ -54,8 +52,7 @@ export class Automation extends BaseEntity {
 		public name?: string,
 		public instructions?: string,
 		public enabled?: boolean,
-		public recurrence?: Recurrence,
-		public timezone?: string,
+		public trigger?: AutomationTrigger,
 		public modelProvider?: string,
 		public modelName?: string,
 		public nextRunAt?: Date,
@@ -74,8 +71,7 @@ export class Automation extends BaseEntity {
 			name: this.name,
 			instructions: this.instructions,
 			enabled: this.enabled,
-			recurrence: this.recurrence,
-			timezone: this.timezone,
+			trigger: this.trigger,
 			modelProvider: this.modelProvider,
 			modelName: this.modelName,
 			nextRunAt: this.nextRunAt,
@@ -87,8 +83,13 @@ export class Automation extends BaseEntity {
 		}
 	}
 
+	isScheduled (): boolean {
+		return this.trigger?.type === 'schedule'
+	}
+
 	scheduleNextRun (from: Date = new Date()): this {
-		const next = this.enabled && this.recurrence && this.timezone ? computeNextRun(this.recurrence, this.timezone, from) : null
+		const trigger = this.trigger
+		const next = this.enabled && trigger?.type === 'schedule' ? computeNextRun(trigger.recurrence, trigger.timezone, from) : null
 
 		if (next) {
 			this.nextRunAt = next

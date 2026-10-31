@@ -189,7 +189,7 @@ export class AutomationRunner {
 			input: { message: automation.instructions as string, chatId },
 			options: { executionMode: 'autonomous', ...model },
 			currentUser,
-			currentSession: CurrentSession.fromJSON({ location: { timezone: automation.timezone } } as any),
+			currentSession: CurrentSession.fromJSON({ location: { timezone: automation.trigger?.timezone } } as any),
 			serviceToken: process.env.INTERNAL_MCP_TOKEN ? secretManager.get('INTERNAL_MCP_TOKEN') : undefined,
 		})
 

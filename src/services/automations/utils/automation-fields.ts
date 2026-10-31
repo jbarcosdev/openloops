@@ -1,5 +1,4 @@
-import { Recurrence, validateRecurrence } from '../entities/recurrence'
-import { assertTimezone } from './next-run'
+import { AutomationTrigger, readTrigger } from '../entities/trigger'
 
 const MAX_NAME_CHARS = 200
 const MAX_INSTRUCTIONS_CHARS = 20000
@@ -8,8 +7,7 @@ export interface AutomationFields {
 	name?: string
 	instructions?: string
 	enabled?: boolean
-	recurrence?: Recurrence
-	timezone?: string
+	trigger?: AutomationTrigger
 	modelProvider?: string | null
 	modelName?: string | null
 }
@@ -26,15 +24,14 @@ const optionalText = (value: unknown, label: string): string | null => {
 	return text(value, label, MAX_NAME_CHARS)
 }
 
-export function readAutomationFields (payload: Record<string, any> | undefined, options: { complete: boolean }): AutomationFields {
+export function readAutomationFields (payload: Record<string, any> | undefined, options: { complete: boolean, trigger?: AutomationTrigger }): AutomationFields {
 	const input = payload ?? {}
 	const fields: AutomationFields = {}
 	const has = (key: string) => input[key] !== undefined
 
 	if (options.complete || has('name')) fields.name = text(input.name, 'name', MAX_NAME_CHARS)
 	if (options.complete || has('instructions')) fields.instructions = text(input.instructions, 'instructions', MAX_INSTRUCTIONS_CHARS)
-	if (options.complete || has('recurrence')) fields.recurrence = validateRecurrence(input.recurrence)
-	if (options.complete || has('timezone')) fields.timezone = assertTimezone(input.timezone)
+	if (options.complete || has('trigger')) fields.trigger = readTrigger(input.trigger, options.trigger)
 
 	if (has('enabled')) {
 		if (typeof input.enabled !== 'boolean') throw new Error('The field enabled must be true or false')

@@ -53,10 +53,13 @@ export class ClaimDueAutomationsUseCase extends BaseUseCase<Params, Output> {
 			const id = String(candidate._id)
 			const scheduledFor = candidate.nextRunAt ? new Date(candidate.nextRunAt) : undefined
 
+			const trigger = candidate.trigger
+			if (trigger?.type !== 'schedule') continue
+
 			let nextRunAt: Date | null = null
 
 			try {
-				nextRunAt = computeNextRun(candidate.recurrence!, candidate.timezone!, now)
+				nextRunAt = computeNextRun(trigger.recurrence, trigger.timezone, now)
 			} catch (error: any) {
 				this.log.error({ error: error?.message ?? error, automationId: id }, '[AUTOMATIONS] The recurrence of an automation cannot be calculated, skipping it')
 				continue
