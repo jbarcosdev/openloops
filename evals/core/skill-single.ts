@@ -20,7 +20,7 @@ export function singleModes (def: SkillDefinition): Partial<Record<ModeId, ModeD
     if (!schema) throw new Error(`skill eval "${def.name}" is kind "single" and needs outputSchema`)
 
     const opening = (caseDef: CaseDef) => JSON.stringify({
-        CONTEXT: { now_utc: '2026-10-11T15:00:00.000Z', day_of_week: 'Sunday', ...def.context },
+        CONTEXT: { now_utc: '2026-10-11T15:00:00.000Z', day_of_week: 'Sunday', ...def.context, ...caseDef.context },
         INPUT: { ...(caseDef.userMessage ? { user_message: caseDef.userMessage } : {}), ...caseDef.input },
     })
 
