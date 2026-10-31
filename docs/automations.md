@@ -324,17 +324,64 @@ The collections are `automations` and `automation_runs`. `ensureIndexes` from `o
 
 ## Migrating from agentic jobs
 
-Before 0.4.0 this module was called `agentic-jobs`. The import is now `openloops/automations`, the functions and types swap `AgenticJob` for `Automation`, the variables are `AUTOMATIONS_*`, the collections are `automations` and `automation_runs`, the runs point to their automation with `automationId`, and `recurrence` and `timezone` live inside `trigger`. The old names are not kept as aliases.
+Before 0.4.0 this module was called `agentic-jobs`. The old names are not kept as aliases, so the update has to be done in your code, in your environment and in your data. Follow these steps in order.
 
-To move the data, run this once per database after deploying the new version, or before it if you prefer. It renames the collections, moves `recurrence` and `timezone` into a `schedule` trigger, renames `jobId` to `automationId`, drops the old index and creates the new ones. It can be run again without changing anything, and it refuses to rename a collection if the new name already exists.
+1. **Stop the runner of the old version.** A run that is in progress while its collection is renamed fails.
+2. **Change the names in your code.**
 
-```typescript
-import { migrateAutomations } from 'openloops/db'
+    | Before | Now |
+    | --- | --- |
+    | `openloops/agentic-jobs` | `openloops/automations` |
+    | `AgenticJob`, `AgenticJobRun` and every `...AgenticJob...` function, such as `createAgenticJob` or `createAgenticJobRunner` | the same name with `Automation`, such as `createAutomation` or `createAutomationRunner` |
+    | `listAgenticJobRunsByJob({ jobId })` | `listAutomationRunsByAutomation({ automationId })` |
+    | `jobId` in the runs, in your queries and in your screens | `automationId` |
+    | `AGENTIC_JOBS_POLL_INTERVAL_MS`, `AGENTIC_JOBS_LEASE_MS` | `AUTOMATIONS_POLL_INTERVAL_MS`, `AUTOMATIONS_LEASE_MS` |
 
-const report = await migrateAutomations(db, { dryRun: true })
-```
+    The old variables are **not read anymore and nothing warns you**: if you had set them, the runner now uses the default values until you rename them.
+3. **Change the shape of what you send and read.** `recurrence` and `timezone` are no longer fields of the automation, they live inside `trigger`.
 
-With `dryRun` it only counts what it would change. In a checkout of this repository you can run `yarn migrate:automations --dry-run` and `yarn migrate:automations`, which read `OPENLOOPS_DB_URI` and `OPENLOOPS_DB_NAME`. Stop the runner of the old version first: a run that is in progress while the collection is renamed fails.
+    Before:
+
+    ```typescript
+    await createAutomation({
+        payload: {
+            name: 'Morning report',
+            instructions: 'Summarize my open tickets',
+            recurrence: { type: 'daily', time: '08:00' },
+            timezone: 'America/Lima',
+        },
+        currentUser,
+    })
+    ```
+
+    Now:
+
+    ```typescript
+    await createAutomation({
+        payload: {
+            name: 'Morning report',
+            instructions: 'Summarize my open tickets',
+            trigger: {
+                type: 'schedule',
+                recurrence: { type: 'daily', time: '08:00' },
+                timezone: 'America/Lima',
+            },
+        },
+        currentUser,
+    })
+    ```
+
+    To change the recurrence or the timezone of an existing automation, send `trigger: { recurrence }` or `trigger: { timezone }`, only the one that changes. When you read an automation, its schedule is in `automation.trigger`.
+4. **Migrate the data**, once per database. It renames the collections, moves `recurrence` and `timezone` into a `schedule` trigger, renames `jobId` to `automationId`, drops the old index and creates the new ones. It can be run again without changing anything, and it refuses to rename a collection if the new name already exists.
+
+    ```typescript
+    import { migrateAutomations } from 'openloops/db'
+
+    const report = await migrateAutomations(db, { dryRun: true })
+    ```
+
+    With `dryRun` it only counts what it would change, so run it first. In a checkout of this repository you can run `yarn migrate:automations --dry-run` and `yarn migrate:automations`, which read `OPENLOOPS_DB_URI` and `OPENLOOPS_DB_NAME`.
+5. **Start the runner of the new version.**
 
 ## Limits
 

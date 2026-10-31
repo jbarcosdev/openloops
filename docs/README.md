@@ -14,7 +14,7 @@ Start with the [README](../README.md) for what `openloops` is and how to run it.
 | --- | --- |
 | [The `Agent`](agent.md) | Options, running a turn, the result and its statuses, confirmations, autonomous mode, hooks and interruption. |
 | [Configuration](configuration.md) | Environment variables, choosing the model and what is recorded. |
-| [Automations](automations.md) | Tasks that the agent runs by itself, on a schedule or when an event arrives: triggers, tokens, the queue, the history of runs and the runner that executes them. |
+| [Automations](automations.md) | Tasks that the agent runs by itself, on a schedule or when an event arrives: triggers, tokens, the queue, the history of runs and the runner that executes them. If you used `agentic-jobs`, read [the migration steps](automations.md#migrating-from-agentic-jobs). |
 | [Chats](chats.md) | The chat record, its messages and their `source`, listing, reading and deleting chats. |
 
 ## Shape how the agent works

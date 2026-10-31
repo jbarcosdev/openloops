@@ -79,7 +79,8 @@
   "files": [
     "dist",
     "docs",
-    "examples"
+    "examples",
+    "CHANGELOG.md"
   ],
   "scripts": {
     "build": "tsup && tsc-alias",

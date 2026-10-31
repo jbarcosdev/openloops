@@ -302,6 +302,7 @@ Every pattern above, and a lot more, lives as a runnable example in [`examples/`
 - [Authentication](docs/authentication.md)
 - [LLM usage tracking](docs/usage.md)
 - [Configuration](docs/configuration.md)
+- [Changelog](CHANGELOG.md)
 
 ## License
 
