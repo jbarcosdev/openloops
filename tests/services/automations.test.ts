@@ -30,8 +30,7 @@ const stored = () => automations().docs[0]
 const valid = (extra: Record<string, any> = {}) => ({
     name: 'Morning report',
     instructions: 'Summarize my open tickets',
-    recurrence: { type: 'daily', time: '08:00' },
-    timezone: 'America/Lima',
+    trigger: { type: 'schedule', recurrence: { type: 'daily', time: '08:00' }, timezone: 'America/Lima' },
     ...extra,
 })
 
@@ -53,7 +52,7 @@ describe('automations', () => {
         it('saves the automation as active with the first run calculated in its timezone', async () => {
             const { data } = await create()
 
-            expect(data).toMatchObject({ name: 'Morning report', enabled: true, timezone: 'America/Lima' })
+            expect(data).toMatchObject({ name: 'Morning report', enabled: true, trigger: { timezone: 'America/Lima' } })
             expect(new Date(data.nextRunAt as Date).toISOString()).toBe('2026-10-14T13:00:00.000Z')
             expect(String(stored().ownerId)).toBe(OWNER)
         })
@@ -77,11 +76,11 @@ describe('automations', () => {
         it.each([
             [valid({ name: ' ' }), /name is required/],
             [valid({ instructions: undefined }), /instructions is required/],
-            [valid({ recurrence: { type: 'daily', time: '8am' } }), /HH:mm/],
-            [valid({ timezone: 'Mars/Olympus' }), /not a valid IANA timezone/],
+            [valid({ trigger: { type: 'schedule', recurrence: { type: 'daily', time: '8am' }, timezone: 'UTC' } }), /HH:mm/],
+            [valid({ trigger: { type: 'schedule', recurrence: { type: 'daily', time: '08:00' }, timezone: 'Mars/Olympus' } }), /not a valid IANA timezone/],
             [valid({ enabled: 'yes' }), /true or false/],
             [valid({ modelProvider: 'anthropic' }), /both the model provider and the model name/],
-            [valid({ recurrence: { type: 'once', at: '2026-01-01T10:00' } }), /already passed/],
+            [valid({ trigger: { type: 'schedule', recurrence: { type: 'once', at: '2026-01-01T10:00' }, timezone: 'UTC' } }), /already passed/],
         ])('rejects %j', async (payload, message) => {
             await expect(create(payload)).rejects.toThrow(message)
             expect(automations().docs).toHaveLength(0)
@@ -110,10 +109,10 @@ describe('automations', () => {
         it('recalculates the next run when the recurrence or the timezone change', async () => {
             const { data: automation } = await create()
 
-            const weekly = await update(String(automation._id), { recurrence: { type: 'weekly', days: [1], time: '09:00' } })
+            const weekly = await update(String(automation._id), { trigger: { recurrence: { type: 'weekly', days: [1], time: '09:00' } } })
             expect(new Date(weekly.data.nextRunAt as Date).toISOString()).toBe('2026-10-19T14:00:00.000Z')
 
-            const moved = await update(String(automation._id), { timezone: 'Europe/Madrid' })
+            const moved = await update(String(automation._id), { trigger: { timezone: 'Europe/Madrid' } })
             expect(new Date(moved.data.nextRunAt as Date).toISOString()).toBe('2026-10-19T07:00:00.000Z')
         })
 
@@ -170,7 +169,7 @@ describe('automations', () => {
         })
 
         it('does not turn on an automation whose single date has passed', async () => {
-            const { data: automation } = await create(valid({ recurrence: { type: 'once', at: '2026-10-14T10:00' } }))
+            const { data: automation } = await create(valid({ trigger: { type: 'schedule', recurrence: { type: 'once', at: '2026-10-14T10:00' }, timezone: 'America/Lima' } }))
             const id = String(automation._id)
             await update(id, { enabled: false })
             jest.setSystemTime(new Date('2026-12-01T00:00:00Z'))

@@ -41,7 +41,7 @@ describe('running automations', () => {
 
     const createAutomationFixture = async (recurrence: any = { type: 'daily', time: '08:00' }) => {
         const { data } = await container.resolve(CreateAutomationUseCase).execute({
-            payload: { name: 'Report', instructions: 'Summarize', recurrence, timezone: 'UTC', modelProvider: 'anthropic', modelName: 'claude-haiku-5-5' } as any,
+            payload: { name: 'Report', instructions: 'Summarize', trigger: { type: 'schedule', recurrence, timezone: 'UTC' }, modelProvider: 'anthropic', modelName: 'claude-haiku-5-5' } as any,
             currentUser: user,
         })
         id = String(data._id)

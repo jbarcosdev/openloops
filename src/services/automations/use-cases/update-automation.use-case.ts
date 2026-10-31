@@ -30,7 +30,7 @@ export class UpdateAutomationUseCase extends BaseUseCase<Params, Output> {
 
 		if (payload.__v !== undefined && payload.__v !== existing.__v) throw new VersionConflictError()
 
-		const changes = readAutomationFields(payload as Record<string, any>, { complete: false })
+		const changes = readAutomationFields(payload as Record<string, any>, { complete: false, trigger: existing.trigger })
 		const { modelProvider, modelName, ...rest } = changes
 
 		const provider = modelProvider === undefined ? existing.modelProvider : modelProvider
@@ -49,12 +49,12 @@ export class UpdateAutomationUseCase extends BaseUseCase<Params, Output> {
 
 		if (!provider) automation.unset(['modelProvider', 'modelName'])
 
-		const schedulingChanged = rest.recurrence !== undefined || rest.timezone !== undefined || rest.enabled !== undefined
-		const missingNextRun = automation.enabled && !automation.nextRunAt
+		const schedulingChanged = rest.trigger !== undefined || rest.enabled !== undefined
+		const missingNextRun = automation.enabled && automation.isScheduled() && !automation.nextRunAt
 
 		if (schedulingChanged || missingNextRun) {
 			automation.scheduleNextRun()
-			if (automation.enabled && !automation.nextRunAt) throw new Error('The date of the recurrence has already passed')
+			if (automation.enabled && automation.isScheduled() && !automation.nextRunAt) throw new Error('The date of the recurrence has already passed')
 		}
 
 		const result = await this.automationRepository?.update(automation, { expectedVersion: existing.__v })

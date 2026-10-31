@@ -29,8 +29,7 @@ describe('the runner of automations', () => {
             payload: {
                 name: 'Report',
                 instructions: 'Summarize my open tickets',
-                recurrence: { type: 'daily', time: '08:00' },
-                timezone: 'UTC',
+                trigger: { type: 'schedule', recurrence: { type: 'daily', time: '08:00' }, timezone: 'UTC' },
                 modelProvider: 'anthropic',
                 modelName: 'claude-haiku-5-5',
                 ...extra,
