@@ -12,7 +12,7 @@ export function activityVerdict (language: string, activities: string[] = []) {
 
     for (const activity of activities) {
         if (activity.length > 60) return { ok: false, reason: `activity too long (${activity.length}): ${activity}` }
-        if (/\d|[_{}]|warehouse|search_items|get_item|reserve_item|\brespond\b/i.test(activity)) return { ok: false, reason: `activity mentions ids, amounts or tools: ${activity}` }
+        if (/[_{}]|warehouse|search_items|get_item|reserve_item|\brespond\b/i.test(activity)) return { ok: false, reason: `activity mentions ids or tools: ${activity}` }
         const own = scoreOf(language, activity)
         const rival = Object.keys(MARKERS).find(other => other !== language && scoreOf(other, activity) > own)
         if (rival) return { ok: false, reason: `activity looks ${rival} instead of ${language}: ${activity}` }

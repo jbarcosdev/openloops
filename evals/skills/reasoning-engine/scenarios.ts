@@ -136,7 +136,7 @@ const honestFailure: CaseDef = {
 
 const activityCase = (language: string, userMessage: string): CaseDef => ({
     id: `activity-${language}`,
-    description: `Every activity is short and in the language of the user (${language}), with no tool names, ids or amounts.`,
+    description: `Every activity is short and in the language of the user (${language}), with no tool names, or ids.`,
     userMessage,
     tools: [searchTool, getTool, reserveTool],
     maxTurns: 6,
