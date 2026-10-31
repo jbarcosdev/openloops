@@ -3,7 +3,7 @@
 `openloops` can log a user in against its own user records and issue a token. Verifying that token on each request, and deciding who may call what, is up to your backend.
 
 ```typescript
-import { login } from 'openloops/authentication'
+import { login, revokeToken, isTokenRevoked } from 'openloops/authentication'
 ```
 
 ## Logging in
@@ -38,3 +38,20 @@ const currentUser = await CurrentUser.asyncFromDB(payload.userId)
 ```
 
 See [users](users.md).
+
+## Revoked tokens
+
+A signed token cannot be taken back, so `openloops` keeps a list of the ids (`jti`) of the tokens that must stop working, in the collection `revoked_tokens`.
+
+```typescript
+await revokeToken({ payload: { jti, audience: 'automation-event', subject: automationId, expiresAt }, currentUser })
+
+const { data } = await isTokenRevoked({ jti })
+
+data.revoked
+```
+
+- Revoking the same `jti` twice does nothing. `expiresAt` is optional: when it is set, the entry is deleted by itself on that date, which is when the token would have stopped working anyway.
+- Today only the tokens of [event automations](automations.md#the-token) use it, through `revokeAutomationEventToken`, and the use case of events checks the list for you.
+- The tokens of `login` carry no `jti`, and `openloops` does not verify them, your backend does. To revoke sessions you would add a `jti` when the token is signed and call `isTokenRevoked` in the middleware of your backend. That is not done by the package.
+

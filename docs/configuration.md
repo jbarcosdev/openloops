@@ -10,12 +10,13 @@
 | `SECRET_MANAGER_KEY` | yes | Key used to decrypt values that start with `ENC:`. The library throws when it loads without it. |
 | `ANTHROPIC_API_KEY` | for the default model | API key of the default provider, `anthropic`. |
 | `OPENAI_API_KEY`, `GEMINI_API_KEY` | for those providers | API keys of the other providers you choose per chat. |
-| `JWT_SECRET` | for `login` | Secret that signs the tokens. See [authentication](authentication.md). |
+| `JWT_SECRET` | for `login` and for event automations | Secret that signs the tokens of the users and the tokens of [event automations](automations.md#the-token). See [authentication](authentication.md). |
 | `SERPER_API_KEY` | for `webSearchTool` | See [tools](tools.md#built-in-tools). |
 | `SLACK_BOT_TOKEN` | for `sendSlackMessageTool` | See [tools](tools.md#built-in-tools). |
 | `INTERNAL_MCP_TOKEN` | for internal MCP servers in automations | Token sent to the internal MCP servers when an automation runs without the session of its owner. See [automations](automations.md#internal-mcp-servers-in-a-automation). |
 | `AUTOMATIONS_POLL_INTERVAL_MS` | no | How often the runner of [automations](automations.md) checks what is due, in milliseconds. Defaults to `60000`. |
 | `AUTOMATIONS_LEASE_MS` | no | How long an automation stays locked while it runs, in milliseconds. Defaults to `600000`. |
+| `AUTOMATIONS_MAX_QUEUED_RUNS` | no | How many events of one automation can wait to run. The next ones are recorded as skipped. Defaults to `10`. Read by the endpoint that receives the events. |
 | `LLM_FALLBACK_PROVIDER`, `LLM_FALLBACK_MODEL` | no | The model to use when nothing else chooses one, for the whole deployment. Set both or neither. See [Which model a chat uses](#which-model-a-chat-uses). |
 | `LLM_CALL_TIMEOUT_MS` | no | Longest time to wait for one attempt of a model call, in milliseconds. Defaults to `60000`, and calls with the `high` thinking effort get twice as much. See [Timeouts](#timeouts). |
 | `MCP_TOOL_TIMEOUT_MS` | no | Longest time to wait for a tool of an MCP server, in milliseconds. Defaults to `60000`. See [Timeouts](#timeouts). |

@@ -104,7 +104,7 @@ You know the pattern: before you write a single line of what your agent actually
 - **Safe tool execution.** Arguments are validated against the tool's schema, destructive tools wait for the user's confirmation, identical failing calls are blocked, identifiers the model invented are rejected before they reach a real system, and large outputs are kept out of the prompt. LLM calls retry with backoff and wait out rate limits.
 - **Native MCP support with a trust flow.** Connect any MCP server and its tools become regular tools. Each server must be approved by the user before its first tool runs, and a server that changes its tools is reviewed again, so a third party cannot quietly change what your agent does.
 - **Autonomous runs.** The same agent can work without a person in the chat, for scheduled tasks. Whatever needs the user pauses the run in the chat, and the user answers there to continue. See [autonomous mode](docs/agent.md#autonomous-mode).
-- **Automations.** Schedule tasks that the agent runs by itself, daily, weekly, monthly or once, in the timezone of the user. A worker runs what is due, safely across several instances, and keeps a history of every run with its chat. See [automations](docs/automations.md).
+- **Automations.** Tasks that the agent runs by itself, on a schedule (daily, weekly, monthly or once, in the timezone of the user) or when another system sends an event, with signed tokens that can be revoked and a queue per automation. A worker runs what is due, safely across several instances, and keeps a history of every run with its chat. See [automations](docs/automations.md).
 - **Guardrails.** Input guards block messages with card numbers, emails, code or anything you define, before the model sees them. See [guardrails](docs/guardrails.md).
 - **Usage and cost tracking.** Every LLM call is recorded. Get the tokens and cost of a chat or an answer, and per-user statistics by model and by period. See [usage](docs/usage.md).
 - **Users and authentication included.** User management and login with tokens, so you don't need a parallel system just to have an identity to hand the `Agent`.
@@ -221,6 +221,7 @@ LLM_FALLBACK_MODEL=
 # Optional, in milliseconds
 AUTOMATIONS_POLL_INTERVAL_MS=
 AUTOMATIONS_LEASE_MS=
+AUTOMATIONS_MAX_QUEUED_RUNS=
 LLM_CALL_TIMEOUT_MS=
 MCP_TOOL_TIMEOUT_MS=
 
@@ -275,7 +276,7 @@ Every pattern above, and a lot more, lives as a runnable example in [`examples/`
 | `openloops/skills` | `Skill`, for writing LLM-backed reasoning steps inside a loop |
 | `openloops/guardrails` | `Guard` and the ready-made input guards |
 | `openloops/mcps` | MCP server management, connection check and trust decisions |
-| `openloops/automations` | Scheduled tasks, their runs and the runner that executes them |
+| `openloops/automations` | Scheduled and event tasks, their runs and the runner that executes them |
 | `openloops/chats` | Chats and their messages: list, read, update, delete |
 | `openloops/users` | User management |
 | `openloops/authentication` | Login and token issuing |

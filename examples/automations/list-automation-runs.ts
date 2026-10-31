@@ -2,7 +2,7 @@ import { Logger } from 'openloops/common'
 import { CurrentUser } from 'openloops/base'
 import { listAutomationRunsByAutomation, listAutomationRunsByUser } from 'openloops/automations'
 
-async function listRunsOfAJob () {
+async function listRunsOfAnAutomation () {
     const logger = new Logger()
 
     const result = await listAutomationRunsByAutomation({
@@ -23,6 +23,6 @@ async function listRunsThatNeedAttention () {
     logger.info({ paused: paused.data.length, failed: failed.data.length }, '[Demo] Runs that need attention')
 }
 
-listRunsOfAJob()
+listRunsOfAnAutomation()
 
 // listRunsThatNeedAttention()

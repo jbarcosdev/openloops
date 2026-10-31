@@ -2,7 +2,7 @@ import { Logger } from 'openloops/common'
 import { CurrentUser } from 'openloops/base'
 import { updateAutomation } from 'openloops/automations'
 
-async function pauseJob () {
+async function pause () {
     const logger = new Logger()
     const currentUser = await CurrentUser.asyncFromDB('6ab56894eb20887d1ef7942c')
 
@@ -15,7 +15,7 @@ async function pauseJob () {
     logger.info({ enabled: result.data.enabled }, '[Demo] The automation is off')
 }
 
-async function resumeJob () {
+async function resume () {
     const logger = new Logger()
     const currentUser = await CurrentUser.asyncFromDB('6ab56894eb20887d1ef7942c')
 
@@ -23,7 +23,7 @@ async function resumeJob () {
         id: '6ad0c9a6d3ea4199c9b7ba10',
         payload: {
             enabled: true,
-            recurrence: { type: 'daily', time: '07:30' },
+            trigger: { recurrence: { type: 'daily', time: '07:30' } },
         },
         currentUser,
     })
@@ -31,6 +31,6 @@ async function resumeJob () {
     logger.info({ nextRunAt: result.data.nextRunAt }, '[Demo] The automation is on again')
 }
 
-pauseJob()
+pause()
 
-// resumeJob()
+// resume()

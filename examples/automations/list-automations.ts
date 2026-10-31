@@ -2,7 +2,7 @@ import { Logger } from 'openloops/common'
 import { CurrentUser } from 'openloops/base'
 import { listAutomationsByUser } from 'openloops/automations'
 
-async function listJobs () {
+async function listAutomations () {
     const logger = new Logger()
     const currentUser = await CurrentUser.asyncFromDB('6ab56894eb20887d1ef7942c')
 
@@ -22,4 +22,4 @@ async function listJobs () {
     })), '[Demo] Automations')
 }
 
-listJobs()
+listAutomations()

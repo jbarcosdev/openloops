@@ -26,7 +26,7 @@ Start with the integration guide, then read only the pages you need. All pages a
 ## Connect and schedule
 
 - [MCP servers](mcp-servers.md): registering servers, the trust flow, approving and blocking, internal servers of your own
-- [Automations](automations.md): scheduled agent runs, recurrence, history and the runner
+- [Automations](automations.md): agent runs by schedule or by event, tokens, queue, history and the runner
 
 ## Users and cost
 
