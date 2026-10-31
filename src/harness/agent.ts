@@ -363,7 +363,6 @@ export class Agent {
         this.awaitingConfirmation = this.currentChat.state?.status === AgentStatus.AWAITING_USER_CONFIRMATION
 
         this.currentChat.state?.setStatus(AgentStatus.PROCESSING)
-        this.currentChat.state?.setCurrentActivity('Starting...')
         await this.persist({ resetStop: true })
 
         if (!await this.runInputGuards(userMessage)) return false
@@ -417,7 +416,6 @@ export class Agent {
 
     private async finishBlocked () {
         this.currentChat.state?.setStatus(this.awaitingConfirmation ? AgentStatus.AWAITING_USER_CONFIRMATION : AgentStatus.IDLE)
-        this.currentChat.state?.setCurrentActivity('stopped')
         await this.persist()
         await this.disconnectMcpServers()
     }
@@ -503,7 +501,6 @@ export class Agent {
             await hook()
         }
 
-        this.currentChat.state?.setCurrentActivity('stopped')
         await this.persist()
         await this.disconnectMcpServers()
     }
@@ -511,7 +508,6 @@ export class Agent {
     private async failRun (message: string, llmError?: LLMError) {
         try {
             this.currentChat.state?.setStatus(AgentStatus.FAILED)
-            this.currentChat.state?.setCurrentActivity('stopped')
             this.currentChat.state?.setLastError({ code: llmError?.code ?? AGENT_ERROR_CODES.RUN_FAILED, message, isRetryable: llmError?.isRetryable ?? true, timestamp: new Date() })
             this.currentChat.addTrace({ node: 'agent', kind: 'agent', reasoning: `Run failed: ${message}` })
             this.currentChat.failTask()

@@ -17,7 +17,7 @@ describe('AgiLoop activity', () => {
         return seen
     }
 
-    it('shows the activity written by the model from its answer until the next one, instead of Thinking or Running', async () => {
+    it('shows the activity written by the model from its answer until the next one', async () => {
         llm.script(
             { activity: 'Buscando tus gastos de vuelos', actions: [act('t_search', { q: 'warehouse' })] },
             { activity: 'Sumando los cargos para darte el total', actions: [act('t_get', { id: '{{step_1_1.output.results[3].id}}' })] },
@@ -27,12 +27,8 @@ describe('AgiLoop activity', () => {
         const seen = await run()
 
         expect(seen).toEqual([
-            'Starting...',
-            'Analyzing requirement...',
-            'Thinking...',
             'Buscando tus gastos de vuelos',
             'Sumando los cargos para darte el total',
-            'stopped',
         ])
     })
 
@@ -43,10 +39,7 @@ describe('AgiLoop activity', () => {
         const seen = await run()
 
         expect(seen).toEqual([
-            'Starting...',
-            'Analyzing requirement...',
             'Voy a buscar tus gastos de vuelos de agosto',
-            'stopped',
         ])
     })
 
@@ -68,7 +61,7 @@ describe('AgiLoop activity', () => {
 
         const seen = await run()
 
-        expect(seen).toEqual(['Starting...', 'Analyzing requirement...', 'Thinking...', 'Buscando tus gastos de vuelos', 'stopped'])
+        expect(seen).toEqual(['Buscando tus gastos de vuelos'])
     })
 
     it('keeps the last activity of the model when the next response is not valid, while the model tries again', async () => {
@@ -80,11 +73,11 @@ describe('AgiLoop activity', () => {
 
         const seen = await run()
 
-        expect(seen).toEqual(['Starting...', 'Analyzing requirement...', 'Thinking...', 'Buscando tus gastos de vuelos', 'stopped'])
+        expect(seen).toEqual(['Buscando tus gastos de vuelos'])
         expect(env.tasks()[0].turns).toHaveLength(3)
     })
 
-    it('goes back to the generic activities when the model gives none or gives something unusable', async () => {
+    it('tells nothing when the model gives none or gives something unusable', async () => {
         llm.script(
             { activity: 42, actions: [act('t_search', { q: 'warehouse' })] },
             { activity: '   ', actions: [act('t_search', { q: 'warehouse' })] },
@@ -94,18 +87,7 @@ describe('AgiLoop activity', () => {
 
         const seen = await run()
 
-        expect(seen).toEqual([
-            'Starting...',
-            'Analyzing requirement...',
-            'Thinking...',
-            'Running t_search...',
-            'Thinking...',
-            'Running t_search...',
-            'Thinking...',
-            'Running t_search...',
-            'Thinking...',
-            'stopped',
-        ])
+        expect(seen).toEqual([])
     })
 
     it('cleans the text before showing it and keeps it short', async () => {
