@@ -32,7 +32,7 @@ export class AgiLoop extends AgentLoop {
     }
 
     get version () {
-        return '1.8.6'
+        return '1.8.7'
     }
 
     get author () {
@@ -104,6 +104,7 @@ export class AgiLoop extends AgentLoop {
 
         const result = await reasoningEngine.run({
             ...ctx.skillParams,
+            thinking: ctx.thinkingEffort,
             history: task.history({
                 budget: { turns_left: MAX_TURNS - task.turnCount, tool_calls_left: MAX_TOOL_CALLS - task.toolCallCount },
                 ...(warning ? { warning } : {}),

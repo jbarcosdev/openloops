@@ -43,7 +43,7 @@ describe('AgiLoop', () => {
             const [task] = env.tasks()
 
             expect(task.turns).toHaveLength(3)
-            expect(task.turns.every(turn => turn.mode === 'plain_chat' && turn.loopVersion === '1.8.6' && turn.skill === 'reasoning_engine' && turn.skillVersion === '2.5.4' && turn.costInUsd === 0)).toBe(true)
+            expect(task.turns.every(turn => turn.mode === 'plain_chat' && turn.loopVersion === '1.8.7' && turn.skill === 'reasoning_engine' && turn.skillVersion === '2.5.4' && turn.costInUsd === 0)).toBe(true)
         })
 
         it('uses the reasoning engine as the only skill that talks to the model', () => {

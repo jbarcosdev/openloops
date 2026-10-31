@@ -6,6 +6,7 @@ import { AgentTask } from '@services/tasks/entities/agent-task.entity'
 import { AgentAction } from '@services/tasks/entities/agent-action.entity'
 import { Tool, BaseParams } from '@tools/tool'
 import { SkillRunOptions } from '@skills/skill'
+import { SelectableThinkingEffort } from '@clients/llm/llm-types'
 import { WeightedKeyword, ScoredTool } from './utils/rank-tools-by-keywords'
 import type { ToolCatalog } from './tool-catalog'
 import { Workspace } from './workspace'
@@ -16,6 +17,7 @@ export interface RunContext {
     task?: AgentTask
     chat: Chat
     chatOptions?: ChatSettingsProps
+    thinkingEffort?: SelectableThinkingEffort
     currentUser: CurrentUser
     currentSession?: CurrentSession
     currentMessage: string

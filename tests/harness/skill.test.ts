@@ -82,6 +82,13 @@ describe('Skill.run', () => {
             expect(chat.mock.calls[0][0]).toMatchObject({ thinking: 'low' })
         })
 
+        it('is replaced by the one of the run', async () => {
+            const chat = respondWith('{"reasoning":"r"}')
+            await new Skill({ name: 'quick', thinking: 'low', systemInstructions: {} }).run({ ...base, userMessage: 'hi', thinking: 'high' })
+
+            expect(chat.mock.calls[0][0]).toMatchObject({ thinking: 'high' })
+        })
+
         it('is left out when the skill does not set it, so the provider default applies', async () => {
             const chat = respondWith('{"reasoning":"r"}')
             await new Skill({ name: 'plain', systemInstructions: {} }).run({ ...base, userMessage: 'hi' })

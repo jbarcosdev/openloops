@@ -17,7 +17,7 @@
 | `AGENTIC_JOBS_POLL_INTERVAL_MS` | no | How often the runner of [agentic jobs](agentic-jobs.md) checks what is due, in milliseconds. Defaults to `60000`. |
 | `AGENTIC_JOBS_LEASE_MS` | no | How long a job stays locked while it runs, in milliseconds. Defaults to `600000`. |
 | `LLM_FALLBACK_PROVIDER`, `LLM_FALLBACK_MODEL` | no | The model to use when nothing else chooses one, for the whole deployment. Set both or neither. See [Which model a chat uses](#which-model-a-chat-uses). |
-| `LLM_CALL_TIMEOUT_MS` | no | Longest time to wait for one attempt of a model call, in milliseconds. Defaults to `60000`. See [Timeouts](#timeouts). |
+| `LLM_CALL_TIMEOUT_MS` | no | Longest time to wait for one attempt of a model call, in milliseconds. Defaults to `60000`, and calls with the `high` thinking effort get twice as much. See [Timeouts](#timeouts). |
 | `MCP_TOOL_TIMEOUT_MS` | no | Longest time to wait for a tool of an MCP server, in milliseconds. Defaults to `60000`. See [Timeouts](#timeouts). |
 | `SENTRY_DSN` | no | Errors are reported to Sentry when set, unless `IS_LOCAL` is `true` or `NODE_ENV` is `development`. |
 | `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`, `LANGFUSE_BASE_URL` | no | Traces every LLM call in Langfuse when all three are set. |
@@ -57,7 +57,7 @@ It is in the low price tier, it makes the most of the prompt cache, which matter
 
 A model call that never answers would block the whole run, so every attempt has a time limit:
 
-- **Model calls.** An attempt that does not answer within `LLM_CALL_TIMEOUT_MS` (60 seconds by default) is cancelled and the same call is made again, up to 3 attempts in total. When all of them time out, the run fails with the error code `LLM_TIMEOUT` and a message for the user, and the chat is left as `failed` so the user can send the message again. Waiting for a provider that asks to slow down is a separate mechanism and is not affected.
+- **Model calls.** An attempt that does not answer within `LLM_CALL_TIMEOUT_MS` (60 seconds by default) is cancelled and the same call is made again, up to 3 attempts in total. A call with the `high` thinking effort, which thinks for longer, gets twice that time. When all of them time out, the run fails with the error code `LLM_TIMEOUT` and a message for the user, and the chat is left as `failed` so the user can send the message again. Waiting for a provider that asks to slow down is a separate mechanism and is not affected.
 - **Tools of MCP servers.** A tool that does not answer within `MCP_TOOL_TIMEOUT_MS` (60 seconds by default) fails. The time starts again every time the server reports progress, so a long tool that is alive is not cut off. A tool call is never repeated automatically, because it may have changed something. The model is told that the result is unknown and that it must check before repeating it.
 - **Langfuse.** Sending the trace of a call to Langfuse waits at most 5 seconds. If it takes longer or fails, the run continues without it.
 

@@ -1,3 +1,5 @@
+import type { SelectableThinkingEffort } from '@clients/llm/llm-types'
+
 export type ExecutionMode = 'interactive' | 'autonomous'
 
 export interface ChatSettingsProps {
@@ -7,6 +9,7 @@ export interface ChatSettingsProps {
     modelName?: string,
     loopName?: string,
     executionMode?: ExecutionMode,
+    thinkingEffort?: SelectableThinkingEffort,
 }
 
 export class ChatSettings {
@@ -18,6 +21,7 @@ export class ChatSettings {
         public modelName?: string,
         public loopName?: string,
         public executionMode?: ExecutionMode,
+        public thinkingEffort?: SelectableThinkingEffort,
     ) {}
 
     static fromJSON (props: ChatSettingsProps) {
@@ -29,6 +33,7 @@ export class ChatSettings {
             props.modelName,
             props.loopName,
             props.executionMode,
+            props.thinkingEffort,
         )
     }
 
@@ -40,6 +45,7 @@ export class ChatSettings {
             modelName: this.modelName,
             loopName: this.loopName,
             executionMode: this.executionMode,
+            thinkingEffort: this.thinkingEffort,
         }
     }
 
@@ -49,6 +55,10 @@ export class ChatSettings {
 
     setExecutionMode (executionMode: ExecutionMode): void {
         this.executionMode = executionMode
+    }
+
+    setThinkingEffort (thinkingEffort: SelectableThinkingEffort): void {
+        this.thinkingEffort = thinkingEffort
     }
 
     setModelProvider (modelProvider: string): void {

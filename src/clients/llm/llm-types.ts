@@ -47,6 +47,12 @@ export type LLMToolChoice = 'auto' | 'none' | 'required'
 
 export type ThinkingEffort = 'off' | 'low' | 'medium' | 'high'
 
+export const SELECTABLE_THINKING_EFFORTS = ['low', 'medium', 'high'] as const
+
+export type SelectableThinkingEffort = typeof SELECTABLE_THINKING_EFFORTS[number]
+
+export const isSelectableThinkingEffort = (value: unknown): value is SelectableThinkingEffort => SELECTABLE_THINKING_EFFORTS.includes(value as SelectableThinkingEffort)
+
 export interface LLMChatParams {
     origin: string
     sessionId: string

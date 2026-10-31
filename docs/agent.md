@@ -64,6 +64,7 @@ Omit `chatId` to start a brand-new chat. Pass an existing `chatId` to continue a
 | Option | What it does |
 | --- | --- |
 | `modelProvider`, `modelName` | Model for this run, always together. It is saved in the chat and used by the next runs that do not send one. Without it, the model comes from the chat, the preference of the user and the fallbacks. See [configuration](configuration.md#which-model-a-chat-uses). |
+| `thinkingEffort` | `low`, `medium` or `high`: how much the reasoning engine thinks before each response. Any other value makes the run fail before calling the model. It is saved in the chat only when you send it, and the next runs that do not send one reuse it. Without it, the reasoning engine uses `medium`. `high` is slower, so its model calls get twice the time limit (see [Timeouts](configuration.md#timeouts)). It does not change the fast responder, which always uses `low`. |
 | `loopName` | Name of the loop driving the chat. Set automatically from the loop. |
 | `executionMode` | `interactive` (default) or `autonomous`. See [Autonomous mode](#autonomous-mode). |
 | `notifyOnCompletion` | Exposed as `agent.notifyOnCompletion` so a post execution hook can notify the user. |

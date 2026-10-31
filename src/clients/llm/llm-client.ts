@@ -22,6 +22,7 @@ const MAX_RETRIES = 4
 const MAX_RATE_LIMIT_WAITS = 2
 const DEFAULT_CALL_TIMEOUT_MS = 60000
 const MAX_TIMEOUT_RETRIES = 2
+const HIGH_THINKING_TIMEOUT_FACTOR = 2
 const LANGFUSE_FLUSH_TIMEOUT_MS = 5000
 
 const REQUIRED_TOOL_CHOICE: Record<string, string> = {
@@ -99,7 +100,7 @@ export class LLMClient {
         if (toolChoice === 'required' && !resolvedChoice) throw new Error(`[LLM Client] forced tool choice is not supported for api ${model.api}`)
 
         const context = toPiContext({ messages, tools }, model)
-        const send = (omitTemperature: boolean) => this.withDeadline(signal => {
+        const send = (omitTemperature: boolean) => this.withDeadline(thinking === 'high' ? this.callTimeoutMs * HIGH_THINKING_TIMEOUT_FACTOR : this.callTimeoutMs, signal => {
             const options = { ...(omitTemperature ? {} : { temperature }), maxRetries: MAX_RETRIES, signal, ...(sessionId ? { sessionId } : {}) }
 
             const reasoning = thinking && thinking !== 'off' ? thinking : undefined
@@ -133,7 +134,7 @@ export class LLMClient {
         })
     }
 
-    private async withDeadline (call: (signal: AbortSignal) => Promise<AssistantMessage>): Promise<AssistantMessage> {
+    private async withDeadline (timeoutMs: number, call: (signal: AbortSignal) => Promise<AssistantMessage>): Promise<AssistantMessage> {
         for (let attempt = 1; attempt <= MAX_TIMEOUT_RETRIES + 1; attempt++) {
             const controller = new AbortController()
             let timer: NodeJS.Timeout | undefined
@@ -142,7 +143,7 @@ export class LLMClient {
                 timer = setTimeout(() => {
                     controller.abort()
                     resolve(undefined)
-                }, this.callTimeoutMs)
+                }, timeoutMs)
             })
 
             const pending = call(controller.signal)
@@ -152,10 +153,10 @@ export class LLMClient {
 
             if (response) return response
 
-            this.logger.warn({ attempt, timeoutMs: this.callTimeoutMs }, '[LLM Service] The model did not answer in time')
+            this.logger.warn({ attempt, timeoutMs }, '[LLM Service] The model did not answer in time')
         }
 
-        throw new LLMError('LLM_TIMEOUT', `the model did not answer within ${this.callTimeoutMs} ms in ${MAX_TIMEOUT_RETRIES + 1} attempts`)
+        throw new LLMError('LLM_TIMEOUT', `the model did not answer within ${timeoutMs} ms in ${MAX_TIMEOUT_RETRIES + 1} attempts`)
     }
 
     private async flushLangfuse (): Promise<void> {
