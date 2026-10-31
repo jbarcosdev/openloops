@@ -72,7 +72,7 @@ Omit `chatId` to start a brand-new chat. Pass an existing `chatId` to continue a
 
 `currentSession` is optional. It carries device, location and locale, which skills use to answer in the right time zone and language.
 
-`mcpTokens` is optional. It gives the token of the user to each [internal MCP server](mcp-servers.md#internal-mcp-servers), by name. It is never saved. `serviceToken` is the token that the runner of [agentic jobs](agentic-jobs.md#internal-mcp-servers-in-a-job) passes when there is no session of the user. You do not need it unless you write your own scheduler.
+`mcpTokens` is optional. It gives the token of the user to each [internal MCP server](mcp-servers.md#internal-mcp-servers), by name. It is never saved. `serviceToken` is the token that the runner of [automations](automations.md#internal-mcp-servers-in-a-automation) passes when there is no session of the user. You do not need it unless you write your own scheduler.
 
 ## Autonomous mode
 
@@ -100,7 +100,7 @@ The mode is saved in `chat.settings.executionMode` when the chat is created and 
 
 Only `AgiLoop` supports autonomous mode.
 
-To run an agent on a schedule, see [agentic jobs](agentic-jobs.md).
+To run an agent on a schedule, see [automations](automations.md).
 
 ## The result
 
