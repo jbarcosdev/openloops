@@ -11,6 +11,7 @@ import { SkillMode, DEFAULT_SKILL_MODE, buildModeCall, readModeResponse } from '
 export { SkillMode, DEFAULT_SKILL_MODE } from './call-modes'
 
 const RAW_RESPONSE_CHARS = 300
+const DEFAULT_THINKING_EFFORT: ThinkingEffort = 'low'
 const RESERVED_CONTEXT_KEYS = ['tools', 'mode', 'history', 'chatHistory']
 
 export interface SkillProps {
@@ -18,7 +19,7 @@ export interface SkillProps {
     version?: string
     description?: string
     temperature?: number
-    /** How much the model thinks before it answers: `off`, `low`, `medium` or `high`. When it is left out, the provider default applies, which is high for the Claude models. */
+    /** How much the model thinks before it answers: `off`, `low`, `medium` or `high`. When it is left out, it is `low`. */
     thinking?: ThinkingEffort
     systemInstructions: Record<string, any>
     systemRole?: boolean
@@ -69,7 +70,7 @@ export class Skill<TResponse = Record<string, any>> {
     readonly version?: string
     readonly description?: string
     readonly temperature?: number
-    readonly thinking?: ThinkingEffort
+    readonly thinking: ThinkingEffort
     readonly systemInstructions: Record<string, any>
     readonly systemRole: boolean
     readonly mode: SkillMode
@@ -79,7 +80,7 @@ export class Skill<TResponse = Record<string, any>> {
         this.version = props.version
         this.description = props.description
         this.temperature = props.temperature
-        this.thinking = props.thinking
+        this.thinking = props.thinking ?? DEFAULT_THINKING_EFFORT
         this.systemInstructions = props.systemInstructions
         this.systemRole = props.systemRole ?? true
         this.mode = props.mode ?? DEFAULT_SKILL_MODE
@@ -128,7 +129,7 @@ export class Skill<TResponse = Record<string, any>> {
                 tools: call.tools,
                 toolChoice: call.toolChoice,
                 temperature: this.temperature ?? 0.7,
-                ...(thinking ? { thinking } : {}),
+                thinking,
             })
 
             const reading = readModeResponse(mode, this.name, response, { expectActions: Boolean(tools?.length) })
