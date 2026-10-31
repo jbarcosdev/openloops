@@ -13,9 +13,9 @@
 | `JWT_SECRET` | for `login` | Secret that signs the tokens. See [authentication](authentication.md). |
 | `SERPER_API_KEY` | for `webSearchTool` | See [tools](tools.md#built-in-tools). |
 | `SLACK_BOT_TOKEN` | for `sendSlackMessageTool` | See [tools](tools.md#built-in-tools). |
-| `INTERNAL_MCP_TOKEN` | for internal MCP servers in agentic jobs | Token sent to the internal MCP servers when a job runs without the session of its owner. See [agentic jobs](agentic-jobs.md#internal-mcp-servers-in-a-job). |
-| `AGENTIC_JOBS_POLL_INTERVAL_MS` | no | How often the runner of [agentic jobs](agentic-jobs.md) checks what is due, in milliseconds. Defaults to `60000`. |
-| `AGENTIC_JOBS_LEASE_MS` | no | How long a job stays locked while it runs, in milliseconds. Defaults to `600000`. |
+| `INTERNAL_MCP_TOKEN` | for internal MCP servers in automations | Token sent to the internal MCP servers when an automation runs without the session of its owner. See [automations](automations.md#internal-mcp-servers-in-a-automation). |
+| `AUTOMATIONS_POLL_INTERVAL_MS` | no | How often the runner of [automations](automations.md) checks what is due, in milliseconds. Defaults to `60000`. |
+| `AUTOMATIONS_LEASE_MS` | no | How long an automation stays locked while it runs, in milliseconds. Defaults to `600000`. |
 | `LLM_FALLBACK_PROVIDER`, `LLM_FALLBACK_MODEL` | no | The model to use when nothing else chooses one, for the whole deployment. Set both or neither. See [Which model a chat uses](#which-model-a-chat-uses). |
 | `LLM_CALL_TIMEOUT_MS` | no | Longest time to wait for one attempt of a model call, in milliseconds. Defaults to `60000`, and calls with the `high` thinking effort get twice as much. See [Timeouts](#timeouts). |
 | `MCP_TOOL_TIMEOUT_MS` | no | Longest time to wait for a tool of an MCP server, in milliseconds. Defaults to `60000`. See [Timeouts](#timeouts). |
@@ -93,7 +93,7 @@ console.log(await ensureIndexes(client.db(process.env.OPENLOOPS_DB_NAME || 'open
 await client.close()
 ```
 
-It covers `llm_calls`, `chats`, `agent_tasks`, `agent_actions`, `agent_traces`, `workspace_items`, `mcp_servers`, `agentic_jobs` and `agentic_job_runs`. It is safe to run again: an index that already exists is left as it is. Collections of your own application are not included.
+It covers `llm_calls`, `chats`, `agent_tasks`, `agent_actions`, `agent_traces`, `workspace_items`, `mcp_servers`, `automations` and `automation_runs`. It is safe to run again: an index that already exists is left as it is. Collections of your own application are not included.
 
 ## What is recorded
 

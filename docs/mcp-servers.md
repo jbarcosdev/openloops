@@ -179,7 +179,7 @@ await agent.run({
 - If a server of the user has the same name as an internal one, the one of the user is ignored for that run, so nobody can impersonate an internal server.
 - The tools are named `<name>__<tool>`, like any other MCP tool.
 
-In an agentic job there is no session of the user, so there is no token of theirs. See [agentic jobs](agentic-jobs.md#internal-mcp-servers-in-a-job).
+In an automation there is no session of the user, so there is no token of theirs. See [automations](automations.md#internal-mcp-servers-in-a-automation).
 
 ## Tools of MCP servers
 
