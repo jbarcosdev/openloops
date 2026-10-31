@@ -1,4 +1,5 @@
 import type { Action, CaseDef } from '../../core/types'
+import { activityVerdict } from '../../cases/activity'
 import { defineTool, get, ITEMS, numbers, search } from '../../cases/world'
 
 const SEARCH = 'warehouse__search_items'
@@ -131,27 +132,6 @@ const honestFailure: CaseDef = {
         if (/\d{3,}/.test(answer)) return { ok: false, reason: 'answer contains a made up number' }
         return /no (pude|puedo|fue posible|se pudo|logr)|error|ca[ií]do|no est[aá] disponible|fall|no responde|inaccesible|unavailable|down/i.test(answer) ? { ok: true } : { ok: false, reason: 'answer does not say the lookup failed' }
     },
-}
-
-const MARKERS: Record<string, RegExp> = {
-    en: /\b(the|your|for|of|and|searching|checking|looking|finding|comparing|reviewing|cheapest|laptop|stock)\b/gi,
-    es: /\b(el|la|los|las|tu|tus|de|del|para|y|m[aá]s|barata|buscando|revisando|consultando|comparando|calculando)\b/gi,
-    pt: /\b(o|os|as|seu|sua|seus|suas|do|da|dos|das|para|e|mais|barato|procurando|verificando|consultando|comparando|calculando)\b/gi,
-    fr: /\b(le|les|des|du|de|votre|vos|pour|et|plus|moins|cher|recherche|v[eé]rifie|consulte|compare|calcule|ordinateur|portable)\b/gi,
-}
-
-const scoreOf = (language: string, text: string) => (text.match(MARKERS[language]) ?? []).length
-
-function activityVerdict (language: string, activities: string[] = []) {
-    if (!activities.length) return { ok: false, reason: 'no activity written' }
-    for (const activity of activities) {
-        if (activity.length > 60) return { ok: false, reason: `activity too long (${activity.length}): ${activity}` }
-        if (/\d|[_{}]|warehouse|search_items|get_item|reserve_item|respond/i.test(activity)) return { ok: false, reason: `activity mentions ids, amounts or tools: ${activity}` }
-        const own = scoreOf(language, activity)
-        const rival = Object.keys(MARKERS).filter(other => other !== language).find(other => scoreOf(other, activity) >= own && scoreOf(other, activity) > 0)
-        if (rival) return { ok: false, reason: `activity looks ${rival} instead of ${language}: ${activity}` }
-    }
-    return { ok: true }
 }
 
 const activityCase = (language: string, userMessage: string): CaseDef => ({
