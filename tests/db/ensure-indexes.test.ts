@@ -14,7 +14,7 @@ describe('ensureIndexes', () => {
 	})
 
 	it('covers the collections of the package that store data per owner', () => {
-		for (const name of ['llm_calls', 'chats', 'agent_tasks', 'agent_actions', 'agent_traces', 'workspace_items', 'mcp_servers', 'automations', 'automation_runs']) {
+		for (const name of ['llm_calls', 'chats', 'agent_tasks', 'agent_actions', 'agent_traces', 'workspace_items', 'mcp_servers', 'automations', 'automation_runs', 'revoked_tokens']) {
 			expect(indexes[name]?.length).toBeGreaterThan(0)
 		}
 	})
