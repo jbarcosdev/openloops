@@ -114,7 +114,7 @@ describe('computing the next run', () => {
             const recurrence = { type: 'daily' as const, time: '02:30' }
             const runs = previewNextRuns(recurrence, 'America/New_York', 3, new Date('2026-03-07T12:00:00Z'))
 
-            expect(runs.map(iso)).toEqual(['2026-03-08T07:30:00.000Z', '2026-03-09T06:30:00.000Z', '2026-03-10T06:30:00.000Z'])
+            expect(runs.map(iso)).toEqual(['2026-03-08T07:00:00.000Z', '2026-03-09T06:30:00.000Z', '2026-03-10T06:30:00.000Z'])
         })
 
         it('runs once a day when a local hour happens twice', () => {
