@@ -1,0 +1,622 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LLM evaluation report</title>
+<style>
+:root{--bg:#f4f3ef;--surface:#fcfcfb;--ink:#0b0b0b;--ink2:#52514e;--muted:#807f79;--line:#e4e2db;--soft:#efede7;--accent:#2a78d6;--good:#1b7f4c;--bad:#c23b3a;--warn:#b7791f;--shadow:0 1px 2px rgba(20,20,10,.05),0 6px 18px rgba(20,20,10,.04);
+--s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--s4:#eda100;--s5:#e87ba4;--s6:#008300;--s7:#6250d6;--s8:#e34948}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121211;--surface:#1a1a19;--ink:#f0efec;--ink2:#c3c2b7;--muted:#8f8e86;--line:#2c2c2a;--soft:#232321;--accent:#3987e5;--good:#3ecf84;--bad:#f06a6a;--warn:#e0a84a;--shadow:none;--s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--s5:#d55181;--s6:#008300;--s7:#9085e9;--s8:#e66767}}
+:root[data-theme="dark"]{--bg:#121211;--surface:#1a1a19;--ink:#f0efec;--ink2:#c3c2b7;--muted:#8f8e86;--line:#2c2c2a;--soft:#232321;--accent:#3987e5;--good:#3ecf84;--bad:#f06a6a;--warn:#e0a84a;--shadow:none;--s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--s5:#d55181;--s6:#008300;--s7:#9085e9;--s8:#e66767}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+header.top{padding:26px 0 14px}
+.toprow{display:flex;gap:16px;align-items:flex-start;justify-content:space-between}
+h1{font-size:26px;letter-spacing:-.02em;margin:0 0 4px;font-weight:650}
+.sub{color:var(--ink2);font-size:13px}
+.muted{color:var(--muted)}
+.icons{display:flex;gap:8px}
+.ibtn{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:600 15px/1 inherit;cursor:pointer;display:grid;place-items:center}
+.ibtn:hover{border-color:var(--ink2)}
+nav.tabs{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+nav.tabs .wrap{display:flex;gap:2px;overflow-x:auto}
+nav.tabs button{background:none;border:0;border-bottom:2px solid transparent;padding:12px 14px;font:inherit;color:var(--ink2);cursor:pointer;white-space:nowrap}
+nav.tabs button:hover{color:var(--ink)}
+nav.tabs button.on{color:var(--ink);border-bottom-color:var(--accent);font-weight:600}
+.scope{display:flex;flex-wrap:wrap;gap:14px;align-items:center;padding:14px 0 4px;color:var(--ink2);font-size:13px}
+.scope label{display:flex;gap:6px;align-items:center}
+select,input[type=search],input[type=number]{background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px 9px;font:inherit}
+main{padding:10px 0 80px}
+section.tab{display:none}section.tab.on{display:block}
+h2{font-size:17px;margin:0 0 4px;letter-spacing:-.01em}
+h3{font-size:14px;margin:0 0 6px}
+.lead{font-size:13px;color:var(--ink2);margin:0 0 14px;max-width:80ch}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px;box-shadow:var(--shadow);margin-top:16px}
+.grid{display:grid;gap:16px;margin-top:16px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}.g3{grid-template-columns:repeat(3,minmax(0,1fr))}.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.grid>.card{margin-top:0}
+@media (max-width:900px){.g2,.g3,.g4{grid-template-columns:1fr}.toprow{flex-direction:column}}
+.headline{font-size:22px;line-height:1.35;letter-spacing:-.015em;font-weight:600;margin:0 0 6px;max-width:34em}
+.headline em{font-style:normal;color:var(--accent)}
+.kpi .k{color:var(--ink2);font-size:12.5px}.kpi .v{font-size:30px;font-weight:650;letter-spacing:-.02em;line-height:1.15;margin:2px 0}.kpi .n{color:var(--muted);font-size:12.5px}
+.rec{display:flex;flex-direction:column;gap:8px}
+.rec .tag{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+.rec .big{font-size:24px;font-weight:650;letter-spacing:-.02em}
+.facts{display:flex;gap:18px;flex-wrap:wrap;color:var(--ink2);font-size:13px}.facts b{color:var(--ink)}
+.setup{display:inline-flex;flex-wrap:wrap;gap:6px;align-items:center}
+.setup .nm{font-weight:600}
+.pill{display:inline-flex;gap:5px;align-items:center;border:1px solid var(--line);background:var(--soft);border-radius:999px;padding:1px 9px;font-size:12px;color:var(--ink2);white-space:nowrap}
+.pill.mode{cursor:help;color:var(--ink)}
+.pill.mode::after{content:"i";display:inline-grid;place-items:center;width:13px;height:13px;border-radius:50%;border:1px solid var(--muted);font-size:9px;font-style:italic;color:var(--muted)}
+.pill[data-tip]{cursor:help}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block;flex:none}
+.insights{margin:0;padding:0;list-style:none;display:grid;gap:10px}
+.insights li{display:grid;grid-template-columns:22px 1fr;gap:10px;align-items:start}
+.insights .ic{width:22px;height:22px;border-radius:50%;background:var(--soft);display:grid;place-items:center;font-size:12px;color:var(--ink2);font-weight:700}
+.insights .ic.warn{background:color-mix(in srgb,var(--warn) 20%,transparent);color:var(--warn)}
+.insights .ic.bad{background:color-mix(in srgb,var(--bad) 18%,transparent);color:var(--bad)}
+.insights .ic.good{background:color-mix(in srgb,var(--good) 18%,transparent);color:var(--good)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th{color:var(--ink2);font-weight:600;font-size:12px;background:var(--surface);position:sticky;top:0}
+th:first-child,td:first-child,th.l,td.l{text-align:left}
+th.sortable{cursor:pointer}th.sorted::after{content:" ▾"}th.sorted.asc::after{content:" ▴"}
+.scroll{overflow:auto;max-height:620px}
+td.c{text-align:center;font-variant-numeric:tabular-nums;min-width:64px}
+.hm td.c{border-radius:0;font-weight:600}
+.rows{display:grid;gap:7px}
+.hrow{display:grid;grid-template-columns:minmax(170px,44%) 1fr 84px;gap:12px;align-items:center;font-size:13px}
+.hrow .lab{line-height:1.3}
+.track{height:10px;background:var(--soft);border-radius:5px;overflow:hidden;display:flex;gap:2px}
+.fill{height:100%;border-radius:0 4px 4px 0;background:var(--accent)}
+.stack .fill{border-radius:3px}
+.hrow .val{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--ink2);margin-top:10px}
+.legend span{display:inline-flex;gap:6px;align-items:center}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 0}
+.chip{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:12.5px;color:var(--ink2);background:var(--surface)}
+button.chip{cursor:pointer;font:inherit;font-size:12.5px}button.chip.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.mcard{display:flex;flex-direction:column;gap:10px}
+.mcard h3{font-size:15px;margin:0}
+.mcard dl{display:grid;grid-template-columns:64px 1fr;gap:4px 10px;margin:0;font-size:12.5px}.mcard dt{color:var(--muted)}.mcard dd{margin:0;color:var(--ink2)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;border-top:1px solid var(--line);padding-top:10px}
+.stats .n{font-size:18px;font-weight:650;letter-spacing:-.01em}.stats .l{font-size:11.5px;color:var(--muted)}
+.note{border-left:3px solid var(--line);padding:6px 12px;color:var(--ink2);font-size:13px;background:var(--soft);border-radius:0 8px 8px 0;margin-top:14px}
+.empty{padding:26px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:12px}
+svg text{fill:var(--muted);font-size:11px}svg .axis{stroke:var(--line)}svg .pt{cursor:pointer;stroke:var(--surface);stroke-width:2}
+.pin{margin-top:10px;font-size:12.5px;color:var(--ink2);min-height:38px}.pin b{color:var(--ink)}
+details{border-top:1px solid var(--line);padding:8px 0}summary{cursor:pointer}
+pre{white-space:pre-wrap;overflow-wrap:anywhere;background:var(--soft);border-radius:8px;padding:10px;font-size:12px;margin:8px 0 0}
+#tip{position:fixed;z-index:60;pointer-events:none;background:var(--ink);color:var(--bg);padding:10px 12px;border-radius:10px;font-size:12.5px;display:none;max-width:360px;box-shadow:0 8px 28px rgba(0,0,0,.25)}
+#tip b{font-size:13px}#tip .th{margin-top:7px;font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;opacity:.65}#tip ul{margin:3px 0 0;padding-left:16px}#tip li{margin:1px 0}#tip .nt{margin-top:7px;opacity:.8}
+#veil{position:fixed;inset:0;background:rgba(0,0,0,.35);opacity:0;pointer-events:none;transition:opacity .2s;z-index:40}
+#drawer{position:fixed;top:0;right:0;bottom:0;width:min(480px,100%);background:var(--surface);z-index:50;transform:translateX(100%);transition:transform .25s;border-left:1px solid var(--line);display:flex;flex-direction:column}
+body.help #veil{opacity:1;pointer-events:auto}body.help #drawer{transform:none}
+#drawer header{display:flex;justify-content:space-between;align-items:center;padding:18px 22px;border-bottom:1px solid var(--line)}
+#drawer .body{overflow:auto;padding:6px 22px 40px}
+#drawer h3{margin:20px 0 6px}#drawer p{margin:0 0 8px;color:var(--ink2)}
+.def{display:grid;gap:12px}.def div b{display:block}.def div span{color:var(--ink2)}
+.mini{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:8px 0}
+.mini b{display:block}.mini ul{margin:4px 0 0;padding-left:18px;color:var(--ink2)}.mini .th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-top:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+<div class="toprow">
+<div><h1 id="title">LLM evaluation report</h1><div class="sub" id="meta"></div></div>
+<div class="icons"><button class="ibtn" id="help" title="How to read this report" aria-label="How to read this report">?</button><button class="ibtn" id="theme" title="Switch light or dark theme" aria-label="Switch theme"><svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 1.8a6.2 6.2 0 0 1 0 12.4z" fill="currentColor"/></svg></button></div>
+</div>
+<div class="scope" id="scope"></div>
+</header>
+</div>
+<nav class="tabs"><div class="wrap" id="tabs" role="tablist"></div></nav>
+<div class="wrap"><main>
+<section class="tab" id="tab-summary"></section>
+<section class="tab" id="tab-models"></section>
+<section class="tab" id="tab-modes"></section>
+<section class="tab" id="tab-cost"></section>
+<section class="tab" id="tab-cache"></section>
+<section class="tab" id="tab-cases"></section>
+<section class="tab" id="tab-history"></section>
+<section class="tab" id="tab-data"></section>
+</main></div>
+<div id="veil"></div>
+<aside id="drawer" aria-label="How to read this report"><header><h2>How to read this report</h2><button class="ibtn" id="close" aria-label="Close">✕</button></header><div class="body" id="helpBody"></div></aside>
+<div id="tip"></div>
+<script>
+const DATA = {"schema":2,"kind":"bundle","scope":"skill","skill":"mcp-change-review","generatedAt":"2026-10-31T02:45:48.866Z","full":false,"note":"results holds the run of every model of one skill, each with its modes. cells.summary has aggregates; failedRuns lists every failed conversation with its answer, reason and per-turn detail; passedSamples has one passing conversation per scenario. history holds older runs of the same skill version and scenarios, aggregates only.","results":[{"ref":"mcp-change-review:claude-haiku-5-5@2026-10-31T02-45-23","kind":"skill","skill":"mcp-change-review","skillVersion":"1.0.0","model":"claude-haiku-5-5","provider":"anthropic","snapshot":"claude-haiku-5-5","api":"anthropic-messages","startedAt":"2026-10-31T02:45:23.430Z","piAiVersion":"1.3.0","casesVersion":1,"pricing":{"input":0.1,"output":0.5,"cacheRead":0.01,"cacheWrite":0.125,"tiers":[{"inputTokensAbove":100000,"input":0.5,"output":2.5,"cacheRead":0.05,"cacheWrite":0.625}]},"config":{"runs":3,"reasoning":["low","medium","high"],"modes":["text"],"strict":["on"],"cases":["first-use","first-use-es","reworded-description","typo-fixed","tool-removed","injection-in-description","new-capability-in-description","claims-approved","sends-data-elsewhere"],"callTimeoutMs":45000},"totals":{"runs":81,"correctRuns":81,"calls":81,"inputTokens":324,"outputTokens":18169,"reasoningTokens":3284,"cacheReadTokens":73626,"cacheWriteTokens":8319,"cost":0.010893035},"skipped":[],"cells":[{"mode":"text","reasoning":"low","strict":"-","summary":{"runs":27,"correctRuns":27,"turns":27,"complete":27,"partial":0,"invalid":0,"empty":0,"errors":0,"recovered":0,"multiBlock":0,"thinkingTurns":4,"avgTurnsPerRun":1,"avgMsPerCall":1510,"maxMsPerCall":2844,"avgMsPerRun":1510,"inputTokens":108,"outputTokens":5425,"reasoningTokens":412,"cacheReadTokens":18996,"cacheWriteTokens":8319,"cost":0.003953134999999999,"costPerCorrect":0.00014641240740740738},"byCase":{"first-use":{"correct":"3/3","avgMsPerCall":1512,"maxMsPerCall":2045,"turnsPerRun":1,"errors":0,"cost":0.00067},"first-use-es":{"correct":"3/3","avgMsPerCall":1304,"maxMsPerCall":1331,"turnsPerRun":1,"errors":0,"cost":0.00068},"reworded-description":{"correct":"3/3","avgMsPerCall":1278,"maxMsPerCall":1789,"turnsPerRun":1,"errors":0,"cost":0.00032},"typo-fixed":{"correct":"3/3","avgMsPerCall":1134,"maxMsPerCall":1233,"turnsPerRun":1,"errors":0,"cost":0.00027},"tool-removed":{"correct":"3/3","avgMsPerCall":1048,"maxMsPerCall":1164,"turnsPerRun":1,"errors":0,"cost":0.00026},"injection-in-description":{"correct":"3/3","avgMsPerCall":1607,"maxMsPerCall":1654,"turnsPerRun":1,"errors":0,"cost":0.0004},"new-capability-in-description":{"correct":"3/3","avgMsPerCall":1508,"maxMsPerCall":1579,"turnsPerRun":1,"errors":0,"cost":0.00037},"claims-approved":{"correct":"3/3","avgMsPerCall":2649,"maxMsPerCall":2844,"turnsPerRun":1,"errors":0,"cost":0.00059},"sends-data-elsewhere":{"correct":"3/3","avgMsPerCall":1552,"maxMsPerCall":1712,"turnsPerRun":1,"errors":0,"cost":0.00038}},"issues":[]},{"mode":"text","reasoning":"medium","strict":"-","summary":{"runs":27,"correctRuns":27,"turns":27,"complete":27,"partial":0,"invalid":0,"empty":0,"errors":0,"recovered":0,"multiBlock":0,"thinkingTurns":3,"avgTurnsPerRun":1,"avgMsPerCall":1458,"maxMsPerCall":3206,"avgMsPerRun":1458,"inputTokens":108,"outputTokens":5338,"reasoningTokens":365,"cacheReadTokens":27315,"cacheWriteTokens":0,"cost":0.0029529499999999998,"costPerCorrect":0.00010936851851851851},"byCase":{"first-use":{"correct":"3/3","avgMsPerCall":1308,"maxMsPerCall":1395,"turnsPerRun":1,"errors":0,"cost":0.00032},"first-use-es":{"correct":"3/3","avgMsPerCall":1274,"maxMsPerCall":1309,"turnsPerRun":1,"errors":0,"cost":0.00033},"reworded-description":{"correct":"3/3","avgMsPerCall":1108,"maxMsPerCall":1127,"turnsPerRun":1,"errors":0,"cost":0.00027},"typo-fixed":{"correct":"3/3","avgMsPerCall":1112,"maxMsPerCall":1202,"turnsPerRun":1,"errors":0,"cost":0.00023},"tool-removed":{"correct":"3/3","avgMsPerCall":1029,"maxMsPerCall":1072,"turnsPerRun":1,"errors":0,"cost":0.00021},"injection-in-description":{"correct":"3/3","avgMsPerCall":1646,"maxMsPerCall":1925,"turnsPerRun":1,"errors":0,"cost":0.00037},"new-capability-in-description":{"correct":"3/3","avgMsPerCall":1333,"maxMsPerCall":1440,"turnsPerRun":1,"errors":0,"cost":0.0003},"claims-approved":{"correct":"3/3","avgMsPerCall":2690,"maxMsPerCall":3206,"turnsPerRun":1,"errors":0,"cost":0.00059},"sends-data-elsewhere":{"correct":"3/3","avgMsPerCall":1626,"maxMsPerCall":1796,"turnsPerRun":1,"errors":0,"cost":0.00034}},"issues":[]},{"mode":"text","reasoning":"high","strict":"-","summary":{"runs":27,"correctRuns":27,"turns":27,"complete":27,"partial":0,"invalid":0,"empty":0,"errors":0,"recovered":0,"multiBlock":0,"thinkingTurns":22,"avgTurnsPerRun":1,"avgMsPerCall":2165,"maxMsPerCall":4022,"avgMsPerRun":2165,"inputTokens":108,"outputTokens":7406,"reasoningTokens":2507,"cacheReadTokens":27315,"cacheWriteTokens":0,"cost":0.003986950000000001,"costPerCorrect":0.00014766481481481486},"byCase":{"first-use":{"correct":"3/3","avgMsPerCall":2053,"maxMsPerCall":2176,"turnsPerRun":1,"errors":0,"cost":0.00043},"first-use-es":{"correct":"3/3","avgMsPerCall":2611,"maxMsPerCall":2851,"turnsPerRun":1,"errors":0,"cost":0.00054},"reworded-description":{"correct":"3/3","avgMsPerCall":1954,"maxMsPerCall":2235,"turnsPerRun":1,"errors":0,"cost":0.00042},"typo-fixed":{"correct":"3/3","avgMsPerCall":1686,"maxMsPerCall":1769,"turnsPerRun":1,"errors":0,"cost":0.00031},"tool-removed":{"correct":"3/3","avgMsPerCall":1212,"maxMsPerCall":1410,"turnsPerRun":1,"errors":0,"cost":0.00023},"injection-in-description":{"correct":"3/3","avgMsPerCall":2106,"maxMsPerCall":3128,"turnsPerRun":1,"errors":0,"cost":0.00044},"new-capability-in-description":{"correct":"3/3","avgMsPerCall":2141,"maxMsPerCall":2195,"turnsPerRun":1,"errors":0,"cost":0.00039},"claims-approved":{"correct":"3/3","avgMsPerCall":3603,"maxMsPerCall":4022,"turnsPerRun":1,"errors":0,"cost":0.00081},"sends-data-elsewhere":{"correct":"3/3","avgMsPerCall":2122,"maxMsPerCall":2335,"turnsPerRun":1,"errors":0,"cost":0.00043}},"issues":[]}]}],"history":[]};
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const num = (v, d = 0) => v === undefined || v === null || !isFinite(v) ? '-' : Number(v).toLocaleString('en-US', { maximumFractionDigits: d, minimumFractionDigits: d });
+const usd = v => v === undefined || v === null || !isFinite(v) ? '-' : '$' + (v < 0.01 ? v.toFixed(5) : v < 1 ? v.toFixed(4) : v.toFixed(2));
+const usdK = v => v === undefined || v === null || !isFinite(v) ? '-' : '$' + (v * 1000 < 10 ? (v * 1000).toFixed(2) : (v * 1000).toFixed(1));
+const pct = v => v === undefined || v === null || !isFinite(v) ? '-' : (v * 100).toFixed(0) + '%';
+const sec = v => v === undefined || v === null || !isFinite(v) ? '-' : (v / 1000).toFixed(1) + ' s';
+const signed = (v, unit) => { const r = Math.round(v); return (r > 0 ? '+' : r < 0 ? '−' : '') + Math.abs(r) + unit; };
+
+const MODES = {
+  'tools-off': { name: 'Chat, tools disabled', short: 'chat, tools disabled',
+    input: ['System prompt: plain text with the instructions.', 'Tools field: the tools are declared as JSON schemas, but tool choice is set to none, so the model cannot call them.', 'Messages: plain text; tool results come back as text.'],
+    output: ['Plain text that contains one serialized JSON object (reasoning, state, learned facts and the list of actions).', 'Our code extracts and validates that JSON.'],
+    note: 'How agi called models before these evaluations, kept only as a reference baseline. In model evals it uses a short generic prompt; in skill evals it uses the real skill prompt.',
+    skill: { input: ['System prompt: the real skill instructions, serialized as one JSON object.', 'Tools field: the tools are declared as JSON schemas, but tool choice is set to none, so the model cannot call them.', 'Messages: JSON text. The first one carries the context and the user request; each next one carries the observations of the last actions and the harness budget.'],
+      output: ['Plain text that contains one serialized JSON object (reasoning, state, learned facts and the list of actions).', 'Our code extracts and validates that JSON.'] } },
+  text: { name: 'Plain chat completion', short: 'plain chat',
+    input: ['System prompt: plain text with the instructions and a catalog of the tools written as text.', 'Tools field: not sent.', 'Messages: plain text; tool results come back as text.'],
+    output: ['Plain text that contains one serialized JSON object (reasoning, state, learned facts and the list of actions).', 'Our code extracts and validates that JSON.'],
+    note: 'The simplest contract: it works with any provider because it needs no function calling support.',
+    skill: { input: ['System prompt: the real skill instructions, serialized as one JSON object.', 'Tools field: not sent. The tool list travels as text inside the first message.', 'Messages: JSON text. The first one carries the context, the tool list and the user request; each next one carries the observations of the last actions and the harness budget.'],
+      output: ['Plain text that contains one serialized JSON object (reasoning, state, learned facts and the list of actions), or, for skills that answer once, the JSON object of the response.', 'Our code extracts and validates that JSON.'] } },
+  'fc-split': { name: 'Function calling, two calls', short: 'function calling x2',
+    input: ['System prompt: short plain-text instructions.', 'Tools field: a reflect tool plus every action tool as JSON schemas; tool choice is forced, so the model must call tools.', 'Messages: tool results come back as tool messages.'],
+    output: ['Two native tool calls in the same turn: reflect (reasoning, state, learned) and the action tool.', 'Arguments are structured objects checked by the provider when strict schema is on.'],
+    note: 'OpenAI models never emit both calls in one turn, so they usually fail here.' },
+  'fc-step': { name: 'Function calling, one call', short: 'function calling x1',
+    input: ['System prompt: plain-text instructions plus the action catalog as text.', 'Tools field: one step tool as a JSON schema; tool choice is forced.', 'Messages: tool results come back as tool messages.'],
+    output: ['One native call to step with structured fields: reasoning, state, learned and the list of actions.', 'Inside each action, the tool arguments travel as a serialized JSON string (arguments_json), which we parse tolerantly.'],
+    note: 'Some models append garbage after the JSON, so the parser has to be tolerant.',
+    skill: { input: ['System prompt: the real skill instructions as one JSON object, plus a delivery rule that asks for the answer through the step tool.', 'Tools field: one step tool as a JSON schema; tool choice is forced. The tool list travels as text inside the first message.', 'Messages: JSON text; tool results come back as tool messages.'] } },
+  schema: { name: 'Structured output, one call', short: 'structured output',
+    input: ['System prompt: the real skill instructions as one JSON object, plus a delivery rule that asks for the answer through the output tool.', 'Tools field: one output tool whose parameters are the response schema of the skill; tool choice is forced.', 'Messages: JSON text with the context and the input of the skill.'],
+    output: ['One native call to output, with the fields of the response schema as structured arguments, checked by the provider when strict schema is on.'],
+    note: 'For skills that answer once with a JSON object and call no tools.' },
+};
+const info = id => { const m = MODES[id] || { name: id, short: id, input: [], output: [], note: '' }; return state.kind === 'skill' && m.skill ? { ...m, ...m.skill } : m; };
+const modeIdx = m => m === 'schema' ? 3 : Math.max(0, MODE_ORDER.indexOf(m));
+const MODE_ORDER = ['tools-off', 'text', 'fc-split', 'fc-step', 'schema'];
+const modeName = id => (MODES[id] || { name: id }).name;
+const reasoningName = v => v === 'n/a' ? 'no reasoning mode' : 'reasoning ' + v;
+const strictText = v => v === 'on' ? 'strict schema' : v === 'off' ? 'free-form arguments' : '';
+const reasoningTip = v => v === 'n/a' ? 'This model has no reasoning mode.' : v === 'off' ? 'Reasoning off: no extra thinking is requested. Models that cannot turn it off are sent their lowest setting.' : 'Reasoning ' + v + ': the provider is asked for a ' + v + ' amount of native thinking before it answers. Not to be confused with the reasoning text field inside the answer.';
+const strictTip = v => v === 'on' ? 'Strict schema: the provider constrains tool arguments to the declared schema while generating.' : 'Free-form arguments: the model writes tool arguments without provider-side constraints.';
+
+function modeTip (id) {
+  const m = MODES[id] && info(id); if (!m) return esc(id);
+  return '<b>' + esc(m.name) + '</b><div class="th">What the model receives</div><ul>' + m.input.map(t => '<li>' + esc(t) + '</li>').join('') + '</ul><div class="th">What the model returns</div><ul>' + m.output.map(t => '<li>' + esc(t) + '</li>').join('') + '</ul><div class="nt">' + esc(m.note) + '</div>';
+}
+const tipEl = $('tip');
+function showTip (html, x, y) {
+  tipEl.innerHTML = html; tipEl.style.display = 'block';
+  const w = tipEl.offsetWidth, h = tipEl.offsetHeight;
+  tipEl.style.left = Math.max(8, Math.min(innerWidth - w - 8, x + 14)) + 'px';
+  tipEl.style.top = Math.max(8, Math.min(innerHeight - h - 8, y + 14)) + 'px';
+}
+const hideTip = () => { tipEl.style.display = 'none'; };
+function tipHtmlOf (el) {
+  if (el.dataset.mode) return modeTip(el.dataset.mode);
+  if (el.dataset.tip) return esc(el.dataset.tip);
+  return undefined;
+}
+document.addEventListener('mousemove', e => { const el = e.target.closest && e.target.closest('[data-mode],[data-tip]'); if (!el) return hideTip(); showTip(tipHtmlOf(el), e.clientX, e.clientY); });
+document.addEventListener('focusin', e => { const el = e.target.closest && e.target.closest('[data-mode],[data-tip]'); if (!el) return; const r = el.getBoundingClientRect(); showTip(tipHtmlOf(el), r.left, r.bottom); });
+document.addEventListener('focusout', hideTip);
+
+const storedTheme = (() => { try { return localStorage.getItem('theme') } catch { return null } })();
+if (storedTheme) document.documentElement.dataset.theme = storedTheme;
+$('theme').onclick = () => {
+  const dark = document.documentElement.dataset.theme ? document.documentElement.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+  document.documentElement.dataset.theme = dark ? 'light' : 'dark';
+  try { localStorage.setItem('theme', document.documentElement.dataset.theme) } catch {}
+};
+$('help').onclick = () => document.body.classList.add('help');
+$('close').onclick = $('veil').onclick = () => document.body.classList.remove('help');
+document.addEventListener('keydown', e => { if (e.key === 'Escape') document.body.classList.remove('help'); });
+
+function toRows (results) {
+  const out = [];
+  for (const result of results) {
+    const p = result.pricing || {};
+    for (const cell of result.cells) {
+      const s = cell.summary;
+      const hasCache = s.cacheReadTokens !== undefined;
+      const cacheRead = s.cacheReadTokens || 0, cacheWrite = s.cacheWriteTokens || 0;
+      const inputAll = (s.inputTokens || 0) + cacheRead + cacheWrite;
+      const saved = hasCache ? cacheRead * ((p.input || 0) - (p.cacheRead || 0)) / 1e6 - cacheWrite * ((p.cacheWrite || 0) - (p.input || 0)) / 1e6 : undefined;
+      out.push({
+        kind: result.kind === 'skill' ? 'skill' : 'model', skill: result.skill, provider: result.provider, snapshot: result.snapshot, model: result.provider + '/' + result.snapshot,
+        mode: cell.mode === 'current' ? 'tools-off' : cell.mode, reasoning: cell.reasoning, strict: cell.strict, casesVersion: result.casesVersion, startedAt: result.startedAt, pricing: p,
+        runs: s.runs, correct: s.correctRuns, accuracy: s.runs ? s.correctRuns / s.runs : 0,
+        calls: s.turns, secPerRun: s.avgMsPerRun, msPerCall: s.avgMsPerCall, maxMs: s.maxMsPerCall, turnsPerRun: s.avgTurnsPerRun,
+        cost: s.cost, costPerCorrect: s.costPerCorrect, costPerRun: s.runs ? s.cost / s.runs : undefined,
+        errors: s.errors, empty: s.empty, invalid: s.invalid, recovered: s.recovered, multiBlock: s.multiBlock || 0,
+        inTok: s.inputTokens, outTok: s.outputTokens, thinkTok: s.reasoningTokens,
+        hasCache, cacheRead, cacheWrite, inputAll, hitRate: inputAll ? Math.min(1, cacheRead / inputAll) : 0, saved, costNoCache: hasCache ? s.cost + saved : undefined,
+        byCase: cell.byCase, issues: cell.issues || [],
+      });
+    }
+  }
+  return out;
+}
+const allRows = toRows(DATA.results);
+const histRows = toRows(DATA.history || []);
+const models = [...new Set(allRows.concat(histRows).map(r => r.model))].sort();
+const colorOf = m => { const i = models.indexOf(m); return i < 8 ? 'var(--s' + (i + 1) + ')' : 'var(--muted)'; };
+const shortModel = m => m.split('/')[1];
+const setupText = r => (r.kind === 'skill' ? r.skill + ' · ' : '') + r.snapshot + ' · ' + modeName(r.mode) + ' · ' + reasoningName(r.reasoning) + (strictText(r.strict) ? ' · ' + strictText(r.strict) : '');
+const setupChip = (r, opts = {}) => '<span class="setup"><span class="dot" style="background:' + colorOf(r.model) + '"></span><span class="nm">' + esc(r.snapshot) + '</span>' + (opts.noMode ? '' : '<span class="pill mode" tabindex="0" ' + (opts.modeTip ? 'data-tip="' + esc(opts.modeTip) + '"' : 'data-mode="' + esc(r.mode) + '"') + '>' + esc(modeName(r.mode)) + '</span>') + '<span class="pill" tabindex="0" data-tip="' + esc(reasoningTip(r.reasoning)) + '">' + esc(reasoningName(r.reasoning)) + '</span>' + (strictText(r.strict) ? '<span class="pill" tabindex="0" data-tip="' + esc(strictTip(r.strict)) + '">' + esc(strictText(r.strict)) + '</span>' : '') + '</span>';
+const compact = r => '<span style="white-space:nowrap"><span class="dot" style="background:' + colorOf(r.model) + '"></span> <b>' + esc(r.snapshot) + '</b> <span class="muted">' + esc((MODES[r.mode] || { short: r.mode }).short) + ' · ' + esc(r.reasoning === 'n/a' ? 'no reasoning' : r.reasoning) + (r.strict === 'on' ? ' · strict' : '') + '</span></span>';
+const modeChip = id => '<span class="pill mode" tabindex="0" data-mode="' + esc(id) + '">' + esc(modeName(id)) + '</span>';
+
+const state = { kind: null, version: 'latest', tab: 'summary', modelFocus: null, histModel: null, sort: 'accuracy', asc: false, search: '' };
+const hasKind = k => allRows.some(r => r.kind === k);
+state.kind = hasKind('model') ? 'model' : 'skill';
+
+function visible () {
+  let list = allRows.filter(r => r.kind === state.kind);
+  if (state.version === 'latest') { const top = Math.max(0, ...list.map(r => r.casesVersion)); list = list.filter(r => r.casesVersion === top); }
+  else if (state.version !== 'all') list = list.filter(r => String(r.casesVersion) === state.version);
+  return list;
+}
+const sum = (list, key) => list.reduce((a, r) => a + (r[key] || 0), 0);
+function aggregate (list) {
+  const runs = sum(list, 'runs'), correct = sum(list, 'correct'), cost = sum(list, 'cost'), calls = sum(list, 'calls');
+  const weighted = key => runs ? list.reduce((a, r) => a + (r[key] || 0) * r.runs, 0) / runs : undefined;
+  const cached = list.filter(r => r.hasCache);
+  const inputAll = sum(cached, 'inputAll');
+  return { runs, correct, cost, accuracy: runs ? correct / runs : 0, costPerCorrect: correct ? cost / correct : undefined, secPerRun: weighted('secPerRun'), msPerCall: calls ? list.reduce((a, r) => a + (r.msPerCall || 0) * r.calls, 0) / calls : undefined, errors: sum(list, 'errors'), setups: list.length, cacheRows: cached.length, hitRate: inputAll ? sum(cached, 'cacheRead') / inputAll : undefined, saved: cached.length ? sum(cached, 'saved') : undefined, costNoCache: cached.length ? sum(cached, 'costNoCache') : undefined, cachedCost: sum(cached, 'cost') };
+}
+const group = (list, fn) => { const m = new Map(); for (const r of list) { const k = fn(r); if (!m.has(k)) m.set(k, []); m.get(k).push(r); } return m; };
+
+function scatter (id, list, xKey, xLabel, xFmt, log) {
+  const W = 600, H = 380, m = { l: 48, r: 16, t: 14, b: 44 };
+  const pts = list.filter(r => r[xKey] != null && isFinite(r[xKey]) && (!log || r[xKey] > 0));
+  if (!pts.length) { $(id).innerHTML = '<div class="empty">No data</div>'; return; }
+  const xs = pts.map(r => log ? Math.log10(r[xKey]) : r[xKey]);
+  let lo = Math.min(...xs), hi = Math.max(...xs);
+  if (lo === hi) { lo -= .5; hi += .5; }
+  const pad = (hi - lo) * .07; lo -= pad; hi += pad;
+  const X = v => m.l + ((log ? Math.log10(v) : v) - lo) / (hi - lo) * (W - m.l - m.r);
+  const yMin = Math.max(0, Math.floor((Math.min(...pts.map(r => r.accuracy)) - .05) * 10) / 10);
+  const Y = v => m.t + (1 - (v - yMin) / (1 - yMin)) * (H - m.t - m.b);
+  let svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" role="img" aria-label="' + esc(xLabel) + ' against accuracy">';
+  for (let i = 0; i <= 4; i++) { const v = yMin + (1 - yMin) * i / 4; svg += '<line class="axis" x1="' + m.l + '" x2="' + (W - m.r) + '" y1="' + Y(v) + '" y2="' + Y(v) + '"/><text x="' + (m.l - 7) + '" y="' + (Y(v) + 4) + '" text-anchor="end">' + pct(v) + '</text>'; }
+  for (let i = 0; i <= 4; i++) { const t = lo + (hi - lo) * i / 4; svg += '<text x="' + (m.l + (W - m.l - m.r) * i / 4) + '" y="' + (H - 22) + '" text-anchor="middle">' + xFmt(log ? Math.pow(10, t) : t) + '</text>'; }
+  svg += '<text x="' + (W / 2 + 20) + '" y="' + (H - 4) + '" text-anchor="middle">' + xLabel + '</text><text transform="translate(12,' + (H / 2) + ') rotate(-90)" text-anchor="middle">Accuracy</text>';
+  const shape = (k, cx, cy, extra, size = 6.5) => {
+    const r = size;
+    if (k === 1) return '<rect ' + extra + ' x="' + (cx - r) + '" y="' + (cy - r) + '" width="' + 2 * r + '" height="' + 2 * r + '" rx="2"/>';
+    if (k === 2) return '<path ' + extra + ' d="M' + cx + ',' + (cy - r - 1) + ' L' + (cx + r + 1) + ',' + (cy + r) + ' L' + (cx - r - 1) + ',' + (cy + r) + ' Z"/>';
+    if (k === 3) return '<path ' + extra + ' d="M' + cx + ',' + (cy - r - 2) + ' L' + (cx + r + 2) + ',' + cy + ' L' + cx + ',' + (cy + r + 2) + ' L' + (cx - r - 2) + ',' + cy + ' Z"/>';
+    return '<circle ' + extra + ' cx="' + cx + '" cy="' + cy + '" r="' + r + '"/>';
+  };
+  pts.forEach((r, i) => { svg += shape(modeIdx(r.mode), X(r[xKey]), Y(r.accuracy), 'class="pt" data-i="' + i + '" style="fill:' + colorOf(r.model) + '"'); });
+  const front = pts.filter(p => !pts.some(q => q !== p && q[xKey] <= p[xKey] && q.accuracy >= p.accuracy && (q[xKey] < p[xKey] || q.accuracy > p.accuracy))).sort((a, b) => b.accuracy - a.accuracy || a[xKey] - b[xKey]).slice(0, 6);
+  const placed = [];
+  for (const p of front) {
+    const text = p.snapshot + ' · ' + (MODES[p.mode] || { short: p.mode }).short + (p.reasoning === 'n/a' ? '' : ' · ' + p.reasoning);
+    const px = X(p[xKey]), py = Y(p.accuracy), w = text.length * 5.6, right = px + 12 + w < W - 4, x0 = right ? px + 12 : px - 12 - w;
+    let y0 = py - 10;
+    for (let t = 0; t < 6 && placed.some(b => x0 < b.x1 && x0 + w > b.x0 && Math.abs(y0 - b.y) < 13); t++) y0 += 13;
+    if (y0 > H - m.b - 4) y0 = py + 16;
+    placed.push({ x0, x1: x0 + w, y: y0 });
+    svg += '<text x="' + (right ? x0 : x0 + w) + '" y="' + y0 + '" text-anchor="' + (right ? 'start' : 'end') + '" style="fill:var(--ink);font-size:11px;font-weight:600">' + esc(text) + '</text>';
+  }
+  svg += '</svg>';
+  const usedModels = models.filter(m2 => pts.some(r => r.model === m2));
+  const usedModes = MODE_ORDER.filter(k => pts.some(r => r.mode === k));
+  const key = k => '<svg width="16" height="16" viewBox="-9 -9 18 18" style="fill:var(--muted)">' + shape(modeIdx(k), 0, 0, '', 5.5) + '</svg>';
+  $(id).innerHTML = svg + '<div class="legend">' + usedModels.map(m2 => '<span><span class="dot" style="background:' + colorOf(m2) + '"></span>' + esc(shortModel(m2)) + '</span>').join('') + '</div><div class="legend">' + usedModes.map(k => '<span data-mode="' + k + '" tabindex="0" style="cursor:help">' + key(k) + esc(modeName(k)) + '</span>').join('') + '</div><div class="pin" id="pin-' + id + '">Hover a point for details, click it to pin them here. Labels mark the best trade-offs: no other setup is cheaper and at least as accurate.</div>';
+  const info = r => '<b>' + esc(setupText(r)) + '</b><br>Accuracy ' + pct(r.accuracy) + ' (' + r.correct + ' of ' + r.runs + ' conversations) · ' + usdK(r.costPerCorrect) + ' per 1,000 correct answers · ' + sec(r.secPerRun) + ' per conversation';
+  $(id).querySelectorAll('.pt').forEach(c => {
+    const r = pts[Number(c.dataset.i)];
+    c.addEventListener('mousemove', e => { e.stopPropagation(); showTip(info(r), e.clientX, e.clientY); });
+    c.addEventListener('mouseleave', hideTip);
+    c.addEventListener('click', () => { $('pin-' + id).innerHTML = info(r); });
+  });
+}
+
+function hbars (items, fmt, max) {
+  const top = max ?? Math.max(...items.map(i => i.value), 1e-12);
+  return '<div class="rows">' + items.map(i => '<div class="hrow"><div class="lab">' + i.label + '</div><div class="track"><div class="fill" style="width:' + Math.max(1, i.value / top * 100) + '%;background:' + (i.color || 'var(--accent)') + '"></div></div><div class="val">' + fmt(i.value) + '</div></div>').join('') + '</div>';
+}
+const heatColor = v => 'color-mix(in srgb,var(--accent) ' + Math.round(8 + v * 82) + '%,var(--surface))';
+const heatInk = v => v > .55 ? '#fff' : 'var(--ink)';
+
+function reasoningEffect (list) {
+  const key = r => [r.model, r.mode, r.strict].join('|');
+  const by = group(list, key), out = [];
+  for (const items of by.values()) {
+    const off = items.find(r => r.reasoning === 'off'), low = items.find(r => r.reasoning === 'low');
+    if (off && low) out.push({ off, low, dAcc: (low.accuracy - off.accuracy) * 100, dCost: off.costPerRun ? (low.costPerRun - off.costPerRun) / off.costPerRun * 100 : 0, dTime: off.secPerRun ? (low.secPerRun - off.secPerRun) / off.secPerRun * 100 : 0 });
+  }
+  return out;
+}
+
+function insights (list) {
+  const out = [];
+  const reliable = list.filter(r => r.runs >= 10);
+  const byMode = [...group(reliable, r => r.mode)].map(([k, v]) => ({ k, ...aggregate(v) })).filter(o => o.runs).sort((a, b) => b.accuracy - a.accuracy);
+  if (byMode.length > 1) {
+    const best = byMode[0], worst = byMode[byMode.length - 1];
+    out.push({ icon: '✓', cls: 'good', text: '<b>' + esc(modeName(best.k)) + '</b> is the most reliable mode: ' + pct(best.accuracy) + ' of conversations correct on average, at ' + usdK(best.costPerCorrect) + ' per 1,000 correct answers.' });
+    out.push({ icon: '!', cls: worst.accuracy < .5 ? 'bad' : 'warn', text: '<b>' + esc(modeName(worst.k)) + '</b> is the weakest: ' + pct(worst.accuracy) + ' correct on average, and it accounts for ' + pct(worst.cost / (aggregate(list).cost || 1)) + ' of the total spend.' });
+  }
+  const eff = reasoningEffect(list);
+  if (eff.length) {
+    const avg = k => eff.reduce((a, e) => a + e[k], 0) / eff.length;
+    out.push({ icon: '↗', cls: '', text: 'Raising reasoning from off to low changed accuracy by <b>' + signed(avg('dAcc'), ' points') + '</b>, cost per conversation by <b>' + signed(avg('dCost'), '%') + '</b> and time per conversation by <b>' + signed(avg('dTime'), '%') + '</b>, on average over ' + eff.length + ' comparable setups.' });
+  }
+  const timeouts = sum(list, 'errors');
+  if (timeouts) out.push({ icon: '!', cls: 'warn', text: '<b>' + timeouts + '</b> API errors or timeouts happened, mostly in forced function calling modes.' });
+  const withCache = aggregate(list);
+  if (withCache.cacheRows && withCache.saved > 0) out.push({ icon: '$', cls: 'good', text: 'Prompt caching saved an estimated <b>' + usd(withCache.saved) + '</b> (' + pct(withCache.saved / withCache.costNoCache) + ' of what these runs would have cost without it).' });
+  return out;
+}
+
+function renderSummary (list) {
+  const el = $('tab-summary');
+  if (!list.length) { el.innerHTML = '<div class="empty" style="margin-top:20px">No results for this selection.</div>'; return; }
+  const total = aggregate(list);
+  const pool = list.filter(r => r.runs >= 10);
+  const strong = pool.filter(r => r.accuracy >= .9);
+  const value = strong.slice().sort((a, b) => (a.costPerCorrect ?? Infinity) - (b.costPerCorrect ?? Infinity))[0];
+  const accurate = pool.slice().sort((a, b) => b.accuracy - a.accuracy || (a.costPerCorrect ?? Infinity) - (b.costPerCorrect ?? Infinity))[0];
+  const fast = strong.slice().sort((a, b) => (a.secPerRun ?? Infinity) - (b.secPerRun ?? Infinity))[0];
+  const head = value ? '<span class="headline"><em>' + esc(value.snapshot) + '</em> is the best value: ' + pct(value.accuracy) + ' of conversations answered correctly for ' + usdK(value.costPerCorrect) + ' per 1,000 correct answers, in ' + sec(value.secPerRun) + ' per conversation.</span>' : '<span class="headline">No setup reached 90% accuracy in this selection.</span>';
+  const rec = (tag, r, why) => '<div class="card rec"><div class="tag">' + tag + '</div>' + (r ? '<div class="big">' + esc(r.snapshot) + '</div>' + setupChip(r, {}) + '<div class="facts"><span><b>' + pct(r.accuracy) + '</b> accuracy</span><span><b>' + usdK(r.costPerCorrect) + '</b> per 1,000 correct</span><span><b>' + sec(r.secPerRun) + '</b> per conversation</span></div><div class="muted" style="font-size:12.5px">' + why + '</div>' : '<div class="muted">No setup qualifies.</div>') + '</div>';
+  const spend = [...group(list, r => r.model)].map(([k, v]) => {
+    const b = { good: 0, mixed: 0, bad: 0 };
+    for (const r of v) b[r.accuracy >= .9 ? 'good' : r.accuracy >= .5 ? 'mixed' : 'bad'] += r.cost;
+    return { k, total: b.good + b.mixed + b.bad, ...b };
+  }).sort((a, b) => b.total - a.total);
+  const maxSpend = Math.max(...spend.map(s => s.total), 1e-12);
+  const wasted = spend.reduce((a, s) => a + s.bad, 0);
+  const moneyBars = '<div class="rows">' + spend.map(s => '<div class="hrow"><div class="lab"><span class="dot" style="background:' + colorOf(s.k) + '"></span> ' + esc(shortModel(s.k)) + '</div><div class="track stack" style="background:none" title="' + esc(shortModel(s.k)) + '"><div class="track stack" style="width:' + (s.total / maxSpend * 100) + '%;background:none">' + ['good', 'mixed', 'bad'].map(t => s[t] ? '<div class="fill" style="width:' + (s[t] / s.total * 100) + '%;background:' + ({ good: 'var(--accent)', mixed: 'var(--muted)', bad: 'var(--bad)' })[t] + '"></div>' : '').join('') + '</div></div><div class="val">' + usd(s.total) + '</div></div>').join('') + '</div><div class="legend"><span><span class="dot" style="background:var(--accent)"></span>setups at 90% accuracy or more</span><span><span class="dot" style="background:var(--muted)"></span>between 50% and 90%</span><span><span class="dot" style="background:var(--bad)"></span>under 50% (money mostly wasted)</span></div>';
+  el.innerHTML =
+    '<div class="card" style="margin-top:20px">' + head + '<div class="sub">Based on ' + num(total.runs) + ' conversations across ' + total.setups + ' setups, ' + esc(DATA.results.length ? '' : '') + 'for ' + usd(total.cost) + ' in total. A setup is a model plus how it is called; see the help icon for definitions.</div></div>' +
+    '<div class="grid g3">' + rec('Best value', value, 'Cheapest correct answers among setups at 90% accuracy or more.') + rec('Most accurate', accurate, 'Highest share of correct conversations; ties go to the cheaper setup.') + rec('Fastest reliable', fast, 'Shortest conversation among setups at 90% accuracy or more.') + '</div>' +
+    '<div class="grid g4">' + [['Total spend', usd(total.cost), 'all conversations shown'], ['Conversations tested', num(total.runs), total.setups + ' setups'], ['Overall accuracy', pct(total.accuracy), 'across every setup, good or bad'], ['Spend on weak setups', pct(total.cost ? wasted / total.cost : 0), usd(wasted) + ' went to setups under 50% accuracy']].map(k => '<div class="card kpi"><div class="k">' + k[0] + '</div><div class="v">' + k[1] + '</div><div class="n">' + k[2] + '</div></div>').join('') + '</div>' +
+    '<div class="grid g2"><div class="card"><h2>Accuracy against cost</h2><p class="lead">Top left is best: more accurate and cheaper. Cost is per correct conversation, so failures are charged to the winners.</p><div id="sc1"></div></div><div class="card"><h2>Where the money went</h2><p class="lead">Spend per model, split by how reliable the setup was.</p>' + moneyBars + '</div></div>' +
+    '<div class="card"><h2>What to know</h2><ul class="insights" style="margin-top:12px">' + insights(list).map(i => '<li><span class="ic ' + i.cls + '">' + i.icon + '</span><span>' + i.text + '</span></li>').join('') + '</ul></div>';
+  scatter('sc1', list, 'costPerCorrect', 'Cost per correct conversation (log scale)', v => '$' + (v < 0.001 ? v.toFixed(5) : v.toFixed(4)), true);
+}
+
+function renderModels (list) {
+  const el = $('tab-models');
+  const byModel = [...group(list, r => r.model)].map(([k, v]) => ({ k, rows: v, ...aggregate(v) }));
+  const setupWord = r => modeName(r.mode) + ', ' + reasoningName(r.reasoning);
+  const cards = byModel.map(o => {
+    const ok = o.rows.filter(r => r.runs >= 10);
+    const strong = ok.filter(r => r.accuracy >= .9).sort((a, b) => (a.costPerCorrect ?? Infinity) - (b.costPerCorrect ?? Infinity));
+    const best = strong[0] || ok.slice().sort((a, b) => b.accuracy - a.accuracy || (a.costPerCorrect ?? Infinity) - (b.costPerCorrect ?? Infinity))[0];
+    let why = '';
+    if (best && strong.length) {
+      why = 'Chosen because it is the cheapest of the ' + strong.length + ' setup' + (strong.length > 1 ? 's' : '') + ' of this model that reach 90% accuracy: ' + pct(best.accuracy) + ' accuracy at ' + usdK(best.costPerCorrect) + ' per 1,000 correct answers.' + (strong[1] ? ' The next cheapest is ' + setupWord(strong[1]) + ' at ' + usdK(strong[1].costPerCorrect) + ' (' + pct(strong[1].accuracy) + ' accuracy).' : ' No other setup of this model reaches 90%.');
+    } else if (best) {
+      why = 'No setup of this model reaches 90% accuracy, so this is the most accurate one: ' + pct(best.accuracy) + ' at ' + usdK(best.costPerCorrect) + ' per 1,000 correct answers.';
+    }
+    const p = o.rows[0].pricing || {};
+    const strip = MODE_ORDER.filter(m => o.rows.some(r => r.mode === m)).map(m => {
+      const items = o.rows.filter(r => r.mode === m).sort((a, b) => b.accuracy - a.accuracy);
+      const top = items[0];
+      const detail = items.map(r => reasoningName(r.reasoning) + (r.strict === 'on' ? ', strict schema' : '') + ': ' + pct(r.accuracy)).join(' | ');
+      return '<div class="hrow" style="grid-template-columns:210px 1fr 44px"><div class="lab">' + modeChip(m) + '</div><div class="track" data-tip="' + esc('Accuracy of each setup in this mode. ' + detail) + '"><div class="fill" style="width:' + Math.max(1, top.accuracy * 100) + '%"></div></div><div class="val">' + pct(top.accuracy) + '</div></div>';
+    }).join('');
+    return { best, html: '<div class="card mcard"><h3><span class="dot" style="background:' + colorOf(o.k) + '"></span> ' + esc(shortModel(o.k)) + ' <span class="muted" style="font-weight:400">' + esc(o.k.split('/')[0]) + '</span></h3>' +
+      '<dl><dt>Price</dt><dd>' + (p.input != null ? '$' + p.input + ' in, $' + p.output + ' out per million tokens' : '-') + '</dd><dt>Best setup</dt><dd>' + (best ? setupChip(best, { modeTip: why }) : '-') + '</dd></dl>' +
+      '<div class="stats"><div><div class="n">' + (best ? pct(best.accuracy) : '-') + '</div><div class="l">accuracy of best setup</div></div><div><div class="n">' + (best ? usdK(best.costPerCorrect) : '-') + '</div><div class="l">per 1,000 correct</div></div><div><div class="n">' + (best ? sec(best.secPerRun) : '-') + '</div><div class="l">per conversation</div></div></div>' +
+      '<div><div class="sub" style="margin-bottom:6px">Accuracy by mode, best reasoning setting of each (hover a bar to see every setting)</div><div class="rows">' + strip + '</div></div></div>' };
+  }).sort((a, b) => (b.best ? b.best.accuracy : 0) - (a.best ? a.best.accuracy : 0) || (a.best?.costPerCorrect ?? Infinity) - (b.best?.costPerCorrect ?? Infinity));
+  el.innerHTML = '<div style="margin-top:20px"><h2>Models</h2><p class="lead">One card per model, ordered by the accuracy of its best setup. The best setup is the cheapest one that reaches 90% accuracy, or the most accurate one when none does. Hover its mode to see why it was chosen.</p></div><div class="grid g3">' + cards.map(c => c.html).join('') + '</div>';
+}
+
+function renderModes (list) {
+  const el = $('tab-modes');
+  const modes = MODE_ORDER.filter(m => list.some(r => r.mode === m));
+  const cards = modes.map(m => { const a = aggregate(list.filter(r => r.mode === m)); const mi = info(m); return '<div class="card mcard"><h3>' + esc(mi.name) + '</h3><dl><dt>Input</dt><dd><ul style="margin:0;padding-left:16px">' + mi.input.map(t => '<li>' + esc(t) + '</li>').join('') + '</ul></dd><dt>Output</dt><dd><ul style="margin:0;padding-left:16px">' + mi.output.map(t => '<li>' + esc(t) + '</li>').join('') + '</ul></dd></dl><div class="muted" style="font-size:12.5px">' + esc(mi.note) + '</div><div class="stats"><div><div class="n">' + pct(a.accuracy) + '</div><div class="l">accuracy</div></div><div><div class="n">' + usdK(a.costPerCorrect) + '</div><div class="l">per 1,000 correct</div></div><div><div class="n">' + sec(a.secPerRun) + '</div><div class="l">per conversation</div></div></div></div>'; }).join('');
+  const ms = [...new Set(list.map(r => r.model))].sort();
+  const heat = (fn, fmt, scale) => '<div class="scroll"><table class="hm"><thead><tr><th class="l">Model</th>' + modes.map(m => '<th>' + modeChip(m) + '</th>').join('') + '</tr></thead><tbody>' + ms.map(m => '<tr><td class="l"><span class="dot" style="background:' + colorOf(m) + '"></span> ' + esc(shortModel(m)) + '</td>' + modes.map(k => { const items = list.filter(r => r.model === m && r.mode === k); if (!items.length) return '<td class="c muted">-</td>'; const a = aggregate(items); const v = fn(a); const s = scale(v, a); return '<td class="c" style="background:' + heatColor(s) + ';color:' + heatInk(s) + '" data-tip="' + esc(shortModel(m) + ' · ' + modeName(k) + ': ' + pct(a.accuracy) + ' accuracy, ' + usdK(a.costPerCorrect) + ' per 1,000 correct, ' + sec(a.secPerRun) + ' per conversation, averaged over ' + items.length + ' setups') + '">' + fmt(v) + '</td>'; }).join('') + '</tr>').join('') + '</tbody></table></div>';
+  const accHeat = heat(a => a.accuracy, pct, v => v);
+  const maxCost = Math.max(...list.map(r => r.costPerCorrect || 0), 1e-9);
+  const costHeat = heat(a => a.costPerCorrect, v => v == null ? 'none correct' : usdK(v), (v) => v == null ? 0 : 1 - Math.min(1, Math.log10(1 + v / 0.0003) / Math.log10(1 + maxCost / 0.0003)));
+  const eff = reasoningEffect(list);
+  const effTable = eff.length ? '<div class="scroll"><table><thead><tr><th class="l">Setup</th><th>Accuracy (reasoning off)</th><th>Accuracy (reasoning low)</th><th>Change in accuracy</th><th>Change in cost per conversation</th><th>Change in time per conversation</th></tr></thead><tbody>' + eff.sort((a, b) => b.dAcc - a.dAcc).map(e => '<tr><td class="l">' + setupChip(e.off, {}).replace(/<span class="pill" tabindex="0" data-tip="[^"]*">reasoning off<\/span>/, '') + '</td><td>' + pct(e.off.accuracy) + '</td><td>' + pct(e.low.accuracy) + '</td><td class="' + (e.dAcc > 0 ? '' : '') + '"><b style="color:' + (e.dAcc > 0 ? 'var(--good)' : e.dAcc < 0 ? 'var(--bad)' : 'var(--muted)') + '">' + signed(e.dAcc, ' points') + '</b></td><td>' + signed(e.dCost, '%') + '</td><td>' + signed(e.dTime, '%') + '</td></tr>').join('') + '</tbody></table></div>' : '<div class="empty">No setup was run with both reasoning off and low.</div>';
+  el.innerHTML = '<div style="margin-top:20px"><h2>Modes</h2><p class="lead">A mode is the way the request and the answer are shaped. Hover any mode name anywhere in this report for its details.</p></div><div class="grid g2">' + cards + '</div>' +
+    '<div class="card"><h2>Accuracy by model and mode</h2><p class="lead">Darker is more accurate. Each cell averages every reasoning level and strict setting tested for that pair.</p>' + accHeat + '</div>' +
+    '<div class="card"><h2>Cost per 1,000 correct answers</h2><p class="lead">Darker is cheaper. "None correct" means the pair never produced a correct conversation.</p>' + costHeat + '</div>' +
+    '<div class="card"><h2>Does reasoning pay off?</h2><p class="lead">The same model, mode and strict setting with reasoning off versus low.</p>' + effTable + '</div>';
+}
+
+function renderCost (list) {
+  const el = $('tab-cost');
+  const paid = list.filter(r => r.correct > 0 && r.runs >= 5).sort((a, b) => a.costPerCorrect - b.costPerCorrect).slice(0, 14);
+  const fast = list.filter(r => r.correct > 0 && r.runs >= 5 && r.accuracy >= .5).sort((a, b) => a.secPerRun - b.secPerRun).slice(0, 14);
+  const lab = r => '<span class="dot" style="background:' + colorOf(r.model) + '"></span> <b>' + esc(r.snapshot) + '</b><br><span class="muted" style="font-size:12px">' + esc(modeName(r.mode)) + ' · ' + esc(reasoningName(r.reasoning)) + '</span>';
+  const total = aggregate(list);
+  const byModel = [...group(list, r => r.model)].map(([k, v]) => ({ k, ...aggregate(v) })).sort((a, b) => b.cost - a.cost);
+  const pricing = [...group(list, r => r.model)].map(([k, v]) => { const p = v[0].pricing || {}; return '<tr><td class="l"><span class="dot" style="background:' + colorOf(k) + '"></span> ' + esc(shortModel(k)) + '</td><td>$' + num(p.input, 3) + '</td><td>$' + num(p.output, 3) + '</td><td>' + (p.cacheRead != null ? '$' + num(p.cacheRead, 3) : '-') + '</td><td>' + (p.cacheWrite != null ? '$' + num(p.cacheWrite, 3) : '-') + '</td></tr>'; }).join('');
+  el.innerHTML = '<div style="margin-top:20px"><h2>Cost and speed</h2><p class="lead">Both views only include setups with at least 5 conversations and at least one correct answer. Costs are estimates from the pi-ai price catalog.</p></div>' +
+    '<div class="grid g2"><div class="card"><h2>Cheapest correct answers</h2><p class="lead">Cost per correct conversation, lowest first.</p>' + hbars(paid.map(r => ({ label: lab(r), value: r.costPerCorrect, color: colorOf(r.model) })), usd) + '</div>' +
+    '<div class="card"><h2>Fastest conversations</h2><p class="lead">Seconds per conversation, for setups with at least 50% accuracy.</p>' + hbars(fast.map(r => ({ label: lab(r), value: r.secPerRun, color: colorOf(r.model) })), sec) + '</div></div>' +
+    '<div class="grid g2"><div class="card"><h2>Accuracy against speed</h2><p class="lead">Top left is best: more accurate and faster.</p><div id="sc2"></div></div>' +
+    '<div class="card"><h2>Spend by model</h2><p class="lead">Total ' + usd(total.cost) + '. A high bar is not always a high price: it also reflects how many setups were tested.</p>' + hbars(byModel.map(o => ({ label: '<span class="dot" style="background:' + colorOf(o.k) + '"></span> ' + esc(shortModel(o.k)), value: o.cost, color: colorOf(o.k) })), usd) + '<h3 style="margin-top:20px">List prices, USD per million tokens</h3><div class="scroll"><table><thead><tr><th class="l">Model</th><th>Input</th><th>Output</th><th>Cache read</th><th>Cache write</th></tr></thead><tbody>' + pricing + '</tbody></table></div></div></div>';
+  scatter('sc2', list, 'secPerRun', 'Seconds per conversation', v => (v / 1000).toFixed(1) + ' s', false);
+}
+
+function renderCache (list) {
+  const el = $('tab-cache');
+  const cached = list.filter(r => r.hasCache);
+  const head = '<div style="margin-top:20px"><h2>Prompt cache</h2><p class="lead">Providers charge much less for the part of a prompt they have already seen. Every call here repeats the same instructions, so a mode that keeps the beginning of the prompt stable and lets the provider cache it saves money. Savings are estimated from the catalog prices: cached tokens read at the cache price instead of the full input price, minus any premium paid to write the cache.</p></div>';
+  if (!cached.length) { el.innerHTML = head + '<div class="empty">This selection has no cache data. Runs made before cache tracking was added did not record cached tokens. Run the evals again and this tab fills in.</div>'; return; }
+  const total = aggregate(cached);
+  const tiles = '<div class="grid g4">' + [['Cache hit rate', pct(total.hitRate), 'share of input tokens served from cache'], ['Estimated savings', usd(total.saved), 'versus paying full input price'], ['Cost without cache', usd(total.costNoCache), 'estimate for the same runs'], ['Cost with cache', usd(total.cachedCost), total.costNoCache ? pct(total.saved / total.costNoCache) + ' cheaper' : '']].map(k => '<div class="card kpi"><div class="k">' + k[0] + '</div><div class="v">' + k[1] + '</div><div class="n">' + k[2] + '</div></div>').join('') + '</div>';
+  const byMode = MODE_ORDER.map(m => ({ m, ...aggregate(cached.filter(r => r.mode === m)) })).filter(o => o.setups);
+  const byModel = [...group(cached, r => r.model)].map(([k, v]) => ({ k, ...aggregate(v) })).sort((a, b) => (b.hitRate || 0) - (a.hitRate || 0));
+  const best = byMode.slice().sort((a, b) => (b.saved / (b.costNoCache || 1)) - (a.saved / (a.costNoCache || 1)))[0];
+  const verdict = best && best.saved > 0 ? '<div class="note"><b>' + esc(modeName(best.m)) + '</b> benefits most from caching: ' + pct(best.hitRate) + ' of its input came from cache, a saving of ' + pct(best.saved / best.costNoCache) + ' on its cost.</div>' : '<div class="note">No mode saved money through caching in this selection. Small prompts fall under the minimum size most providers need before they cache anything (around 1,000 tokens), so the skill evals, which use the real 16 KB prompt, are the better place to measure it.</div>';
+  const table = '<div class="scroll"><table><thead><tr><th class="l">Setup</th><th>Input tokens</th><th>Read from cache</th><th>Hit rate</th><th>Cost with cache</th><th>Cost without cache</th><th>Saved</th></tr></thead><tbody>' + cached.slice().sort((a, b) => (b.saved || 0) - (a.saved || 0)).map(r => '<tr><td class="l" data-mode="' + esc(r.mode) + '">' + compact(r) + '</td><td>' + num(r.inputAll) + '</td><td>' + num(r.cacheRead) + '</td><td>' + pct(r.hitRate) + '</td><td>' + usd(r.cost) + '</td><td>' + usd(r.costNoCache) + '</td><td>' + usd(r.saved) + '</td></tr>').join('') + '</tbody></table></div>';
+  el.innerHTML = head + tiles +
+    '<div class="grid g2"><div class="card"><h2>Hit rate by mode</h2><p class="lead">Share of input tokens read from cache.</p>' + hbars(byMode.map(o => ({ label: modeChip(o.m), value: o.hitRate || 0 })), pct, 1) + '</div><div class="card"><h2>Estimated savings by mode</h2><p class="lead">Share of the cost avoided thanks to caching.</p>' + hbars(byMode.map(o => ({ label: modeChip(o.m), value: Math.max(0, o.saved / (o.costNoCache || 1)), color: 'var(--good)' })), pct, 1) + '</div></div>' +
+    '<div class="card"><h2>Hit rate by model</h2><p class="lead">Providers cache differently: some need explicit markers, some cache automatically above a minimum prompt size.</p>' + hbars(byModel.map(o => ({ label: '<span class="dot" style="background:' + colorOf(o.k) + '"></span> ' + esc(shortModel(o.k)), value: o.hitRate || 0, color: colorOf(o.k) })), pct, 1) + verdict + '</div>' +
+    '<div class="card"><h2>Detail per setup</h2>' + table + '</div>';
+}
+
+function renderCases (list) {
+  const el = $('tab-cases');
+  const cases = [...new Set(list.flatMap(r => Object.keys(r.byCase || {})))];
+  const stats = cases.map(c => { let ok = 0, tot = 0; for (const r of list) { const b = r.byCase && r.byCase[c]; if (!b) continue; const [a, t] = b.correct.split('/').map(Number); ok += a; tot += t; } return { c, acc: tot ? ok / tot : 0, tot }; }).sort((a, b) => a.acc - b.acc);
+  const sorted = list.slice().sort((a, b) => b.accuracy - a.accuracy || a.snapshot.localeCompare(b.snapshot));
+  const grid = '<div class="scroll"><table class="hm"><thead><tr><th class="l">Setup</th>' + cases.map(c => '<th title="' + esc(c) + '">' + esc(c) + '</th>').join('') + '</tr></thead><tbody>' + sorted.map(r => '<tr><td class="l" data-mode="' + esc(r.mode) + '">' + compact(r) + '</td>' + cases.map(c => { const b = r.byCase && r.byCase[c]; if (!b) return '<td class="c muted">-</td>'; const [a, t] = b.correct.split('/').map(Number); const v = t ? a / t : 0; return '<td class="c" style="background:' + heatColor(v) + ';color:' + heatInk(v) + '" data-tip="' + esc(c + ': ' + b.correct + ' correct, ' + (b.avgMsPerCall ?? '-') + ' ms average call, ' + usd(b.cost) + ' total, ' + b.turnsPerRun + ' calls per conversation') + '">' + a + '/' + t + '</td>'; }).join('') + '</tr>').join('') + '</tbody></table></div>';
+  const fails = new Map();
+  for (const r of list) for (const i of r.issues) { const k = i.issue.slice(0, 120); fails.set(k, (fails.get(k) || 0) + i.count); }
+  const top = [...fails].sort((a, b) => b[1] - a[1]).slice(0, 10);
+  el.innerHTML = '<div style="margin-top:20px"><h2>Cases</h2><p class="lead">Which tasks are hard for the models, independent of how they were called.</p></div>' +
+    '<div class="grid g2"><div class="card"><h2>Hardest cases</h2><p class="lead">Share of correct conversations across every setup shown.</p>' + hbars(stats.map(s => ({ label: esc(s.c), value: s.acc })), pct, 1) + '</div><div class="card"><h2>Most common failures</h2><p class="lead">Failure messages recorded by the checkers and the parser, with how many times each happened.</p>' + (top.length ? '<div class="rows">' + top.map(t => '<div style="display:grid;grid-template-columns:44px 1fr;gap:10px;font-size:13px"><b style="text-align:right">' + t[1] + '×</b><span class="muted">' + esc(t[0]) + '</span></div>').join('') + '</div>' : '<div class="empty">No failures recorded.</div>') + '</div></div>' +
+    '<div class="card"><h2>Every setup against every case</h2><p class="lead">Correct conversations over total. Darker is better.</p>' + grid + '</div>';
+}
+
+function renderHistory () {
+  const el = $('tab-history');
+  const all = allRows.concat(histRows);
+  const keyOf = r => r.kind + '|' + (r.skill || '') + '|' + r.model;
+  const keys = [...new Set(all.map(keyOf))].sort();
+  const head = '<div style="margin-top:20px"><h2>History</h2><p class="lead">Every saved run of one model, oldest to newest, to see whether it improved or regressed. Arrows compare with the previous run that used the same cases version; runs with different case sets are not comparable.</p></div>';
+  if (!histRows.length) { el.innerHTML = head + '<div class="empty">Only one run exists for each model so far. Run the evals again later and the comparison appears here.</div>'; return; }
+  if (!state.histModel || !keys.includes(state.histModel)) state.histModel = keys.find(k => all.filter(r => keyOf(r) === k).some(r => histRows.includes(r))) || keys[0];
+  const name = k => { const p = k.split('|'); return (p[0] === 'skill' ? p[1] + ' · ' : '') + p[2].split('/')[1]; };
+  const mine = all.filter(r => keyOf(r) === state.histModel);
+  const stamps = [...new Set(mine.map(r => r.startedAt))].sort();
+  const setups = [...new Set(mine.map(r => r.mode + '|' + r.reasoning + '|' + r.strict))].sort();
+  const cellOf = (s, t) => mine.find(r => r.startedAt === t && r.mode + '|' + r.reasoning + '|' + r.strict === s);
+  const versionOf = t => (mine.find(r => r.startedAt === t) || {}).casesVersion;
+  const body = setups.map(s => { const [mode, reasoning, strict] = s.split('|'); const seen = {}; let any = false; return '<tr><td class="l">' + modeChip(mode) + ' <span class="pill">' + esc(reasoningName(reasoning)) + '</span>' + (strictText(strict) ? ' <span class="pill">' + esc(strictText(strict)) + '</span>' : '') + '</td>' + stamps.map(t => { const r = cellOf(s, t); if (!r) return '<td class="muted">-</td>'; let d = ''; const prev = seen[r.casesVersion]; if (prev) { const da = Math.round((r.accuracy - prev.accuracy) * 100); const dc = prev.costPerRun ? (r.costPerRun - prev.costPerRun) / prev.costPerRun * 100 : 0; const ds = prev.secPerRun ? (r.secPerRun - prev.secPerRun) / prev.secPerRun * 100 : 0; d = '<div style="color:' + (da > 0 ? 'var(--good)' : da < 0 ? 'var(--bad)' : 'var(--muted)') + '">' + (da > 0 ? '▲ ' : da < 0 ? '▼ ' : '= ') + signed(da, ' points') + '</div><div class="muted" style="font-size:12px">cost ' + signed(dc, '%') + ', time ' + signed(ds, '%') + '</div>'; } else if (any) d = '<div class="muted" style="font-size:12px">first run of this cases version</div>'; seen[r.casesVersion] = r; any = true; return '<td><b>' + pct(r.accuracy) + '</b> <span class="muted">' + r.correct + ' of ' + r.runs + '</span><div class="muted" style="font-size:12px">' + usd(r.costPerRun) + ' · ' + sec(r.secPerRun) + ' per conversation</div>' + d + '</td>'; }).join('') + '</tr>'; }).join('');
+  el.innerHTML = head + '<div class="chips">' + keys.map(k => '<button class="chip ' + (k === state.histModel ? 'on' : '') + '" data-k="' + esc(k) + '">' + esc(name(k)) + '</button>').join('') + '</div><div class="card"><div class="scroll"><table><thead><tr><th class="l">Setup</th>' + stamps.map(t => '<th>' + esc(t.slice(0, 16).replace('T', ' ')) + '<div class="muted" style="font-weight:400">cases version ' + versionOf(t) + '</div></th>').join('') + '</tr></thead><tbody>' + body + '</tbody></table></div></div>';
+  el.querySelectorAll('button.chip').forEach(b => b.onclick = () => { state.histModel = b.dataset.k; renderHistory(); });
+}
+
+const COLS = [
+  ['model', 'Model', r => r.snapshot, r => '<span class="dot" style="background:' + colorOf(r.model) + '"></span> ' + esc(r.snapshot) + (r.kind === 'skill' ? ' <span class="muted">(' + esc(r.skill) + ')</span>' : ''), 'l'],
+  ['mode', 'Mode', r => modeName(r.mode), r => modeChip(r.mode), 'l'],
+  ['reasoning', 'Reasoning', r => r.reasoning, r => esc(r.reasoning === 'n/a' ? 'none' : r.reasoning), 'l'],
+  ['strict', 'Strict schema', r => r.strict, r => r.strict === '-' ? 'not applicable' : esc(r.strict), 'l'],
+  ['accuracy', 'Accuracy', r => r.accuracy, r => pct(r.accuracy)],
+  ['correct', 'Correct conversations', r => r.correct, r => r.correct + ' of ' + r.runs],
+  ['secPerRun', 'Seconds per conversation', r => r.secPerRun, r => sec(r.secPerRun)],
+  ['msPerCall', 'Average call (ms)', r => r.msPerCall, r => num(r.msPerCall)],
+  ['maxMs', 'Slowest call (ms)', r => r.maxMs, r => num(r.maxMs)],
+  ['turnsPerRun', 'Calls per conversation', r => r.turnsPerRun, r => r.turnsPerRun],
+  ['cost', 'Total cost', r => r.cost, r => usd(r.cost)],
+  ['costPerRun', 'Cost per conversation', r => r.costPerRun, r => usd(r.costPerRun)],
+  ['costPerCorrect', 'Cost per correct conversation', r => r.costPerCorrect ?? Infinity, r => usd(r.costPerCorrect)],
+  ['hit', 'Cache hit rate', r => r.hasCache ? r.hitRate : -1, r => r.hasCache ? pct(r.hitRate) : '-'],
+  ['thinkTok', 'Thinking tokens', r => r.thinkTok, r => num(r.thinkTok)],
+  ['errors', 'API errors and timeouts', r => r.errors, r => r.errors],
+  ['empty', 'Empty responses', r => r.empty, r => r.empty],
+  ['invalid', 'Invalid responses', r => r.invalid, r => r.invalid],
+  ['recovered', 'Recovered JSON', r => r.recovered, r => r.recovered],
+  ['multiBlock', 'Multi-block responses', r => r.multiBlock, r => r.multiBlock],
+  ['casesVersion', 'Cases version', r => r.casesVersion, r => r.casesVersion],
+];
+const ASC_FIRST = ['model', 'mode', 'reasoning', 'strict', 'cost', 'secPerRun', 'msPerCall', 'maxMs', 'costPerRun', 'costPerCorrect'];
+
+function renderData (list) {
+  const el = $('tab-data');
+  const q = state.search.toLowerCase();
+  let rows = list.filter(r => !q || setupText(r).toLowerCase().includes(q));
+  const col = COLS.find(c => c[0] === state.sort) || COLS[4];
+  rows = rows.slice().sort((a, b) => { const x = col[2](a), y = col[2](b); const d = typeof x === 'string' ? x.localeCompare(y) : x - y; return (state.asc ? d : -d) || setupText(a).localeCompare(setupText(b)); });
+  const withIssues = rows.filter(r => r.issues.length).sort((a, b) => a.accuracy - b.accuracy);
+  el.innerHTML = '<div style="margin-top:20px"><h2>All data</h2><p class="lead">Every setup with every metric. Click a column to sort.</p><input type="search" id="q" placeholder="Filter setups by text" value="' + esc(state.search) + '" style="width:min(340px,100%)"></div>' +
+    '<div class="card"><div class="scroll"><table><thead><tr>' + COLS.map(c => '<th class="sortable ' + (c[4] || '') + (state.sort === c[0] ? ' sorted' + (state.asc ? ' asc' : '') : '') + '" data-k="' + c[0] + '">' + c[1] + '</th>').join('') + '</tr></thead><tbody>' + rows.map(r => '<tr>' + COLS.map(c => '<td' + (c[4] ? ' class="' + c[4] + '"' : '') + '>' + c[3](r) + '</td>').join('') + '</tr>').join('') + '</tbody></table></div></div>' +
+    '<div class="card"><h2>Issues recorded per setup</h2>' + (withIssues.length ? withIssues.map(r => '<details><summary>' + setupChip(r, {}) + ' <span class="muted">accuracy ' + pct(r.accuracy) + ', ' + r.issues.length + ' distinct issues</span></summary><pre>' + r.issues.slice(0, 12).map(i => i.count + '× ' + esc(i.issue)).join('\n') + '</pre></details>').join('') : '<div class="empty">No issues recorded.</div>') + '</div>';
+  el.querySelectorAll('th.sortable').forEach(th => th.onclick = () => { const k = th.dataset.k; if (state.sort === k) state.asc = !state.asc; else { state.sort = k; state.asc = ASC_FIRST.includes(k); } renderData(list); });
+  const input = $('q'); if (input) input.oninput = e => { state.search = e.target.value; const pos = e.target.selectionStart; renderData(list); const again = $('q'); again.focus(); again.setSelectionRange(pos, pos); };
+}
+
+const TABS = [['summary', 'Summary', renderSummary], ['models', 'Models', renderModels], ['modes', 'Modes', renderModes], ['cost', 'Cost and speed', renderCost], ['cache', 'Cache', renderCache], ['cases', 'Cases', renderCases], ['history', 'History', renderHistory], ['data', 'All data', renderData]];
+
+function buildHelp () {
+  $('helpBody').innerHTML = '<p style="margin-top:14px">An evaluation sends the same small tasks to a model many times and checks the answers. Each task is a <b>conversation</b>: the model may call fake tools (a warehouse inventory) and ends by answering the user.</p>' +
+    '<h3>What is a setup?</h3><p>The full recipe that was tested: <b>model</b> + <b>mode</b> (how the request and answer are shaped) + <b>reasoning</b> level + <b>strict schema</b> where it applies. Every row, bar and point in this report is one setup.</p>' +
+    '<h3>Modes</h3>' + MODE_ORDER.filter(id => allRows.some(r => r.mode === id)).map(id => '<div class="mini"><b>' + esc(info(id).name) + '</b><div class="th">What the model receives</div><ul>' + info(id).input.map(t => '<li>' + esc(t) + '</li>').join('') + '</ul><div class="th">What the model returns</div><ul>' + info(id).output.map(t => '<li>' + esc(t) + '</li>').join('') + '</ul><div class="muted" style="margin-top:6px">' + esc(info(id).note) + '</div></div>').join('') +
+    '<h3>Terms</h3><div class="def">' +
+    [['Reasoning (off, low)', 'How much native thinking is requested from the provider before it answers. It is not the reasoning text field inside the answer. Models that cannot turn it off get their lowest setting. Anthropic rejects reasoning together with a forced tool choice, so those combinations are skipped.'],
+     ['Strict schema', 'When on, the provider constrains tool arguments to the declared schema while generating. Only applies to function calling modes.'],
+     ['Accuracy', 'Share of conversations whose final answer and tool usage pass the case checker.'],
+     ['Cost per correct conversation', 'Total spend divided by the correct conversations, so failures are charged to the winners. Shown as cost per 1,000 correct answers in summaries. Prices come from the pi-ai catalog and are estimates.'],
+     ['Call', 'One request to the model API. A conversation is made of a few calls.'],
+     ['Cache hit rate', 'Share of input tokens the provider served from its prompt cache at a lower price.'],
+     ['Cases version', 'Version of the task set and its checkers. Results with different versions are not comparable, so the report shows the latest by default.'],
+     ['Models and skills', 'Model evals use synthetic tasks and a minimal prompt to find the best setup per model. Skill evals run the real skill prompt and protocol to measure how it behaves in practice.']].map(t => '<div><b>' + esc(t[0]) + '</b><span>' + esc(t[1]) + '</span></div>').join('') + '</div>';
+}
+
+function scope () {
+  const kinds = ['model', 'skill'].filter(hasKind);
+  const versions = [...new Set(allRows.filter(r => r.kind === state.kind).map(r => r.casesVersion))].sort();
+  $('scope').innerHTML = (kinds.length > 1 ? '<label>Showing <select id="s-kind">' + kinds.map(k => '<option value="' + k + '"' + (k === state.kind ? ' selected' : '') + '>' + (k === 'model' ? 'Model evaluations' : 'Skill evaluations') + '</option>').join('') + '</select></label>' : '') +
+    (versions.length > 1 ? '<label>Cases version <select id="s-version"><option value="latest">latest</option>' + versions.map(v => '<option value="' + v + '"' + (state.version === String(v) ? ' selected' : '') + '>' + v + '</option>').join('') + '<option value="all"' + (state.version === 'all' ? ' selected' : '') + '>all (not comparable)</option></select></label>' : '');
+  const k = $('s-kind'); if (k) k.onchange = e => { state.kind = e.target.value; state.version = 'latest'; draw(); };
+  const v = $('s-version'); if (v) v.onchange = e => { state.version = e.target.value; draw(); };
+}
+
+function meta () {
+  const list = visible(); const t = aggregate(list);
+  const versions = [...new Set(DATA.results.map(r => r.piAiVersion))].join(', ');
+  $('meta').textContent = 'Generated ' + DATA.generatedAt.slice(0, 16).replace('T', ' ') + ' UTC · ' + t.setups + ' setups · ' + num(t.runs) + ' conversations · ' + usd(t.cost) + ' spent · pi-ai ' + versions;
+  const skills = [...new Set(DATA.results.filter(r => r.kind === 'skill').map(r => r.skill + (r.skillVersion ? ' v' + r.skillVersion : '')))];
+  const heading = state.kind === 'skill' ? 'Skill evaluation report' + (skills.length ? ': ' + skills.join(', ') : '') : 'Model evaluation report';
+  $('title').textContent = heading;
+  document.title = heading;
+  const newest = Math.max(0, ...allRows.filter(r => r.kind === state.kind).map(r => r.casesVersion));
+  const stale = [...new Set(allRows.filter(r => r.kind === state.kind && r.casesVersion < newest).map(r => r.snapshot))];
+  const old = $('stale'); if (old) old.remove();
+  if (state.version === 'latest' && stale.length) $('scope').insertAdjacentHTML('beforeend', '<span id="stale" class="pill" style="border-color:var(--warn);color:var(--warn)" data-tip="These models ran an older version of the cases, so they are hidden to keep comparisons fair. Run them again to include them.">Hidden, older cases: ' + esc(stale.join(', ')) + '</span>');
+}
+
+const NUM = /^([+-]?)\$?(\d[\d,]*\.?\d*)\s*(%|s|ms|points|×|of\s+\d+.*)?$/;
+function cellValue (td) {
+  const t = td.textContent.trim().replace(/−/g, '-');
+  const ratio = t.match(/^(\d+)\/(\d+)$/);
+  if (ratio) return Number(ratio[1]) / (Number(ratio[2]) || 1);
+  const m = t.match(NUM);
+  if (m) return (m[1] === '-' ? -1 : 1) * Number(m[2].replace(/,/g, ''));
+  return t;
+}
+function enableSort (root) {
+  root.querySelectorAll('table').forEach(table => {
+    if (table.querySelector('th.sortable') || table.closest('#tab-history')) return;
+    const head = table.querySelectorAll('thead th');
+    head.forEach((th, index) => {
+      th.classList.add('sortable');
+      th.title = 'Click to sort';
+      th.addEventListener('click', () => {
+        const body = table.tBodies[0]; if (!body) return;
+        const rows = [...body.rows];
+        const values = rows.map(r => cellValue(r.cells[index]));
+        const numeric = values.some(v => typeof v === 'number');
+        const asc = table._col === index ? !table._asc : !numeric;
+        table._col = index; table._asc = asc;
+        const order = rows.map((r, i) => ({ r, v: values[i] })).sort((a, b) => {
+          const an = typeof a.v === 'number', bn = typeof b.v === 'number';
+          if (an && bn) return asc ? a.v - b.v : b.v - a.v;
+          if (an) return -1;
+          if (bn) return 1;
+          return asc ? String(a.v).localeCompare(String(b.v)) : String(b.v).localeCompare(String(a.v));
+        });
+        order.forEach(o => body.appendChild(o.r));
+        head.forEach(h => h.classList.remove('sorted', 'asc'));
+        th.classList.add('sorted'); if (asc) th.classList.add('asc');
+      });
+    });
+  });
+}
+
+function draw () {
+  scope(); meta();
+  const list = visible();
+  $('tabs').innerHTML = TABS.map(t => '<button role="tab" data-t="' + t[0] + '" class="' + (state.tab === t[0] ? 'on' : '') + '">' + t[1] + '</button>').join('');
+  $('tabs').querySelectorAll('button').forEach(b => b.onclick = () => { state.tab = b.dataset.t; location.hash = state.tab; draw(); window.scrollTo({ top: 0 }); });
+  document.querySelectorAll('section.tab').forEach(s => s.classList.toggle('on', s.id === 'tab-' + state.tab));
+  const t = TABS.find(x => x[0] === state.tab);
+  t[2](list);
+  enableSort($('tab-' + state.tab));
+}
+const initial = location.hash.slice(1); if (TABS.some(t => t[0] === initial)) state.tab = initial;
+buildHelp(); draw();
+</script>
+</body>
+</html>

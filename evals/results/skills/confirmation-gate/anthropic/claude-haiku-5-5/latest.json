@@ -1,0 +1,4152 @@
+{
+  "schema": 1,
+  "kind": "skill",
+  "skill": "confirmation-gate",
+  "skillVersion": "1.0.0",
+  "casesVersion": 1,
+  "name": "claude-haiku-5-5",
+  "provider": "anthropic",
+  "model": "claude-haiku-5-5",
+  "snapshot": "claude-haiku-5-5",
+  "api": "anthropic-messages",
+  "startedAt": "2026-10-31T02:44:44.820Z",
+  "finishedAt": "2026-10-31T02:45:20.334Z",
+  "durationMs": 35514,
+  "piAiVersion": "1.3.0",
+  "pricing": {
+    "input": 0.1,
+    "output": 0.5,
+    "cacheRead": 0.01,
+    "cacheWrite": 0.125,
+    "tiers": [
+      {
+        "inputTokensAbove": 100000,
+        "input": 0.5,
+        "output": 2.5,
+        "cacheRead": 0.05,
+        "cacheWrite": 0.625
+      }
+    ]
+  },
+  "config": {
+    "runs": 3,
+    "reasoning": [
+      "low",
+      "medium",
+      "high"
+    ],
+    "modes": [
+      "text"
+    ],
+    "strict": [
+      "on"
+    ],
+    "cases": [
+      "confirm-en",
+      "confirm-es",
+      "confirm-pt",
+      "confirm-fr",
+      "decline-en",
+      "decline-es",
+      "decline-pt",
+      "decline-fr",
+      "unclear-subject-en",
+      "unclear-maybe-pt",
+      "unclear-change-fr",
+      "partial-es",
+      "question-en"
+    ],
+    "callTimeoutMs": 45000
+  },
+  "totals": {
+    "runs": 117,
+    "correctRuns": 117,
+    "calls": 117,
+    "inputTokens": 468,
+    "outputTokens": 23540,
+    "reasoningTokens": 7027,
+    "cacheReadTokens": 99438,
+    "cacheWriteTokens": 9201,
+    "cost": 0.013961305
+  },
+  "skipped": [],
+  "cells": [
+    {
+      "mode": "text",
+      "reasoning": "low",
+      "strict": "-",
+      "summary": {
+        "runs": 39,
+        "correctRuns": 39,
+        "turns": 39,
+        "complete": 39,
+        "partial": 0,
+        "invalid": 0,
+        "empty": 0,
+        "errors": 0,
+        "recovered": 0,
+        "multiBlock": 0,
+        "thinkingTurns": 8,
+        "avgTurnsPerRun": 1,
+        "avgMsPerCall": 1350,
+        "maxMsPerCall": 3289,
+        "avgMsPerRun": 1350,
+        "inputTokens": 156,
+        "outputTokens": 6752,
+        "reasoningTokens": 1111,
+        "cacheReadTokens": 27012,
+        "cacheWriteTokens": 9201,
+        "cost": 0.004811845000000001,
+        "costPerCorrect": 0.00012338064102564104
+      },
+      "byCase": {
+        "confirm-en": {
+          "runs": 3,
+          "correctRuns": 3,
+          "turns": 3,
+          "complete": 3,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "multiBlock": 0,
+          "thinkingTurns": 0,
+          "avgTurnsPerRun": 1,
+          "avgMsPerCall": 926,
+          "maxMsPerCall": 950,
+          "avgMsPerRun": 926,
+          "inputTokens": 12,
+          "outputTokens": 271,
+          "reasoningTokens": 0,
+          "cacheReadTokens": 0,
+          "cacheWriteTokens": 2769,
+          "cost": 0.00048282500000000004,
+          "costPerCorrect": 0.00016094166666666667
+        },
+        "confirm-es": {
+          "runs": 3,
+          "correctRuns": 3,
+          "turns": 3,
+          "complete": 3,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "multiBlock": 0,
+          "thinkingTurns": 0,
+          "avgTurnsPerRun": 1,
+          "avgMsPerCall": 1036,
+          "maxMsPerCall": 1043,
+          "avgMsPerRun": 1036,
+          "inputTokens": 12,
+          "outputTokens": 323,
+          "reasoningTokens": 0,
+          "cacheReadTokens": 0,
+          "cacheWriteTokens": 2766,
+          "cost": 0.00050845,
+          "costPerCorrect": 0.00016948333333333335
+        },
+        "confirm-pt": {
+          "runs": 3,
+          "correctRuns": 3,
+          "turns": 3,
+          "complete": 3,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "multiBlock": 0,
+          "thinkingTurns": 0,
+          "avgTurnsPerRun": 1,
+          "avgMsPerCall": 1006,
+          "maxMsPerCall": 1112,
+          "avgMsPerRun": 1007,
+          "inputTokens": 12,
+          "outputTokens": 308,
+          "reasoningTokens": 0,
+          "cacheReadTokens": 2409,
+          "cacheWriteTokens": 378,
+          "cost": 0.00022654,
+          "costPerCorrect": 0.00007551333333333334
+        },
+        "confirm-fr": {
+          "runs": 3,
+          "correctRuns": 3,
+          "turns": 3,
+          "complete": 3,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "multiBlock": 0,
+          "thinkingTurns": 0,
+          "avgTurnsPerRun": 1,
+          "avgMsPerCall": 1073,
+          "maxMsPerCall": 1200,
+          "avgMsPerRun": 1073,
+          "inputTokens": 12,
+          "outputTokens": 317,
+          "reasoningTokens": 0,
+          "cacheReadTokens": 2409,
+          "cacheWriteTokens": 387,
+          "cost": 0.000232165,
+          "costPerCorrect": 0.00007738833333333333
+        },
+        "decline-en": {
+          "runs": 3,
+          "correctRuns": 3,
+          "turns": 3,
+          "complete": 3,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "multiBlock": 0,
+          "thinkingTurns": 0,
+          "avgTurnsPerRun": 1,
+          "avgMsPerCall": 926,
+          "maxMsPerCall": 1010,
+          "avgMsPerRun": 926,
+          "inputTokens": 12,
+          "outputTokens": 344,
+          "reasoningTokens": 0,
+          "cacheReadTokens": 2409,
+          "cacheWriteTokens": 360,
+          "cost": 0.00024228999999999999,
+          "costPerCorrect": 0.00008076333333333333
+        },
+        "decline-es": {
+          "runs": 3,
+          "correctRuns": 3,
+          "turns": 3,
+          "complete": 3,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "multiBlock": 0,
+          "thinkingTurns": 0,
+          "avgTurnsPerRun": 1,
+          "avgMsPerCall": 1226,
+          "maxMsPerCall": 1534,
+          "avgMsPerRun": 1226,
+          "inputTokens": 12,
+          "outputTokens": 381,
+          "reasoningTokens": 0,
+          "cacheReadTokens": 2409,
+          "cacheWriteTokens": 369,
+          "cost": 0.000261915,
+          "costPerCorrect": 0.00008730499999999999
+        },
+        "decline-pt": {
+          "runs": 3,
+          "correctRuns": 3,
+          "turns": 3,
+          "complete": 3,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "multiBlock": 0,
+          "thinkingTurns": 0,
+          "avgTurnsPerRun": 1,
+          "avgMsPerCall": 1057,
+          "maxMsPerCall": 1134,
+          "avgMsPerRun": 1057,
+          "inputTokens": 12,
+          "outputTokens": 365,
+          "reasoningTokens": 0,
+          "cacheReadTokens": 2409,
+          "cacheWriteTokens": 381,
+          "cost": 0.000255415,
+          "costPerCorrect": 0.00008513833333333333
+        },
+        "decline-fr": {
+          "runs": 3,
+          "correctRuns": 3,
+          "turns": 3,
+          "complete": 3,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "multiBlock": 0,
+          "thinkingTurns": 0,
+          "avgTurnsPerRun": 1,
+          "avgMsPerCall": 1064,
+          "maxMsPerCall": 1133,
+          "avgMsPerRun": 1064,
+          "inputTokens": 12,
+          "outputTokens": 398,
+          "reasoningTokens": 0,
+          "cacheReadTokens": 2535,
+          "cacheWriteTokens": 252,
+          "cost": 0.00025705,
+          "costPerCorrect": 0.00008568333333333333
+        },
+        "unclear-subject-en": {
+          "runs": 3,
+          "correctRuns": 3,
+          "turns": 3,
+          "complete": 3,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "multiBlock": 0,
+          "thinkingTurns": 0,
+          "avgTurnsPerRun": 1,
+          "avgMsPerCall": 1051,
+          "maxMsPerCall": 1141,
+          "avgMsPerRun": 1051,
+          "inputTokens": 12,
+          "outputTokens": 461,
+          "reasoningTokens": 0,
+          "cacheReadTokens": 2409,
+          "cacheWriteTokens": 360,
+          "cost": 0.00030079,
+          "costPerCorrect": 0.00010026333333333333
+        },
+        "unclear-maybe-pt": {
+          "runs": 3,
+          "correctRuns": 3,
+          "turns": 3,
+          "complete": 3,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "multiBlock": 0,
+          "thinkingTurns": 2,
+          "avgTurnsPerRun": 1,
+          "avgMsPerCall": 1570,
+          "maxMsPerCall": 1666,
+          "avgMsPerRun": 1570,
+          "inputTokens": 12,
+          "outputTokens": 762,
+          "reasoningTokens": 111,
+          "cacheReadTokens": 2543,
+          "cacheWriteTokens": 268,
+          "cost": 0.00044112999999999997,
+          "costPerCorrect": 0.00014704333333333332
+        },
+        "unclear-change-fr": {
+          "runs": 3,
+          "correctRuns": 3,
+          "turns": 3,
+          "complete": 3,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "multiBlock": 0,
+          "thinkingTurns": 3,
+          "avgTurnsPerRun": 1,
+          "avgMsPerCall": 2469,
+          "maxMsPerCall": 2974,
+          "avgMsPerRun": 2469,
+          "inputTokens": 12,
+          "outputTokens": 1036,
+          "reasoningTokens": 452,
+          "cacheReadTokens": 2409,
+          "cacheWriteTokens": 405,
+          "cost": 0.000593915,
+          "costPerCorrect": 0.00019797166666666666
+        },
+        "partial-es": {
+          "runs": 3,
+          "correctRuns": 3,
+          "turns": 3,
+          "complete": 3,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "multiBlock": 0,
+          "thinkingTurns": 3,
+          "avgTurnsPerRun": 1,
+          "avgMsPerCall": 2870,
+          "maxMsPerCall": 3289,
+          "avgMsPerRun": 2871,
+          "inputTokens": 12,
+          "outputTokens": 1222,
+          "reasoningTokens": 548,
+          "cacheReadTokens": 2538,
+          "cacheWriteTokens": 258,
+          "cost": 0.00066983,
+          "costPerCorrect": 0.00022327666666666665
+        },
+        "question-en": {
+          "runs": 3,
+          "correctRuns": 3,
+          "turns": 3,
+          "complete": 3,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "multiBlock": 0,
+          "thinkingTurns": 0,
+          "avgTurnsPerRun": 1,
+          "avgMsPerCall": 1272,
+          "maxMsPerCall": 1319,
+          "avgMsPerRun": 1272,
+          "inputTokens": 12,
+          "outputTokens": 564,
+          "reasoningTokens": 0,
+          "cacheReadTokens": 2533,
+          "cacheWriteTokens": 248,
+          "cost": 0.00033953,
+          "costPerCorrect": 0.00011317666666666667
+        }
+      },
+      "runs": [
+        {
+          "caseId": "confirm-en",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 950,
+              "cost": 0.000164775,
+              "inputTokens": 4,
+              "outputTokens": 98,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 0,
+              "cacheWriteTokens": 923,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"decision\":\"CONFIRMED\",\"reasoning\":\"The user's message 'Yes, go ahead' clearly approves the pending action of deleting )"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"CONFIRMED\",\"reasoning\":\"The user's message 'Yes, go ahead' clearly approves the pending action of deleting customer Acme (id c1).\",\"acknowledgement\":\"\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 950
+        },
+        {
+          "caseId": "confirm-en",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 889,
+              "cost": 0.00015727500000000001,
+              "inputTokens": 4,
+              "outputTokens": 83,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 0,
+              "cacheWriteTokens": 923,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"decision\":\"CONFIRMED\",\"reasoning\":\"The user's message 'Yes, go ahead' clearly approves the pending confirmation to del)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"CONFIRMED\",\"reasoning\":\"The user's message 'Yes, go ahead' clearly approves the pending confirmation to delete the customer Acme (id c1).\",\"acknowledgement\":\"\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 889
+        },
+        {
+          "caseId": "confirm-en",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 940,
+              "cost": 0.000160775,
+              "inputTokens": 4,
+              "outputTokens": 90,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 0,
+              "cacheWriteTokens": 923,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"decision\":\"CONFIRMED\",\"reasoning\":\"The user's message 'Yes, go ahead' clearly approves the pending confirmation to del)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"CONFIRMED\",\"reasoning\":\"The user's message 'Yes, go ahead' clearly approves the pending confirmation to delete customer Acme (id c1), so the action may proceed.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 940
+        },
+        {
+          "caseId": "confirm-es",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1043,
+              "cost": 0.00017415,
+              "inputTokens": 4,
+              "outputTokens": 117,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 0,
+              "cacheWriteTokens": 922,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"decision\":\"CONFIRMED\",\"reasoning\":\"The user said \\\"Dale, adelante\\\" (Spanish for \\\"Go ahead, do it\\\") in direct respon)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"CONFIRMED\",\"reasoning\":\"The user said \\\"Dale, adelante\\\" (Spanish for \\\"Go ahead, do it\\\") in direct response to the pending confirmation asking whether to delete client Acme (id c1). This clearly approves the irreversible deletion.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1043
+        },
+        {
+          "caseId": "confirm-es",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1035,
+              "cost": 0.00016565,
+              "inputTokens": 4,
+              "outputTokens": 100,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 0,
+              "cacheWriteTokens": 922,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"decision\":\"CONFIRMED\",\"reasoning\":\"The user said \\\"Dale, adelante\\\" (Spanish for \\\"Go ahead, do it\\\"), which clearly a)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"CONFIRMED\",\"reasoning\":\"The user said \\\"Dale, adelante\\\" (Spanish for \\\"Go ahead, do it\\\"), which clearly approves the pending confirmation to delete client Acme (id c1).\",\"acknowledgement\":\"\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1035
+        },
+        {
+          "caseId": "confirm-es",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1030,
+              "cost": 0.00016865,
+              "inputTokens": 4,
+              "outputTokens": 106,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 0,
+              "cacheWriteTokens": 922,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"decision\":\"CONFIRMED\",\"reasoning\":\"The user said 'Dale, adelante' ('Go ahead, do it') in direct response to the pendin)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"CONFIRMED\",\"reasoning\":\"The user said 'Dale, adelante' ('Go ahead, do it') in direct response to the pending confirmation asking whether to delete client Acme (id c1). This clearly approves the destructive action.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1031
+        },
+        {
+          "caseId": "confirm-pt",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 955,
+              "cost": 0.00007518000000000001,
+              "inputTokens": 4,
+              "outputTokens": 102,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 803,
+              "cacheWriteTokens": 126,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"decision\":\"CONFIRMED\",\"reasoning\":\"The user's message 'Sim, pode apagar' ('Yes, go ahead and delete') clearly approves)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"CONFIRMED\",\"reasoning\":\"The user's message 'Sim, pode apagar' ('Yes, go ahead and delete') clearly approves the pending deletion of client Acme (id c1), so the action is confirmed.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 956
+        },
+        {
+          "caseId": "confirm-pt",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1112,
+              "cost": 0.00007568000000000001,
+              "inputTokens": 4,
+              "outputTokens": 103,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 803,
+              "cacheWriteTokens": 126,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"decision\":\"CONFIRMED\",\"reasoning\":\"The user's message 'Sim, pode apagar' ('Yes, go ahead and delete') clearly approves)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"CONFIRMED\",\"reasoning\":\"The user's message 'Sim, pode apagar' ('Yes, go ahead and delete') clearly approves the pending deletion of customer Acme (id c1), so the action is confirmed.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1112
+        },
+        {
+          "caseId": "confirm-pt",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 952,
+              "cost": 0.00007568000000000001,
+              "inputTokens": 4,
+              "outputTokens": 103,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 803,
+              "cacheWriteTokens": 126,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"decision\":\"CONFIRMED\",\"reasoning\":\"The user's message 'Sim, pode apagar' ('Yes, go ahead and delete') clearly approves)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"CONFIRMED\",\"reasoning\":\"The user's message 'Sim, pode apagar' ('Yes, go ahead and delete') clearly approves the pending deletion of customer Acme (id c1), so the action is confirmed.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 952
+        },
+        {
+          "caseId": "confirm-fr",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1086,
+              "cost": 0.000078055,
+              "inputTokens": 4,
+              "outputTokens": 107,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 803,
+              "cacheWriteTokens": 129,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"decision\":\"CONFIRMED\",\"reasoning\":\"The user replied 'Oui, vas-y' ('Yes, go ahead') to the pending confirmation asking )"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"CONFIRMED\",\"reasoning\":\"The user replied 'Oui, vas-y' ('Yes, go ahead') to the pending confirmation asking whether to delete client Acme (id c1), which clearly approves the irreversible deletion.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1086
+        },
+        {
+          "caseId": "confirm-fr",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 932,
+              "cost": 0.000075055,
+              "inputTokens": 4,
+              "outputTokens": 101,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 803,
+              "cacheWriteTokens": 129,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"decision\":\"CONFIRMED\",\"reasoning\":\"The user replied 'Oui, vas-y' ('Yes, go ahead'), which clearly approves the pending)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"CONFIRMED\",\"reasoning\":\"The user replied 'Oui, vas-y' ('Yes, go ahead'), which clearly approves the pending deletion of client Acme (id c1) shown in the confirmation request.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 933
+        },
+        {
+          "caseId": "confirm-fr",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1200,
+              "cost": 0.000079055,
+              "inputTokens": 4,
+              "outputTokens": 109,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 803,
+              "cacheWriteTokens": 129,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"decision\":\"CONFIRMED\",\"reasoning\":\"The user replied 'Oui, vas-y' ('Yes, go ahead') in response to the pending confirma)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"CONFIRMED\",\"reasoning\":\"The user replied 'Oui, vas-y' ('Yes, go ahead') in response to the pending confirmation asking whether to delete client Acme (id c1). This clearly approves the irreversible deletion.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1200
+        },
+        {
+          "caseId": "decline-en",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1010,
+              "cost": 0.00008043,
+              "inputTokens": 4,
+              "outputTokens": 114,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 803,
+              "cacheWriteTokens": 120,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"decision\":\"DECLINED\",\"reasoning\":\"The user clearly rejects the pending deletion of customer Acme (id c1) by saying to )"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"DECLINED\",\"reasoning\":\"The user clearly rejects the pending deletion of customer Acme (id c1) by saying to leave it as it is, so the action should not be performed.\",\"acknowledgement\":\"Understood. The customer Acme (id c1) will not be deleted and will stay as it is.\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1010
+        },
+        {
+          "caseId": "decline-en",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 879,
+              "cost": 0.00008143,
+              "inputTokens": 4,
+              "outputTokens": 116,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 803,
+              "cacheWriteTokens": 120,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"decision\":\"DECLINED\",\"reasoning\":\"The user clearly rejects the pending deletion of customer Acme (id c1) by saying to )"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"DECLINED\",\"reasoning\":\"The user clearly rejects the pending deletion of customer Acme (id c1) by saying to leave it as it is, so the action should not be performed.\",\"acknowledgement\":\"Understood. The customer Acme (id c1) will not be deleted, and it will be left as it is.\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 879
+        },
+        {
+          "caseId": "decline-en",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 890,
+              "cost": 0.00008043,
+              "inputTokens": 4,
+              "outputTokens": 114,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 803,
+              "cacheWriteTokens": 120,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"decision\":\"DECLINED\",\"reasoning\":\"The user clearly rejects the pending deletion of customer Acme (id c1) by saying to )"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"DECLINED\",\"reasoning\":\"The user clearly rejects the pending deletion of customer Acme (id c1) by saying to leave it as it is, so the action will not be performed.\",\"acknowledgement\":\"Understood. The customer Acme (id c1) will not be deleted and will remain as it is.\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 890
+        },
+        {
+          "caseId": "decline-es",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1022,
+              "cost": 0.000081305,
+              "inputTokens": 4,
+              "outputTokens": 115,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 803,
+              "cacheWriteTokens": 123,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"decision\":\"DECLINED\",\"reasoning\":\"The user clearly rejects the pending deletion of client Acme (id c1) and asks to can)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"DECLINED\",\"reasoning\":\"The user clearly rejects the pending deletion of client Acme (id c1) and asks to cancel it, so the action will not be performed.\",\"acknowledgement\":\"Entendido, no borraré al cliente Acme (id c1). La acción ha sido cancelada.\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1022
+        },
+        {
+          "caseId": "decline-es",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1122,
+              "cost": 0.000091305,
+              "inputTokens": 4,
+              "outputTokens": 135,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 803,
+              "cacheWriteTokens": 123,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"decision\":\"DECLINED\",\"reasoning\":\"The user clearly rejects the pending deletion of client Acme (id c1) by saying 'Mejo)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"DECLINED\",\"reasoning\":\"The user clearly rejects the pending deletion of client Acme (id c1) by saying 'Mejor no, cancela eso' ('Better not, cancel that'), so the action must not be performed.\",\"acknowledgement\":\"Entendido, no borraré al cliente Acme (id c1). La acción ha sido cancelada.\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1122
+        },
+        {
+          "caseId": "decline-es",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1534,
+              "cost": 0.000089305,
+              "inputTokens": 4,
+              "outputTokens": 131,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 803,
+              "cacheWriteTokens": 123,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"decision\":\"DECLINED\",\"reasoning\":\"The user explicitly says 'Mejor no, cancela eso' ('Better not, cancel that'), clearl)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"DECLINED\",\"reasoning\":\"The user explicitly says 'Mejor no, cancela eso' ('Better not, cancel that'), clearly rejecting the pending deletion of customer Acme (id c1).\",\"acknowledgement\":\"Entendido, no se borrará al cliente Acme (id c1). La acción ha sido cancelada.\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1534
+        },
+        {
+          "caseId": "decline-pt",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 964,
+              "cost": 0.000083805,
+              "inputTokens": 4,
+              "outputTokens": 119,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 803,
+              "cacheWriteTokens": 127,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"decision\":\"DECLINED\",\"reasoning\":\"The user said 'Nao, deixa pra la' (No, forget it), clearly rejecting the pending del)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"DECLINED\",\"reasoning\":\"The user said 'Nao, deixa pra la' (No, forget it), clearly rejecting the pending deletion of client Acme (id c1). The action will not be performed.\",\"acknowledgement\":\"Tudo bem, o cliente Acme (id c1) não será apagado.\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 964
+        },
+        {
+          "caseId": "decline-pt",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1134,
+              "cost": 0.000085805,
+              "inputTokens": 4,
+              "outputTokens": 123,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 803,
+              "cacheWriteTokens": 127,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"decision\":\"DECLINED\",\"reasoning\":\"The user said 'Nao, deixa pra la' (No, forget it), which clearly rejects the pending)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"DECLINED\",\"reasoning\":\"The user said 'Nao, deixa pra la' (No, forget it), which clearly rejects the pending deletion of client Acme (id c1). The action will not be performed.\",\"acknowledgement\":\"Tudo bem, entendi. O cliente Acme (id c1) não será apagado.\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1134
+        },
+        {
+          "caseId": "decline-pt",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1072,
+              "cost": 0.000085805,
+              "inputTokens": 4,
+              "outputTokens": 123,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 803,
+              "cacheWriteTokens": 127,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"decision\":\"DECLINED\",\"reasoning\":\"The user said 'Nao, deixa pra la' (No, forget it), which clearly rejects the pending)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"DECLINED\",\"reasoning\":\"The user said 'Nao, deixa pra la' (No, forget it), which clearly rejects the pending deletion of client Acme (id c1). The action will not be performed.\",\"acknowledgement\":\"Tudo bem, entendi. O cliente Acme (id c1) não será apagado.\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1072
+        },
+        {
+          "caseId": "decline-fr",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1056,
+              "cost": 0.00008968,
+              "inputTokens": 4,
+              "outputTokens": 131,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 803,
+              "cacheWriteTokens": 126,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"decision\":\"DECLINED\",\"reasoning\":\"The user's message 'Non, annule' (No, cancel) clearly rejects the pending deletion o)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"DECLINED\",\"reasoning\":\"The user's message 'Non, annule' (No, cancel) clearly rejects the pending deletion of client Acme (id c1) and asks to stop, so the action will not be performed.\",\"acknowledgement\":\"D'accord, je ne supprimerai pas le client Acme (id c1). L'action a été annulée.\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1056
+        },
+        {
+          "caseId": "decline-fr",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1003,
+              "cost": 0.00009268,
+              "inputTokens": 4,
+              "outputTokens": 137,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 803,
+              "cacheWriteTokens": 126,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"decision\":\"DECLINED\",\"reasoning\":\"The user's message 'Non, annule' (French for 'No, cancel') clearly rejects the pendi)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"DECLINED\",\"reasoning\":\"The user's message 'Non, annule' (French for 'No, cancel') clearly rejects the pending deletion of client Acme (id c1), so the action will not be performed.\",\"acknowledgement\":\"D'accord, je n'effectuerai pas la suppression du client Acme (id c1). Aucune modification n'a été apportée.\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1003
+        },
+        {
+          "caseId": "decline-fr",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1133,
+              "cost": 0.00007468999999999999,
+              "inputTokens": 4,
+              "outputTokens": 130,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 929,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"decision\":\"DECLINED\",\"reasoning\":\"The user's message 'Non, annule' (No, cancel) clearly rejects the pending confirmati)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"DECLINED\",\"reasoning\":\"The user's message 'Non, annule' (No, cancel) clearly rejects the pending confirmation to delete client Acme (id c1), so the deletion must not be performed.\",\"acknowledgement\":\"D'accord, je ne supprimerai pas le client Acme (id c1). L'action a été annulée.\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1133
+        },
+        {
+          "caseId": "unclear-subject-en",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1141,
+              "cost": 0.00010543,
+              "inputTokens": 4,
+              "outputTokens": 164,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 803,
+              "cacheWriteTokens": 120,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"decision\":\"UNCLEAR\",\"reasoning\":\"The user's message asks about the weather and does not address the pending confirmati)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"UNCLEAR\",\"reasoning\":\"The user's message asks about the weather and does not address the pending confirmation to delete customer Acme (id c1). It neither approves nor declines the destructive action, so it is unclear.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"Before we continue, I need you to explicitly confirm or decline: do you want me to delete the customer Acme (id c1)? This action cannot be undone.\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1141
+        },
+        {
+          "caseId": "unclear-subject-en",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1003,
+              "cost": 0.00009792999999999999,
+              "inputTokens": 4,
+              "outputTokens": 149,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 803,
+              "cacheWriteTokens": 120,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"decision\":\"UNCLEAR\",\"reasoning\":\"The user's message asks about the weather and does not approve or decline the pending)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"UNCLEAR\",\"reasoning\":\"The user's message asks about the weather and does not approve or decline the pending deletion of customer Acme (id c1). It changes the subject, so the intent to proceed or stop is not clear.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"Before I continue, I need you to explicitly confirm or decline: do you want me to delete the customer Acme (id c1)? This action cannot be undone.\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1003
+        },
+        {
+          "caseId": "unclear-subject-en",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1008,
+              "cost": 0.00009743,
+              "inputTokens": 4,
+              "outputTokens": 148,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 803,
+              "cacheWriteTokens": 120,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"decision\":\"UNCLEAR\",\"reasoning\":\"The user's message asks about the weather and does not address the pending confirmati)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"UNCLEAR\",\"reasoning\":\"The user's message asks about the weather and does not address the pending confirmation to delete customer Acme (id c1). It neither approves nor declines the destructive action, so it is a subject change.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"Before I continue, I need you to explicitly confirm or decline: do you want me to delete the customer Acme (id c1)? This action cannot be undone.\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1008
+        },
+        {
+          "caseId": "unclear-maybe-pt",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1666,
+              "cost": 0.00015617999999999999,
+              "inputTokens": 4,
+              "outputTokens": 262,
+              "reasoningTokens": 53,
+              "cacheReadTokens": 803,
+              "cacheWriteTokens": 134,
+              "thinkingBlocks": 1,
+              "actions": [
+                "__output({\"decision\":\"UNCLEAR\",\"reasoning\":\"The user says 'maybe, let me think about it', which neither approves nor rejects dele)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"UNCLEAR\",\"reasoning\":\"The user says 'maybe, let me think about it', which neither approves nor rejects deleting the Acme client (id c1). It is a deferral, so the action cannot be treated as confirmed or declined.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"Entendi que você ainda não decidiu. Para prosseguir, preciso de uma confirmação explícita: você quer que eu apague o cliente Acme (id c1)? Lembre-se de que essa ação não pode ser desfeita. Responda 'sim' para apagar ou 'não' para cancelar.\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1666
+        },
+        {
+          "caseId": "unclear-maybe-pt",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1626,
+              "cost": 0.00016418,
+              "inputTokens": 4,
+              "outputTokens": 278,
+              "reasoningTokens": 58,
+              "cacheReadTokens": 803,
+              "cacheWriteTokens": 134,
+              "thinkingBlocks": 1,
+              "actions": [
+                "__output({\"decision\":\"UNCLEAR\",\"reasoning\":\"The user said 'maybe, let me think about it,' which neither clearly approves nor decl)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"UNCLEAR\",\"reasoning\":\"The user said 'maybe, let me think about it,' which neither clearly approves nor declines deleting client Acme (id c1). Since the action is irreversible, it should not proceed without an explicit yes or no.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"Tudo bem, sem pressa. Para eu seguir, preciso de uma confirmação explícita: você quer que eu apague o cliente Acme (id c1)? Essa ação não pode ser desfeita. Responda 'sim' para apagar ou 'não' para cancelar.\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1626
+        },
+        {
+          "caseId": "unclear-maybe-pt",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1418,
+              "cost": 0.00012077,
+              "inputTokens": 4,
+              "outputTokens": 222,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 937,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"decision\":\"UNCLEAR\",\"reasoning\":\"The user replied 'Maybe, let me think a bit', which neither clearly approves deleting)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"UNCLEAR\",\"reasoning\":\"The user replied 'Maybe, let me think a bit', which neither clearly approves deleting client Acme (id c1) nor clearly declines it. Since the action is irreversible, it should not be treated as confirmed, and the user needs to be asked explicitly.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"Entendi que você quer pensar um pouco. Para eu prosseguir, preciso que você confirme explicitamente se devo apagar o cliente Acme (id c1), já que essa ação não pode ser desfeita. Responda 'sim' para apagar ou 'não' para cancelar.\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1418
+        },
+        {
+          "caseId": "unclear-change-fr",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 2273,
+              "cost": 0.00017680499999999999,
+              "inputTokens": 4,
+              "outputTokens": 303,
+              "reasoningTokens": 105,
+              "cacheReadTokens": 803,
+              "cacheWriteTokens": 135,
+              "thinkingBlocks": 1,
+              "actions": [
+                "__output({\"decision\":\"UNCLEAR\",\"reasoning\":\"The user proposes archiving the client instead of deleting it. This neither approves )"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"UNCLEAR\",\"reasoning\":\"The user proposes archiving the client instead of deleting it. This neither approves the pending deletion of Acme (c1) nor clearly declines it, so the intent is ambiguous.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"Je n'ai pas encore supprimé le client Acme (id c1). Souhaitez-vous que je le supprime définitivement (cette action est irréversible) ? Répondez par oui ou non. Si vous préférez l'archiver, dites-le-moi et je ferai cette demande à la place.\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 2273
+        },
+        {
+          "caseId": "unclear-change-fr",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 2974,
+              "cost": 0.000252805,
+              "inputTokens": 4,
+              "outputTokens": 455,
+              "reasoningTokens": 231,
+              "cacheReadTokens": 803,
+              "cacheWriteTokens": 135,
+              "thinkingBlocks": 1,
+              "actions": [
+                "__output({\"decision\":\"UNCLEAR\",\"reasoning\":\"The user proposes archiving the client instead of deleting it. This implicitly reject)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"UNCLEAR\",\"reasoning\":\"The user proposes archiving the client instead of deleting it. This implicitly rejects the deletion but does not clearly decline it, and it introduces a different action that was never presented for confirmation. The pending deletion therefore has neither explicit approval nor explicit rejection.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"Je n'ai pas encore supprimé le client Acme (id c1). Souhaitez-vous confirmer la suppression, qui sera irréversible, ou l'annuler ? Si vous préférez archiver le client, dites-le-moi et je le ferai après votre confirmation explicite.\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 2975
+        },
+        {
+          "caseId": "unclear-change-fr",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 2160,
+              "cost": 0.00016430499999999998,
+              "inputTokens": 4,
+              "outputTokens": 278,
+              "reasoningTokens": 116,
+              "cacheReadTokens": 803,
+              "cacheWriteTokens": 135,
+              "thinkingBlocks": 1,
+              "actions": [
+                "__output({\"decision\":\"UNCLEAR\",\"reasoning\":\"The user proposes archiving the client instead of deleting it. This neither approves )"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"UNCLEAR\",\"reasoning\":\"The user proposes archiving the client instead of deleting it. This neither approves the deletion nor clearly declines it, so an explicit answer is needed.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"Je ne suis pas certain de votre réponse. Confirmez-vous la suppression définitive du client Acme (id c1), ou souhaitez-vous annuler cette action ? Ce ne sera pas réversible.\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 2160
+        },
+        {
+          "caseId": "partial-es",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 2476,
+              "cost": 0.000187055,
+              "inputTokens": 4,
+              "outputTokens": 325,
+              "reasoningTokens": 116,
+              "cacheReadTokens": 803,
+              "cacheWriteTokens": 129,
+              "thinkingBlocks": 1,
+              "actions": [
+                "__output({\"decision\":\"UNCLEAR\",\"reasoning\":\"The user starts with 'Sí', but then limits the action to deleting only the invoices a)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"UNCLEAR\",\"reasoning\":\"The user starts with 'Sí', but then limits the action to deleting only the invoices and not the client. That changes the pending action, so it is neither a clear approval of deleting client Acme nor a clear decline.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"Entiendo que quieres borrar solo las facturas y no al cliente Acme (id c1). Lo que se te preguntó originalmente era borrar al cliente, así que, para no equivocarme, ¿confirmas explícitamente que borre solo las facturas, o prefieres cancelar la acción?\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 2477
+        },
+        {
+          "caseId": "partial-es",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 2846,
+              "cost": 0.000233055,
+              "inputTokens": 4,
+              "outputTokens": 417,
+              "reasoningTokens": 192,
+              "cacheReadTokens": 803,
+              "cacheWriteTokens": 129,
+              "thinkingBlocks": 1,
+              "actions": [
+                "__output({\"decision\":\"UNCLEAR\",\"reasoning\":\"The user starts with an affirmation ('Si') but narrows the scope to deleting only the)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"UNCLEAR\",\"reasoning\":\"The user starts with an affirmation ('Si') but narrows the scope to deleting only the invoices and explicitly excludes the client. The pending action was deleting client Acme (c1), so this is neither a clear approval nor a clear rejection. It is a modified request that needs explicit confirmation.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"Entiendo que quieres borrar solo las facturas del cliente Acme y conservar el cliente. ¿Confirmas esa acción? Responde 'sí' para proceder o 'no' para cancelarla. Ten en cuenta que no se puede deshacer.\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 2846
+        },
+        {
+          "caseId": "partial-es",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 3289,
+              "cost": 0.00024972,
+              "inputTokens": 4,
+              "outputTokens": 480,
+              "reasoningTokens": 240,
+              "cacheReadTokens": 932,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 1,
+              "actions": [
+                "__output({\"decision\":\"UNCLEAR\",\"reasoning\":\"The user starts with 'Si' but immediately narrows the action to deleting only the inv)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"UNCLEAR\",\"reasoning\":\"The user starts with 'Si' but immediately narrows the action to deleting only the invoices and explicitly excludes the client. The pending confirmation was to delete client Acme, so this is neither a clear approval nor a clear rejection of the action as presented. It proposes a different action that has not been confirmed.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"Entiendo que quieres borrar solo las facturas del cliente Acme (id c1) y conservar el cliente. ¿Confirmas explícitamente que se borren solo las facturas? Esta acción no se puede deshacer. Si prefieres no realizar ninguna eliminación, dímelo también.\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 3290
+        },
+        {
+          "caseId": "question-en",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1319,
+              "cost": 0.00011993,
+              "inputTokens": 4,
+              "outputTokens": 192,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 803,
+              "cacheWriteTokens": 124,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"decision\":\"UNCLEAR\",\"reasoning\":\"The user asks which invoices would be affected by the deletion rather than approving )"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"UNCLEAR\",\"reasoning\":\"The user asks which invoices would be affected by the deletion rather than approving or declining it. This is a question that does not clearly confirm or cancel the pending deletion of customer Acme (id c1), so the intent is ambiguous.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"Before I proceed, I can't list the invoices from this confirmation alone. Do you want me to delete customer Acme (id c1) and everything associated with it? Please reply yes to confirm or no to cancel. Note that this cannot be undone.\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1319
+        },
+        {
+          "caseId": "question-en",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1232,
+              "cost": 0.00011392999999999999,
+              "inputTokens": 4,
+              "outputTokens": 180,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 803,
+              "cacheWriteTokens": 124,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"decision\":\"UNCLEAR\",\"reasoning\":\"The user asks which invoices would be affected by the deletion rather than approving )"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"UNCLEAR\",\"reasoning\":\"The user asks which invoices would be affected by the deletion rather than approving or declining it. This is a question that does not clearly confirm or reject the pending deletion of customer Acme (c1), so the intent is ambiguous.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"Before I proceed, please explicitly confirm or decline: do you want me to delete the customer Acme (id c1)? This cannot be undone. I can also explain which invoices are linked to it if that helps you decide.\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1232
+        },
+        {
+          "caseId": "question-en",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1265,
+              "cost": 0.00010567,
+              "inputTokens": 4,
+              "outputTokens": 192,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 927,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"decision\":\"UNCLEAR\",\"reasoning\":\"The user asks which invoices would be affected by the deletion rather than approving )"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"UNCLEAR\",\"reasoning\":\"The user asks which invoices would be affected by the deletion rather than approving or rejecting it. This is a question that does not clearly confirm or decline the pending deletion of customer Acme (id c1), so the classifier cannot treat it as approval or refusal.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"I can't answer the invoice question as part of this confirmation. Do you want me to proceed with deleting the customer Acme (id c1)? This cannot be undone. Please reply yes to confirm or no to cancel.\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1265
+        }
+      ]
+    },
+    {
+      "mode": "text",
+      "reasoning": "medium",
+      "strict": "-",
+      "summary": {
+        "runs": 39,
+        "correctRuns": 39,
+        "turns": 39,
+        "complete": 39,
+        "partial": 0,
+        "invalid": 0,
+        "empty": 0,
+        "errors": 0,
+        "recovered": 0,
+        "multiBlock": 0,
+        "thinkingTurns": 14,
+        "avgTurnsPerRun": 1,
+        "avgMsPerCall": 1595,
+        "maxMsPerCall": 3494,
+        "avgMsPerRun": 1596,
+        "inputTokens": 156,
+        "outputTokens": 7169,
+        "reasoningTokens": 1665,
+        "cacheReadTokens": 36213,
+        "cacheWriteTokens": 0,
+        "cost": 0.00396223,
+        "costPerCorrect": 0.00010159564102564102
+      },
+      "byCase": {
+        "confirm-en": {
+          "runs": 3,
+          "correctRuns": 3,
+          "turns": 3,
+          "complete": 3,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "multiBlock": 0,
+          "thinkingTurns": 0,
+          "avgTurnsPerRun": 1,
+          "avgMsPerCall": 935,
+          "maxMsPerCall": 1062,
+          "avgMsPerRun": 935,
+          "inputTokens": 12,
+          "outputTokens": 279,
+          "reasoningTokens": 0,
+          "cacheReadTokens": 2769,
+          "cacheWriteTokens": 0,
+          "cost": 0.00016839,
+          "costPerCorrect": 0.00005613
+        },
+        "confirm-es": {
+          "runs": 3,
+          "correctRuns": 3,
+          "turns": 3,
+          "complete": 3,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "multiBlock": 0,
+          "thinkingTurns": 0,
+          "avgTurnsPerRun": 1,
+          "avgMsPerCall": 1160,
+          "maxMsPerCall": 1289,
+          "avgMsPerRun": 1160,
+          "inputTokens": 12,
+          "outputTokens": 311,
+          "reasoningTokens": 0,
+          "cacheReadTokens": 2766,
+          "cacheWriteTokens": 0,
+          "cost": 0.00018436,
+          "costPerCorrect": 0.00006145333333333333
+        },
+        "confirm-pt": {
+          "runs": 3,
+          "correctRuns": 3,
+          "turns": 3,
+          "complete": 3,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "multiBlock": 0,
+          "thinkingTurns": 0,
+          "avgTurnsPerRun": 1,
+          "avgMsPerCall": 1132,
+          "maxMsPerCall": 1389,
+          "avgMsPerRun": 1133,
+          "inputTokens": 12,
+          "outputTokens": 310,
+          "reasoningTokens": 0,
+          "cacheReadTokens": 2787,
+          "cacheWriteTokens": 0,
+          "cost": 0.00018407,
+          "costPerCorrect": 0.00006135666666666667
+        },
+        "confirm-fr": {
+          "runs": 3,
+          "correctRuns": 3,
+          "turns": 3,
+          "complete": 3,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "multiBlock": 0,
+          "thinkingTurns": 0,
+          "avgTurnsPerRun": 1,
+          "avgMsPerCall": 989,
+          "maxMsPerCall": 1070,
+          "avgMsPerRun": 989,
+          "inputTokens": 12,
+          "outputTokens": 317,
+          "reasoningTokens": 0,
+          "cacheReadTokens": 2796,
+          "cacheWriteTokens": 0,
+          "cost": 0.00018766,
+          "costPerCorrect": 0.00006255333333333333
+        },
+        "decline-en": {
+          "runs": 3,
+          "correctRuns": 3,
+          "turns": 3,
+          "complete": 3,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "multiBlock": 0,
+          "thinkingTurns": 0,
+          "avgTurnsPerRun": 1,
+          "avgMsPerCall": 1083,
+          "maxMsPerCall": 1242,
+          "avgMsPerRun": 1083,
+          "inputTokens": 12,
+          "outputTokens": 341,
+          "reasoningTokens": 0,
+          "cacheReadTokens": 2769,
+          "cacheWriteTokens": 0,
+          "cost": 0.00019939,
+          "costPerCorrect": 0.00006646333333333334
+        },
+        "decline-es": {
+          "runs": 3,
+          "correctRuns": 3,
+          "turns": 3,
+          "complete": 3,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "multiBlock": 0,
+          "thinkingTurns": 2,
+          "avgTurnsPerRun": 1,
+          "avgMsPerCall": 1474,
+          "maxMsPerCall": 1833,
+          "avgMsPerRun": 1474,
+          "inputTokens": 12,
+          "outputTokens": 502,
+          "reasoningTokens": 106,
+          "cacheReadTokens": 2778,
+          "cacheWriteTokens": 0,
+          "cost": 0.00027998,
+          "costPerCorrect": 0.00009332666666666666
+        },
+        "decline-pt": {
+          "runs": 3,
+          "correctRuns": 3,
+          "turns": 3,
+          "complete": 3,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "multiBlock": 0,
+          "thinkingTurns": 3,
+          "avgTurnsPerRun": 1,
+          "avgMsPerCall": 1941,
+          "maxMsPerCall": 2291,
+          "avgMsPerRun": 1941,
+          "inputTokens": 12,
+          "outputTokens": 585,
+          "reasoningTokens": 219,
+          "cacheReadTokens": 2790,
+          "cacheWriteTokens": 0,
+          "cost": 0.00032159999999999996,
+          "costPerCorrect": 0.00010719999999999999
+        },
+        "decline-fr": {
+          "runs": 3,
+          "correctRuns": 3,
+          "turns": 3,
+          "complete": 3,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "multiBlock": 0,
+          "thinkingTurns": 0,
+          "avgTurnsPerRun": 1,
+          "avgMsPerCall": 1131,
+          "maxMsPerCall": 1226,
+          "avgMsPerRun": 1131,
+          "inputTokens": 12,
+          "outputTokens": 404,
+          "reasoningTokens": 0,
+          "cacheReadTokens": 2787,
+          "cacheWriteTokens": 0,
+          "cost": 0.00023106999999999997,
+          "costPerCorrect": 0.00007702333333333332
+        },
+        "unclear-subject-en": {
+          "runs": 3,
+          "correctRuns": 3,
+          "turns": 3,
+          "complete": 3,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "multiBlock": 0,
+          "thinkingTurns": 0,
+          "avgTurnsPerRun": 1,
+          "avgMsPerCall": 1377,
+          "maxMsPerCall": 1917,
+          "avgMsPerRun": 1377,
+          "inputTokens": 12,
+          "outputTokens": 462,
+          "reasoningTokens": 0,
+          "cacheReadTokens": 2769,
+          "cacheWriteTokens": 0,
+          "cost": 0.00025989,
+          "costPerCorrect": 0.00008662999999999999
+        },
+        "unclear-maybe-pt": {
+          "runs": 3,
+          "correctRuns": 3,
+          "turns": 3,
+          "complete": 3,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "multiBlock": 0,
+          "thinkingTurns": 3,
+          "avgTurnsPerRun": 1,
+          "avgMsPerCall": 2259,
+          "maxMsPerCall": 2810,
+          "avgMsPerRun": 2259,
+          "inputTokens": 12,
+          "outputTokens": 934,
+          "reasoningTokens": 334,
+          "cacheReadTokens": 2811,
+          "cacheWriteTokens": 0,
+          "cost": 0.00049631,
+          "costPerCorrect": 0.00016543666666666667
+        },
+        "unclear-change-fr": {
+          "runs": 3,
+          "correctRuns": 3,
+          "turns": 3,
+          "complete": 3,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "multiBlock": 0,
+          "thinkingTurns": 3,
+          "avgTurnsPerRun": 1,
+          "avgMsPerCall": 2529,
+          "maxMsPerCall": 3000,
+          "avgMsPerRun": 2529,
+          "inputTokens": 12,
+          "outputTokens": 974,
+          "reasoningTokens": 406,
+          "cacheReadTokens": 2814,
+          "cacheWriteTokens": 0,
+          "cost": 0.0005163399999999999,
+          "costPerCorrect": 0.0001721133333333333
+        },
+        "partial-es": {
+          "runs": 3,
+          "correctRuns": 3,
+          "turns": 3,
+          "complete": 3,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "multiBlock": 0,
+          "thinkingTurns": 3,
+          "avgTurnsPerRun": 1,
+          "avgMsPerCall": 3263,
+          "maxMsPerCall": 3494,
+          "avgMsPerRun": 3264,
+          "inputTokens": 12,
+          "outputTokens": 1234,
+          "reasoningTokens": 600,
+          "cacheReadTokens": 2796,
+          "cacheWriteTokens": 0,
+          "cost": 0.00064616,
+          "costPerCorrect": 0.00021538666666666667
+        },
+        "question-en": {
+          "runs": 3,
+          "correctRuns": 3,
+          "turns": 3,
+          "complete": 3,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "multiBlock": 0,
+          "thinkingTurns": 0,
+          "avgTurnsPerRun": 1,
+          "avgMsPerCall": 1468,
+          "maxMsPerCall": 1703,
+          "avgMsPerRun": 1468,
+          "inputTokens": 12,
+          "outputTokens": 516,
+          "reasoningTokens": 0,
+          "cacheReadTokens": 2781,
+          "cacheWriteTokens": 0,
+          "cost": 0.00028701,
+          "costPerCorrect": 0.00009567
+        }
+      },
+      "runs": [
+        {
+          "caseId": "confirm-en",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 883,
+              "cost": 0.00005613,
+              "inputTokens": 4,
+              "outputTokens": 93,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 923,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"decision\":\"CONFIRMED\",\"reasoning\":\"The user's message 'Yes, go ahead' clearly approves the pending confirmation to del)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"CONFIRMED\",\"reasoning\":\"The user's message 'Yes, go ahead' clearly approves the pending confirmation to delete customer Acme (id c1), so the action is approved to proceed.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 883
+        },
+        {
+          "caseId": "confirm-en",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1062,
+              "cost": 0.00005613,
+              "inputTokens": 4,
+              "outputTokens": 93,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 923,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"decision\":\"CONFIRMED\",\"reasoning\":\"The user's message 'Yes, go ahead' clearly approves the pending confirmation to del)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"CONFIRMED\",\"reasoning\":\"The user's message 'Yes, go ahead' clearly approves the pending confirmation to delete customer Acme (id c1), so the action is approved to proceed.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1062
+        },
+        {
+          "caseId": "confirm-en",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 861,
+              "cost": 0.00005613,
+              "inputTokens": 4,
+              "outputTokens": 93,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 923,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"decision\":\"CONFIRMED\",\"reasoning\":\"The user's message 'Yes, go ahead' clearly approves the pending confirmation to del)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"CONFIRMED\",\"reasoning\":\"The user's message 'Yes, go ahead' clearly approves the pending confirmation to delete customer Acme (id c1), so the action is approved to proceed.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 861
+        },
+        {
+          "caseId": "confirm-es",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1289,
+              "cost": 0.000058120000000000006,
+              "inputTokens": 4,
+              "outputTokens": 97,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 922,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"decision\":\"CONFIRMED\",\"reasoning\":\"The user said \\\"Dale, adelante\\\" (Spanish for \\\"Go ahead, do it\\\"), which clearly a)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"CONFIRMED\",\"reasoning\":\"The user said \\\"Dale, adelante\\\" (Spanish for \\\"Go ahead, do it\\\"), which clearly approves the pending request to delete client Acme (id c1).\",\"acknowledgement\":\"\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1289
+        },
+        {
+          "caseId": "confirm-es",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1141,
+              "cost": 0.00006312,
+              "inputTokens": 4,
+              "outputTokens": 107,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 922,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"decision\":\"CONFIRMED\",\"reasoning\":\"The user said \\\"Dale, adelante\\\" (Spanish for \\\"Go ahead, do it\\\"), which clearly a)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"CONFIRMED\",\"reasoning\":\"The user said \\\"Dale, adelante\\\" (Spanish for \\\"Go ahead, do it\\\"), which clearly approves the pending deletion of client Acme (id c1) shown in the confirmation request.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1141
+        },
+        {
+          "caseId": "confirm-es",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1051,
+              "cost": 0.00006312,
+              "inputTokens": 4,
+              "outputTokens": 107,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 922,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"decision\":\"CONFIRMED\",\"reasoning\":\"The user said \\\"Dale, adelante\\\" (Spanish for \\\"Go ahead, do it\\\"), which clearly a)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"CONFIRMED\",\"reasoning\":\"The user said \\\"Dale, adelante\\\" (Spanish for \\\"Go ahead, do it\\\"), which clearly approves the pending deletion of client Acme (id c1) shown in the confirmation request.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1051
+        },
+        {
+          "caseId": "confirm-pt",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1070,
+              "cost": 0.00006119,
+              "inputTokens": 4,
+              "outputTokens": 103,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 929,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"decision\":\"CONFIRMED\",\"reasoning\":\"The user's message 'Sim, pode apagar' ('Yes, go ahead and delete') clearly approves)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"CONFIRMED\",\"reasoning\":\"The user's message 'Sim, pode apagar' ('Yes, go ahead and delete') clearly approves the pending deletion of customer Acme (id c1), so the action is confirmed.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1071
+        },
+        {
+          "caseId": "confirm-pt",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 937,
+              "cost": 0.00006119,
+              "inputTokens": 4,
+              "outputTokens": 103,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 929,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"decision\":\"CONFIRMED\",\"reasoning\":\"The user's message 'Sim, pode apagar' ('Yes, go ahead and delete') clearly approves)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"CONFIRMED\",\"reasoning\":\"The user's message 'Sim, pode apagar' ('Yes, go ahead and delete') clearly approves the pending deletion of customer Acme (id c1), so the action is confirmed.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 937
+        },
+        {
+          "caseId": "confirm-pt",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1389,
+              "cost": 0.00006169,
+              "inputTokens": 4,
+              "outputTokens": 104,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 929,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"decision\":\"CONFIRMED\",\"reasoning\":\"The user's message 'Sim, pode apagar' ('Yes, go ahead and delete') clearly approves)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"CONFIRMED\",\"reasoning\":\"The user's message 'Sim, pode apagar' ('Yes, go ahead and delete') clearly approves the pending deletion of customer Acme (id c1) in response to the confirmation question.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1390
+        },
+        {
+          "caseId": "confirm-fr",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 933,
+              "cost": 0.00006022,
+              "inputTokens": 4,
+              "outputTokens": 101,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 932,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"decision\":\"CONFIRMED\",\"reasoning\":\"The user replied 'Oui, vas-y' ('Yes, go ahead') in response to the pending confirma)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"CONFIRMED\",\"reasoning\":\"The user replied 'Oui, vas-y' ('Yes, go ahead') in response to the pending confirmation asking to delete client Acme (id c1), which clearly approves the action.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 933
+        },
+        {
+          "caseId": "confirm-fr",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1070,
+              "cost": 0.00006322000000000001,
+              "inputTokens": 4,
+              "outputTokens": 107,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 932,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"decision\":\"CONFIRMED\",\"reasoning\":\"The user replied 'Oui, vas-y' ('Yes, go ahead') in response to the pending confirma)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"CONFIRMED\",\"reasoning\":\"The user replied 'Oui, vas-y' ('Yes, go ahead') in response to the pending confirmation asking to delete client Acme (id c1), which clearly approves the irreversible deletion.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1070
+        },
+        {
+          "caseId": "confirm-fr",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 964,
+              "cost": 0.00006422,
+              "inputTokens": 4,
+              "outputTokens": 109,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 932,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"decision\":\"CONFIRMED\",\"reasoning\":\"The user replied 'Oui, vas-y' ('Yes, go ahead') in response to the pending confirma)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"CONFIRMED\",\"reasoning\":\"The user replied 'Oui, vas-y' ('Yes, go ahead') in response to the pending confirmation asking whether to delete client Acme (id c1). This clearly approves the irreversible deletion.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 964
+        },
+        {
+          "caseId": "decline-en",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 913,
+              "cost": 0.00006513000000000001,
+              "inputTokens": 4,
+              "outputTokens": 111,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 923,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"decision\":\"DECLINED\",\"reasoning\":\"The user clearly rejects the pending deletion of customer Acme (id c1) by saying to )"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"DECLINED\",\"reasoning\":\"The user clearly rejects the pending deletion of customer Acme (id c1) by saying to leave it as it is, so the action should not be performed.\",\"acknowledgement\":\"Understood. The customer Acme will not be deleted, and it will be left as it is.\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 913
+        },
+        {
+          "caseId": "decline-en",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1242,
+              "cost": 0.00006763,
+              "inputTokens": 4,
+              "outputTokens": 116,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 923,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"decision\":\"DECLINED\",\"reasoning\":\"The user clearly rejects the pending deletion of customer Acme (id c1) by saying to )"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"DECLINED\",\"reasoning\":\"The user clearly rejects the pending deletion of customer Acme (id c1) by saying to leave it as it is, so the action should not be performed.\",\"acknowledgement\":\"Understood. The customer Acme (id c1) will not be deleted, and it will be left as it is.\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1242
+        },
+        {
+          "caseId": "decline-en",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1093,
+              "cost": 0.00006663,
+              "inputTokens": 4,
+              "outputTokens": 114,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 923,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"decision\":\"DECLINED\",\"reasoning\":\"The user clearly rejects the pending deletion of customer Acme (id c1) by saying to )"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"DECLINED\",\"reasoning\":\"The user clearly rejects the pending deletion of customer Acme (id c1) by saying to leave it as it is, so the action should not be performed.\",\"acknowledgement\":\"Understood. The customer Acme (id c1) will not be deleted and will stay as it is.\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1093
+        },
+        {
+          "caseId": "decline-es",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1006,
+              "cost": 0.00007716,
+              "inputTokens": 4,
+              "outputTokens": 135,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 926,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"decision\":\"DECLINED\",\"reasoning\":\"The user clearly rejects the pending deletion of client Acme (id c1) by saying 'Mejo)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"DECLINED\",\"reasoning\":\"The user clearly rejects the pending deletion of client Acme (id c1) by saying 'Mejor no, cancela eso' ('Better not, cancel that'), so the action should not be performed.\",\"acknowledgement\":\"Entendido, no borraré al cliente Acme (id c1). La acción ha sido cancelada.\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1006
+        },
+        {
+          "caseId": "decline-es",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1583,
+              "cost": 0.00009316,
+              "inputTokens": 4,
+              "outputTokens": 167,
+              "reasoningTokens": 34,
+              "cacheReadTokens": 926,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 1,
+              "actions": [
+                "__output({\"decision\":\"DECLINED\",\"reasoning\":\"The user said 'Mejor no, cancela eso' ('Better not, cancel that'), which clearly rej)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"DECLINED\",\"reasoning\":\"The user said 'Mejor no, cancela eso' ('Better not, cancel that'), which clearly rejects the pending request to delete client Acme (id c1). The action will not be performed.\",\"acknowledgement\":\"Entendido, no borraré al cliente Acme (id c1). La acción ha sido cancelada.\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1583
+        },
+        {
+          "caseId": "decline-es",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1833,
+              "cost": 0.00010965999999999999,
+              "inputTokens": 4,
+              "outputTokens": 200,
+              "reasoningTokens": 72,
+              "cacheReadTokens": 926,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 1,
+              "actions": [
+                "__output({\"decision\":\"DECLINED\",\"reasoning\":\"The user said 'Mejor no, cancela eso' (\\\"Better not, cancel that\\\"), which clearly r)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"DECLINED\",\"reasoning\":\"The user said 'Mejor no, cancela eso' (\\\"Better not, cancel that\\\"), which clearly rejects the pending deletion of client Acme (id c1).\",\"acknowledgement\":\"Entendido, no se borrará al cliente Acme (id c1). La acción ha sido cancelada.\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1833
+        },
+        {
+          "caseId": "decline-pt",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 2291,
+              "cost": 0.00010519999999999998,
+              "inputTokens": 4,
+              "outputTokens": 191,
+              "reasoningTokens": 78,
+              "cacheReadTokens": 930,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 1,
+              "actions": [
+                "__output({\"decision\":\"DECLINED\",\"reasoning\":\"The user said 'Não, deixa pra lá' ('No, forget it'), which clearly rejects the pendi)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"DECLINED\",\"reasoning\":\"The user said 'Não, deixa pra lá' ('No, forget it'), which clearly rejects the pending deletion of client Acme (id c1).\",\"acknowledgement\":\"Tudo bem! O cliente Acme (id c1) não será apagado.\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 2291
+        },
+        {
+          "caseId": "decline-pt",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1901,
+              "cost": 0.00010619999999999999,
+              "inputTokens": 4,
+              "outputTokens": 193,
+              "reasoningTokens": 75,
+              "cacheReadTokens": 930,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 1,
+              "actions": [
+                "__output({\"decision\":\"DECLINED\",\"reasoning\":\"The user replied \\\"Não, deixa pra lá\\\" (\\\"No, forget it\\\"), which clearly rejects th)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"DECLINED\",\"reasoning\":\"The user replied \\\"Não, deixa pra lá\\\" (\\\"No, forget it\\\"), which clearly rejects the pending deletion of customer Acme (id c1).\",\"acknowledgement\":\"Tudo bem! O cliente Acme (id c1) não será apagado.\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1901
+        },
+        {
+          "caseId": "decline-pt",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1631,
+              "cost": 0.00011019999999999998,
+              "inputTokens": 4,
+              "outputTokens": 201,
+              "reasoningTokens": 66,
+              "cacheReadTokens": 930,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 1,
+              "actions": [
+                "__output({\"decision\":\"DECLINED\",\"reasoning\":\"The user replied 'Não, deixa pra lá' ('No, forget it'), which clearly rejects the pe)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"DECLINED\",\"reasoning\":\"The user replied 'Não, deixa pra lá' ('No, forget it'), which clearly rejects the pending deletion of client Acme (c1). The acknowledgement is in Portuguese, matching detected_language.\",\"acknowledgement\":\"Tudo bem! O cliente Acme (id c1) não será apagado.\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1631
+        },
+        {
+          "caseId": "decline-fr",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1226,
+              "cost": 0.00007869,
+              "inputTokens": 4,
+              "outputTokens": 138,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 929,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"decision\":\"DECLINED\",\"reasoning\":\"The user said 'Non, annule' ('No, cancel') in response to the pending confirmation t)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"DECLINED\",\"reasoning\":\"The user said 'Non, annule' ('No, cancel') in response to the pending confirmation to delete client Acme (id c1). This clearly rejects and cancels the destructive action.\",\"acknowledgement\":\"D'accord, je ne supprimerai pas le client Acme (id c1). Aucune modification n'a été effectuée.\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1226
+        },
+        {
+          "caseId": "decline-fr",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1065,
+              "cost": 0.00007568999999999999,
+              "inputTokens": 4,
+              "outputTokens": 132,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 929,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"decision\":\"DECLINED\",\"reasoning\":\"The user said 'Non, annule' ('No, cancel') in response to the pending confirmation a)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"DECLINED\",\"reasoning\":\"The user said 'Non, annule' ('No, cancel') in response to the pending confirmation about deleting client Acme, clearly rejecting the irreversible action.\",\"acknowledgement\":\"D'accord, je ne supprimerai pas le client Acme (id c1). Aucune modification n'a été effectuée.\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1066
+        },
+        {
+          "caseId": "decline-fr",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1101,
+              "cost": 0.00007669,
+              "inputTokens": 4,
+              "outputTokens": 134,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 929,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"decision\":\"DECLINED\",\"reasoning\":\"The user's message 'Non, annule' clearly rejects the pending deletion of client Acme)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"DECLINED\",\"reasoning\":\"The user's message 'Non, annule' clearly rejects the pending deletion of client Acme (id c1) and asks to cancel, so the action will not be performed.\",\"acknowledgement\":\"D'accord, je n'effectuerai pas la suppression du client Acme (id c1). Aucune modification n'a été apportée.\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1102
+        },
+        {
+          "caseId": "unclear-subject-en",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1036,
+              "cost": 0.00008512999999999999,
+              "inputTokens": 4,
+              "outputTokens": 151,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 923,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"decision\":\"UNCLEAR\",\"reasoning\":\"The user's message asks about the weather and does not address the pending confirmati)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"UNCLEAR\",\"reasoning\":\"The user's message asks about the weather and does not address the pending confirmation to delete customer Acme (id c1). It neither approves nor declines the destructive action, so the intent is unclear.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"Before I continue, I need to check: do you want me to delete the customer Acme (id c1)? This cannot be undone. Please reply with a clear yes or no.\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1036
+        },
+        {
+          "caseId": "unclear-subject-en",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1917,
+              "cost": 0.00008512999999999999,
+              "inputTokens": 4,
+              "outputTokens": 151,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 923,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"decision\":\"UNCLEAR\",\"reasoning\":\"The user's message asks about the weather and does not address the pending confirmati)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"UNCLEAR\",\"reasoning\":\"The user's message asks about the weather and does not address the pending confirmation to delete customer Acme (id c1). It neither approves nor declines the destructive action, so the intent is unclear.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"Before I continue, I need to check: do you want me to delete the customer Acme (id c1)? This cannot be undone. Please reply with a clear yes or no.\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1917
+        },
+        {
+          "caseId": "unclear-subject-en",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1178,
+              "cost": 0.00008963,
+              "inputTokens": 4,
+              "outputTokens": 160,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 923,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"decision\":\"UNCLEAR\",\"reasoning\":\"The user's message asks about the weather and does not address the pending confirmati)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"UNCLEAR\",\"reasoning\":\"The user's message asks about the weather and does not address the pending confirmation to delete customer Acme (id c1). It neither approves nor declines the destructive action, so the intent is unclear.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"I haven't received a clear answer about the pending action. Do you confirm that I delete the customer Acme (id c1)? This cannot be undone. Please reply explicitly with yes or no.\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1178
+        },
+        {
+          "caseId": "unclear-maybe-pt",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 2203,
+              "cost": 0.00015677,
+              "inputTokens": 4,
+              "outputTokens": 294,
+              "reasoningTokens": 76,
+              "cacheReadTokens": 937,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 1,
+              "actions": [
+                "__output({\"decision\":\"UNCLEAR\",\"reasoning\":\"The user said 'maybe, let me think about it,' which neither clearly approves nor clea)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"UNCLEAR\",\"reasoning\":\"The user said 'maybe, let me think about it,' which neither clearly approves nor clearly declines the pending deletion of client Acme (c1). The action is irreversible, so it should not proceed without an explicit answer.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"Entendi que você quer pensar um pouco. Para eu prosseguir, preciso de uma resposta clara: você confirma que eu apague o cliente Acme (id c1)? Lembre-se de que essa ação não pode ser desfeita. Responda 'sim' para confirmar ou 'não' para cancelar.\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 2203
+        },
+        {
+          "caseId": "unclear-maybe-pt",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1764,
+              "cost": 0.00014277000000000002,
+              "inputTokens": 4,
+              "outputTokens": 266,
+              "reasoningTokens": 64,
+              "cacheReadTokens": 937,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 1,
+              "actions": [
+                "__output({\"decision\":\"UNCLEAR\",\"reasoning\":\"The user says 'Maybe, let me think about it,' which neither clearly approves nor decl)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"UNCLEAR\",\"reasoning\":\"The user says 'Maybe, let me think about it,' which neither clearly approves nor declines deleting the Acme customer (id c1). The action is irreversible, so it should not proceed without an explicit answer.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"Tudo bem, sem pressa. Para eu seguir, preciso de uma resposta clara: você confirma que eu apague o cliente Acme (id c1)? Essa ação não pode ser desfeita. Responda 'sim' para apagar ou 'não' para cancelar.\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1764
+        },
+        {
+          "caseId": "unclear-maybe-pt",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 2810,
+              "cost": 0.00019677,
+              "inputTokens": 4,
+              "outputTokens": 374,
+              "reasoningTokens": 194,
+              "cacheReadTokens": 937,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 1,
+              "actions": [
+                "__output({\"decision\":\"UNCLEAR\",\"reasoning\":\"The user said they want to think about it, which neither approves nor rejects the pen)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"UNCLEAR\",\"reasoning\":\"The user said they want to think about it, which neither approves nor rejects the pending deletion of client Acme (id c1). The message is not a clear confirmation or decline.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"Entendi que você ainda está pensando. Para eu prosseguir, preciso que você confirme explicitamente se devo apagar o cliente Acme (id c1), lembrando que essa ação não pode ser desfeita, ou que diga que não devo apagar.\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 2810
+        },
+        {
+          "caseId": "unclear-change-fr",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 3000,
+              "cost": 0.00021428,
+              "inputTokens": 4,
+              "outputTokens": 409,
+              "reasoningTokens": 189,
+              "cacheReadTokens": 938,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 1,
+              "actions": [
+                "__output({\"decision\":\"UNCLEAR\",\"reasoning\":\"The user proposes archiving the client instead of deleting it. This does not approve )"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"UNCLEAR\",\"reasoning\":\"The user proposes archiving the client instead of deleting it. This does not approve the deletion, but it does not clearly cancel it either, and archiving is a different action from the one pending. The user should explicitly confirm or decline the deletion.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"Je n'ai pas encore effectué d'action. Souhaitez-vous confirmer la suppression définitive du client Acme (id c1), qui ne sera pas réversible, ou préférez-vous annuler cette suppression ? Si vous voulez l'archiver à la place, dites-le-moi explicitement.\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 3000
+        },
+        {
+          "caseId": "unclear-change-fr",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 2373,
+              "cost": 0.00015078,
+              "inputTokens": 4,
+              "outputTokens": 282,
+              "reasoningTokens": 129,
+              "cacheReadTokens": 938,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 1,
+              "actions": [
+                "__output({\"decision\":\"UNCLEAR\",\"reasoning\":\"The user proposes archiving the client instead of deleting it. This neither approves )"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"UNCLEAR\",\"reasoning\":\"The user proposes archiving the client instead of deleting it. This neither approves the pending deletion nor clearly declines it, so an explicit answer is needed.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"Je n'ai pas encore supprimé le client Acme (id c1). Voulez-vous confirmer la suppression, qui ne sera pas réversible, ou l'annuler ?\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 2373
+        },
+        {
+          "caseId": "unclear-change-fr",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 2214,
+              "cost": 0.00015128,
+              "inputTokens": 4,
+              "outputTokens": 283,
+              "reasoningTokens": 88,
+              "cacheReadTokens": 938,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 1,
+              "actions": [
+                "__output({\"decision\":\"UNCLEAR\",\"reasoning\":\"The user proposes archiving the client instead of deleting it. This is neither an app)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"UNCLEAR\",\"reasoning\":\"The user proposes archiving the client instead of deleting it. This is neither an approval of the deletion nor a clear refusal, so the pending confirmation has not been answered.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"Je n'ai pas encore supprimé le client Acme (id c1). Souhaitez-vous que je le supprime définitivement, sachant que ce ne sera pas réversible, ou préférez-vous annuler cette action ? Vous pouvez aussi me demander d'archiver le client à la place.\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 2214
+        },
+        {
+          "caseId": "partial-es",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 3190,
+              "cost": 0.00018072,
+              "inputTokens": 4,
+              "outputTokens": 342,
+              "reasoningTokens": 150,
+              "cacheReadTokens": 932,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 1,
+              "actions": [
+                "__output({\"decision\":\"UNCLEAR\",\"reasoning\":\"The user starts with 'Si' but then narrows the action to deleting only the invoices a)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"UNCLEAR\",\"reasoning\":\"The user starts with 'Si' but then narrows the action to deleting only the invoices and not the client. That does not approve the presented action (deleting client Acme), and it is not a clear rejection either. It is a modified request, so explicit confirmation is needed.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"Entiendo que quieres borrar solo las facturas del cliente Acme (id c1) y conservar el cliente. ¿Confirmas esta acción? Por favor, responde explícitamente si sí o no.\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 3191
+        },
+        {
+          "caseId": "partial-es",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 3106,
+              "cost": 0.00025571999999999997,
+              "inputTokens": 4,
+              "outputTokens": 492,
+              "reasoningTokens": 280,
+              "cacheReadTokens": 932,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 1,
+              "actions": [
+                "__output({\"decision\":\"UNCLEAR\",\"reasoning\":\"The user begins with 'Yes' but then narrows the action to deleting only the invoices )"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"UNCLEAR\",\"reasoning\":\"The user begins with 'Yes' but then narrows the action to deleting only the invoices and not the client. That is a different action from the one presented (deleting client Acme), so it is not a clear approval of the pending confirmation. It is also not a clear rejection.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"Entiendo que quieres borrar solo las facturas, no al cliente Acme (id c1), pero la acción pendiente era borrar al cliente. ¿Confirmas que se borren únicamente las facturas, o prefieres no realizar ninguna eliminación?\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 3106
+        },
+        {
+          "caseId": "partial-es",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 3494,
+              "cost": 0.00020972,
+              "inputTokens": 4,
+              "outputTokens": 400,
+              "reasoningTokens": 170,
+              "cacheReadTokens": 932,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 1,
+              "actions": [
+                "__output({\"decision\":\"UNCLEAR\",\"reasoning\":\"The user says 'yes' but narrows the action to deleting only the invoices, not the cli)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"UNCLEAR\",\"reasoning\":\"The user says 'yes' but narrows the action to deleting only the invoices, not the client. That changes the pending request, so it is neither a clear approval of deleting client Acme nor a clear rejection.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"Entiendo que quieres borrar solo las facturas y no al cliente Acme (id c1), pero esa acción no es la que se te pidió confirmar. ¿Confirmas explícitamente que se borre el cliente Acme (id c1) o lo cancelamos? Si prefieres borrar solo las facturas, dímelo y te pediré confirmación para esa acción.\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 3495
+        },
+        {
+          "caseId": "question-en",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1703,
+              "cost": 0.00009916999999999999,
+              "inputTokens": 4,
+              "outputTokens": 179,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 927,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"decision\":\"UNCLEAR\",\"reasoning\":\"The user asks which invoices would be affected by the deletion rather than approving )"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"UNCLEAR\",\"reasoning\":\"The user asks which invoices would be affected by the deletion rather than approving or declining it. The question is unrelated to a yes/no answer, so the user has not clearly confirmed or rejected the pending deletion of customer Acme (c1).\",\"acknowledgement\":\"\",\"clarification_prompt\":\"I haven't deleted anything yet. Do you want me to proceed with deleting the customer Acme (id c1)? This cannot be undone. Please reply yes to confirm or no to cancel.\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1703
+        },
+        {
+          "caseId": "question-en",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1244,
+              "cost": 0.00009167,
+              "inputTokens": 4,
+              "outputTokens": 164,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 927,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"decision\":\"UNCLEAR\",\"reasoning\":\"The user asked which invoices would be affected by the deletion rather than approving)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"UNCLEAR\",\"reasoning\":\"The user asked which invoices would be affected by the deletion rather than approving or declining it. The message neither confirms nor cancels the pending deletion of customer Acme, so it is ambiguous.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"I haven't deleted anything yet. Do you want me to proceed with deleting customer Acme (id c1)? This cannot be undone. Please reply yes to confirm or no to cancel.\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1245
+        },
+        {
+          "caseId": "question-en",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1457,
+              "cost": 0.00009617,
+              "inputTokens": 4,
+              "outputTokens": 173,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 927,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"decision\":\"UNCLEAR\",\"reasoning\":\"The user asks which invoices would be affected by the deletion rather than approving )"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"UNCLEAR\",\"reasoning\":\"The user asks which invoices would be affected by the deletion rather than approving or declining it. The message neither confirms nor cancels the pending deletion of customer Acme, so it is ambiguous and needs an explicit answer.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"I haven't deleted anything yet. Do you want me to proceed with deleting customer Acme (id c1)? This cannot be undone. Please reply yes to confirm or no to cancel.\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1457
+        }
+      ]
+    },
+    {
+      "mode": "text",
+      "reasoning": "high",
+      "strict": "-",
+      "summary": {
+        "runs": 39,
+        "correctRuns": 39,
+        "turns": 39,
+        "complete": 39,
+        "partial": 0,
+        "invalid": 0,
+        "empty": 0,
+        "errors": 0,
+        "recovered": 0,
+        "multiBlock": 0,
+        "thinkingTurns": 35,
+        "avgTurnsPerRun": 1,
+        "avgMsPerCall": 2004,
+        "maxMsPerCall": 4186,
+        "avgMsPerRun": 2004,
+        "inputTokens": 156,
+        "outputTokens": 9619,
+        "reasoningTokens": 4251,
+        "cacheReadTokens": 36213,
+        "cacheWriteTokens": 0,
+        "cost": 0.00518723,
+        "costPerCorrect": 0.00013300589743589744
+      },
+      "byCase": {
+        "confirm-en": {
+          "runs": 3,
+          "correctRuns": 3,
+          "turns": 3,
+          "complete": 3,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "multiBlock": 0,
+          "thinkingTurns": 2,
+          "avgTurnsPerRun": 1,
+          "avgMsPerCall": 1412,
+          "maxMsPerCall": 1859,
+          "avgMsPerRun": 1413,
+          "inputTokens": 12,
+          "outputTokens": 392,
+          "reasoningTokens": 125,
+          "cacheReadTokens": 2769,
+          "cacheWriteTokens": 0,
+          "cost": 0.00022489,
+          "costPerCorrect": 0.00007496333333333333
+        },
+        "confirm-es": {
+          "runs": 3,
+          "correctRuns": 3,
+          "turns": 3,
+          "complete": 3,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "multiBlock": 0,
+          "thinkingTurns": 3,
+          "avgTurnsPerRun": 1,
+          "avgMsPerCall": 1684,
+          "maxMsPerCall": 2069,
+          "avgMsPerRun": 1684,
+          "inputTokens": 12,
+          "outputTokens": 496,
+          "reasoningTokens": 225,
+          "cacheReadTokens": 2766,
+          "cacheWriteTokens": 0,
+          "cost": 0.00027686,
+          "costPerCorrect": 0.00009228666666666666
+        },
+        "confirm-pt": {
+          "runs": 3,
+          "correctRuns": 3,
+          "turns": 3,
+          "complete": 3,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "multiBlock": 0,
+          "thinkingTurns": 3,
+          "avgTurnsPerRun": 1,
+          "avgMsPerCall": 1804,
+          "maxMsPerCall": 1899,
+          "avgMsPerRun": 1804,
+          "inputTokens": 12,
+          "outputTokens": 489,
+          "reasoningTokens": 187,
+          "cacheReadTokens": 2787,
+          "cacheWriteTokens": 0,
+          "cost": 0.00027356999999999994,
+          "costPerCorrect": 0.00009118999999999999
+        },
+        "confirm-fr": {
+          "runs": 3,
+          "correctRuns": 3,
+          "turns": 3,
+          "complete": 3,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "multiBlock": 0,
+          "thinkingTurns": 3,
+          "avgTurnsPerRun": 1,
+          "avgMsPerCall": 1739,
+          "maxMsPerCall": 1844,
+          "avgMsPerRun": 1739,
+          "inputTokens": 12,
+          "outputTokens": 482,
+          "reasoningTokens": 211,
+          "cacheReadTokens": 2796,
+          "cacheWriteTokens": 0,
+          "cost": 0.00027016,
+          "costPerCorrect": 0.00009005333333333332
+        },
+        "decline-en": {
+          "runs": 3,
+          "correctRuns": 3,
+          "turns": 3,
+          "complete": 3,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "multiBlock": 0,
+          "thinkingTurns": 0,
+          "avgTurnsPerRun": 1,
+          "avgMsPerCall": 1016,
+          "maxMsPerCall": 1081,
+          "avgMsPerRun": 1016,
+          "inputTokens": 12,
+          "outputTokens": 342,
+          "reasoningTokens": 0,
+          "cacheReadTokens": 2769,
+          "cacheWriteTokens": 0,
+          "cost": 0.00019989,
+          "costPerCorrect": 0.00006663
+        },
+        "decline-es": {
+          "runs": 3,
+          "correctRuns": 3,
+          "turns": 3,
+          "complete": 3,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "multiBlock": 0,
+          "thinkingTurns": 3,
+          "avgTurnsPerRun": 1,
+          "avgMsPerCall": 1858,
+          "maxMsPerCall": 1986,
+          "avgMsPerRun": 1858,
+          "inputTokens": 12,
+          "outputTokens": 570,
+          "reasoningTokens": 204,
+          "cacheReadTokens": 2778,
+          "cacheWriteTokens": 0,
+          "cost": 0.00031398,
+          "costPerCorrect": 0.00010466
+        },
+        "decline-pt": {
+          "runs": 3,
+          "correctRuns": 3,
+          "turns": 3,
+          "complete": 3,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "multiBlock": 0,
+          "thinkingTurns": 3,
+          "avgTurnsPerRun": 1,
+          "avgMsPerCall": 1923,
+          "maxMsPerCall": 2010,
+          "avgMsPerRun": 1923,
+          "inputTokens": 12,
+          "outputTokens": 689,
+          "reasoningTokens": 289,
+          "cacheReadTokens": 2790,
+          "cacheWriteTokens": 0,
+          "cost": 0.0003736,
+          "costPerCorrect": 0.00012453333333333332
+        },
+        "decline-fr": {
+          "runs": 3,
+          "correctRuns": 3,
+          "turns": 3,
+          "complete": 3,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "multiBlock": 0,
+          "thinkingTurns": 3,
+          "avgTurnsPerRun": 1,
+          "avgMsPerCall": 1811,
+          "maxMsPerCall": 1867,
+          "avgMsPerRun": 1811,
+          "inputTokens": 12,
+          "outputTokens": 591,
+          "reasoningTokens": 214,
+          "cacheReadTokens": 2787,
+          "cacheWriteTokens": 0,
+          "cost": 0.00032457,
+          "costPerCorrect": 0.00010818999999999999
+        },
+        "unclear-subject-en": {
+          "runs": 3,
+          "correctRuns": 3,
+          "turns": 3,
+          "complete": 3,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "multiBlock": 0,
+          "thinkingTurns": 3,
+          "avgTurnsPerRun": 1,
+          "avgMsPerCall": 1715,
+          "maxMsPerCall": 1814,
+          "avgMsPerRun": 1715,
+          "inputTokens": 12,
+          "outputTokens": 581,
+          "reasoningTokens": 161,
+          "cacheReadTokens": 2769,
+          "cacheWriteTokens": 0,
+          "cost": 0.00031938999999999996,
+          "costPerCorrect": 0.00010646333333333332
+        },
+        "unclear-maybe-pt": {
+          "runs": 3,
+          "correctRuns": 3,
+          "turns": 3,
+          "complete": 3,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "multiBlock": 0,
+          "thinkingTurns": 3,
+          "avgTurnsPerRun": 1,
+          "avgMsPerCall": 2487,
+          "maxMsPerCall": 2694,
+          "avgMsPerRun": 2487,
+          "inputTokens": 12,
+          "outputTokens": 1119,
+          "reasoningTokens": 525,
+          "cacheReadTokens": 2811,
+          "cacheWriteTokens": 0,
+          "cost": 0.0005888099999999999,
+          "costPerCorrect": 0.00019627
+        },
+        "unclear-change-fr": {
+          "runs": 3,
+          "correctRuns": 3,
+          "turns": 3,
+          "complete": 3,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "multiBlock": 0,
+          "thinkingTurns": 3,
+          "avgTurnsPerRun": 1,
+          "avgMsPerCall": 3297,
+          "maxMsPerCall": 3475,
+          "avgMsPerRun": 3297,
+          "inputTokens": 12,
+          "outputTokens": 1426,
+          "reasoningTokens": 822,
+          "cacheReadTokens": 2814,
+          "cacheWriteTokens": 0,
+          "cost": 0.00074234,
+          "costPerCorrect": 0.00024744666666666666
+        },
+        "partial-es": {
+          "runs": 3,
+          "correctRuns": 3,
+          "turns": 3,
+          "complete": 3,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "multiBlock": 0,
+          "thinkingTurns": 3,
+          "avgTurnsPerRun": 1,
+          "avgMsPerCall": 3632,
+          "maxMsPerCall": 4186,
+          "avgMsPerRun": 3632,
+          "inputTokens": 12,
+          "outputTokens": 1769,
+          "reasoningTokens": 1113,
+          "cacheReadTokens": 2796,
+          "cacheWriteTokens": 0,
+          "cost": 0.0009136600000000001,
+          "costPerCorrect": 0.00030455333333333337
+        },
+        "question-en": {
+          "runs": 3,
+          "correctRuns": 3,
+          "turns": 3,
+          "complete": 3,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "multiBlock": 0,
+          "thinkingTurns": 3,
+          "avgTurnsPerRun": 1,
+          "avgMsPerCall": 1675,
+          "maxMsPerCall": 1896,
+          "avgMsPerRun": 1675,
+          "inputTokens": 12,
+          "outputTokens": 673,
+          "reasoningTokens": 175,
+          "cacheReadTokens": 2781,
+          "cacheWriteTokens": 0,
+          "cost": 0.00036551,
+          "costPerCorrect": 0.00012183666666666666
+        }
+      },
+      "runs": [
+        {
+          "caseId": "confirm-en",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 878,
+              "cost": 0.00005663,
+              "inputTokens": 4,
+              "outputTokens": 94,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 923,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"decision\":\"CONFIRMED\",\"reasoning\":\"The user's message 'Yes, go ahead' clearly approves the pending confirmation to del)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"CONFIRMED\",\"reasoning\":\"The user's message 'Yes, go ahead' clearly approves the pending confirmation to delete the customer Acme (id c1), so the action is approved to proceed.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 879
+        },
+        {
+          "caseId": "confirm-en",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1500,
+              "cost": 0.00008213,
+              "inputTokens": 4,
+              "outputTokens": 145,
+              "reasoningTokens": 63,
+              "cacheReadTokens": 923,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 1,
+              "actions": [
+                "__output({\"decision\":\"CONFIRMED\",\"reasoning\":\"The user's message 'Yes, go ahead' clearly approves the pending confirmation to del)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"CONFIRMED\",\"reasoning\":\"The user's message 'Yes, go ahead' clearly approves the pending confirmation to delete customer Acme (id c1).\",\"acknowledgement\":\"\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1500
+        },
+        {
+          "caseId": "confirm-en",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1859,
+              "cost": 0.00008613,
+              "inputTokens": 4,
+              "outputTokens": 153,
+              "reasoningTokens": 62,
+              "cacheReadTokens": 923,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 1,
+              "actions": [
+                "__output({\"decision\":\"CONFIRMED\",\"reasoning\":\"The user's message 'Yes, go ahead' is a clear affirmative response to the pending c)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"CONFIRMED\",\"reasoning\":\"The user's message 'Yes, go ahead' is a clear affirmative response to the pending confirmation asking whether to delete customer Acme (id c1).\",\"acknowledgement\":\"\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1859
+        },
+        {
+          "caseId": "confirm-es",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1552,
+              "cost": 0.00008861999999999999,
+              "inputTokens": 4,
+              "outputTokens": 158,
+              "reasoningTokens": 68,
+              "cacheReadTokens": 922,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 1,
+              "actions": [
+                "__output({\"decision\":\"CONFIRMED\",\"reasoning\":\"The user replied \\\"Dale, adelante\\\" (\\\"Go ahead\\\"), which clearly approves the pend)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"CONFIRMED\",\"reasoning\":\"The user replied \\\"Dale, adelante\\\" (\\\"Go ahead\\\"), which clearly approves the pending deletion of client Acme (id c1).\",\"acknowledgement\":\"\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1552
+        },
+        {
+          "caseId": "confirm-es",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1432,
+              "cost": 0.00008561999999999998,
+              "inputTokens": 4,
+              "outputTokens": 152,
+              "reasoningTokens": 61,
+              "cacheReadTokens": 922,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 1,
+              "actions": [
+                "__output({\"decision\":\"CONFIRMED\",\"reasoning\":\"The user's message 'Dale, adelante' ('Go ahead, let's do it') clearly approves the )"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"CONFIRMED\",\"reasoning\":\"The user's message 'Dale, adelante' ('Go ahead, let's do it') clearly approves the pending action of deleting client Acme (id c1).\",\"acknowledgement\":\"\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1432
+        },
+        {
+          "caseId": "confirm-es",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 2069,
+              "cost": 0.00010261999999999999,
+              "inputTokens": 4,
+              "outputTokens": 186,
+              "reasoningTokens": 96,
+              "cacheReadTokens": 922,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 1,
+              "actions": [
+                "__output({\"decision\":\"CONFIRMED\",\"reasoning\":\"The user replied \\\"Dale, adelante\\\" (\\\"Go ahead\\\"), which clearly approves the pend)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"CONFIRMED\",\"reasoning\":\"The user replied \\\"Dale, adelante\\\" (\\\"Go ahead\\\"), which clearly approves the pending deletion of client Acme (id c1).\",\"acknowledgement\":\"\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 2069
+        },
+        {
+          "caseId": "confirm-pt",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1756,
+              "cost": 0.00008868999999999999,
+              "inputTokens": 4,
+              "outputTokens": 158,
+              "reasoningTokens": 63,
+              "cacheReadTokens": 929,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 1,
+              "actions": [
+                "__output({\"decision\":\"CONFIRMED\",\"reasoning\":\"The user's reply 'Sim, pode apagar' ('Yes, go ahead and delete') clearly approves t)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"CONFIRMED\",\"reasoning\":\"The user's reply 'Sim, pode apagar' ('Yes, go ahead and delete') clearly approves the pending deletion of customer Acme (id c1).\",\"acknowledgement\":\"\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1756
+        },
+        {
+          "caseId": "confirm-pt",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1757,
+              "cost": 0.00009018999999999999,
+              "inputTokens": 4,
+              "outputTokens": 161,
+              "reasoningTokens": 59,
+              "cacheReadTokens": 929,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 1,
+              "actions": [
+                "__output({\"decision\":\"CONFIRMED\",\"reasoning\":\"The user clearly approved the pending action with 'Sim, pode apagar' ('Yes, you can)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"CONFIRMED\",\"reasoning\":\"The user clearly approved the pending action with 'Sim, pode apagar' ('Yes, you can delete it'), which directly answers the confirmation about deleting client Acme (id c1).\",\"acknowledgement\":\"\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1757
+        },
+        {
+          "caseId": "confirm-pt",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1899,
+              "cost": 0.00009468999999999999,
+              "inputTokens": 4,
+              "outputTokens": 170,
+              "reasoningTokens": 65,
+              "cacheReadTokens": 929,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 1,
+              "actions": [
+                "__output({\"decision\":\"CONFIRMED\",\"reasoning\":\"The user replied 'Sim, pode apagar' ('Yes, you can delete it') directly to the pend)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"CONFIRMED\",\"reasoning\":\"The user replied 'Sim, pode apagar' ('Yes, you can delete it') directly to the pending confirmation to delete customer Acme (id c1). This clearly approves the destructive action.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1899
+        },
+        {
+          "caseId": "confirm-fr",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1698,
+              "cost": 0.00009271999999999999,
+              "inputTokens": 4,
+              "outputTokens": 166,
+              "reasoningTokens": 74,
+              "cacheReadTokens": 932,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 1,
+              "actions": [
+                "__output({\"decision\":\"CONFIRMED\",\"reasoning\":\"The user's message 'Oui, vas-y' ('Yes, go ahead') clearly approves the pending conf)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"CONFIRMED\",\"reasoning\":\"The user's message 'Oui, vas-y' ('Yes, go ahead') clearly approves the pending confirmation to delete client Acme (id c1).\",\"acknowledgement\":\"\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1698
+        },
+        {
+          "caseId": "confirm-fr",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1844,
+              "cost": 0.00008571999999999999,
+              "inputTokens": 4,
+              "outputTokens": 152,
+              "reasoningTokens": 62,
+              "cacheReadTokens": 932,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 1,
+              "actions": [
+                "__output({\"decision\":\"CONFIRMED\",\"reasoning\":\"The user's message 'Oui, vas-y' ('Yes, go ahead') clearly approves the pending acti)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"CONFIRMED\",\"reasoning\":\"The user's message 'Oui, vas-y' ('Yes, go ahead') clearly approves the pending action of deleting client Acme (id c1).\",\"acknowledgement\":\"\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1844
+        },
+        {
+          "caseId": "confirm-fr",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1675,
+              "cost": 0.00009172,
+              "inputTokens": 4,
+              "outputTokens": 164,
+              "reasoningTokens": 75,
+              "cacheReadTokens": 932,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 1,
+              "actions": [
+                "__output({\"decision\":\"CONFIRMED\",\"reasoning\":\"The user's message 'Oui, vas-y' ('Yes, go ahead') clearly approves the pending dele)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"CONFIRMED\",\"reasoning\":\"The user's message 'Oui, vas-y' ('Yes, go ahead') clearly approves the pending deletion of client Acme (id c1).\",\"acknowledgement\":\"\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1675
+        },
+        {
+          "caseId": "decline-en",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 948,
+              "cost": 0.00006663,
+              "inputTokens": 4,
+              "outputTokens": 114,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 923,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"decision\":\"DECLINED\",\"reasoning\":\"The user clearly rejects the pending deletion of customer Acme (id c1) by saying to )"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"DECLINED\",\"reasoning\":\"The user clearly rejects the pending deletion of customer Acme (id c1) by saying to leave it as it is, so the action should not be performed.\",\"acknowledgement\":\"Understood. The customer Acme (id c1) will not be deleted and will remain as it is.\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 948
+        },
+        {
+          "caseId": "decline-en",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1020,
+              "cost": 0.00006663,
+              "inputTokens": 4,
+              "outputTokens": 114,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 923,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"decision\":\"DECLINED\",\"reasoning\":\"The user clearly rejects the pending deletion of customer Acme (id c1) by saying to )"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"DECLINED\",\"reasoning\":\"The user clearly rejects the pending deletion of customer Acme (id c1) by saying to leave it as it is, so the action should not be performed.\",\"acknowledgement\":\"Understood. The customer Acme (id c1) will not be deleted and will remain as it is.\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1020
+        },
+        {
+          "caseId": "decline-en",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1081,
+              "cost": 0.00006663,
+              "inputTokens": 4,
+              "outputTokens": 114,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 923,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"decision\":\"DECLINED\",\"reasoning\":\"The user clearly rejects the pending deletion of customer Acme (id c1) by saying to )"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"DECLINED\",\"reasoning\":\"The user clearly rejects the pending deletion of customer Acme (id c1) by saying to leave it as it is, so the action should not be performed.\",\"acknowledgement\":\"Understood. The customer Acme (id c1) will not be deleted and will remain as it is.\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1081
+        },
+        {
+          "caseId": "decline-es",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1986,
+              "cost": 0.00010515999999999999,
+              "inputTokens": 4,
+              "outputTokens": 191,
+              "reasoningTokens": 65,
+              "cacheReadTokens": 926,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 1,
+              "actions": [
+                "__output({\"decision\":\"DECLINED\",\"reasoning\":\"The user said 'Mejor no, cancela eso' ('Better not, cancel that'), which clearly rej)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"DECLINED\",\"reasoning\":\"The user said 'Mejor no, cancela eso' ('Better not, cancel that'), which clearly rejects the pending deletion of client Acme (id c1).\",\"acknowledgement\":\"Entendido, no se borrará al cliente Acme (id c1). La acción ha sido cancelada.\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1986
+        },
+        {
+          "caseId": "decline-es",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1707,
+              "cost": 0.00010766,
+              "inputTokens": 4,
+              "outputTokens": 196,
+              "reasoningTokens": 70,
+              "cacheReadTokens": 926,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 1,
+              "actions": [
+                "__output({\"decision\":\"DECLINED\",\"reasoning\":\"The user said 'Mejor no, cancela eso' ('Better not, cancel that'), which clearly rej)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"DECLINED\",\"reasoning\":\"The user said 'Mejor no, cancela eso' ('Better not, cancel that'), which clearly rejects the pending deletion of client Acme (id c1).\",\"acknowledgement\":\"Entendido, no se borrará al cliente Acme (id c1). La acción ha sido cancelada.\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1707
+        },
+        {
+          "caseId": "decline-es",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1881,
+              "cost": 0.00010116,
+              "inputTokens": 4,
+              "outputTokens": 183,
+              "reasoningTokens": 69,
+              "cacheReadTokens": 926,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 1,
+              "actions": [
+                "__output({\"decision\":\"DECLINED\",\"reasoning\":\"The user said 'Mejor no, cancela eso' ('Better not, cancel that'), which clearly rej)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"DECLINED\",\"reasoning\":\"The user said 'Mejor no, cancela eso' ('Better not, cancel that'), which clearly rejects the pending deletion of client Acme (id c1).\",\"acknowledgement\":\"Entendido, no se borrará al cliente Acme (id c1).\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1881
+        },
+        {
+          "caseId": "decline-pt",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 2010,
+              "cost": 0.0001327,
+              "inputTokens": 4,
+              "outputTokens": 246,
+              "reasoningTokens": 102,
+              "cacheReadTokens": 930,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 1,
+              "actions": [
+                "__output({\"decision\":\"DECLINED\",\"reasoning\":\"The user said \\\"Não, deixa pra lá\\\" (\\\"No, forget it\\\"), which clearly rejects the p)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"DECLINED\",\"reasoning\":\"The user said \\\"Não, deixa pra lá\\\" (\\\"No, forget it\\\"), which clearly rejects the pending deletion of client Acme (id c1). The user's language is Portuguese, per detected_language.\",\"acknowledgement\":\"Ok, não vou apagar o cliente Acme (id c1). Nenhuma alteração foi feita.\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 2010
+        },
+        {
+          "caseId": "decline-pt",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1990,
+              "cost": 0.00010669999999999999,
+              "inputTokens": 4,
+              "outputTokens": 194,
+              "reasoningTokens": 82,
+              "cacheReadTokens": 930,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 1,
+              "actions": [
+                "__output({\"decision\":\"DECLINED\",\"reasoning\":\"The user said 'Não, deixa pra lá' ('No, forget it'), which clearly rejects the pendi)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"DECLINED\",\"reasoning\":\"The user said 'Não, deixa pra lá' ('No, forget it'), which clearly rejects the pending deletion of client Acme (c1).\",\"acknowledgement\":\"Tudo bem! O cliente Acme (id c1) não será apagado.\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1990
+        },
+        {
+          "caseId": "decline-pt",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1769,
+              "cost": 0.0001342,
+              "inputTokens": 4,
+              "outputTokens": 249,
+              "reasoningTokens": 105,
+              "cacheReadTokens": 930,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 1,
+              "actions": [
+                "__output({\"decision\":\"DECLINED\",\"reasoning\":\"The user said 'Não, deixa pra lá' ('No, forget it'), which clearly rejects the pendi)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"DECLINED\",\"reasoning\":\"The user said 'Não, deixa pra lá' ('No, forget it'), which clearly rejects the pending deletion of client Acme (id c1). The user's language is Portuguese, from detected_language.\",\"acknowledgement\":\"Tudo bem, não vou apagar o cliente Acme (id c1). Nenhuma alteração foi feita.\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1769
+        },
+        {
+          "caseId": "decline-fr",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1788,
+              "cost": 0.00011418999999999999,
+              "inputTokens": 4,
+              "outputTokens": 209,
+              "reasoningTokens": 75,
+              "cacheReadTokens": 929,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 1,
+              "actions": [
+                "__output({\"decision\":\"DECLINED\",\"reasoning\":\"The user clearly rejects the pending confirmation ('Non, annule' means 'No, cancel'))"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"DECLINED\",\"reasoning\":\"The user clearly rejects the pending confirmation ('Non, annule' means 'No, cancel'), so the deletion of client Acme (id c1) will not be performed.\",\"acknowledgement\":\"D'accord, je ne supprimerai pas le client Acme (id c1). Aucune modification n'a été effectuée.\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1789
+        },
+        {
+          "caseId": "decline-fr",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1867,
+              "cost": 0.00010669,
+              "inputTokens": 4,
+              "outputTokens": 194,
+              "reasoningTokens": 75,
+              "cacheReadTokens": 929,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 1,
+              "actions": [
+                "__output({\"decision\":\"DECLINED\",\"reasoning\":\"The user said \\\"Non, annule\\\" (\\\"No, cancel\\\"), which clearly rejects the pending de)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"DECLINED\",\"reasoning\":\"The user said \\\"Non, annule\\\" (\\\"No, cancel\\\"), which clearly rejects the pending deletion of client Acme.\",\"acknowledgement\":\"D'accord, le client Acme (id c1) ne sera pas supprimé. L'action a bien été annulée.\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1867
+        },
+        {
+          "caseId": "decline-fr",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1777,
+              "cost": 0.00010368999999999999,
+              "inputTokens": 4,
+              "outputTokens": 188,
+              "reasoningTokens": 64,
+              "cacheReadTokens": 929,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 1,
+              "actions": [
+                "__output({\"decision\":\"DECLINED\",\"reasoning\":\"The user replied 'Non, annule' ('No, cancel'), which clearly rejects the pending del)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"DECLINED\",\"reasoning\":\"The user replied 'Non, annule' ('No, cancel'), which clearly rejects the pending deletion of client Acme (id c1).\",\"acknowledgement\":\"D'accord, je ne supprimerai pas le client Acme (id c1). Aucune modification n'a été effectuée.\",\"clarification_prompt\":\"\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1777
+        },
+        {
+          "caseId": "unclear-subject-en",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1660,
+              "cost": 0.00009913,
+              "inputTokens": 4,
+              "outputTokens": 179,
+              "reasoningTokens": 47,
+              "cacheReadTokens": 923,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 1,
+              "actions": [
+                "__output({\"decision\":\"UNCLEAR\",\"reasoning\":\"The user asked about the weather, which is unrelated to the pending request to delete)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"UNCLEAR\",\"reasoning\":\"The user asked about the weather, which is unrelated to the pending request to delete the customer Acme (id c1). The message neither approves nor declines the deletion.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"Before I continue, please confirm or decline: do you want me to delete the customer Acme (id c1)? This cannot be undone.\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1660
+        },
+        {
+          "caseId": "unclear-subject-en",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1814,
+              "cost": 0.00011962999999999999,
+              "inputTokens": 4,
+              "outputTokens": 220,
+              "reasoningTokens": 66,
+              "cacheReadTokens": 923,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 1,
+              "actions": [
+                "__output({\"decision\":\"UNCLEAR\",\"reasoning\":\"The user asked about the weather, which is unrelated to the pending confirmation abou)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"UNCLEAR\",\"reasoning\":\"The user asked about the weather, which is unrelated to the pending confirmation about deleting customer Acme (id c1). The message neither approves nor declines the deletion, so the intent is unclear.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"I haven't received an answer to my previous question. Please confirm or decline: do you want me to delete the customer Acme (id c1)? This action cannot be undone.\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1814
+        },
+        {
+          "caseId": "unclear-subject-en",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1670,
+              "cost": 0.00010062999999999999,
+              "inputTokens": 4,
+              "outputTokens": 182,
+              "reasoningTokens": 48,
+              "cacheReadTokens": 923,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 1,
+              "actions": [
+                "__output({\"decision\":\"UNCLEAR\",\"reasoning\":\"The user asked about the weather, which is unrelated to the pending confirmation to d)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"UNCLEAR\",\"reasoning\":\"The user asked about the weather, which is unrelated to the pending confirmation to delete customer Acme (id c1). The message neither approves nor declines the deletion.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"Before we continue, please confirm or decline: do you want me to delete the customer Acme (id c1)? This cannot be undone.\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1670
+        },
+        {
+          "caseId": "unclear-maybe-pt",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 2564,
+              "cost": 0.00020927,
+              "inputTokens": 4,
+              "outputTokens": 399,
+              "reasoningTokens": 205,
+              "cacheReadTokens": 937,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 1,
+              "actions": [
+                "__output({\"decision\":\"UNCLEAR\",\"reasoning\":\"The user said they want to think about it ('Maybe, let me think a bit'), which neithe)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"UNCLEAR\",\"reasoning\":\"The user said they want to think about it ('Maybe, let me think a bit'), which neither clearly approves nor declines the irreversible deletion of client Acme (c1).\",\"acknowledgement\":\"\",\"clarification_prompt\":\"Sem problemas, pode pensar com calma. Antes de prosseguir, preciso que você confirme explicitamente se devo apagar o cliente Acme (id c1). Essa ação não pode ser desfeita. Responda \\\"sim\\\" para confirmar ou \\\"não\\\" para cancelar.\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 2564
+        },
+        {
+          "caseId": "unclear-maybe-pt",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 2204,
+              "cost": 0.00017227,
+              "inputTokens": 4,
+              "outputTokens": 325,
+              "reasoningTokens": 115,
+              "cacheReadTokens": 937,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 1,
+              "actions": [
+                "__output({\"decision\":\"UNCLEAR\",\"reasoning\":\"The user said 'Maybe, let me think about it,' which neither clearly approves nor clea)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"UNCLEAR\",\"reasoning\":\"The user said 'Maybe, let me think about it,' which neither clearly approves nor clearly declines the deletion of client Acme (c1). The request is irreversible, so the action must not proceed without an explicit yes or no.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"Sem problemas, pode pensar com calma. Antes de prosseguir, preciso que você confirme explicitamente se devo apagar o cliente Acme (id c1). Essa ação não pode ser desfeita. Responda 'sim' para confirmar ou 'não' para cancelar.\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 2204
+        },
+        {
+          "caseId": "unclear-maybe-pt",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 2694,
+              "cost": 0.00020727,
+              "inputTokens": 4,
+              "outputTokens": 395,
+              "reasoningTokens": 205,
+              "cacheReadTokens": 937,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 1,
+              "actions": [
+                "__output({\"decision\":\"UNCLEAR\",\"reasoning\":\"The user said 'maybe, let me think about it,' which is neither an explicit approval n)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"UNCLEAR\",\"reasoning\":\"The user said 'maybe, let me think about it,' which is neither an explicit approval nor a rejection of the pending deletion of client Acme (id c1). The action is irreversible, so it should not proceed without a clear answer.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"Ainda não ficou claro se você quer que eu apague o cliente Acme (id c1). Como essa ação não pode ser desfeita, por favor confirme explicitamente se devo prosseguir ou se prefere cancelar.\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 2694
+        },
+        {
+          "caseId": "unclear-change-fr",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 3404,
+              "cost": 0.00024028,
+              "inputTokens": 4,
+              "outputTokens": 461,
+              "reasoningTokens": 237,
+              "cacheReadTokens": 938,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 1,
+              "actions": [
+                "__output({\"decision\":\"UNCLEAR\",\"reasoning\":\"The user proposes archiving the client instead of deleting it. This implicitly reject)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"UNCLEAR\",\"reasoning\":\"The user proposes archiving the client instead of deleting it. This implicitly rejects the irreversible deletion but does not clearly decline it or clearly approve it, and it introduces a different action that was not confirmed. An explicit yes or no is needed.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"Je ne suis pas certain de votre réponse. Souhaitez-vous confirmer la suppression du client Acme (id c1), qui ne sera pas réversible, ou annuler cette action ? Si vous préférez archiver le client, dites-le-moi explicitement et je procéderai selon votre choix.\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 3404
+        },
+        {
+          "caseId": "unclear-change-fr",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 3475,
+              "cost": 0.00024178,
+              "inputTokens": 4,
+              "outputTokens": 464,
+              "reasoningTokens": 279,
+              "cacheReadTokens": 938,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 1,
+              "actions": [
+                "__output({\"decision\":\"UNCLEAR\",\"reasoning\":\"The user proposes archiving the client instead of deleting it. This neither approves )"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"UNCLEAR\",\"reasoning\":\"The user proposes archiving the client instead of deleting it. This neither approves the deletion nor clearly cancels it, and it introduces a different action that was not part of the pending confirmation. The user needs to explicitly confirm or decline the deletion.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"Je n'ai pas encore supprimé le client Acme (id c1). Souhaitez-vous confirmer la suppression, qui ne sera pas réversible, ou annuler cette action ?\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 3475
+        },
+        {
+          "caseId": "unclear-change-fr",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 3011,
+              "cost": 0.00026028,
+              "inputTokens": 4,
+              "outputTokens": 501,
+              "reasoningTokens": 306,
+              "cacheReadTokens": 938,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 1,
+              "actions": [
+                "__output({\"decision\":\"UNCLEAR\",\"reasoning\":\"The user does not approve the deletion, but proposes archiving the client instead. Th)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"UNCLEAR\",\"reasoning\":\"The user does not approve the deletion, but proposes archiving the client instead. That implies not deleting, yet it is not an explicit decline and introduces a different action that has not been confirmed.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"Je n'ai pas encore supprimé le client Acme (id c1). Souhaitez-vous que je le supprime définitivement (action irréversible), ou préférez-vous que je l'archive plutôt ? Répondez-moi clairement pour que je puisse agir en conséquence.\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 3012
+        },
+        {
+          "caseId": "partial-es",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 3665,
+              "cost": 0.00032872,
+              "inputTokens": 4,
+              "outputTokens": 638,
+              "reasoningTokens": 417,
+              "cacheReadTokens": 932,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 1,
+              "actions": [
+                "__output({\"decision\":\"UNCLEAR\",\"reasoning\":\"The user says 'yes' but narrows the action to deleting only the invoices and explicit)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"UNCLEAR\",\"reasoning\":\"The user says 'yes' but narrows the action to deleting only the invoices and explicitly excludes the client. That is a different action from the pending confirmation (deleting client Acme, id c1), so it is neither a clear approval nor a clear rejection of what was presented.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"Entiendo que quieres borrar solo las facturas y conservar al cliente, pero la acción pendiente era borrar al cliente Acme (id c1), que no se puede deshacer. ¿Confirmas que se borre al cliente Acme, o prefieres cancelarlo?\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 3665
+        },
+        {
+          "caseId": "partial-es",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 3045,
+              "cost": 0.00020822,
+              "inputTokens": 4,
+              "outputTokens": 397,
+              "reasoningTokens": 180,
+              "cacheReadTokens": 932,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 1,
+              "actions": [
+                "__output({\"decision\":\"UNCLEAR\",\"reasoning\":\"The user begins with 'Sí' but then narrows the scope to deleting only the invoices an)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"UNCLEAR\",\"reasoning\":\"The user begins with 'Sí' but then narrows the scope to deleting only the invoices and not the client. That changes the pending action rather than clearly approving or declining it, so explicit confirmation is needed.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"Entiendo que quieres borrar solo las facturas y no al cliente Acme (id c1), pero la acción pendiente era borrar al cliente completo. ¿Confirmas que se borre el cliente Acme (id c1) tal como se indicó, o prefieres cancelar la acción? Por favor, responde explícitamente.\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 3045
+        },
+        {
+          "caseId": "partial-es",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 4186,
+              "cost": 0.00037672,
+              "inputTokens": 4,
+              "outputTokens": 734,
+              "reasoningTokens": 516,
+              "cacheReadTokens": 932,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 1,
+              "actions": [
+                "__output({\"decision\":\"UNCLEAR\",\"reasoning\":\"The user says 'yes' but changes the scope: they want only the invoices deleted, not t)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"UNCLEAR\",\"reasoning\":\"The user says 'yes' but changes the scope: they want only the invoices deleted, not the client. This does not approve the pending action (deleting client Acme, id c1), and it does not decline it. It proposes a different action that was never presented for confirmation, so intent is ambiguous.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"Entiendo que quieres borrar solo las facturas y no al cliente Acme (id c1), pero esa acción no es la que te pedí confirmar. ¿Confirmas que borre al cliente Acme (id c1), o prefieres cancelar la operación?\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 4186
+        },
+        {
+          "caseId": "question-en",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1677,
+              "cost": 0.00012817,
+              "inputTokens": 4,
+              "outputTokens": 237,
+              "reasoningTokens": 72,
+              "cacheReadTokens": 927,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 1,
+              "actions": [
+                "__output({\"decision\":\"UNCLEAR\",\"reasoning\":\"The user asked a question about which invoices the deletion would include. This neith)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"UNCLEAR\",\"reasoning\":\"The user asked a question about which invoices the deletion would include. This neither approves nor rejects the pending deletion of customer Acme (id c1), so the intent is unclear.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"I can't answer the invoice question as part of this confirmation. Do you want me to delete customer Acme (id c1)? This cannot be undone. Please reply 'yes' to confirm or 'no' to cancel.\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1677
+        },
+        {
+          "caseId": "question-en",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1452,
+              "cost": 0.00012617,
+              "inputTokens": 4,
+              "outputTokens": 233,
+              "reasoningTokens": 42,
+              "cacheReadTokens": 927,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 1,
+              "actions": [
+                "__output({\"decision\":\"UNCLEAR\",\"reasoning\":\"The user asked which invoices the deletion would include, which is a question about t)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"UNCLEAR\",\"reasoning\":\"The user asked which invoices the deletion would include, which is a question about the pending action rather than an approval or rejection. The user has not clearly confirmed or declined the deletion of customer Acme (id c1).\",\"acknowledgement\":\"\",\"clarification_prompt\":\"I can look into which invoices are linked to customer Acme (id c1), but I haven't deleted anything yet. Do you want me to proceed with deleting Acme (id c1)? Please reply yes to confirm or no to cancel. Note that this cannot be undone.\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1452
+        },
+        {
+          "caseId": "question-en",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1896,
+              "cost": 0.00011117,
+              "inputTokens": 4,
+              "outputTokens": 203,
+              "reasoningTokens": 61,
+              "cacheReadTokens": 927,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 1,
+              "actions": [
+                "__output({\"decision\":\"UNCLEAR\",\"reasoning\":\"The user asked which invoices the deletion would include. This is a question about th)"
+              ]
+            }
+          ],
+          "answer": "{\"decision\":\"UNCLEAR\",\"reasoning\":\"The user asked which invoices the deletion would include. This is a question about the pending action, not an approval or rejection, so the intent to proceed is not clear.\",\"acknowledgement\":\"\",\"clarification_prompt\":\"I can't tell yet whether you want to proceed. Please explicitly confirm or decline deleting the customer Acme (id c1). Note that this cannot be undone.\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1896
+        }
+      ]
+    }
+  ]
+}

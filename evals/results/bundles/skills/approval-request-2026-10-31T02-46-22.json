@@ -1,0 +1,431 @@
+{
+ "schema": 2,
+ "kind": "bundle",
+ "scope": "skill",
+ "skill": "approval-request",
+ "generatedAt": "2026-10-31T02:46:22.908Z",
+ "full": false,
+ "note": "results holds the run of every model of one skill, each with its modes. cells.summary has aggregates; failedRuns lists every failed conversation with its answer, reason and per-turn detail; passedSamples has one passing conversation per scenario. history holds older runs of the same skill version and scenarios, aggregates only.",
+ "results": [
+  {
+   "ref": "approval-request:claude-haiku-5-5@2026-10-31T02-46-13",
+   "kind": "skill",
+   "skill": "approval-request",
+   "skillVersion": "1.0.0",
+   "model": "claude-haiku-5-5",
+   "provider": "anthropic",
+   "snapshot": "claude-haiku-5-5",
+   "api": "anthropic-messages",
+   "startedAt": "2026-10-31T02:46:13.961Z",
+   "piAiVersion": "1.3.0",
+   "casesVersion": 1,
+   "pricing": {
+    "input": 0.1,
+    "output": 0.5,
+    "cacheRead": 0.01,
+    "cacheWrite": 0.125,
+    "tiers": [
+     {
+      "inputTokensAbove": 100000,
+      "input": 0.5,
+      "output": 2.5,
+      "cacheRead": 0.05,
+      "cacheWrite": 0.625
+     }
+    ]
+   },
+   "config": {
+    "runs": 3,
+    "reasoning": [
+     "low",
+     "medium",
+     "high"
+    ],
+    "modes": [
+     "text"
+    ],
+    "strict": [
+     "on"
+    ],
+    "cases": [
+     "two-actions",
+     "create-amount",
+     "spanish"
+    ],
+    "callTimeoutMs": 45000
+   },
+   "totals": {
+    "runs": 27,
+    "correctRuns": 27,
+    "calls": 27,
+    "inputTokens": 108,
+    "outputTokens": 4502,
+    "reasoningTokens": 0,
+    "cacheReadTokens": 14604,
+    "cacheWriteTokens": 4710,
+    "cost": 0.00299659
+   },
+   "skipped": [],
+   "cells": [
+    {
+     "mode": "text",
+     "reasoning": "low",
+     "strict": "-",
+     "summary": {
+      "runs": 9,
+      "correctRuns": 9,
+      "turns": 9,
+      "complete": 9,
+      "partial": 0,
+      "invalid": 0,
+      "empty": 0,
+      "errors": 0,
+      "recovered": 0,
+      "multiBlock": 0,
+      "thinkingTurns": 0,
+      "avgTurnsPerRun": 1,
+      "avgMsPerCall": 1404,
+      "maxMsPerCall": 1896,
+      "avgMsPerRun": 1405,
+      "inputTokens": 36,
+      "outputTokens": 1477,
+      "reasoningTokens": 0,
+      "cacheReadTokens": 1728,
+      "cacheWriteTokens": 4710,
+      "cost": 0.00134813,
+      "costPerCorrect": 0.00014979222222222222
+     },
+     "byCase": {
+      "two-actions": {
+       "correct": "3/3",
+       "avgMsPerCall": 1534,
+       "maxMsPerCall": 1896,
+       "turnsPerRun": 1,
+       "errors": 0,
+       "cost": 0.00056
+      },
+      "create-amount": {
+       "correct": "3/3",
+       "avgMsPerCall": 1198,
+       "maxMsPerCall": 1256,
+       "turnsPerRun": 1,
+       "errors": 0,
+       "cost": 0.00047
+      },
+      "spanish": {
+       "correct": "3/3",
+       "avgMsPerCall": 1481,
+       "maxMsPerCall": 1545,
+       "turnsPerRun": 1,
+       "errors": 0,
+       "cost": 0.00032
+      }
+     },
+     "issues": [],
+     "failedRuns": [],
+     "passedSamples": [
+      {
+       "case": "two-actions",
+       "correct": true,
+       "answer": "{\"reasoning\":\"Two pending actions are listed: deleting the customer record 'Acme' (id c1) and deleting invoice number 14 (id inv-14). The goal is to clean the Acme account. The question must state both deletions plainly, include the identifiers, and not claim anything about reversibility or effects beyond what is given.\",\"question\":\"The system is ready to delete the customer 'Acme' (ID c1) and inv",
+       "ms": 1401,
+       "turns": [
+        {
+         "turn": 1,
+         "kind": "complete",
+         "calls": [],
+         "actions": [
+          "__output({\"reasoning\":\"Two pending actions are listed: deleting the customer record 'Acme' (id c1) and deleting invoice number 14)"
+         ],
+         "stop": "stop",
+         "ms": 1401,
+         "outputTokens": 187,
+         "reasoningTokens": 0
+        }
+       ]
+      },
+      {
+       "case": "create-amount",
+       "correct": true,
+       "answer": "{\"reasoning\":\"One pending action: create_transaction with amount 50, merchant Walmart, date 2026-10-30. It registers a new transaction; no deletion or modification of existing data is listed. I should state the values and ask for confirmation or decline, in English, without inventing effects.\",\"question\":\"I am about to register a purchase of 50 at Walmart dated October 30, 2026 as a new transactio",
+       "ms": 1256,
+       "turns": [
+        {
+         "turn": 1,
+         "kind": "complete",
+         "calls": [],
+         "actions": [
+          "__output({\"reasoning\":\"One pending action: create_transaction with amount 50, merchant Walmart, date 2026-10-30. It registers a n)"
+         ],
+         "stop": "stop",
+         "ms": 1256,
+         "outputTokens": 154,
+         "reasoningTokens": 0
+        }
+       ]
+      },
+      {
+       "case": "spanish",
+       "correct": true,
+       "answer": "{\"reasoning\":\"La única acción pendiente es crm__delete_customer con id c1 y nombre Acme. Debo describirla en lenguaje llano, sin nombres de herramientas, y pedir confirmación o rechazo en español, en una sola pregunta. No afirmo si se puede deshacer.\",\"question\":\"Se va a eliminar el cliente \\\"Acme\\\" (identificador c1) del CRM. ¿Confirmas que se borre o prefieres cancelarlo?\"}",
+       "ms": 1412,
+       "turns": [
+        {
+         "turn": 1,
+         "kind": "complete",
+         "calls": [],
+         "actions": [
+          "__output({\"reasoning\":\"La única acción pendiente es crm__delete_customer con id c1 y nombre Acme. Debo describirla en lenguaje ll)"
+         ],
+         "stop": "stop",
+         "ms": 1412,
+         "outputTokens": 166,
+         "reasoningTokens": 0
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "mode": "text",
+     "reasoning": "medium",
+     "strict": "-",
+     "summary": {
+      "runs": 9,
+      "correctRuns": 9,
+      "turns": 9,
+      "complete": 9,
+      "partial": 0,
+      "invalid": 0,
+      "empty": 0,
+      "errors": 0,
+      "recovered": 0,
+      "multiBlock": 0,
+      "thinkingTurns": 0,
+      "avgTurnsPerRun": 1,
+      "avgMsPerCall": 1357,
+      "maxMsPerCall": 2101,
+      "avgMsPerRun": 1357,
+      "inputTokens": 36,
+      "outputTokens": 1430,
+      "reasoningTokens": 0,
+      "cacheReadTokens": 6438,
+      "cacheWriteTokens": 0,
+      "cost": 0.0007829800000000001,
+      "costPerCorrect": 0.00008699777777777779
+     },
+     "byCase": {
+      "two-actions": {
+       "correct": "3/3",
+       "avgMsPerCall": 1392,
+       "maxMsPerCall": 1475,
+       "turnsPerRun": 1,
+       "errors": 0,
+       "cost": 0.00028
+      },
+      "create-amount": {
+       "correct": "3/3",
+       "avgMsPerCall": 1135,
+       "maxMsPerCall": 1172,
+       "turnsPerRun": 1,
+       "errors": 0,
+       "cost": 0.00023
+      },
+      "spanish": {
+       "correct": "3/3",
+       "avgMsPerCall": 1542,
+       "maxMsPerCall": 2101,
+       "turnsPerRun": 1,
+       "errors": 0,
+       "cost": 0.00027
+      }
+     },
+     "issues": [],
+     "failedRuns": [],
+     "passedSamples": [
+      {
+       "case": "two-actions",
+       "correct": true,
+       "answer": "{\"reasoning\":\"Two pending actions: deleting the customer record 'Acme' (id c1) and deleting invoice number 14 (id inv-14). Both are deletions. The user's goal is to clean the Acme account. No further effects are stated, so none are claimed. Language is English per CONTEXT.detected_language.\",\"question\":\"The system is about to delete the customer record 'Acme' (ID c1) and invoice number 14 (ID inv-",
+       "ms": 1475,
+       "turns": [
+        {
+         "turn": 1,
+         "kind": "complete",
+         "calls": [],
+         "actions": [
+          "__output({\"reasoning\":\"Two pending actions: deleting the customer record 'Acme' (id c1) and deleting invoice number 14 (id inv-14)"
+         ],
+         "stop": "stop",
+         "ms": 1475,
+         "outputTokens": 184,
+         "reasoningTokens": 0
+        }
+       ]
+      },
+      {
+       "case": "create-amount",
+       "correct": true,
+       "answer": "{\"reasoning\":\"One pending action: create_transaction with amount 50, merchant Walmart, date 2026-10-30. It registers a new transaction. No deletion or modification of existing data is listed. Question asks user to confirm or decline in English.\",\"question\":\"Shall I register a purchase of 50 at Walmart dated October 30, 2026? Please confirm or decline.\"}",
+       "ms": 1077,
+       "turns": [
+        {
+         "turn": 1,
+         "kind": "complete",
+         "calls": [],
+         "actions": [
+          "__output({\"reasoning\":\"One pending action: create_transaction with amount 50, merchant Walmart, date 2026-10-30. It registers a n)"
+         ],
+         "stop": "stop",
+         "ms": 1077,
+         "outputTokens": 124,
+         "reasoningTokens": 0
+        }
+       ]
+      },
+      {
+       "case": "spanish",
+       "correct": true,
+       "answer": "{\"reasoning\":\"The only pending action is crm__delete_customer with id c1 and name Acme. It deletes the customer record. Question must be in Spanish, state the action plainly, and ask confirm or decline. No claims about reversibility.\",\"question\":\"Se va a eliminar el cliente \\\"Acme\\\" (identificador c1) del sistema de CRM. ¿Confirmas que quieres borrarlo o prefieres cancelar la acción?\"}",
+       "ms": 1252,
+       "turns": [
+        {
+         "turn": 1,
+         "kind": "complete",
+         "calls": [],
+         "actions": [
+          "__output({\"reasoning\":\"The only pending action is crm__delete_customer with id c1 and name Acme. It deletes the customer record. )"
+         ],
+         "stop": "stop",
+         "ms": 1252,
+         "outputTokens": 151,
+         "reasoningTokens": 0
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "mode": "text",
+     "reasoning": "high",
+     "strict": "-",
+     "summary": {
+      "runs": 9,
+      "correctRuns": 9,
+      "turns": 9,
+      "complete": 9,
+      "partial": 0,
+      "invalid": 0,
+      "empty": 0,
+      "errors": 0,
+      "recovered": 0,
+      "multiBlock": 0,
+      "thinkingTurns": 0,
+      "avgTurnsPerRun": 1,
+      "avgMsPerCall": 1425,
+      "maxMsPerCall": 1722,
+      "avgMsPerRun": 1425,
+      "inputTokens": 36,
+      "outputTokens": 1595,
+      "reasoningTokens": 0,
+      "cacheReadTokens": 6438,
+      "cacheWriteTokens": 0,
+      "cost": 0.0008654800000000001,
+      "costPerCorrect": 0.00009616444444444445
+     },
+     "byCase": {
+      "two-actions": {
+       "correct": "3/3",
+       "avgMsPerCall": 1465,
+       "maxMsPerCall": 1527,
+       "turnsPerRun": 1,
+       "errors": 0,
+       "cost": 0.00032
+      },
+      "create-amount": {
+       "correct": "3/3",
+       "avgMsPerCall": 1407,
+       "maxMsPerCall": 1722,
+       "turnsPerRun": 1,
+       "errors": 0,
+       "cost": 0.00025
+      },
+      "spanish": {
+       "correct": "3/3",
+       "avgMsPerCall": 1402,
+       "maxMsPerCall": 1457,
+       "turnsPerRun": 1,
+       "errors": 0,
+       "cost": 0.00029
+      }
+     },
+     "issues": [],
+     "failedRuns": [],
+     "passedSamples": [
+      {
+       "case": "two-actions",
+       "correct": true,
+       "answer": "{\"reasoning\":\"Two pending actions are listed: deleting the customer record with id c1 named Acme, and deleting invoice inv-14 (number 14). The goal is to clean the Acme account. I must state each action plainly, include the key argument values, and ask for confirm or decline without inventing consequences or reversibility claims.\",\"question\":\"The system is paused before running two deletions for t",
+       "ms": 1405,
+       "turns": [
+        {
+         "turn": 1,
+         "kind": "complete",
+         "calls": [],
+         "actions": [
+          "__output({\"reasoning\":\"Two pending actions are listed: deleting the customer record with id c1 named Acme, and deleting invoice i)"
+         ],
+         "stop": "stop",
+         "ms": 1405,
+         "outputTokens": 190,
+         "reasoningTokens": 0
+        }
+       ]
+      },
+      {
+       "case": "create-amount",
+       "correct": true,
+       "answer": "{\"reasoning\":\"There is one pending action: create_transaction with amount 50, merchant Walmart, date 2026-10-30. It creates a new transaction record. The goal is registering a purchase. No deletion or modification of existing data is listed. I should state the action plainly without inventing currency or other details, and ask for confirmation in English.\",\"question\":\"Shall I register a purchase o",
+       "ms": 1192,
+       "turns": [
+        {
+         "turn": 1,
+         "kind": "complete",
+         "calls": [],
+         "actions": [
+          "__output({\"reasoning\":\"There is one pending action: create_transaction with amount 50, merchant Walmart, date 2026-10-30. It crea)"
+         ],
+         "stop": "stop",
+         "ms": 1192,
+         "outputTokens": 152,
+         "reasoningTokens": 0
+        }
+       ]
+      },
+      {
+       "case": "spanish",
+       "correct": true,
+       "answer": "{\"reasoning\":\"La acción pendiente es crm__delete_customer con id c1 y nombre Acme. Debe describirse en lenguaje sencillo: borrar el cliente Acme (identificador c1). El objetivo indica borrar al cliente. No añado consecuencias no indicadas. Idioma: español, según CONTEXT.detected_language.\",\"question\":\"¿Confirmas que se borre el cliente Acme (identificador c1) del CRM? Responde sí para confirmar o ",
+       "ms": 1336,
+       "turns": [
+        {
+         "turn": 1,
+         "kind": "complete",
+         "calls": [],
+         "actions": [
+          "__output({\"reasoning\":\"La acción pendiente es crm__delete_customer con id c1 y nombre Acme. Debe describirse en lenguaje sencillo)"
+         ],
+         "stop": "stop",
+         "ms": 1336,
+         "outputTokens": 175,
+         "reasoningTokens": 0
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "history": []
+}

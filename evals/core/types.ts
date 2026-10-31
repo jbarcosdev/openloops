@@ -37,6 +37,7 @@ export interface CaseDef {
     description: string
     userMessage: string
     input?: Record<string, any>
+    context?: Record<string, any>
     tools: ToolSpec[]
     maxTurns?: number
     world: (tool: string, args: any, ctx: WorldCtx) => string

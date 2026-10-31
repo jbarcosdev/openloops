@@ -1,0 +1,1082 @@
+{
+  "schema": 1,
+  "kind": "skill",
+  "skill": "approval-request",
+  "skillVersion": "1.0.0",
+  "casesVersion": 1,
+  "name": "claude-haiku-5-5",
+  "provider": "anthropic",
+  "model": "claude-haiku-5-5",
+  "snapshot": "claude-haiku-5-5",
+  "api": "anthropic-messages",
+  "startedAt": "2026-10-31T02:46:13.961Z",
+  "finishedAt": "2026-10-31T02:46:22.881Z",
+  "durationMs": 8920,
+  "piAiVersion": "1.3.0",
+  "pricing": {
+    "input": 0.1,
+    "output": 0.5,
+    "cacheRead": 0.01,
+    "cacheWrite": 0.125,
+    "tiers": [
+      {
+        "inputTokensAbove": 100000,
+        "input": 0.5,
+        "output": 2.5,
+        "cacheRead": 0.05,
+        "cacheWrite": 0.625
+      }
+    ]
+  },
+  "config": {
+    "runs": 3,
+    "reasoning": [
+      "low",
+      "medium",
+      "high"
+    ],
+    "modes": [
+      "text"
+    ],
+    "strict": [
+      "on"
+    ],
+    "cases": [
+      "two-actions",
+      "create-amount",
+      "spanish"
+    ],
+    "callTimeoutMs": 45000
+  },
+  "totals": {
+    "runs": 27,
+    "correctRuns": 27,
+    "calls": 27,
+    "inputTokens": 108,
+    "outputTokens": 4502,
+    "reasoningTokens": 0,
+    "cacheReadTokens": 14604,
+    "cacheWriteTokens": 4710,
+    "cost": 0.00299659
+  },
+  "skipped": [],
+  "cells": [
+    {
+      "mode": "text",
+      "reasoning": "low",
+      "strict": "-",
+      "summary": {
+        "runs": 9,
+        "correctRuns": 9,
+        "turns": 9,
+        "complete": 9,
+        "partial": 0,
+        "invalid": 0,
+        "empty": 0,
+        "errors": 0,
+        "recovered": 0,
+        "multiBlock": 0,
+        "thinkingTurns": 0,
+        "avgTurnsPerRun": 1,
+        "avgMsPerCall": 1404,
+        "maxMsPerCall": 1896,
+        "avgMsPerRun": 1405,
+        "inputTokens": 36,
+        "outputTokens": 1477,
+        "reasoningTokens": 0,
+        "cacheReadTokens": 1728,
+        "cacheWriteTokens": 4710,
+        "cost": 0.00134813,
+        "costPerCorrect": 0.00014979222222222222
+      },
+      "byCase": {
+        "two-actions": {
+          "runs": 3,
+          "correctRuns": 3,
+          "turns": 3,
+          "complete": 3,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "multiBlock": 0,
+          "thinkingTurns": 0,
+          "avgTurnsPerRun": 1,
+          "avgMsPerCall": 1534,
+          "maxMsPerCall": 1896,
+          "avgMsPerRun": 1534,
+          "inputTokens": 12,
+          "outputTokens": 555,
+          "reasoningTokens": 0,
+          "cacheReadTokens": 0,
+          "cacheWriteTokens": 2214,
+          "cost": 0.00055545,
+          "costPerCorrect": 0.00018515
+        },
+        "create-amount": {
+          "runs": 3,
+          "correctRuns": 3,
+          "turns": 3,
+          "complete": 3,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "multiBlock": 0,
+          "thinkingTurns": 0,
+          "avgTurnsPerRun": 1,
+          "avgMsPerCall": 1198,
+          "maxMsPerCall": 1256,
+          "avgMsPerRun": 1199,
+          "inputTokens": 12,
+          "outputTokens": 404,
+          "reasoningTokens": 0,
+          "cacheReadTokens": 0,
+          "cacheWriteTokens": 2124,
+          "cost": 0.0004687,
+          "costPerCorrect": 0.00015623333333333333
+        },
+        "spanish": {
+          "runs": 3,
+          "correctRuns": 3,
+          "turns": 3,
+          "complete": 3,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "multiBlock": 0,
+          "thinkingTurns": 0,
+          "avgTurnsPerRun": 1,
+          "avgMsPerCall": 1481,
+          "maxMsPerCall": 1545,
+          "avgMsPerRun": 1481,
+          "inputTokens": 12,
+          "outputTokens": 518,
+          "reasoningTokens": 0,
+          "cacheReadTokens": 1728,
+          "cacheWriteTokens": 372,
+          "cost": 0.00032397999999999997,
+          "costPerCorrect": 0.00010799333333333333
+        }
+      },
+      "runs": [
+        {
+          "caseId": "two-actions",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1401,
+              "cost": 0.00018615,
+              "inputTokens": 4,
+              "outputTokens": 187,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 0,
+              "cacheWriteTokens": 738,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"reasoning\":\"Two pending actions are listed: deleting the customer record 'Acme' (id c1) and deleting invoice number 14)"
+              ]
+            }
+          ],
+          "answer": "{\"reasoning\":\"Two pending actions are listed: deleting the customer record 'Acme' (id c1) and deleting invoice number 14 (id inv-14). The goal is to clean the Acme account. The question must state both deletions plainly, include the identifiers, and not claim anything about reversibility or effects beyond what is given.\",\"question\":\"The system is ready to delete the customer 'Acme' (ID c1) and invoice number 14 (ID inv-14) as part of cleaning the Acme account. Do you want me to go ahead with both deletions, or decline?\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1401
+        },
+        {
+          "caseId": "two-actions",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1305,
+              "cost": 0.00018165,
+              "inputTokens": 4,
+              "outputTokens": 178,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 0,
+              "cacheWriteTokens": 738,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"reasoning\":\"Two pending actions: deleting customer c1 named Acme, and deleting invoice inv-14 (number 14). Goal is to )"
+              ]
+            }
+          ],
+          "answer": "{\"reasoning\":\"Two pending actions: deleting customer c1 named Acme, and deleting invoice inv-14 (number 14). Goal is to clean the Acme account. Asking for confirmation in English, the detected language, without adding unverified consequences.\",\"question\":\"The system is ready to run two deletions for the goal 'Clean the account of Acme': first, delete the customer record with ID c1 named Acme; second, delete invoice inv-14 (invoice number 14). Do you confirm these deletions, or do you want to decline them?\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1305
+        },
+        {
+          "caseId": "two-actions",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1896,
+              "cost": 0.00018764999999999998,
+              "inputTokens": 4,
+              "outputTokens": 190,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 0,
+              "cacheWriteTokens": 738,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"reasoning\":\"Two pending actions are listed: deleting customer c1 named Acme, and deleting invoice inv-14 (number 14). )"
+              ]
+            }
+          ],
+          "answer": "{\"reasoning\":\"Two pending actions are listed: deleting customer c1 named Acme, and deleting invoice inv-14 (number 14). Both are deletions. The user's goal is to clean the Acme account. I state each action in plain words with its key values, avoid tool names, and do not claim reversibility. Language is English.\",\"question\":\"The system is ready to permanently delete the customer record \\\"Acme\\\" (ID c1) and invoice number 14 (ID inv-14) as part of cleaning the Acme account. Do you confirm these deletions, or do you want to decline them?\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1897
+        },
+        {
+          "caseId": "create-amount",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1256,
+              "cost": 0.0001659,
+              "inputTokens": 4,
+              "outputTokens": 154,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 0,
+              "cacheWriteTokens": 708,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"reasoning\":\"One pending action: create_transaction with amount 50, merchant Walmart, date 2026-10-30. It registers a n)"
+              ]
+            }
+          ],
+          "answer": "{\"reasoning\":\"One pending action: create_transaction with amount 50, merchant Walmart, date 2026-10-30. It registers a new transaction; no deletion or modification of existing data is listed. I should state the values and ask for confirmation or decline, in English, without inventing effects.\",\"question\":\"I am about to register a purchase of 50 at Walmart dated October 30, 2026 as a new transaction. Do you want me to go ahead, or should I cancel it?\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1256
+        },
+        {
+          "caseId": "create-amount",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1106,
+              "cost": 0.0001519,
+              "inputTokens": 4,
+              "outputTokens": 126,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 0,
+              "cacheWriteTokens": 708,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"reasoning\":\"One pending action: create_transaction with amount 50, merchant Walmart, date 2026-10-30. It adds a new tr)"
+              ]
+            }
+          ],
+          "answer": "{\"reasoning\":\"One pending action: create_transaction with amount 50, merchant Walmart, date 2026-10-30. It adds a new transaction record. Language is English. Only the listed values are used.\",\"question\":\"I'm about to register a purchase of 50 at Walmart dated October 30, 2026 as a new transaction. Do you want me to go ahead, or cancel it?\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1107
+        },
+        {
+          "caseId": "create-amount",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1233,
+              "cost": 0.00015089999999999998,
+              "inputTokens": 4,
+              "outputTokens": 124,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 0,
+              "cacheWriteTokens": 708,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"reasoning\":\"One pending action: create_transaction with amount 50, merchant Walmart, date 2026-10-30. It adds a new tr)"
+              ]
+            }
+          ],
+          "answer": "{\"reasoning\":\"One pending action: create_transaction with amount 50, merchant Walmart, date 2026-10-30. It adds a new transaction record. No deletion or change to existing data is listed, so I describe only the creation and the given values.\",\"question\":\"Do you want me to register a purchase of 50 at Walmart dated October 30, 2026? Please confirm or decline.\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1234
+        },
+        {
+          "caseId": "spanish",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1412,
+              "cost": 0.00010465999999999999,
+              "inputTokens": 4,
+              "outputTokens": 166,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 576,
+              "cacheWriteTokens": 124,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"reasoning\":\"La única acción pendiente es crm__delete_customer con id c1 y nombre Acme. Debo describirla en lenguaje ll)"
+              ]
+            }
+          ],
+          "answer": "{\"reasoning\":\"La única acción pendiente es crm__delete_customer con id c1 y nombre Acme. Debo describirla en lenguaje llano, sin nombres de herramientas, y pedir confirmación o rechazo en español, en una sola pregunta. No afirmo si se puede deshacer.\",\"question\":\"Se va a eliminar el cliente \\\"Acme\\\" (identificador c1) del CRM. ¿Confirmas que se borre o prefieres cancelarlo?\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1412
+        },
+        {
+          "caseId": "spanish",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1545,
+              "cost": 0.00010715999999999998,
+              "inputTokens": 4,
+              "outputTokens": 171,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 576,
+              "cacheWriteTokens": 124,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"reasoning\":\"La acción pendiente es crm__delete_customer con id c1 y nombre Acme. Se borrará el cliente Acme (id c1) de)"
+              ]
+            }
+          ],
+          "answer": "{\"reasoning\":\"La acción pendiente es crm__delete_customer con id c1 y nombre Acme. Se borrará el cliente Acme (id c1) del CRM. Debo describirlo en lenguaje claro, sin nombres de herramientas, y preguntar en español si confirma o declina.\",\"question\":\"Vas a borrar el cliente \\\"Acme\\\" (identificador c1) del sistema CRM. ¿Confirmas que se ejecute esta acción o prefieres cancelarla?\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1545
+        },
+        {
+          "caseId": "spanish",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1486,
+              "cost": 0.00011215999999999998,
+              "inputTokens": 4,
+              "outputTokens": 181,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 576,
+              "cacheWriteTokens": 124,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"reasoning\":\"La acción pendiente es crm__delete_customer con id c1 y nombre Acme. Debe describirse en lenguaje claro: s)"
+              ]
+            }
+          ],
+          "answer": "{\"reasoning\":\"La acción pendiente es crm__delete_customer con id c1 y nombre Acme. Debe describirse en lenguaje claro: se eliminará el cliente Acme (identificador c1). No debo afirmar si es reversible ni inventar consecuencias. Pregunta en español, una sola pregunta de confirmación.\",\"question\":\"¿Confirmas que se elimine el cliente «Acme» (identificador c1) de la base de datos de clientes? Responde sí para continuar o no para cancelar la acción.\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1486
+        }
+      ]
+    },
+    {
+      "mode": "text",
+      "reasoning": "medium",
+      "strict": "-",
+      "summary": {
+        "runs": 9,
+        "correctRuns": 9,
+        "turns": 9,
+        "complete": 9,
+        "partial": 0,
+        "invalid": 0,
+        "empty": 0,
+        "errors": 0,
+        "recovered": 0,
+        "multiBlock": 0,
+        "thinkingTurns": 0,
+        "avgTurnsPerRun": 1,
+        "avgMsPerCall": 1357,
+        "maxMsPerCall": 2101,
+        "avgMsPerRun": 1357,
+        "inputTokens": 36,
+        "outputTokens": 1430,
+        "reasoningTokens": 0,
+        "cacheReadTokens": 6438,
+        "cacheWriteTokens": 0,
+        "cost": 0.0007829800000000001,
+        "costPerCorrect": 0.00008699777777777779
+      },
+      "byCase": {
+        "two-actions": {
+          "runs": 3,
+          "correctRuns": 3,
+          "turns": 3,
+          "complete": 3,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "multiBlock": 0,
+          "thinkingTurns": 0,
+          "avgTurnsPerRun": 1,
+          "avgMsPerCall": 1392,
+          "maxMsPerCall": 1475,
+          "avgMsPerRun": 1392,
+          "inputTokens": 12,
+          "outputTokens": 504,
+          "reasoningTokens": 0,
+          "cacheReadTokens": 2214,
+          "cacheWriteTokens": 0,
+          "cost": 0.00027534,
+          "costPerCorrect": 0.00009178
+        },
+        "create-amount": {
+          "runs": 3,
+          "correctRuns": 3,
+          "turns": 3,
+          "complete": 3,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "multiBlock": 0,
+          "thinkingTurns": 0,
+          "avgTurnsPerRun": 1,
+          "avgMsPerCall": 1135,
+          "maxMsPerCall": 1172,
+          "avgMsPerRun": 1135,
+          "inputTokens": 12,
+          "outputTokens": 421,
+          "reasoningTokens": 0,
+          "cacheReadTokens": 2124,
+          "cacheWriteTokens": 0,
+          "cost": 0.00023294,
+          "costPerCorrect": 0.00007764666666666666
+        },
+        "spanish": {
+          "runs": 3,
+          "correctRuns": 3,
+          "turns": 3,
+          "complete": 3,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "multiBlock": 0,
+          "thinkingTurns": 0,
+          "avgTurnsPerRun": 1,
+          "avgMsPerCall": 1542,
+          "maxMsPerCall": 2101,
+          "avgMsPerRun": 1542,
+          "inputTokens": 12,
+          "outputTokens": 505,
+          "reasoningTokens": 0,
+          "cacheReadTokens": 2100,
+          "cacheWriteTokens": 0,
+          "cost": 0.00027469999999999996,
+          "costPerCorrect": 0.00009156666666666665
+        }
+      },
+      "runs": [
+        {
+          "caseId": "two-actions",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1475,
+              "cost": 0.00009978,
+              "inputTokens": 4,
+              "outputTokens": 184,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 738,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"reasoning\":\"Two pending actions: deleting the customer record 'Acme' (id c1) and deleting invoice number 14 (id inv-14)"
+              ]
+            }
+          ],
+          "answer": "{\"reasoning\":\"Two pending actions: deleting the customer record 'Acme' (id c1) and deleting invoice number 14 (id inv-14). Both are deletions. The user's goal is to clean the Acme account. No further effects are stated, so none are claimed. Language is English per CONTEXT.detected_language.\",\"question\":\"The system is about to delete the customer record 'Acme' (ID c1) and invoice number 14 (ID inv-14) as part of cleaning the Acme account. Do you want me to proceed with both deletions, or decline?\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1475
+        },
+        {
+          "caseId": "two-actions",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1466,
+              "cost": 0.00008078,
+              "inputTokens": 4,
+              "outputTokens": 146,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 738,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"reasoning\":\"Two pending actions: deleting customer c1 named Acme and deleting invoice inv-14 (number 14). Language is )"
+              ]
+            }
+          ],
+          "answer": "{\"reasoning\":\"Two pending actions: deleting customer c1 named Acme and deleting invoice inv-14 (number 14). Language is English. Only the listed facts are used; no claims about reversibility.\",\"question\":\"The system is about to delete the customer \\\"Acme\\\" (ID c1) and invoice number 14 (ID inv-14) as part of cleaning the Acme account. Do you want to confirm these deletions, or decline them?\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1466
+        },
+        {
+          "caseId": "two-actions",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1236,
+              "cost": 0.00009478,
+              "inputTokens": 4,
+              "outputTokens": 174,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 738,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"reasoning\":\"Two pending actions are listed: deleting the customer record 'Acme' (id c1) and deleting invoice number 14)"
+              ]
+            }
+          ],
+          "answer": "{\"reasoning\":\"Two pending actions are listed: deleting the customer record 'Acme' (id c1) and deleting invoice number 14 (id inv-14). The goal is to clean the Acme account. I must state each action plainly with its key arguments, without inventing consequences, and ask for confirmation or refusal in English.\",\"question\":\"Do you want me to proceed? I will delete the customer 'Acme' (ID c1) from the CRM, and delete invoice number 14 (ID inv-14). Please confirm or decline.\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1236
+        },
+        {
+          "caseId": "create-amount",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1077,
+              "cost": 0.00006947999999999999,
+              "inputTokens": 4,
+              "outputTokens": 124,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 708,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"reasoning\":\"One pending action: create_transaction with amount 50, merchant Walmart, date 2026-10-30. It registers a n)"
+              ]
+            }
+          ],
+          "answer": "{\"reasoning\":\"One pending action: create_transaction with amount 50, merchant Walmart, date 2026-10-30. It registers a new transaction. No deletion or modification of existing data is listed. Question asks user to confirm or decline in English.\",\"question\":\"Shall I register a purchase of 50 at Walmart dated October 30, 2026? Please confirm or decline.\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1077
+        },
+        {
+          "caseId": "create-amount",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1157,
+              "cost": 0.00007898,
+              "inputTokens": 4,
+              "outputTokens": 143,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 708,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"reasoning\":\"One pending action: create_transaction with amount 50, merchant Walmart, date 2026-10-30. It registers a n)"
+              ]
+            }
+          ],
+          "answer": "{\"reasoning\":\"One pending action: create_transaction with amount 50, merchant Walmart, date 2026-10-30. It registers a new transaction; no deletion or modification of existing data is listed. Stating only these facts and asking for confirmation in English.\",\"question\":\"I'm about to register a purchase of 50 at Walmart dated October 30, 2026. Do you want me to go ahead and create this transaction, or cancel it?\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1157
+        },
+        {
+          "caseId": "create-amount",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1172,
+              "cost": 0.00008448,
+              "inputTokens": 4,
+              "outputTokens": 154,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 708,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"reasoning\":\"One pending action: create_transaction with amount 50, merchant Walmart, date 2026-10-30. It registers a n)"
+              ]
+            }
+          ],
+          "answer": "{\"reasoning\":\"One pending action: create_transaction with amount 50, merchant Walmart, date 2026-10-30. It registers a new transaction. No deletion or modification of existing data is listed. Need to state these facts only, in English, and ask for confirmation or decline in one question.\",\"question\":\"I'm about to register a purchase of 50 at Walmart dated October 30, 2026 as a new transaction. Do you want me to go ahead and create it, or decline?\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1172
+        },
+        {
+          "caseId": "spanish",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1252,
+              "cost": 0.00008289999999999998,
+              "inputTokens": 4,
+              "outputTokens": 151,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 700,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"reasoning\":\"The only pending action is crm__delete_customer with id c1 and name Acme. It deletes the customer record. )"
+              ]
+            }
+          ],
+          "answer": "{\"reasoning\":\"The only pending action is crm__delete_customer with id c1 and name Acme. It deletes the customer record. Question must be in Spanish, state the action plainly, and ask confirm or decline. No claims about reversibility.\",\"question\":\"Se va a eliminar el cliente \\\"Acme\\\" (identificador c1) del sistema de CRM. ¿Confirmas que quieres borrarlo o prefieres cancelar la acción?\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1252
+        },
+        {
+          "caseId": "spanish",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1274,
+              "cost": 0.00010089999999999999,
+              "inputTokens": 4,
+              "outputTokens": 187,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 700,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"reasoning\":\"The only pending action is crm__delete_customer with id c1 and name Acme. It deletes the customer record. )"
+              ]
+            }
+          ],
+          "answer": "{\"reasoning\":\"The only pending action is crm__delete_customer with id c1 and name Acme. It deletes the customer record. Language is Spanish per CONTEXT.detected_language. I describe the action in plain words without tool names, state the key values, and ask for confirmation or refusal in one question. I do not claim anything about reversibility.\",\"question\":\"Se va a borrar el cliente \\\"Acme\\\" (identificador c1) de la base de datos de clientes. ¿Confirmas que quieres que se ejecute esta acción o prefieres cancelarla?\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1274
+        },
+        {
+          "caseId": "spanish",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 2101,
+              "cost": 0.00009089999999999999,
+              "inputTokens": 4,
+              "outputTokens": 167,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 700,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"reasoning\":\"La única acción pendiente es crm__delete_customer con id c1 y nombre Acme. Debo describirla en lenguaje ll)"
+              ]
+            }
+          ],
+          "answer": "{\"reasoning\":\"La única acción pendiente es crm__delete_customer con id c1 y nombre Acme. Debo describirla en lenguaje llano, sin nombres internos de herramientas, sin afirmar si se puede deshacer, y preguntar en español si confirma o rechaza.\",\"question\":\"Se va a borrar el cliente \\\"Acme\\\" (identificador c1) de tu CRM. ¿Confirmas que se ejecute esta acción o prefieres cancelarla?\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 2101
+        }
+      ]
+    },
+    {
+      "mode": "text",
+      "reasoning": "high",
+      "strict": "-",
+      "summary": {
+        "runs": 9,
+        "correctRuns": 9,
+        "turns": 9,
+        "complete": 9,
+        "partial": 0,
+        "invalid": 0,
+        "empty": 0,
+        "errors": 0,
+        "recovered": 0,
+        "multiBlock": 0,
+        "thinkingTurns": 0,
+        "avgTurnsPerRun": 1,
+        "avgMsPerCall": 1425,
+        "maxMsPerCall": 1722,
+        "avgMsPerRun": 1425,
+        "inputTokens": 36,
+        "outputTokens": 1595,
+        "reasoningTokens": 0,
+        "cacheReadTokens": 6438,
+        "cacheWriteTokens": 0,
+        "cost": 0.0008654800000000001,
+        "costPerCorrect": 0.00009616444444444445
+      },
+      "byCase": {
+        "two-actions": {
+          "runs": 3,
+          "correctRuns": 3,
+          "turns": 3,
+          "complete": 3,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "multiBlock": 0,
+          "thinkingTurns": 0,
+          "avgTurnsPerRun": 1,
+          "avgMsPerCall": 1465,
+          "maxMsPerCall": 1527,
+          "avgMsPerRun": 1465,
+          "inputTokens": 12,
+          "outputTokens": 602,
+          "reasoningTokens": 0,
+          "cacheReadTokens": 2214,
+          "cacheWriteTokens": 0,
+          "cost": 0.00032434,
+          "costPerCorrect": 0.00010811333333333333
+        },
+        "create-amount": {
+          "runs": 3,
+          "correctRuns": 3,
+          "turns": 3,
+          "complete": 3,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "multiBlock": 0,
+          "thinkingTurns": 0,
+          "avgTurnsPerRun": 1,
+          "avgMsPerCall": 1407,
+          "maxMsPerCall": 1722,
+          "avgMsPerRun": 1407,
+          "inputTokens": 12,
+          "outputTokens": 450,
+          "reasoningTokens": 0,
+          "cacheReadTokens": 2124,
+          "cacheWriteTokens": 0,
+          "cost": 0.00024744,
+          "costPerCorrect": 0.00008248
+        },
+        "spanish": {
+          "runs": 3,
+          "correctRuns": 3,
+          "turns": 3,
+          "complete": 3,
+          "partial": 0,
+          "invalid": 0,
+          "empty": 0,
+          "errors": 0,
+          "recovered": 0,
+          "multiBlock": 0,
+          "thinkingTurns": 0,
+          "avgTurnsPerRun": 1,
+          "avgMsPerCall": 1402,
+          "maxMsPerCall": 1457,
+          "avgMsPerRun": 1402,
+          "inputTokens": 12,
+          "outputTokens": 543,
+          "reasoningTokens": 0,
+          "cacheReadTokens": 2100,
+          "cacheWriteTokens": 0,
+          "cost": 0.00029369999999999993,
+          "costPerCorrect": 0.00009789999999999998
+        }
+      },
+      "runs": [
+        {
+          "caseId": "two-actions",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1405,
+              "cost": 0.00010277999999999999,
+              "inputTokens": 4,
+              "outputTokens": 190,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 738,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"reasoning\":\"Two pending actions are listed: deleting the customer record with id c1 named Acme, and deleting invoice i)"
+              ]
+            }
+          ],
+          "answer": "{\"reasoning\":\"Two pending actions are listed: deleting the customer record with id c1 named Acme, and deleting invoice inv-14 (number 14). The goal is to clean the Acme account. I must state each action plainly, include the key argument values, and ask for confirm or decline without inventing consequences or reversibility claims.\",\"question\":\"The system is paused before running two deletions for the Acme account: it will delete the customer record \\\"Acme\\\" (ID c1), and it will delete invoice number 14 (ID inv-14). Do you want to confirm these deletions or decline them?\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1405
+        },
+        {
+          "caseId": "two-actions",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1463,
+              "cost": 0.00010727999999999999,
+              "inputTokens": 4,
+              "outputTokens": 199,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 738,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"reasoning\":\"Two pending actions are listed: deleting the customer record 'Acme' (id c1) and deleting invoice number 14)"
+              ]
+            }
+          ],
+          "answer": "{\"reasoning\":\"Two pending actions are listed: deleting the customer record 'Acme' (id c1) and deleting invoice number 14 (id inv-14). The question must state both actions plainly with their key values, ask for confirmation or decline, and not claim anything about reversibility. Language is English.\",\"question\":\"The system is paused and needs your decision before continuing with the goal 'Clean the account of Acme'. It will (1) delete the customer record named Acme (ID c1), and (2) delete invoice number 14 (ID inv-14). Do you confirm these deletions, or do you want to decline them?\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1463
+        },
+        {
+          "caseId": "two-actions",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1527,
+              "cost": 0.00011428,
+              "inputTokens": 4,
+              "outputTokens": 213,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 738,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"reasoning\":\"Two pending actions are listed: deleting the customer record 'Acme' (id c1) and deleting invoice number 14)"
+              ]
+            }
+          ],
+          "answer": "{\"reasoning\":\"Two pending actions are listed: deleting the customer record 'Acme' (id c1) and deleting invoice number 14 (id inv-14). The user's goal is to clean the Acme account. I need to state each action plainly with its key argument values, without inventing consequences or claiming reversibility, and ask for confirmation or decline.\",\"question\":\"The system is paused and needs your decision before it runs these two steps to clean up the Acme account: (1) delete the customer record named \\\"Acme\\\" (ID c1), and (2) delete invoice number 14 (ID inv-14). Do you want me to proceed with both deletions, or decline?\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1527
+        },
+        {
+          "caseId": "create-amount",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1192,
+              "cost": 0.00008347999999999998,
+              "inputTokens": 4,
+              "outputTokens": 152,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 708,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"reasoning\":\"There is one pending action: create_transaction with amount 50, merchant Walmart, date 2026-10-30. It crea)"
+              ]
+            }
+          ],
+          "answer": "{\"reasoning\":\"There is one pending action: create_transaction with amount 50, merchant Walmart, date 2026-10-30. It creates a new transaction record. The goal is registering a purchase. No deletion or modification of existing data is listed. I should state the action plainly without inventing currency or other details, and ask for confirmation in English.\",\"question\":\"Shall I register a purchase of 50 at Walmart dated October 30, 2026? Please confirm or decline.\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1192
+        },
+        {
+          "caseId": "create-amount",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1722,
+              "cost": 0.00008198,
+              "inputTokens": 4,
+              "outputTokens": 149,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 708,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"reasoning\":\"The only pending action is create_transaction with amount 50, merchant Walmart, date 2026-10-30. It create)"
+              ]
+            }
+          ],
+          "answer": "{\"reasoning\":\"The only pending action is create_transaction with amount 50, merchant Walmart, date 2026-10-30. It creates a new transaction record; it does not change or delete existing data. I state the values as given without adding consequences, and I ask for confirmation in English as detected_language is en.\",\"question\":\"I'm about to register a purchase of 50 at Walmart dated October 30, 2026. Do you want me to go ahead and create this transaction?\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1722
+        },
+        {
+          "caseId": "create-amount",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1306,
+              "cost": 0.00008198,
+              "inputTokens": 4,
+              "outputTokens": 149,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 708,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"reasoning\":\"The only pending action is create_transaction, which registers a transaction of 50 at Walmart dated 2026-1)"
+              ]
+            }
+          ],
+          "answer": "{\"reasoning\":\"The only pending action is create_transaction, which registers a transaction of 50 at Walmart dated 2026-10-30. It creates a new record and changes no existing data, so the question should describe that plainly. The currency is not given, so I will not add one. The language is English.\",\"question\":\"I'm about to register a purchase of 50 at Walmart dated October 30, 2026. Do you want me to go ahead and add it? Please confirm or decline.\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1306
+        },
+        {
+          "caseId": "spanish",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1336,
+              "cost": 0.00009489999999999999,
+              "inputTokens": 4,
+              "outputTokens": 175,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 700,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"reasoning\":\"La acción pendiente es crm__delete_customer con id c1 y nombre Acme. Debe describirse en lenguaje sencillo)"
+              ]
+            }
+          ],
+          "answer": "{\"reasoning\":\"La acción pendiente es crm__delete_customer con id c1 y nombre Acme. Debe describirse en lenguaje sencillo: borrar el cliente Acme (identificador c1). El objetivo indica borrar al cliente. No añado consecuencias no indicadas. Idioma: español, según CONTEXT.detected_language.\",\"question\":\"¿Confirmas que se borre el cliente Acme (identificador c1) del CRM? Responde sí para confirmar o no para cancelar.\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1336
+        },
+        {
+          "caseId": "spanish",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1413,
+              "cost": 0.00009689999999999998,
+              "inputTokens": 4,
+              "outputTokens": 179,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 700,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"reasoning\":\"La acción pendiente es crm__delete_customer con id c1 y nombre Acme. Según el objetivo, se va a borrar el )"
+              ]
+            }
+          ],
+          "answer": "{\"reasoning\":\"La acción pendiente es crm__delete_customer con id c1 y nombre Acme. Según el objetivo, se va a borrar el cliente. Debo describirlo en lenguaje llano, sin nombres de herramientas, y preguntar en español si confirma o rechaza. No debo afirmar si se puede deshacer.\",\"question\":\"Voy a borrar el cliente \\\"Acme\\\" (identificador c1) del CRM. ¿Confirmas que lo borre o prefieres cancelarlo?\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1413
+        },
+        {
+          "caseId": "spanish",
+          "turns": [
+            {
+              "turn": 1,
+              "kind": "complete",
+              "calls": [],
+              "stopReason": "stop",
+              "ms": 1457,
+              "cost": 0.00010189999999999998,
+              "inputTokens": 4,
+              "outputTokens": 189,
+              "reasoningTokens": 0,
+              "cacheReadTokens": 700,
+              "cacheWriteTokens": 0,
+              "thinkingBlocks": 0,
+              "actions": [
+                "__output({\"reasoning\":\"La acción pendiente es crm__delete_customer con id c1 y nombre Acme. Debo describirla en lenguaje llano, s)"
+              ]
+            }
+          ],
+          "answer": "{\"reasoning\":\"La acción pendiente es crm__delete_customer con id c1 y nombre Acme. Debo describirla en lenguaje llano, sin nombres de herramientas, indicando el cliente afectado y el cambio (eliminar). No añado consecuencias no indicadas. La pregunta va en español, el idioma detectado.\",\"question\":\"Se va a eliminar el cliente \\\"Acme\\\" (identificador c1) de la base de datos de clientes. ¿Confirmas que se ejecute esta acción o prefieres cancelarla?\"}",
+          "finalTool": "__output",
+          "correct": true,
+          "ms": 1457
+        }
+      ]
+    }
+  ]
+}
