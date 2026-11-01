@@ -1,4 +1,5 @@
 import { Tool } from "@tools/tool"
+import { escapeRegex } from "@common/helpers"
 
 export interface WeightedKeyword {
     keyword: string
@@ -10,13 +11,6 @@ export interface ScoredTool {
     score: number
     matchedKeywords: string[]
     tool: Tool
-}
-
-/**
- * Escapa caracteres especiales de regex para evitar errores sintácticos.
- */
-function escapeRegExp(text: string): string {
-    return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
 /**
@@ -52,7 +46,7 @@ export function rankToolsByKeywords(
             if (!keyword || weight <= 0) continue
 
             const cleanKeyword = keyword.trim()
-            const escapedKeyword = escapeRegExp(cleanKeyword)
+            const escapedKeyword = escapeRegex(cleanKeyword)
 
             // \b para garantizar coincidencia de término completo
             const regex = new RegExp(`\\b${escapedKeyword}\\b`, 'gi')

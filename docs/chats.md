@@ -53,6 +53,12 @@ const interactive = await listChatsByUser({ executionMode: 'interactive', curren
 
 `executionMode` is optional. `autonomous` returns the chats that were created by an autonomous run and `interactive` returns the rest, including the chats saved before the mode existed. Combine it with `state.status` to show the autonomous runs that need attention: `awaiting_user_confirmation` or `awaiting_user_input` mean the run is paused until the user answers in the chat, and `failed` means it failed.
 
+```typescript
+const found = await listChatsByUser({ search: 'netflix', currentUser })
+```
+
+`search` is optional. It returns the chats with at least one message whose content contains the text, ignoring case, in the same order and with the same pagination. The text is matched literally, so characters such as `(` or `.` have no special meaning. It reads the messages without an index, which is fine for the chats of one user. An empty text is ignored.
+
 ## Getting one chat
 
 ```typescript

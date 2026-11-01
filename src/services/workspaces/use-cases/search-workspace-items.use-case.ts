@@ -1,5 +1,6 @@
 import { autoInjectable, inject } from 'tsyringe'
 import { QueryOptions } from '@common/repositories'
+import { escapeRegex } from '@common/helpers'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
 import { BaseEntity } from '@common/base/base.entity'
 import { WorkspaceItemRepository } from '../repositories'
@@ -33,8 +34,7 @@ export class SearchWorkspaceItemsUseCase extends BaseUseCase<Params, Output> {
 		if (!query?.trim()) throw new Error('query is required')
 		if (!currentUser) this.throwError403()
 
-		const escaped = query.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-		const pattern = { $regex: escaped, $options: 'i' }
+		const pattern = { $regex: escapeRegex(query.trim()), $options: 'i' }
 
 		const where = {
 			ownerId: BaseEntity.toObjectId(currentUser?.userId),
