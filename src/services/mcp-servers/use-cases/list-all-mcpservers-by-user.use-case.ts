@@ -7,6 +7,7 @@ export interface Params extends BaseUseCaseParams {}
 
 export interface Output extends BaseUseCaseOutput {
 	data: McpServerProps[]
+	hasMore?: boolean
 }
 
 @autoInjectable()
@@ -22,6 +23,6 @@ export class ListAllMcpServersByUserUseCase extends BaseUseCase<Params, Output> 
 
 		const results = await this.mcpServerRepository?.findAllByOwner(currentUser.userId)
 
-		return { data: results ?? [] }
+		return { data: results ?? [], hasMore: false }
 	}
 }
