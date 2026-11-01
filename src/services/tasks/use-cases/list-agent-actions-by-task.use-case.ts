@@ -14,6 +14,7 @@ export interface Params extends BaseUseCaseParams {
 
 export interface Output extends BaseUseCaseOutput {
 	data: AgentActionProps[]
+	hasMore?: boolean
 }
 
 @autoInjectable()
@@ -28,11 +29,11 @@ export class ListAgentActionsByTaskUseCase extends BaseUseCase<Params, Output> {
 		if (!taskId) throw new Error('taskId is required')
 		if (!currentUser) this.throwError403()
 
-		const data = await this.agentActionRepository?.findByProps(
+		const result = await this.agentActionRepository?.findByProps(
 			{ ownerId: BaseEntity.toObjectId(currentUser?.userId), taskId: BaseEntity.toObjectId(taskId) },
 			{ limit: DEFAULT_LIMIT, sortBy: { _id: 1 }, ...options },
 		)
 
-		return { data: data ?? [] }
+		return { data: result?.items ?? [], hasMore: result?.hasMore ?? false }
 	}
 }

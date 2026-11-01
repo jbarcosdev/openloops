@@ -31,7 +31,7 @@ export class ChatRepository {
 		return await this._.deleteOne({ where: { _id: this._.parseId(id) } })
 	}
 
-	public async findByProps (where: ChatProps, options: QueryOptions): Promise<ChatProps[]> {
-		return await this._.findMany({ where, options })
+	public async findByProps (where: ChatProps, options: QueryOptions): Promise<{ items: ChatProps[], hasMore: boolean }> {
+		return await this._.findManyPaginated({ where, options })
 	}
 }

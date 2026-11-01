@@ -25,7 +25,7 @@ export class AgentActionRepository {
 		})
 	}
 
-	public async findByProps (where: AgentActionProps, options: QueryOptions): Promise<AgentActionProps[]> {
-		return await this._.findMany({ where, options })
+	public async findByProps (where: AgentActionProps, options: QueryOptions): Promise<{ items: AgentActionProps[], hasMore: boolean }> {
+		return await this._.findManyPaginated({ where, options })
 	}
 }

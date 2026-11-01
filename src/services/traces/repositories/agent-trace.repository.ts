@@ -17,7 +17,7 @@ export class AgentTraceRepository {
 		return Object.keys(ids).length
 	}
 
-	public async findByProps (where: AgentTraceEntryProps, options: QueryOptions): Promise<AgentTraceEntryProps[]> {
-		return await this._.findMany({ where, options })
+	public async findByProps (where: AgentTraceEntryProps, options: QueryOptions): Promise<{ items: AgentTraceEntryProps[], hasMore: boolean }> {
+		return await this._.findManyPaginated({ where, options })
 	}
 }

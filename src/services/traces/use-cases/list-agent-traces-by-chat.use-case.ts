@@ -16,6 +16,7 @@ export interface Params extends BaseUseCaseParams {
 
 export interface Output extends BaseUseCaseOutput {
 	data: AgentTraceEntryProps[]
+	hasMore?: boolean
 }
 
 @autoInjectable()
@@ -30,7 +31,7 @@ export class ListAgentTracesByChatUseCase extends BaseUseCase<Params, Output> {
 		if (!chatId) throw new Error('chatId is required')
 		if (!currentUser) this.throwError403()
 
-		const data = await this.agentTraceRepository?.findByProps(
+		const result = await this.agentTraceRepository?.findByProps(
 			{
 				ownerId: BaseEntity.toObjectId(currentUser?.userId),
 				chatId: BaseEntity.toObjectId(chatId),
@@ -40,6 +41,6 @@ export class ListAgentTracesByChatUseCase extends BaseUseCase<Params, Output> {
 			{ limit: DEFAULT_LIMIT, sortBy: { _id: 1 }, ...options },
 		)
 
-		return { data: data ?? [] }
+		return { data: result?.items ?? [], hasMore: result?.hasMore ?? false }
 	}
 }

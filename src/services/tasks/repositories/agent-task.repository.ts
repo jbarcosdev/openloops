@@ -29,7 +29,7 @@ export class AgentTaskRepository {
 		return await this._.findOne({ where: { _id: this._.parseId(id) }, select })
 	}
 
-	public async findByProps (where: AgentTaskProps, options: QueryOptions): Promise<AgentTaskProps[]> {
-		return await this._.findMany({ where, options })
+	public async findByProps (where: AgentTaskProps, options: QueryOptions): Promise<{ items: AgentTaskProps[], hasMore: boolean }> {
+		return await this._.findManyPaginated({ where, options })
 	}
 }

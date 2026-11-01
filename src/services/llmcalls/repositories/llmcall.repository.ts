@@ -31,7 +31,7 @@ export class LLMCallRepository {
 		return await this._.deleteOne({ where: { _id: this._.parseId(id) } })
 	}
 
-	public async findByProps (where: LLMCallProps, options?: QueryOptions): Promise<LLMCallProps[]> {
-		return await this._.findMany({ where, options })
+	public async findByProps (where: LLMCallProps, options?: QueryOptions): Promise<{ items: LLMCallProps[], hasMore: boolean }> {
+		return await this._.findManyPaginated({ where, options })
 	}
 }

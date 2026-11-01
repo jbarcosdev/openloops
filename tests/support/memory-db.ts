@@ -184,7 +184,7 @@ export class MemoryDb {
                 return db.chats.remove(id)
             },
             async findByProps (where: Doc, options: Doc) {
-                return db.chats.find(where, undefined, options)
+                return { items: db.chats.find(where, undefined, options), hasMore: false }
             },
         })
 
@@ -200,7 +200,7 @@ export class MemoryDb {
                 return db.tasks.findById(id, select)
             },
             async findByProps (where: Doc, options: Doc) {
-                return db.tasks.find(where, undefined, options)
+                return { items: db.tasks.find(where, undefined, options), hasMore: false }
             },
         })
 
@@ -213,7 +213,7 @@ export class MemoryDb {
                 return db.actions.patch(action._id, action.toDocument(), Object.keys(action.clearedFields))
             },
             async findByProps (where: Doc, options: Doc) {
-                return db.actions.find(where, undefined, options)
+                return { items: db.actions.find(where, undefined, options), hasMore: false }
             },
         })
 
@@ -236,6 +236,9 @@ export class MemoryDb {
             async findMany (where: Doc, select?: Doc, options?: Doc) {
                 return db.workspace.find(where, select, options)
             },
+            async findManyPaginated (where: Doc, select?: Doc, options?: Doc) {
+                return { items: db.workspace.find(where, select, options), hasMore: false }
+            },
             async deleteById (id: string) {
                 return db.workspace.remove(id)
             },
@@ -247,7 +250,7 @@ export class MemoryDb {
                 return entries.length
             },
             async findByProps (where: Doc, options: Doc) {
-                return db.traces.find(where, undefined, options)
+                return { items: db.traces.find(where, undefined, options), hasMore: false }
             },
         })
 

@@ -11,6 +11,7 @@ export interface Params extends BaseUseCaseParams {
 
 export interface Output extends BaseUseCaseOutput {
 	data: UserProps[] | null | undefined
+	hasMore?: boolean
 }
 
 @autoInjectable()
@@ -23,6 +24,6 @@ export class ListUsersByPropsUseCase extends BaseUseCase<Params, Output> {
 		const { where, options } = params
 		const result = await this.userRepository?.findByProps(where, options || {})
 
-		return { data: result }
+		return { data: result?.items, hasMore: result?.hasMore }
 	}
 }

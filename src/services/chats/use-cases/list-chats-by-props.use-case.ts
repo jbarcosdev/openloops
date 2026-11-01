@@ -11,6 +11,7 @@ export interface Params extends BaseUseCaseParams {
 
 export interface Output extends BaseUseCaseOutput {
 	data: ChatProps[] | null | undefined
+	hasMore?: boolean
 }
 
 @autoInjectable()
@@ -23,6 +24,6 @@ export class ListChatsByPropsUseCase extends BaseUseCase<Params, Output> {
 		const { where, options } = params
 		const result = await this.chatRepository?.findByProps(where, options || {})
 
-		return { data: result }
+		return { data: result?.items, hasMore: result?.hasMore }
 	}
 }

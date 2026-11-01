@@ -40,8 +40,8 @@ export class UserRepository {
 		return await this._.deleteOne({ where: { _id: this._.parseId(id) } })
 	}
 
-	public async findByProps (where: Partial<UserProps>, options: QueryOptions): Promise<UserProps[]> {
-		return await this._.findMany({ where, select: { password: 0 }, options })
+	public async findByProps (where: Partial<UserProps>, options: QueryOptions): Promise<{ items: UserProps[], hasMore: boolean }> {
+		return await this._.findManyPaginated({ where, select: { password: 0 }, options })
 	}
 
 	public async findByEmailOrUsernameWithPassword (emailOrUsername: string): Promise<User | null> {
