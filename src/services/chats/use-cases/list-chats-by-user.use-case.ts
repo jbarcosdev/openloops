@@ -13,6 +13,7 @@ export interface Params extends BaseUseCaseParams {
 
 export interface Output extends BaseUseCaseOutput {
 	data: ChatProps[] | null | undefined
+	hasMore?: boolean
 }
 
 @autoInjectable()
@@ -25,7 +26,7 @@ export class ListChatsByUserUseCase extends BaseUseCase<Params, Output> {
 		const { options, executionMode, currentUser } = params
 		const { page = 1, limit: pageSize = 10 } = options || {}
 
-		const results = await this.chatRepository?._.findMany({
+		const result = await this.chatRepository?._.findManyPaginated({
 			where: { 
 				ownerId: new ObjectId(currentUser?.userId),
 				...(executionMode === 'autonomous' ? { 'settings.executionMode': 'autonomous' } : {}),
@@ -34,6 +35,6 @@ export class ListChatsByUserUseCase extends BaseUseCase<Params, Output> {
 			options: { page, limit: pageSize, sortBy: { updatedAt: -1 } },
 		})
 
-		return { data: results }
+		return { data: result?.items, hasMore: result?.hasMore }
 	}
 }

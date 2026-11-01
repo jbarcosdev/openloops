@@ -224,9 +224,9 @@ describe('autonomous mode', () => {
 
     describe('listing the chats of a user', () => {
         const list = async (executionMode?: 'interactive' | 'autonomous') => {
-            const findMany = jest.fn(async () => [])
-            await new ListChatsByUserUseCase({ _: { findMany } } as any).execute({ executionMode, currentUser: env.user })
-            return (findMany.mock.calls[0] as any[])[0].where
+            const findManyPaginated = jest.fn(async () => ({ items: [], hasMore: false }))
+            await new ListChatsByUserUseCase({ _: { findManyPaginated } } as any).execute({ executionMode, currentUser: env.user })
+            return (findManyPaginated.mock.calls[0] as any[])[0].where
         }
 
         it('does not filter by mode when none is given', async () => {

@@ -67,20 +67,29 @@ export class MongoRepository<T> {
 		}
 	}
 
-	public async findMany ({ where, select, options }: QueryParams<T>): Promise<T[]> {
+	public async findMany (params: QueryParams<T>): Promise<T[]> {
+		const _limit = this.clampLimit(params.options?.limit)
+		return this.query(params, _limit, _limit)
+	}
+
+	public async findManyPaginated (params: QueryParams<T>): Promise<{ items: T[], hasMore: boolean }> {
+		const _limit = this.clampLimit(params.options?.limit)
+		const results = await this.query(params, _limit, _limit + 1)
+		return { items: results.slice(0, _limit), hasMore: results.length > _limit }
+	}
+
+	private async query ({ where, select, options }: QueryParams<T>, pageSize: number, fetchSize: number): Promise<T[]> {
 		try {
 			const db = await this.dbClient.db(this.database)
 			const collection = db.collection(this.collection)
-			const { page = 1, limit = 10 } = options || {}
-
-			const _limit = this.clampLimit(limit)
-			const _skip = +page > 0 ? (+page - 1) * _limit : 0
+			const { page = 1 } = options || {}
+			const _skip = +page > 0 ? (+page - 1) * pageSize : 0
 
 			const result = await collection
 				.find({ ...where, ...this._where }, { projection: select })
 				.sort(options?.sortBy || { _id: -1 })
 				.skip(_skip)
-				.limit(_limit)
+				.limit(fetchSize)
 				.toArray()
 
 			return result as unknown as T[]

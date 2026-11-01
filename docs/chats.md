@@ -43,7 +43,7 @@ const result = await listChatsByUser({
 })
 ```
 
-Sorted by last update, newest first. Defaults to page 1 and 10 chats.
+Sorted by last update, newest first. Defaults to page 1 and 10 chats. The result has `data` and `hasMore`, which is `true` when there is a next page.
 
 ```typescript
 const autonomous = await listChatsByUser({ executionMode: 'autonomous', currentUser })

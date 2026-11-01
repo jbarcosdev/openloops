@@ -12,6 +12,7 @@ export interface Params extends BaseUseCaseParams {
 
 export interface Output extends BaseUseCaseOutput {
 	data: McpServerProps[] | null | undefined
+	hasMore?: boolean
 }
 
 @autoInjectable()
@@ -24,13 +25,13 @@ export class ListMcpServersByUserUseCase extends BaseUseCase<Params, Output> {
 		const { options, currentUser } = params
 		const { page = 1, limit: pageSize = 10 } = options || {}
 
-		const results = await this.mcpServerRepository?._.findMany({
+		const result = await this.mcpServerRepository?._.findManyPaginated({
 			where: { 
 				ownerId: new ObjectId(currentUser?.userId),
 			},
 			options: { page, limit: pageSize, sortBy: { updatedAt: -1 } },
 		})
 
-		return { data: results }
+		return { data: result?.items, hasMore: result?.hasMore }
 	}
 }
