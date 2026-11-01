@@ -16,6 +16,7 @@ export interface Params extends BaseUseCaseParams {
 
 export interface Output extends BaseUseCaseOutput {
 	data: WorkspaceItemProps[]
+	hasMore?: boolean
 }
 
 @autoInjectable()
@@ -37,12 +38,12 @@ export class ListWorkspaceItemsUseCase extends BaseUseCase<Params, Output> {
 			...(kind ? { kind } : {}),
 		}
 
-		const data = await this.workspaceItemRepository?.findMany(
+		const result = await this.workspaceItemRepository?.findManyPaginated(
 			where,
 			{ content: 0 },
 			{ limit: DEFAULT_LIMIT, sortBy: { _id: -1 }, ...options },
 		)
 
-		return { data: data ?? [] }
+		return { data: result?.items ?? [], hasMore: result?.hasMore ?? false }
 	}
 }

@@ -48,6 +48,10 @@ export class WorkspaceItemRepository {
 		return await this._.findMany({ where: where as any, select, options })
 	}
 
+	public async findManyPaginated (where: Record<string, unknown>, select?: QueryParams<WorkspaceItemProps>['select'], options?: QueryOptions): Promise<{ items: WorkspaceItemProps[], hasMore: boolean }> {
+		return await this._.findManyPaginated({ where: where as any, select, options })
+	}
+
 	public async deleteById (id: string): Promise<number> {
 		return await this._.deleteOne({ where: { _id: this._.parseId(id) } })
 	}
