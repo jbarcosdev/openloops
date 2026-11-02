@@ -152,11 +152,11 @@ const agent = new Agent({
     loop: new AgiLoop(),
     internalMcps: [
         {
-            name: 'sofi',
-            url: 'https://api.sofi.cash/mcp',
+            name: 'budget',
+            url: 'https://api.example.com/mcp',
             headers: {
                 Authorization: 'Bearer {{token}}',
-                'X-App': 'sofi-agent',
+                'X-App': 'budget-agent',
             },
         },
     ],
@@ -167,7 +167,7 @@ agent.addInternalMcp({ name: 'other', url: 'https://other.example.com/mcp' })
 await agent.run({
     input: { message: 'how much did I spend on food this month?' },
     currentUser,
-    mcpTokens: { sofi: sessionToken },
+    mcpTokens: { budget: sessionToken },
 })
 ```
 

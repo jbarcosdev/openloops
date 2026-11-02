@@ -6,9 +6,9 @@ async function createUserExample () {
 
     const result = await createUser({
         payload: {
-            firstName: 'Jose',
-            lastName: 'Barcos',
-            email: 'jose@openloops.xyz',
+            firstName: 'John',
+            lastName: 'Smith',
+            email: 'john.smith@example.com',
             password: 'openloops!',
             role: UserRole.USER
         },
