@@ -6,7 +6,7 @@ async function previewRuns () {
 
     const result = await previewAutomationRuns({
         recurrence: { type: 'monthly', day: 'last', time: '18:00' },
-        timezone: 'America/Lima',
+        timezone: 'America/New_York',
         count: 5,
     })
 

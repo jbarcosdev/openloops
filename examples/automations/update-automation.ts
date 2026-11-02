@@ -8,11 +8,11 @@ async function pause () {
 
     const result = await updateAutomation({
         id: '6ad0c9a6d3ea4199c9b7ba10',
-        payload: { enabled: false },
+        payload: { triggers: { schedule: { enabled: false } } },
         currentUser,
     })
 
-    logger.info({ enabled: result.data.enabled }, '[Demo] The automation is off')
+    logger.info({ enabled: result.data.triggers?.schedule?.enabled }, '[Demo] The automation is off')
 }
 
 async function resume () {
@@ -22,13 +22,12 @@ async function resume () {
     const result = await updateAutomation({
         id: '6ad0c9a6d3ea4199c9b7ba10',
         payload: {
-            enabled: true,
-            trigger: { recurrence: { type: 'daily', time: '07:30' } },
+            triggers: { schedule: { enabled: true, recurrence: { type: 'daily', time: '07:30' } } },
         },
         currentUser,
     })
 
-    logger.info({ nextRunAt: result.data.nextRunAt }, '[Demo] The automation is on again')
+    logger.info({ nextRunAt: result.data.triggers?.schedule?.nextRunAt }, '[Demo] The automation is on again')
 }
 
 pause()

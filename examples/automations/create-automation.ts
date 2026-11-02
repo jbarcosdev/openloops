@@ -10,10 +10,11 @@ async function createSchedule () {
         payload: {
             name: 'Morning report',
             instructions: 'Summarize the news about the bitcoin price and keep the summary short',
-            trigger: {
-                type: 'schedule',
-                recurrence: { type: 'weekly', days: [1, 2, 3, 4, 5], time: '08:00' },
-                timezone: 'America/Lima',
+            triggers: {
+                schedule: {
+                    recurrence: { type: 'weekly', days: [1, 2, 3, 4, 5], time: '08:00' },
+                    timezone: 'America/New_York',
+                },
             },
             modelProvider: 'anthropic',
             modelName: 'claude-haiku-5-5',
@@ -21,7 +22,7 @@ async function createSchedule () {
         currentUser,
     })
 
-    logger.info({ id: result.data._id, nextRunAt: result.data.nextRunAt }, '[Demo] Created automation')
+    logger.info({ id: result.data._id, nextRunAt: result.data.triggers?.schedule?.nextRunAt }, '[Demo] Created automation')
 }
 
 createSchedule()
