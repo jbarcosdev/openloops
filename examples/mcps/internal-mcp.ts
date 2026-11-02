@@ -13,8 +13,8 @@ async function runAgentWithInternalMcp (sessionToken: string) {
         loop: new AgiLoop(),
         internalMcps: [
             {
-                name: 'sofi',
-                url: 'https://api.sofi.cash/mcp',
+                name: 'budget',
+                url: 'https://api.example.com/mcp',
                 headers: { Authorization: 'Bearer {{token}}' },
             },
         ],
@@ -26,7 +26,7 @@ async function runAgentWithInternalMcp (sessionToken: string) {
                 message: 'how much did I spend on food this month?',
             },
             currentUser,
-            mcpTokens: { sofi: sessionToken },
+            mcpTokens: { budget: sessionToken },
         })
 
         logger.debug(result, '[Demo] Result')

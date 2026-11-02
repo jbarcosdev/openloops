@@ -13,7 +13,7 @@ async function runAgentWithIdentity () {
     const agent = new Agent({
         loop,
         identity: {
-            name: 'Sofi',
+            name: 'Ava',
             gender: 'Female',
             role: 'Personal assistant and daily companion',
         },

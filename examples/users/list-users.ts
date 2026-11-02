@@ -7,7 +7,7 @@ async function listUsers () {
     const currentUser = await CurrentUser.asyncFromDB('6ab56894eb20887d1ef7942c')
 
     const result = await ListUsersByProps({
-        where: { firstName: 'Jose' },
+        where: { firstName: 'John' },
         options: { page: 1, limit: 10 },
         currentUser,
     })

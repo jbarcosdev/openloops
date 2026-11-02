@@ -11,7 +11,7 @@ import { login, revokeToken, isTokenRevoked } from 'openloops/authentication'
 ```typescript
 const result = await login({
     payload: {
-        emailOrUsername: 'jose@openloops.xyz',
+        emailOrUsername: 'john.smith@example.com',
         password: 'a-real-password',
     },
 })
