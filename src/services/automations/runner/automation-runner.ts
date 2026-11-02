@@ -204,7 +204,7 @@ export class AutomationRunner {
 			input: { message: buildMessage(automation.instructions as string, run.payload), chatId },
 			options: { executionMode: 'autonomous', ...model },
 			currentUser,
-			currentSession: CurrentSession.fromJSON({ location: { timezone: automation.trigger?.timezone } } as any),
+			currentSession: CurrentSession.fromJSON({ location: { timezone: currentUser.preferences?.timezone?.ianaIdentifier } } as any),
 			serviceToken: process.env.INTERNAL_MCP_TOKEN ? secretManager.get('INTERNAL_MCP_TOKEN') : undefined,
 		})
 

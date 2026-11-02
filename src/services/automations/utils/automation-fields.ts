@@ -1,4 +1,4 @@
-import { AutomationTrigger, readTrigger } from '../entities/trigger'
+import { AutomationTriggers, readTriggers } from '../entities/trigger'
 
 const MAX_NAME_CHARS = 200
 const MAX_INSTRUCTIONS_CHARS = 20000
@@ -6,8 +6,7 @@ const MAX_INSTRUCTIONS_CHARS = 20000
 export interface AutomationFields {
 	name?: string
 	instructions?: string
-	enabled?: boolean
-	trigger?: AutomationTrigger
+	triggers?: AutomationTriggers
 	modelProvider?: string | null
 	modelName?: string | null
 }
@@ -24,19 +23,17 @@ const optionalText = (value: unknown, label: string): string | null => {
 	return text(value, label, MAX_NAME_CHARS)
 }
 
-export function readAutomationFields (payload: Record<string, any> | undefined, options: { complete: boolean, trigger?: AutomationTrigger }): AutomationFields {
+export function readAutomationFields (payload: Record<string, any> | undefined, options: { complete: boolean, triggers?: AutomationTriggers }): AutomationFields {
 	const input = payload ?? {}
 	const fields: AutomationFields = {}
 	const has = (key: string) => input[key] !== undefined
 
 	if (options.complete || has('name')) fields.name = text(input.name, 'name', MAX_NAME_CHARS)
 	if (options.complete || has('instructions')) fields.instructions = text(input.instructions, 'instructions', MAX_INSTRUCTIONS_CHARS)
-	if (options.complete || has('trigger')) fields.trigger = readTrigger(input.trigger, options.trigger)
 
-	if (has('enabled')) {
-		if (typeof input.enabled !== 'boolean') throw new Error('The field enabled must be true or false')
-		fields.enabled = input.enabled
-	}
+	if (has('trigger')) throw new Error('The field trigger was replaced by triggers')
+	if (has('enabled')) throw new Error('The field enabled belongs to each trigger, send it inside triggers.schedule or triggers.event')
+	if (options.complete || has('triggers')) fields.triggers = readTriggers(input.triggers, options.triggers)
 
 	if (has('modelProvider')) fields.modelProvider = optionalText(input.modelProvider, 'model provider')
 	if (has('modelName')) fields.modelName = optionalText(input.modelName, 'model name')

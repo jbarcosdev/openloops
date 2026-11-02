@@ -24,14 +24,13 @@ describe('automation repository', () => {
     const repository = new AutomationRepository()
 
     const create = async (props: Record<string, any> = {}): Promise<string> => {
+        const { enabled = true, nextRunAt = 'nextRunAt' in props ? undefined : new Date(NOW.getTime() - 1000), ...rest } = props
         const automation = Automation.fromJSON({
             name: 'report',
             instructions: 'summarize the tickets',
-            enabled: true,
-            trigger: { type: 'schedule', recurrence: { type: 'daily', time: '08:00' }, timezone: 'UTC' },
+            triggers: { schedule: { enabled, recurrence: { type: 'daily', time: '08:00' }, timezone: 'UTC', ...(nextRunAt ? { nextRunAt } : {}) } },
             ownerId: OWNER,
-            nextRunAt: new Date(NOW.getTime() - 1000),
-            ...props,
+            ...rest,
         })
         await repository.create(automation)
         return String(automation._id)
@@ -78,7 +77,7 @@ describe('automation repository', () => {
 
             expect(claimed).toMatchObject({ lockedBy: 'worker-1' })
             expect(new Date(claimed!.lockedUntil as Date).getTime()).toBe(NOW.getTime() + LEASE)
-            expect(new Date(claimed!.nextRunAt as Date).getTime()).toBe(next.getTime())
+            expect(new Date(claimed!.triggers!.schedule!.nextRunAt as Date).getTime()).toBe(next.getTime())
         })
 
         it('lets only one of several workers get it', async () => {
@@ -117,8 +116,8 @@ describe('automation repository', () => {
 
             const claimed = await repository.claim({ id, workerId: 'a', now: NOW, leaseMs: LEASE })
 
-            expect(claimed?.nextRunAt).toBeUndefined()
-            expect(automations().docs[0].nextRunAt).toBeUndefined()
+            expect(claimed?.triggers?.schedule?.nextRunAt).toBeUndefined()
+            expect(automations().docs[0].triggers.schedule.nextRunAt).toBeUndefined()
         })
 
         it('does not give an automation that is off or deleted', async () => {
@@ -138,7 +137,7 @@ describe('automation repository', () => {
             const claimed = await repository.claimManual({ id, workerId: 'a', now: NOW, leaseMs: LEASE })
 
             expect(claimed).toMatchObject({ lockedBy: 'a' })
-            expect(new Date(claimed!.nextRunAt as Date).getTime()).toBe(future.getTime())
+            expect(new Date(claimed!.triggers!.schedule!.nextRunAt as Date).getTime()).toBe(future.getTime())
         })
 
         it('is refused while the automation is being run', async () => {

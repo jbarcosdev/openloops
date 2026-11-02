@@ -1,17 +1,16 @@
 import { ObjectId } from 'mongodb'
 import { BaseEntity, BaseEntityProps } from '@common/base/base.entity'
-import { AutomationTrigger } from './trigger'
+import { AutomationTriggers } from './trigger'
 import { computeNextRun } from '../utils/next-run'
 import type { AutomationRunStatus } from './automation-run.entity'
 
 export interface AutomationProps extends BaseEntityProps {
 	name?: string
 	instructions?: string
-	enabled?: boolean
-	trigger?: AutomationTrigger
+	triggers?: AutomationTriggers
+	eventTokenVersion?: number
 	modelProvider?: string
 	modelName?: string
-	nextRunAt?: string | Date | null
 	lastRunAt?: string | Date | null
 	lastRunStatus?: AutomationRunStatus
 	lockedBy?: string | null
@@ -28,17 +27,25 @@ const toDate = (value?: string | Date | null): Date | undefined => {
 	return date
 }
 
+const readTriggerDates = (triggers?: AutomationTriggers): AutomationTriggers | undefined => {
+	if (!triggers?.schedule) return triggers
+
+	const { nextRunAt, ...schedule } = triggers.schedule
+	const date = toDate(nextRunAt)
+
+	return { ...triggers, schedule: { ...schedule, ...(date ? { nextRunAt: date } : {}) } }
+}
+
 export class Automation extends BaseEntity {
 	static fromJSON (props: AutomationProps): Automation {
 		return new Automation(
 			props,
 			props.name || undefined,
 			props.instructions || undefined,
-			props.enabled,
-			props.trigger,
+			readTriggerDates(props.triggers),
+			props.eventTokenVersion,
 			props.modelProvider || undefined,
 			props.modelName || undefined,
-			toDate(props.nextRunAt),
 			toDate(props.lastRunAt),
 			props.lastRunStatus,
 			props.lockedBy || undefined,
@@ -51,11 +58,10 @@ export class Automation extends BaseEntity {
 		private readonly props: AutomationProps,
 		public name?: string,
 		public instructions?: string,
-		public enabled?: boolean,
-		public trigger?: AutomationTrigger,
+		public triggers?: AutomationTriggers,
+		public eventTokenVersion?: number,
 		public modelProvider?: string,
 		public modelName?: string,
-		public nextRunAt?: Date,
 		public lastRunAt?: Date,
 		public lastRunStatus?: AutomationRunStatus,
 		public lockedBy?: string,
@@ -70,11 +76,10 @@ export class Automation extends BaseEntity {
 			...super.toJSON(),
 			name: this.name,
 			instructions: this.instructions,
-			enabled: this.enabled,
-			trigger: this.trigger,
+			triggers: this.triggers,
+			eventTokenVersion: this.eventTokenVersion,
 			modelProvider: this.modelProvider,
 			modelName: this.modelName,
-			nextRunAt: this.nextRunAt,
 			lastRunAt: this.lastRunAt,
 			lastRunStatus: this.lastRunStatus,
 			lockedBy: this.lockedBy,
@@ -83,18 +88,17 @@ export class Automation extends BaseEntity {
 		}
 	}
 
-	isScheduled (): boolean {
-		return this.trigger?.type === 'schedule'
-	}
-
 	scheduleNextRun (from: Date = new Date()): this {
-		const trigger = this.trigger
-		const next = this.enabled && trigger?.type === 'schedule' ? computeNextRun(trigger.recurrence, trigger.timezone, from) : null
+		const schedule = this.triggers?.schedule
+		if (!schedule) return this
+
+		const next = schedule.enabled ? computeNextRun(schedule.recurrence, schedule.timezone, from) : null
 
 		if (next) {
-			this.nextRunAt = next
+			schedule.nextRunAt = next
 		} else {
-			this.unset(['nextRunAt'])
+			delete schedule.nextRunAt
+			this.toUnset = { ...this.toUnset, 'triggers.schedule.nextRunAt': '' }
 		}
 
 		return this

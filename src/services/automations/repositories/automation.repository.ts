@@ -49,8 +49,8 @@ export class AutomationRepository {
 
 	public async findDue (now: Date, limit: number): Promise<AutomationProps[]> {
 		return await this._.findMany({
-			where: { enabled: true, nextRunAt: { $lte: now }, ...this.unlocked(now) } as any,
-			options: { page: 1, limit, sortBy: { nextRunAt: 1 } },
+			where: { 'triggers.schedule.enabled': true, 'triggers.schedule.nextRunAt': { $lte: now }, ...this.unlocked(now) } as any,
+			options: { page: 1, limit, sortBy: { 'triggers.schedule.nextRunAt': 1 } },
 		})
 	}
 
@@ -58,11 +58,11 @@ export class AutomationRepository {
 		const { id, workerId, now, leaseMs, nextRunAt } = params
 
 		return await this._.updateOne({
-			where: { _id: this._.parseId(id), enabled: true, nextRunAt: { $lte: now }, ...this.unlocked(now) } as any,
+			where: { _id: this._.parseId(id), 'triggers.schedule.enabled': true, 'triggers.schedule.nextRunAt': { $lte: now }, ...this.unlocked(now) } as any,
 			payload: {
 				lockedBy: workerId,
 				lockedUntil: new Date(now.getTime() + leaseMs),
-				...(nextRunAt ? { nextRunAt } : { toUnset: { nextRunAt: '' } }),
+				...(nextRunAt ? { 'triggers.schedule.nextRunAt': nextRunAt } : { toUnset: { 'triggers.schedule.nextRunAt': '' } }),
 			} as any,
 		})
 	}

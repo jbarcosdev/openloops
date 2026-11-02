@@ -37,10 +37,14 @@ function matchesValue (actual: any, wanted: any): boolean {
     return wanted === null ? actual == null : String(comparable(actual)) === String(comparable(wanted))
 }
 
+function getPath (source: Doc, path: string): any {
+    return path.split('.').reduce((node: any, part) => node?.[part], source)
+}
+
 function matches (doc: Doc, filter: Doc): boolean {
     return Object.entries(filter).every(([key, wanted]) => {
         if (key === '$or') return (wanted as Doc[]).some(branch => matches(doc, branch))
-        return matchesValue(doc[key], wanted)
+        return matchesValue(getPath(doc, key), wanted)
     })
 }
 
@@ -90,8 +94,8 @@ class FakeCollection {
             sort: (spec: Record<string, 1 | -1>) => {
                 found = found.sort((a, b) => {
                     for (const [key, direction] of Object.entries(spec)) {
-                        const left = comparable(a[key]) ?? ''
-                        const right = comparable(b[key]) ?? ''
+                        const left = comparable(getPath(a, key)) ?? ''
+                        const right = comparable(getPath(b, key)) ?? ''
                         if (left !== right) return (left < right ? -1 : 1) * direction
                     }
                     return 0

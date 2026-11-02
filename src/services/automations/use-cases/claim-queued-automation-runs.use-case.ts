@@ -55,7 +55,7 @@ export class ClaimQueuedAutomationRunsUseCase extends BaseUseCase<Params, Output
 			seen.add(automationId)
 
 			const existing = await this.automationRepository!.findById(automationId)
-			const reason = !existing ? 'The automation no longer exists' : !existing.enabled ? 'The automation is turned off' : undefined
+			const reason = !existing ? 'The automation no longer exists' : !existing.triggers?.event?.enabled ? 'The event trigger of the automation is turned off' : undefined
 
 			if (reason) {
 				const settled = await this.automationRunRepository!.update(AutomationRun.fromJSON({ ...run, status: 'skipped', finishedAt: now, skipReason: reason }))

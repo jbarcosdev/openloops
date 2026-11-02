@@ -49,8 +49,9 @@ export class ReceiveAutomationEventUseCase extends BaseUseCase<Params, Output> {
 
 		const automation = await this.automationRepository!.findById(automationId)
 		if (!automation) throw new AutomationEventError('not_found')
-		if (automation.trigger?.type !== 'event' || automation.trigger.tokenVersion !== claims.v) throw new AutomationEventError('invalid')
-		if (!automation.enabled) throw new AutomationEventError('disabled')
+		const event = automation.triggers?.event
+		if (!event || automation.eventTokenVersion !== claims.v) throw new AutomationEventError('invalid')
+		if (!event.enabled) throw new AutomationEventError('disabled')
 
 		const { data: { revoked } } = await isTokenRevoked({ jti: claims.jti })
 		if (revoked) throw new AutomationEventError('revoked')
