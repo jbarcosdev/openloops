@@ -1,6 +1,6 @@
 # Automations
 
-An automation is a task that your agent runs by itself, without anyone in the chat. You describe what it must do and what starts it, a schedule or an event that arrives from another system, and `openloops` runs it in [autonomous mode](agent.md#autonomous-mode), in a new chat each time, and keeps a history of every run.
+An automation is a task that your agent runs by itself, without anyone in the chat. You describe what it must do and what starts it, a schedule, an event that arrives from another system or both, and `openloops` runs it in [autonomous mode](agent.md#autonomous-mode), in a new chat each time, and keeps a history of every run.
 
 ```typescript
 import {
@@ -29,10 +29,11 @@ const result = await createAutomation({
     payload: {
         name: 'Morning report',
         instructions: 'Summarize my open tickets and send the summary to my email',
-        trigger: {
-            type: 'schedule',
-            recurrence: { type: 'weekly', days: [1, 2, 3, 4, 5], time: '08:00' },
-            timezone: 'America/Lima',
+        triggers: {
+            schedule: {
+                recurrence: { type: 'weekly', days: [1, 2, 3, 4, 5], time: '08:00' },
+                timezone: 'America/New_York',
+            },
         },
         modelProvider: 'anthropic',
         modelName: 'claude-haiku-5-5',
@@ -40,27 +41,45 @@ const result = await createAutomation({
     currentUser,
 })
 
-result.data.nextRunAt
+result.data.triggers.schedule.nextRunAt
 ```
 
 | Field | Required | What it is |
 | --- | --- | --- |
 | `name` | yes | A name to recognize the automation. |
 | `instructions` | yes | What the agent must do. It is sent to the agent as the message of the user, so write it as you would write it in a chat. If the task needs to notify someone, say so here and give the agent a tool for it. |
-| `trigger` | yes | What starts it. A `schedule` or an `event`. See below. |
-| `enabled` | no | `true` by default. An automation that is off never runs, and can be turned on again. |
+| `triggers` | yes | What starts it: a `schedule`, an `event` or both, at least one. See below. |
 | `modelProvider`, `modelName` | no | The model of the automation, both or none. Without them, the default model of the owner is used, then the fallbacks. See [configuration](configuration.md#which-model-a-chat-uses). |
 
-`nextRunAt` is calculated when a scheduled automation is created and it is what you show to the user. An automation with an event trigger has no `nextRunAt`. The fields that the system manages (`nextRunAt`, `lastRunAt`, `lastRunStatus`, `lockedBy`, `lockedUntil`, `activeRunId`) are ignored if they come in the payload.
+`triggers.schedule.nextRunAt` is calculated when the schedule is created and it is what you show to the user. An automation without a schedule has no `nextRunAt`. The fields that the system manages (`nextRunAt` inside the schedule, `eventTokenVersion`, `lastRunAt`, `lastRunStatus`, `lockedBy`, `lockedUntil`, `activeRunId`) are ignored if they come in the payload.
 
 ## Triggers
 
-An automation has one trigger. Its type is chosen when it is created and cannot be changed afterwards. To change it, create another automation.
+An automation has at most one trigger of each type, so `triggers` has two optional keys and at least one of them must be present.
 
-| Type | Fields | Starts |
+| Trigger | Fields | Starts |
 | --- | --- | --- |
-| `schedule` | `recurrence`, `timezone` | On the dates of the recurrence. |
-| `event` | `timezone` (optional) | When an external system sends an event to it. See [events](#events). |
+| `schedule` | `enabled`, `recurrence`, `timezone` | On the dates of the recurrence. |
+| `event` | `enabled` | When an external system sends an event to it. See [events](#events). |
+
+```typescript
+await createAutomation({
+    payload: {
+        name: 'Ticket review',
+        instructions: 'Review the open tickets and report what needs attention',
+        triggers: {
+            schedule: { recurrence: { type: 'daily', time: '08:00' }, timezone: 'America/New_York' },
+            event: {},
+        },
+    },
+    currentUser,
+})
+```
+
+- **Every trigger has its own `enabled`**, `true` by default. There is no switch for the whole automation. A trigger that is off never starts a run and can be turned on again, and the other trigger keeps working.
+- **The `timezone` belongs to the schedule.** It only decides when the schedule runs. The agent gets the timezone of the owner of the automation, whatever started the run.
+- **`nextRunAt`** lives inside `triggers.schedule`, and only a schedule has it.
+- **Both triggers share the queue and the lock of the automation**: its runs happen one at a time, whether they come from the schedule, from an event or from a [manual run](#running-by-hand).
 
 You can always start any automation by hand with [`runNow`](#running-by-hand), whatever its trigger.
 
@@ -84,7 +103,7 @@ The recurrence of a `schedule` trigger is stored as a structured value, so a scr
 ```typescript
 const { data } = await previewAutomationRuns({
     recurrence: { type: 'weekly', days: [1, 5], time: '08:00' },
-    timezone: 'America/Lima',
+    timezone: 'America/New_York',
     count: 5,
 })
 
@@ -96,9 +115,13 @@ It returns the next dates (at most 20) without saving anything, so a screen can 
 ## Managing automations
 
 ```typescript
-await updateAutomation({ id, payload: { enabled: false }, currentUser })
+await updateAutomation({ id, payload: { triggers: { schedule: { enabled: false } } }, currentUser })
 
-await updateAutomation({ id, payload: { enabled: true }, currentUser })
+await updateAutomation({ id, payload: { triggers: { event: { enabled: true } } }, currentUser })
+
+await updateAutomation({ id, payload: { triggers: { event: {} } }, currentUser })
+
+await updateAutomation({ id, payload: { triggers: { event: null } }, currentUser })
 
 const automation = await getAutomationById({ id, currentUser })
 
@@ -107,12 +130,15 @@ const automations = await listAutomationsByUser({ options: { page: 1, limit: 10 
 await deleteAutomation({ id, currentUser })
 ```
 
-- **Turning an automation off** is how the user pauses it for a while. It has no next run until it is turned on again. Turning it on counts the next run from that moment, it does not catch up with what was missed.
-- **Changing the trigger of a schedule** (its recurrence or timezone, you can send only the one that changes) **or turning it on** calculates `nextRunAt` again from now.
-- **A run that is in progress is not interrupted** by turning the automation off or by deleting it.
+- **The triggers are merged key by key.** Send only the trigger that changes, and inside it only the fields that change. What you do not send is kept. To pause the whole automation, turn off both triggers.
+- **Turning the schedule off** is how the user pauses it for a while. It has no next run until it is turned on again. Turning it on counts the next run from that moment, it does not catch up with what was missed.
+- **Changing the schedule** (its recurrence or timezone, you can send only the one that changes) **or turning it on** calculates `nextRunAt` again from now. Changing only the event does not move it.
+- **Adding a trigger** is sending its key. A schedule that does not exist yet needs its `recurrence` and `timezone`.
+- **Removing a trigger** is sending `null` in its key. The last trigger cannot be removed. Removing the event is not the same as turning it off. Turning it off keeps `eventTokenVersion`, so the tokens issued before work again when it is turned on. Removing it counts as a rotation: `eventTokenVersion` goes up by one, so no token issued before works, not even when the event is added again.
+- **A run that is in progress is not interrupted** by turning a trigger off, removing it or deleting the automation.
 - **`__v`** in the payload works as in the other use cases: if the automation changed since it was read, the update fails with a `VersionConflictError`.
 - **Deleting** is a soft delete. An admin can delete for good with `hardDelete: true`.
-- **The system never turns an automation off by itself.** An automation that fails keeps trying on every occurrence, so watch the history.
+- **The system never turns a trigger off by itself.** An automation that fails keeps trying on every occurrence, so watch the history.
 
 ## Events
 
@@ -123,7 +149,7 @@ const { data: automation } = await createAutomation({
     payload: {
         name: 'Cost anomaly analysis',
         instructions: 'Find the cause of the cost alert in AWS and send a summary to the channel #costs',
-        trigger: { type: 'event' },
+        triggers: { event: {} },
     },
     currentUser,
 })
@@ -170,13 +196,13 @@ The use case answers without running the agent. The run is created as `queued` a
 4. If the automation already has `AUTOMATIONS_MAX_QUEUED_RUNS` runs waiting (10 by default), the event is recorded as a `skipped` run with its payload and the status `skipped`, and it is not run.
 5. Otherwise it saves a `queued` run and returns the status `queued`.
 
-All refusals of the token are an `AutomationEventError` with the status 401 and the same message, so the caller learns nothing. The `reason` (`invalid`, `expired`, `revoked`, `not_found`, `disabled`) is for your logs.
+All refusals of the token are an `AutomationEventError` with the status 401 and the same message, so the caller learns nothing. The `reason` (`invalid`, `expired`, `revoked`, `not_found`, `disabled`) is for your logs. `disabled` means the event trigger is turned off.
 
 ### The queue
 
 - Events of one automation run **one at a time and in order**, like everything else in an automation. While one runs, the next ones wait as `queued`.
 - If the run in progress is `paused` waiting for the user, the queue waits too, until the user answers.
-- A queued event whose automation was turned off or deleted before it started is marked `skipped`, and `onRunFinished` is called for it when the automation still exists.
+- A queued event whose event trigger was turned off or removed, or whose automation was deleted, before it started is marked `skipped`, and `onRunFinished` is called for it when the automation still exists.
 - A queued run keeps the instructions of the automation as they were when the event arrived, but starts with the instructions and the model it has when the run begins.
 
 ### What the agent receives
@@ -191,18 +217,28 @@ The token is a JWT signed with `JWT_SECRET`. It is not stored: the owner or an a
 | --- | --- |
 | `aud` | `automation-event`. A session token of a user is refused, and this one does not log anybody in. |
 | `sub` | The id of the automation. It must be the one of the URL. |
-| `v` | The version of the tokens of the automation. |
+| `v` | The `eventTokenVersion` of the automation when the token was issued. |
 | `jti` | A unique id, used to revoke it. |
 | `exp` | Only if you pass `expiresIn` when you issue it, such as `'30m'`, `'12h'`, `'30d'` or `'2w'`. Without it the token does not expire. |
+
+The `eventTokenVersion` is a field of the automation, not of the event trigger, so it is not lost when the event is removed. It starts at 1, it only goes up, and it is the only thing that decides which tokens are valid as a group: a token is accepted only if its `v` is equal to the current `eventTokenVersion`, so every lower version is blocked. Three operations touch tokens, and only one of them changes the version:
+
+| Operation | What it does | Changes `eventTokenVersion` | Effect on the tokens already issued |
+| --- | --- | --- | --- |
+| `issueAutomationEventToken({ id, expiresIn?, currentUser })` | Signs a new token with the current `eventTokenVersion` and a new `jti`. It does not store it and it does not write the automation. | No | None. Every token issued before keeps working, so you can have one per system that sends events. |
+| `revokeAutomationEventToken({ id, token, currentUser })` | Saves the `jti` of the token you pass in `revoked_tokens`. | No | Only that token stops working. The rest are valid. |
+| `rotateAutomationEventTokens({ id, currentUser })` | Adds 1 to `eventTokenVersion` and saves the automation. It does not return a token. | Yes | Every token issued before stops working, because its `v` is not the current version any more. Issue a new one afterwards. |
+
+So issuing again does **not** replace the previous token. To "regenerate" a token and kill the old ones, rotate first and then issue. The three are only for the owner of the automation or an admin, and the event trigger must exist: without it they fail with an error.
 
 Four ways to take a token out of use:
 
 - **Let it expire,** if it was issued with `expiresIn`. A token that expires stops working without notice, and the refused events create no run, so watch the `expired` reasons in your logs.
 - **Revoke one token.** If a token leaked, pass it to `revokeAutomationEventToken({ id, token, currentUser })`. Its `jti` goes to the collection `revoked_tokens` and only that token stops working. The entry is deleted by itself when the token would have expired. The tokens are not stored, so there is no list to choose from: you need the leaked token in your hands.
 - **Rotate.** `rotateAutomationEventTokens({ id, currentUser })` increases the version and **every** token issued before stops working. Use it when you do not have the leaked token, or you want to start again. Issue the new token afterwards.
-- **Turn the automation off.** Its events are refused with the reason `disabled`.
+- **Turn the event trigger off.** Its events are refused with the reason `disabled`, and the tokens work again when it is turned on. If you remove the event trigger instead, the tokens are refused with the reason `invalid` until an event is added again, see [managing automations](#managing-automations).
 
-Revoking and rotating, like issuing, are only for the owner of the automation or an admin. A revoked token is checked after its signature, so an invalid token never reaches the database.
+A revoked token is checked after its signature, so an invalid token never reaches the database.
 
 ## The history
 
@@ -232,7 +268,7 @@ const byUser = await listAutomationRunsByUser({ status: 'failed', currentUser })
 | `completed` | The agent finished its task. |
 | `paused` | The agent needs the user: it asked for the approval of a tool or an MCP server, or asked a question. The chat is waiting. When the user answers in the chat and it finishes, the run becomes `completed` or `failed`. |
 | `failed` | It failed. `error` says why: the model did not answer in time, a guardrail blocked the instructions, the owner no longer exists, or the worker was lost. |
-| `skipped` | It was not started and `skipReason` says why: a scheduled run was due but the previous one was still `paused`, an event found the queue full, or the automation was turned off or deleted while the event waited. It is recorded so you can notify the user. |
+| `skipped` | It was not started and `skipReason` says why: a scheduled run was due but the previous one was still `paused`, an event found the queue full, or the event trigger was turned off or removed, or the automation deleted, while the event waited. It is recorded so you can notify the user. |
 
 ## The runner
 
@@ -278,7 +314,7 @@ A new `Agent` is created for every run, so the options are the same but nothing 
 
 - It runs as the owner of the automation, which must exist.
 - It starts a new chat, in autonomous mode, with the model of the automation, and the instructions as the first message. The chat is recorded in the run as soon as it exists.
-- It gives the agent the timezone of the automation, so the local time reaches the prompts.
+- It gives the agent the timezone of the owner, taken from their preferences, so the local time reaches the prompts. The timezone of the schedule is not used for this.
 - Guards of the agent apply to the instructions. If one blocks them, the run is `failed`.
 
 ### Internal MCP servers in an automation
@@ -318,7 +354,7 @@ Someone answers a paused run in the chat, outside the runner. The runner checks 
 
 The collections are `automations` and `automation_runs`. `ensureIndexes` from `openloops/db` creates the indexes of the queries of the runner and of the lists (see [configuration](configuration.md#indexes)). They are:
 
-- `automations`: `{ enabled: 1, nextRunAt: 1 }` and `{ ownerId: 1, createdAt: -1 }`.
+- `automations`: `{ 'triggers.schedule.enabled': 1, 'triggers.schedule.nextRunAt': 1 }` and `{ ownerId: 1, createdAt: -1 }`.
 - `automation_runs`: `{ automationId: 1, createdAt: -1 }`, `{ ownerId: 1, createdAt: -1 }`, `{ status: 1, createdAt: 1 }` and a unique index on `{ automationId: 1, idempotencyKey: 1 }` for the runs that have a key, which makes the deduplication of events safe when two requests arrive together.
 - `revoked_tokens`: a unique index on `jti` and a TTL index on `expiresAt`. It belongs to [authentication](authentication.md#revoked-tokens).
 
@@ -338,7 +374,7 @@ Before 0.4.0 this module was called `agentic-jobs`. The old names are not kept a
     | `AGENTIC_JOBS_POLL_INTERVAL_MS`, `AGENTIC_JOBS_LEASE_MS` | `AUTOMATIONS_POLL_INTERVAL_MS`, `AUTOMATIONS_LEASE_MS` |
 
     The old variables are **not read anymore and nothing warns you**: if you had set them, the runner now uses the default values until you rename them.
-3. **Change the shape of what you send and read.** `recurrence` and `timezone` are no longer fields of the automation, they live inside `trigger`.
+3. **Change the shape of what you send and read.** `recurrence` and `timezone` are no longer fields of the automation, they live inside `triggers.schedule` (see also [Migrating to 5.0](#migrating-to-50)).
 
     Before:
 
@@ -348,7 +384,7 @@ Before 0.4.0 this module was called `agentic-jobs`. The old names are not kept a
             name: 'Morning report',
             instructions: 'Summarize my open tickets',
             recurrence: { type: 'daily', time: '08:00' },
-            timezone: 'America/Lima',
+            timezone: 'America/New_York',
         },
         currentUser,
     })
@@ -361,18 +397,19 @@ Before 0.4.0 this module was called `agentic-jobs`. The old names are not kept a
         payload: {
             name: 'Morning report',
             instructions: 'Summarize my open tickets',
-            trigger: {
-                type: 'schedule',
-                recurrence: { type: 'daily', time: '08:00' },
-                timezone: 'America/Lima',
+            triggers: {
+                schedule: {
+                    recurrence: { type: 'daily', time: '08:00' },
+                    timezone: 'America/New_York',
+                },
             },
         },
         currentUser,
     })
     ```
 
-    To change the recurrence or the timezone of an existing automation, send `trigger: { recurrence }` or `trigger: { timezone }`, only the one that changes. When you read an automation, its schedule is in `automation.trigger`.
-4. **Migrate the data**, once per database. It renames the collections, moves `recurrence` and `timezone` into a `schedule` trigger, renames `jobId` to `automationId`, drops the old index and creates the new ones. It can be run again without changing anything, and it refuses to rename a collection if the new name already exists.
+    To change the recurrence or the timezone of an existing automation, send `triggers: { schedule: { recurrence } }` or `triggers: { schedule: { timezone } }`, only the one that changes. When you read an automation, its schedule is in `automation.triggers.schedule`.
+4. **Migrate the data**, once per database. It renames the collections, moves `recurrence` and `timezone` into the schedule trigger, renames `jobId` to `automationId`, drops the old index and creates the new ones. It can be run again without changing anything, and it refuses to rename a collection if the new name already exists.
 
     ```typescript
     import { migrateAutomations } from 'openloops/db'
@@ -382,6 +419,71 @@ Before 0.4.0 this module was called `agentic-jobs`. The old names are not kept a
 
     With `dryRun` it only counts what it would change, so run it first. In a checkout of this repository you can run `yarn migrate:automations --dry-run` and `yarn migrate:automations`, which read `OPENLOOPS_DB_URI` and `OPENLOOPS_DB_NAME`.
 5. **Start the runner of the new version.**
+
+## Migrating to 5.0
+
+Version 5.0 lets an automation have a schedule and an event at the same time. It breaks the shape of the automation, and there are no aliases for the old one. Follow these steps in order.
+
+1. **Stop the runner of the old version**, so no run is in progress while the data changes.
+2. **Change what you send.** `trigger` is now `triggers`, an object with the optional keys `schedule` and `event`. `enabled` moved from the automation to each trigger, and `timezone` moved from the trigger to the schedule. The event trigger has no `timezone`.
+
+    Before:
+
+    ```typescript
+    await createAutomation({
+        payload: {
+            name: 'Morning report',
+            instructions: 'Summarize my open tickets',
+            enabled: true,
+            trigger: { type: 'schedule', recurrence: { type: 'daily', time: '08:00' }, timezone: 'America/New_York' },
+        },
+        currentUser,
+    })
+
+    await createAutomation({ payload: { name: 'Alarms', instructions: 'Analyze the alarm', trigger: { type: 'event' } }, currentUser })
+    ```
+
+    Now:
+
+    ```typescript
+    await createAutomation({
+        payload: {
+            name: 'Morning report',
+            instructions: 'Summarize my open tickets',
+            triggers: { schedule: { enabled: true, recurrence: { type: 'daily', time: '08:00' }, timezone: 'America/New_York' } },
+        },
+        currentUser,
+    })
+
+    await createAutomation({ payload: { name: 'Alarms', instructions: 'Analyze the alarm', triggers: { event: {} } }, currentUser })
+    ```
+
+    Sending `trigger` or `enabled` in the payload of `createAutomation` or `updateAutomation` fails with an error that says where the field went, so nothing is ignored silently.
+3. **Change what you read.**
+
+    | Before | Now |
+    | --- | --- |
+    | `automation.trigger.type` | the keys present in `automation.triggers` |
+    | `automation.enabled` | `automation.triggers.schedule?.enabled` and `automation.triggers.event?.enabled` |
+    | `automation.nextRunAt` | `automation.triggers.schedule?.nextRunAt` |
+    | `automation.trigger.recurrence`, `automation.trigger.timezone` | `automation.triggers.schedule.recurrence`, `automation.triggers.schedule.timezone` |
+    | `automation.trigger.tokenVersion` | `automation.eventTokenVersion` |
+
+    The `trigger` of a run (`schedule`, `event` or `manual`) does not change.
+4. **Know the changes of behavior.**
+    - The agent of every run now gets the timezone of the owner, not the one saved in the trigger. Before, a schedule passed its own timezone and an event trigger only had one if you had set it.
+    - Turning off an automation used to stop its schedule and its events. Now each trigger has its own switch, so turn off both to pause everything.
+    - The events that are queued when an event trigger is turned off are marked `skipped` with the reason `The event trigger of the automation is turned off`.
+5. **Migrate the data**, once per database, with the same `migrateAutomations` as before. It also moves `trigger` into `triggers`: the root `enabled` goes into the trigger that the automation had, `nextRunAt` goes into the schedule, `tokenVersion` goes to `eventTokenVersion` in the automation (1 when it had no event), the timezone of an event trigger is dropped, and the old index `enabled_1_nextRunAt_1` is replaced by the new one. It can be run again without changing anything, and it also migrates databases that still have the agentic jobs. Run it with `dryRun` first, and take a backup before the real run.
+
+    ```typescript
+    import { migrateAutomations } from 'openloops/db'
+
+    const report = await migrateAutomations(db, { dryRun: true })
+    ```
+
+    The report has a new `triggersMoved` count. In a checkout of this repository you can run `yarn migrate:automations --dry-run` and `yarn migrate:automations`.
+6. **Start the runner of the new version.** Until the data is migrated the runner finds no automation due, because it looks for the schedule inside `triggers`.
 
 ## Limits
 
