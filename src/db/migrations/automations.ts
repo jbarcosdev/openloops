@@ -9,6 +9,7 @@ export interface AutomationsMigrationReport {
 	dryRun: boolean
 	renamedCollections: string[]
 	triggersCreated: number
+	triggersMoved: number
 	runsUpdated: number
 	droppedIndexes: string[]
 }
@@ -19,12 +20,13 @@ const RENAMES: [string, string][] = [
 ]
 
 const OLD_RUN_INDEX = 'jobId_1_createdAt_-1'
+const OLD_AUTOMATION_INDEX = 'enabled_1_nextRunAt_1'
 
 const exists = async (db: Db, name: string): Promise<boolean> => (await db.listCollections({ name }).toArray()).length > 0
 
 export async function migrateAutomations (db: Db, options: AutomationsMigrationOptions = {}): Promise<AutomationsMigrationReport> {
 	const dryRun = Boolean(options.dryRun)
-	const report: AutomationsMigrationReport = { dryRun, renamedCollections: [], triggersCreated: 0, runsUpdated: 0, droppedIndexes: [] }
+	const report: AutomationsMigrationReport = { dryRun, renamedCollections: [], triggersCreated: 0, triggersMoved: 0, runsUpdated: 0, droppedIndexes: [] }
 
 	for (const [from, to] of RENAMES) {
 		if (!await exists(db, from)) continue
@@ -38,15 +40,39 @@ export async function migrateAutomations (db: Db, options: AutomationsMigrationO
 	const runs = db.collection(dryRun && report.renamedCollections.length ? 'agentic_job_runs' : 'automation_runs')
 
 	const withoutTrigger = { trigger: { $exists: false }, recurrence: { $exists: true } }
+	const withTrigger = { trigger: { $exists: true } }
 	const withJobId = { jobId: { $exists: true } }
 
 	if (dryRun) {
 		report.triggersCreated = await automations.countDocuments(withoutTrigger)
+		report.triggersMoved = await automations.countDocuments(withTrigger) + report.triggersCreated
 		report.runsUpdated = await runs.countDocuments(withJobId)
 	} else {
 		const triggers = await automations.updateMany(withoutTrigger, [
 			{ $set: { trigger: { type: 'schedule', recurrence: '$recurrence', timezone: '$timezone' } } },
 			{ $unset: ['recurrence', 'timezone'] },
+		])
+		const split = await automations.updateMany(withTrigger, [
+			{
+				$set: {
+					triggers: {
+						$cond: [
+							{ $eq: ['$trigger.type', 'schedule'] },
+							{
+								schedule: {
+									$mergeObjects: [
+										{ enabled: { $ifNull: ['$enabled', true] }, recurrence: '$trigger.recurrence', timezone: '$trigger.timezone' },
+										{ $cond: [{ $ifNull: ['$nextRunAt', false] }, { nextRunAt: '$nextRunAt' }, {}] },
+									],
+								},
+							},
+							{ event: { enabled: { $ifNull: ['$enabled', true] } } },
+						],
+					},
+					eventTokenVersion: { $ifNull: ['$trigger.tokenVersion', 1] },
+				},
+			},
+			{ $unset: ['trigger', 'enabled', 'nextRunAt'] },
 		])
 		const moved = await runs.updateMany(withJobId, [
 			{ $set: { automationId: '$jobId' } },
@@ -54,14 +80,16 @@ export async function migrateAutomations (db: Db, options: AutomationsMigrationO
 		])
 
 		report.triggersCreated = triggers.modifiedCount
+		report.triggersMoved = split.modifiedCount
 		report.runsUpdated = moved.modifiedCount
 	}
 
-	const indexes = await runs.indexes().catch(() => [])
+	for (const [collection, name] of [[runs, OLD_RUN_INDEX], [automations, OLD_AUTOMATION_INDEX]] as const) {
+		const indexes = await collection.indexes().catch(() => [])
+		if (!indexes.some(index => index.name === name)) continue
 
-	if (indexes.some(index => index.name === OLD_RUN_INDEX)) {
-		if (!dryRun) await runs.dropIndex(OLD_RUN_INDEX)
-		report.droppedIndexes.push(OLD_RUN_INDEX)
+		if (!dryRun) await collection.dropIndex(name)
+		report.droppedIndexes.push(name)
 	}
 
 	if (!dryRun) await ensureIndexes(db)
