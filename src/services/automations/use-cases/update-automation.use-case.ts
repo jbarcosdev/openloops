@@ -30,7 +30,7 @@ export class UpdateAutomationUseCase extends BaseUseCase<Params, Output> {
 
 		if (payload.__v !== undefined && payload.__v !== existing.__v) throw new VersionConflictError()
 
-		const changes = readAutomationFields(payload as Record<string, any>, { complete: false, trigger: existing.trigger })
+		const changes = readAutomationFields(payload as Record<string, any>, { complete: false, triggers: existing.triggers })
 		const { modelProvider, modelName, ...rest } = changes
 
 		const provider = modelProvider === undefined ? existing.modelProvider : modelProvider
@@ -49,12 +49,16 @@ export class UpdateAutomationUseCase extends BaseUseCase<Params, Output> {
 
 		if (!provider) automation.unset(['modelProvider', 'modelName'])
 
-		const schedulingChanged = rest.trigger !== undefined || rest.enabled !== undefined
-		const missingNextRun = automation.enabled && automation.isScheduled() && !automation.nextRunAt
+		const removed = (['schedule', 'event'] as const).filter(key => existing.triggers?.[key] && !automation.triggers?.[key])
+		if (removed.length) automation.toUnset = Object.fromEntries(removed.map(key => [`triggers.${key}`, '']))
+		if (removed.includes('event')) automation.eventTokenVersion = (existing.eventTokenVersion as number) + 1
 
-		if (schedulingChanged || missingNextRun) {
+		const schedule = automation.triggers?.schedule
+		const scheduleChanged = (payload.triggers as Record<string, unknown> | undefined)?.schedule !== undefined
+
+		if (schedule && (scheduleChanged || (schedule.enabled && !schedule.nextRunAt))) {
 			automation.scheduleNextRun()
-			if (automation.enabled && automation.isScheduled() && !automation.nextRunAt) throw new Error('The date of the recurrence has already passed')
+			if (schedule.enabled && !schedule.nextRunAt) throw new Error('The date of the recurrence has already passed')
 		}
 
 		const result = await this.automationRepository?.update(automation, { expectedVersion: existing.__v })

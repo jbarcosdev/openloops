@@ -32,7 +32,7 @@ const revoked = () => fakeMongo.collection('revoked_tokens')
 
 const createEvent = async (extra: Record<string, any> = {}) => {
     const { data } = await container.resolve(CreateAutomationUseCase).execute({
-        payload: { name: 'Cost alerts', instructions: 'Analyze the cost alert', trigger: { type: 'event' }, ...extra } as any,
+        payload: { name: 'Cost alerts', instructions: 'Analyze the cost alert', triggers: { event: {} }, ...extra } as any,
         currentUser: user,
     })
 
@@ -64,28 +64,94 @@ describe('automations with an event trigger', () => {
 
     describe('creating', () => {
         it('has no schedule and starts with the first version of the token', async () => {
-            const id = await createEvent({ trigger: { type: 'event', timezone: 'America/Lima' } })
-
-            expect(automations().docs[0]).toMatchObject({ enabled: true, trigger: { type: 'event', tokenVersion: 1, timezone: 'America/Lima' } })
-            expect(automations().docs[0].nextRunAt).toBeUndefined()
-            expect(id).toBeTruthy()
-        })
-
-        it('cannot change the type of its trigger', async () => {
             const id = await createEvent()
 
-            await expect(container.resolve(UpdateAutomationUseCase).execute({ id, payload: { trigger: { type: 'schedule', recurrence: { type: 'daily', time: '08:00' }, timezone: 'UTC' } } as any, currentUser: user })).rejects.toThrow(/cannot be changed/)
+            expect(automations().docs[0].triggers).toEqual({ event: { enabled: true } })
+            expect(automations().docs[0].eventTokenVersion).toBe(1)
+            expect(id).toBeTruthy()
         })
 
         it('can be turned off and on without a next run', async () => {
             const id = await createEvent()
             const update = container.resolve(UpdateAutomationUseCase)
 
-            await update.execute({ id, payload: { enabled: false }, currentUser: user })
-            const on = await update.execute({ id, payload: { enabled: true }, currentUser: user })
+            const off = await update.execute({ id, payload: { triggers: { event: { enabled: false } } } as any, currentUser: user })
+            const on = await update.execute({ id, payload: { triggers: { event: { enabled: true } } } as any, currentUser: user })
 
-            expect(on.data.enabled).toBe(true)
-            expect(on.data.nextRunAt).toBeUndefined()
+            expect(off.data.triggers?.event?.enabled).toBe(false)
+            expect(on.data.triggers).toEqual({ event: { enabled: true } })
+            expect(on.data.eventTokenVersion).toBe(1)
+        })
+    })
+
+    describe('next to a schedule', () => {
+        const both = { triggers: { schedule: { recurrence: { type: 'daily', time: '08:00' }, timezone: 'UTC' }, event: {} } }
+        const update = (id: string, payload: Record<string, any>) => container.resolve(UpdateAutomationUseCase).execute({ id, payload: payload as any, currentUser: user })
+
+        it('keeps receiving events when the schedule is turned off', async () => {
+            const id = await createEvent(both)
+            const { token } = await issue(id)
+
+            await update(id, { triggers: { schedule: { enabled: false } } })
+
+            expect((await receive(id, token)).data.status).toBe('queued')
+        })
+
+        it('stops receiving events when only the event is turned off, and the schedule stays', async () => {
+            const id = await createEvent(both)
+            const { token } = await issue(id)
+
+            await update(id, { triggers: { event: { enabled: false } } })
+
+            expect(await rejection(receive(id, token))).toBe('disabled')
+            expect(automations().docs[0].triggers.schedule).toMatchObject({ enabled: true })
+            expect(automations().docs[0].triggers.schedule.nextRunAt).toBeInstanceOf(Date)
+        })
+
+        it('keeps the old tokens valid when the event is turned off and on again', async () => {
+            const id = await createEvent(both)
+            const { token } = await issue(id)
+
+            await update(id, { triggers: { event: { enabled: false } } })
+            await update(id, { triggers: { event: { enabled: true } } })
+
+            expect((await receive(id, token)).data.status).toBe('queued')
+        })
+
+        it('rejects the old tokens when the event is removed', async () => {
+            const id = await createEvent(both)
+            const { token } = await issue(id)
+
+            await update(id, { triggers: { event: null } })
+
+            expect(await rejection(receive(id, token))).toBe('invalid')
+            await expect(issue(id)).rejects.toThrow(/event trigger/)
+        })
+
+        it('keeps rejecting the old tokens when the event is added again', async () => {
+            const id = await createEvent(both)
+            const old = await issue(id)
+            await container.resolve(RotateAutomationEventTokensUseCase).execute({ id, currentUser: user })
+            const rotated = await issue(id)
+
+            await update(id, { triggers: { event: null } })
+            await update(id, { triggers: { event: {} } })
+            const fresh = await issue(id)
+
+            expect(automations().docs[0].eventTokenVersion).toBe(3)
+            expect(await rejection(receive(id, old.token))).toBe('invalid')
+            expect(await rejection(receive(id, rotated.token))).toBe('invalid')
+            expect((await receive(id, fresh.token)).data.status).toBe('queued')
+        })
+
+        it('rotates the tokens without touching the schedule', async () => {
+            const id = await createEvent(both)
+            const before = automations().docs[0].triggers.schedule
+
+            const { data } = await container.resolve(RotateAutomationEventTokensUseCase).execute({ id, currentUser: user })
+
+            expect(data.eventTokenVersion).toBe(2)
+            expect(automations().docs[0].triggers.schedule).toEqual(before)
         })
     })
 
@@ -134,7 +200,7 @@ describe('automations with an event trigger', () => {
             await expect(issue(id, undefined, admin)).resolves.toMatchObject({ token: expect.any(String) })
 
             const { data } = await container.resolve(CreateAutomationUseCase).execute({
-                payload: { name: 'Daily', instructions: 'Do it', trigger: { type: 'schedule', recurrence: { type: 'daily', time: '08:00' }, timezone: 'UTC' } } as any,
+                payload: { name: 'Daily', instructions: 'Do it', triggers: { schedule: { recurrence: { type: 'daily', time: '08:00' }, timezone: 'UTC' } } } as any,
                 currentUser: user,
             })
 
@@ -253,7 +319,7 @@ describe('automations with an event trigger', () => {
             const id = await createEvent()
             const { token } = await issue(id)
 
-            await container.resolve(UpdateAutomationUseCase).execute({ id, payload: { enabled: false }, currentUser: user })
+            await container.resolve(UpdateAutomationUseCase).execute({ id, payload: { triggers: { event: { enabled: false } } } as any, currentUser: user })
             expect(await rejection(receive(id, token))).toBe('disabled')
 
             const missing = new ObjectId().toHexString()
@@ -315,7 +381,8 @@ describe('automations with an event trigger', () => {
             const { data } = await container.resolve(RotateAutomationEventTokensUseCase).execute({ id, currentUser: user })
             const after = await issue(id)
 
-            expect(data.trigger).toMatchObject({ type: 'event', tokenVersion: 2 })
+            expect(data.triggers?.event).toEqual({ enabled: true })
+            expect(data.eventTokenVersion).toBe(2)
             expect(await rejection(receive(id, before.token))).toBe('invalid')
             expect((await receive(id, after.token)).data.status).toBe('queued')
         })
@@ -389,16 +456,27 @@ describe('automations with an event trigger', () => {
             expect((await claim('w1', 5)).data.claimed).toHaveLength(1)
         })
 
+        it('skips what was queued for an automation whose event trigger was removed', async () => {
+            const id = await createEvent({ triggers: { schedule: { recurrence: { type: 'daily', time: '08:00' }, timezone: 'UTC' }, event: {} } })
+            await receive(id, (await issue(id)).token)
+            await container.resolve(UpdateAutomationUseCase).execute({ id, payload: { triggers: { event: null } } as any, currentUser: user })
+
+            const { data } = await claim()
+
+            expect(data.claimed).toHaveLength(0)
+            expect(runs().docs[0]).toMatchObject({ status: 'skipped', skipReason: 'The event trigger of the automation is turned off' })
+        })
+
         it('skips what was queued for an automation that was turned off', async () => {
             const id = await createEvent()
             await receive(id, (await issue(id)).token)
-            await container.resolve(UpdateAutomationUseCase).execute({ id, payload: { enabled: false }, currentUser: user })
+            await container.resolve(UpdateAutomationUseCase).execute({ id, payload: { triggers: { event: { enabled: false } } } as any, currentUser: user })
 
             const { data } = await claim()
 
             expect(data.claimed).toHaveLength(0)
             expect(data.skipped).toHaveLength(1)
-            expect(runs().docs[0]).toMatchObject({ status: 'skipped', skipReason: 'The automation is turned off' })
+            expect(runs().docs[0]).toMatchObject({ status: 'skipped', skipReason: 'The event trigger of the automation is turned off' })
         })
     })
 })

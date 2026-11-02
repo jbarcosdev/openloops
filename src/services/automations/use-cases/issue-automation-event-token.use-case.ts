@@ -25,8 +25,9 @@ export class IssueAutomationEventTokenUseCase extends BaseUseCase<Params, Output
 		if (!automation) throw new Error('Automation not found')
 
 		if (!currentUser?.isAdmin() && String(automation.ownerId) !== currentUser?.userId) this.throwError403()
-		if (automation.trigger?.type !== 'event') throw new Error('Only an automation with an event trigger has a token')
 
-		return { data: signEventToken({ automationId: id, tokenVersion: automation.trigger.tokenVersion, expiresIn }) }
+		if (!automation.triggers?.event) throw new Error('Only an automation with an event trigger has a token')
+
+		return { data: signEventToken({ automationId: id, tokenVersion: automation.eventTokenVersion as number, expiresIn }) }
 	}
 }

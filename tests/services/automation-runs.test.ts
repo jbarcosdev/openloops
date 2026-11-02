@@ -29,6 +29,7 @@ const automations = () => fakeMongo.collection('automations')
 const runs = () => fakeMongo.collection('automation_runs')
 const automation = () => automations().docs[0]
 const at = (value: any) => new Date(value).toISOString()
+const schedule = () => automation().triggers.schedule
 
 const claim = (workerId: string, now: Date) => container.resolve(ClaimDueAutomationsUseCase).execute({ workerId, now, leaseMs: LEASE })
 const finish = (runId: any, workerId: string, status: 'completed' | 'paused' | 'failed', now: Date, error?: any) =>
@@ -41,7 +42,7 @@ describe('running automations', () => {
 
     const createAutomationFixture = async (recurrence: any = { type: 'daily', time: '08:00' }) => {
         const { data } = await container.resolve(CreateAutomationUseCase).execute({
-            payload: { name: 'Report', instructions: 'Summarize', trigger: { type: 'schedule', recurrence, timezone: 'UTC' }, modelProvider: 'anthropic', modelName: 'claude-haiku-5-5' } as any,
+            payload: { name: 'Report', instructions: 'Summarize', triggers: { schedule: { recurrence, timezone: 'UTC' } }, modelProvider: 'anthropic', modelName: 'claude-haiku-5-5' } as any,
             currentUser: user,
         })
         id = String(data._id)
@@ -79,7 +80,7 @@ describe('running automations', () => {
             })
             expect(String(runs().docs[0].ownerId)).toBe(OWNER)
             expect(at(runs().docs[0].scheduledFor)).toBe('2026-10-14T08:00:00.000Z')
-            expect(at(automation().nextRunAt)).toBe('2026-10-15T08:00:00.000Z')
+            expect(at(schedule().nextRunAt)).toBe('2026-10-15T08:00:00.000Z')
             expect(automation().lockedBy).toBe('w1')
             expect(String(automation().activeRunId)).toBe(String(runs().docs[0]._id))
         })
@@ -102,11 +103,11 @@ describe('running automations', () => {
 
             expect(data.claimed).toHaveLength(1)
             expect(runs().docs).toHaveLength(1)
-            expect(at(automation().nextRunAt)).toBe('2026-10-18T08:00:00.000Z')
+            expect(at(schedule().nextRunAt)).toBe('2026-10-18T08:00:00.000Z')
         })
 
         it('does not take an automation that is off', async () => {
-            await container.resolve(UpdateAutomationUseCase).execute({ id, payload: { enabled: false }, currentUser: user })
+            await container.resolve(UpdateAutomationUseCase).execute({ id, payload: { triggers: { schedule: { enabled: false } } } as any, currentUser: user })
 
             expect((await claim('w1', new Date('2026-10-14T09:00:00Z'))).data.claimed).toHaveLength(0)
         })
@@ -156,11 +157,11 @@ describe('running automations', () => {
 
         it('does not turn on again an automation that the user turned off while it was running', async () => {
             const { data } = await claim('w1', new Date('2026-10-14T08:00:00Z'))
-            await container.resolve(UpdateAutomationUseCase).execute({ id, payload: { enabled: false }, currentUser: user })
+            await container.resolve(UpdateAutomationUseCase).execute({ id, payload: { triggers: { schedule: { enabled: false } } } as any, currentUser: user })
             await finish(data.claimed[0].run._id, 'w1', 'completed', new Date('2026-10-14T08:03:00Z'))
 
-            expect(automation().enabled).toBe(false)
-            expect(automation().nextRunAt).toBeUndefined()
+            expect(schedule().enabled).toBe(false)
+            expect(schedule().nextRunAt).toBeUndefined()
         })
 
         it('does not fail when the lock was lost to another worker', async () => {
@@ -179,11 +180,11 @@ describe('running automations', () => {
             fakeMongo.reset()
             await createAutomationFixture({ type: 'once', at: '2026-10-14T10:00' })
 
-            expect(at(automation().nextRunAt)).toBe('2026-10-14T10:00:00.000Z')
+            expect(at(schedule().nextRunAt)).toBe('2026-10-14T10:00:00.000Z')
 
             const { data } = await claim('w1', new Date('2026-10-14T10:00:00Z'))
             expect(data.claimed).toHaveLength(1)
-            expect(automation().nextRunAt).toBeUndefined()
+            expect(schedule().nextRunAt).toBeUndefined()
 
             await finish(data.claimed[0].run._id, 'w1', 'completed', new Date('2026-10-14T10:02:00Z'))
             expect((await claim('w1', new Date('2026-10-20T10:00:00Z'))).data.claimed).toHaveLength(0)
@@ -248,7 +249,7 @@ describe('running automations', () => {
             expect(data.skipped).toHaveLength(1)
             expect(runs().docs).toHaveLength(2)
             expect(runs().docs[1]).toMatchObject({ status: 'skipped', skipReason: expect.stringMatching(/waiting for the user/) })
-            expect(at(automation().nextRunAt)).toBe('2026-10-16T08:00:00.000Z')
+            expect(at(schedule().nextRunAt)).toBe('2026-10-16T08:00:00.000Z')
             expect(automation().lockedBy).toBeUndefined()
             expect(automation().lastRunStatus).toBe('paused')
             expect(String(automation().activeRunId)).toBe(String(runs().docs[0]._id))
@@ -270,12 +271,12 @@ describe('running automations', () => {
         const start = (now: Date, worker = 'w1') => container.resolve(StartAutomationRunUseCase).execute({ automationId: id, workerId: worker, now, leaseMs: LEASE })
 
         it('runs at once without moving the next run', async () => {
-            const before = at(automation().nextRunAt)
+            const before = at(schedule().nextRunAt)
 
             const { data } = await start(new Date('2026-10-14T07:10:00Z'))
 
             expect(data.run).toMatchObject({ status: 'running', trigger: 'manual' })
-            expect(at(automation().nextRunAt)).toBe(before)
+            expect(at(schedule().nextRunAt)).toBe(before)
             expect(automation().lockedBy).toBe('w1')
         })
 

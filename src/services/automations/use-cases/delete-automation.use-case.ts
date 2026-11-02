@@ -31,7 +31,7 @@ export class DeleteAutomationUseCase extends BaseUseCase<Params, Output> {
 
 		const automation = Automation.fromJSON({ _id: id })
 		automation.setDeletedBy(currentUser)
-		automation.unset(['nextRunAt'])
+		automation.unset(['triggers.schedule.nextRunAt' as keyof Automation])
 
 		const result = await this.automationRepository?.update(automation)
 

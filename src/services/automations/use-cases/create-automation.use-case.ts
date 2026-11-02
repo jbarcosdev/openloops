@@ -29,8 +29,8 @@ export class CreateAutomationUseCase extends BaseUseCase<Params, Output> {
 		const automation = Automation.fromJSON({
 			name: fields.name,
 			instructions: fields.instructions,
-			trigger: fields.trigger,
-			enabled: fields.enabled ?? true,
+			triggers: fields.triggers,
+			eventTokenVersion: 1,
 			modelProvider: fields.modelProvider ?? undefined,
 			modelName: fields.modelName ?? undefined,
 		})
@@ -39,7 +39,8 @@ export class CreateAutomationUseCase extends BaseUseCase<Params, Output> {
 		automation.setOwner(currentUser)
 		automation.scheduleNextRun()
 
-		if (automation.enabled && automation.isScheduled() && !automation.nextRunAt) throw new Error('The date of the recurrence has already passed')
+		const schedule = automation.triggers?.schedule
+		if (schedule?.enabled && !schedule.nextRunAt) throw new Error('The date of the recurrence has already passed')
 
 		await this.automationRepository?.create(automation)
 

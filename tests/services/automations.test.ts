@@ -26,11 +26,12 @@ const NOW = new Date('2026-10-14T12:00:00Z')
 const automations = () => fakeMongo.collection('automations')
 const runs = () => fakeMongo.collection('automation_runs')
 const stored = () => automations().docs[0]
+const nextRunAt = (data: any) => data.triggers.schedule.nextRunAt && new Date(data.triggers.schedule.nextRunAt).toISOString()
 
 const valid = (extra: Record<string, any> = {}) => ({
     name: 'Morning report',
     instructions: 'Summarize my open tickets',
-    trigger: { type: 'schedule', recurrence: { type: 'daily', time: '08:00' }, timezone: 'America/Lima' },
+    triggers: { schedule: { recurrence: { type: 'daily', time: '08:00' }, timezone: 'America/Lima' } },
     ...extra,
 })
 
@@ -52,22 +53,23 @@ describe('automations', () => {
         it('saves the automation as active with the first run calculated in its timezone', async () => {
             const { data } = await create()
 
-            expect(data).toMatchObject({ name: 'Morning report', enabled: true, trigger: { timezone: 'America/Lima' } })
-            expect(new Date(data.nextRunAt as Date).toISOString()).toBe('2026-10-14T13:00:00.000Z')
+            expect(data).toMatchObject({ name: 'Morning report', triggers: { schedule: { enabled: true, timezone: 'America/Lima' } } })
+            expect(data.triggers?.event).toBeUndefined()
+            expect(nextRunAt(data)).toBe('2026-10-14T13:00:00.000Z')
             expect(String(stored().ownerId)).toBe(OWNER)
         })
 
         it('can be created turned off, without a next run', async () => {
-            const { data } = await create(valid({ enabled: false }))
+            const { data } = await create(valid({ triggers: { schedule: { enabled: false, recurrence: { type: 'daily', time: '08:00' }, timezone: 'America/Lima' } } }))
 
-            expect(data.enabled).toBe(false)
-            expect(data.nextRunAt).toBeUndefined()
+            expect(data.triggers?.schedule?.enabled).toBe(false)
+            expect(data.triggers?.schedule?.nextRunAt).toBeUndefined()
         })
 
         it('ignores the fields that only the system sets', async () => {
-            const { data } = await create(valid({ nextRunAt: '2020-01-01T00:00:00Z', lockedBy: 'x', lockedUntil: '2099-01-01T00:00:00Z', lastRunStatus: 'completed', activeRunId: new ObjectId().toHexString() }))
+            const { data } = await create(valid({ triggers: { schedule: { recurrence: { type: 'daily', time: '08:00' }, timezone: 'America/Lima', nextRunAt: '2020-01-01T00:00:00Z' } }, lockedBy: 'x', lockedUntil: '2099-01-01T00:00:00Z', lastRunStatus: 'completed', activeRunId: new ObjectId().toHexString() }))
 
-            expect(new Date(data.nextRunAt as Date).toISOString()).toBe('2026-10-14T13:00:00.000Z')
+            expect(nextRunAt(data)).toBe('2026-10-14T13:00:00.000Z')
             expect(data.lockedBy).toBeUndefined()
             expect(data.lastRunStatus).toBeUndefined()
             expect(data.activeRunId).toBeUndefined()
@@ -76,11 +78,19 @@ describe('automations', () => {
         it.each([
             [valid({ name: ' ' }), /name is required/],
             [valid({ instructions: undefined }), /instructions is required/],
-            [valid({ trigger: { type: 'schedule', recurrence: { type: 'daily', time: '8am' }, timezone: 'UTC' } }), /HH:mm/],
-            [valid({ trigger: { type: 'schedule', recurrence: { type: 'daily', time: '08:00' }, timezone: 'Mars/Olympus' } }), /not a valid IANA timezone/],
-            [valid({ enabled: 'yes' }), /true or false/],
+            [valid({ triggers: { schedule: { recurrence: { type: 'daily', time: '8am' }, timezone: 'UTC' } } }), /HH:mm/],
+            [valid({ triggers: { schedule: { recurrence: { type: 'daily', time: '08:00' }, timezone: 'Mars/Olympus' } } }), /not a valid IANA timezone/],
+            [valid({ triggers: { schedule: { enabled: 'yes', recurrence: { type: 'daily', time: '08:00' }, timezone: 'UTC' } } }), /true or false/],
+            [valid({ triggers: { event: { enabled: 'yes' } } }), /true or false/],
+            [valid({ triggers: undefined }), /triggers are required/],
+            [valid({ triggers: {} }), /at least one trigger/],
+            [valid({ triggers: { schedule: null } }), /at least one trigger/],
+            [valid({ triggers: { webhook: {} } }), /can only be schedule or event/],
+            [valid({ triggers: { schedule: { recurrence: { type: 'daily', time: '08:00' } } } }), /timezone is required/],
+            [valid({ trigger: { type: 'event' } }), /replaced by triggers/],
+            [valid({ enabled: false }), /belongs to each trigger/],
             [valid({ modelProvider: 'anthropic' }), /both the model provider and the model name/],
-            [valid({ trigger: { type: 'schedule', recurrence: { type: 'once', at: '2026-01-01T10:00' }, timezone: 'UTC' } }), /already passed/],
+            [valid({ triggers: { schedule: { recurrence: { type: 'once', at: '2026-01-01T10:00' }, timezone: 'UTC' } } }), /already passed/],
         ])('rejects %j', async (payload, message) => {
             await expect(create(payload)).rejects.toThrow(message)
             expect(automations().docs).toHaveLength(0)
@@ -103,33 +113,33 @@ describe('automations', () => {
             const { data } = await update(String(automation._id), { name: 'Evening report', __v: automation.__v })
 
             expect(data).toMatchObject({ name: 'Evening report', instructions: 'Summarize my open tickets' })
-            expect(new Date(data.nextRunAt as Date).toISOString()).toBe('2026-10-14T13:00:00.000Z')
+            expect(nextRunAt(data)).toBe('2026-10-14T13:00:00.000Z')
         })
 
         it('recalculates the next run when the recurrence or the timezone change', async () => {
             const { data: automation } = await create()
 
-            const weekly = await update(String(automation._id), { trigger: { recurrence: { type: 'weekly', days: [1], time: '09:00' } } })
-            expect(new Date(weekly.data.nextRunAt as Date).toISOString()).toBe('2026-10-19T14:00:00.000Z')
+            const weekly = await update(String(automation._id), { triggers: { schedule: { recurrence: { type: 'weekly', days: [1], time: '09:00' } } } })
+            expect(nextRunAt(weekly.data)).toBe('2026-10-19T14:00:00.000Z')
 
-            const moved = await update(String(automation._id), { trigger: { timezone: 'Europe/Madrid' } })
-            expect(new Date(moved.data.nextRunAt as Date).toISOString()).toBe('2026-10-19T07:00:00.000Z')
+            const moved = await update(String(automation._id), { triggers: { schedule: { timezone: 'Europe/Madrid' } } })
+            expect(nextRunAt(moved.data)).toBe('2026-10-19T07:00:00.000Z')
         })
 
         it('turns off without a next run and turns on again counting from now', async () => {
             const { data: automation } = await create()
             const id = String(automation._id)
 
-            const off = await update(id, { enabled: false })
-            expect(off.data.enabled).toBe(false)
-            expect(off.data.nextRunAt).toBeUndefined()
-            expect(stored().nextRunAt).toBeUndefined()
+            const off = await update(id, { triggers: { schedule: { enabled: false } } })
+            expect(off.data.triggers?.schedule?.enabled).toBe(false)
+            expect(off.data.triggers?.schedule?.nextRunAt).toBeUndefined()
+            expect(stored().triggers.schedule.nextRunAt).toBeUndefined()
 
             jest.setSystemTime(new Date('2026-10-20T20:00:00Z'))
-            const on = await update(id, { enabled: true })
+            const on = await update(id, { triggers: { schedule: { enabled: true } } })
 
-            expect(on.data.enabled).toBe(true)
-            expect(new Date(on.data.nextRunAt as Date).toISOString()).toBe('2026-10-21T13:00:00.000Z')
+            expect(on.data.triggers?.schedule?.enabled).toBe(true)
+            expect(nextRunAt(on.data)).toBe('2026-10-21T13:00:00.000Z')
         })
 
         it('does not let the payload change what the system manages', async () => {
@@ -138,10 +148,10 @@ describe('automations', () => {
             const claimedAt = new Date('2026-10-14T12:00:00Z')
             Object.assign(stored(), { lockedBy: 'worker-1', lockedUntil: new Date(claimedAt.getTime() + 600000), lastRunStatus: 'failed' })
 
-            const { data } = await update(id, { name: 'x', nextRunAt: '2030-01-01T00:00:00Z', lockedBy: 'hacker', lockedUntil: '2000-01-01T00:00:00Z', lastRunStatus: 'completed', ownerId: new ObjectId().toHexString() })
+            const { data } = await update(id, { name: 'x', triggers: { schedule: { nextRunAt: '2030-01-01T00:00:00Z' } }, lockedBy: 'hacker', lockedUntil: '2000-01-01T00:00:00Z', lastRunStatus: 'completed', ownerId: new ObjectId().toHexString() })
 
             expect(data).toMatchObject({ lockedBy: 'worker-1', lastRunStatus: 'failed' })
-            expect(new Date(data.nextRunAt as Date).toISOString()).toBe('2026-10-14T13:00:00.000Z')
+            expect(nextRunAt(data)).toBe('2026-10-14T13:00:00.000Z')
             expect(String(data.ownerId)).toBe(OWNER)
         })
 
@@ -169,12 +179,12 @@ describe('automations', () => {
         })
 
         it('does not turn on an automation whose single date has passed', async () => {
-            const { data: automation } = await create(valid({ trigger: { type: 'schedule', recurrence: { type: 'once', at: '2026-10-14T10:00' }, timezone: 'America/Lima' } }))
+            const { data: automation } = await create(valid({ triggers: { schedule: { recurrence: { type: 'once', at: '2026-10-14T10:00' }, timezone: 'America/Lima' } } }))
             const id = String(automation._id)
-            await update(id, { enabled: false })
+            await update(id, { triggers: { schedule: { enabled: false } } })
             jest.setSystemTime(new Date('2026-12-01T00:00:00Z'))
 
-            await expect(update(id, { enabled: true })).rejects.toThrow(/already passed/)
+            await expect(update(id, { triggers: { schedule: { enabled: true } } })).rejects.toThrow(/already passed/)
         })
 
         it('works for an admin as for any user', async () => {
@@ -183,6 +193,116 @@ describe('automations', () => {
             const { data } = await update(String(automation._id), { name: 'x' }, admin)
 
             expect(data.name).toBe('x')
+        })
+    })
+
+    describe('with several triggers', () => {
+        const schedule = { recurrence: { type: 'daily', time: '08:00' }, timezone: 'America/Lima' }
+
+        it('can have only an event, with no schedule and no next run', async () => {
+            const { data } = await create(valid({ triggers: { event: {} } }))
+
+            expect(data.triggers).toEqual({ event: { enabled: true } })
+            expect(data.eventTokenVersion).toBe(1)
+        })
+
+        it('can have a schedule and an event at the same time', async () => {
+            const { data } = await create(valid({ triggers: { schedule, event: { enabled: false } } }))
+
+            expect(data.triggers?.event).toEqual({ enabled: false })
+            expect(data.triggers?.schedule).toMatchObject({ enabled: true, timezone: 'America/Lima' })
+            expect(nextRunAt(data)).toBe('2026-10-14T13:00:00.000Z')
+        })
+
+        it('ignores the token version that the payload sends', async () => {
+            const { data } = await create(valid({ triggers: { event: { tokenVersion: 99 } }, eventTokenVersion: 99 }))
+
+            expect(data.triggers?.event).toEqual({ enabled: true })
+            expect(data.eventTokenVersion).toBe(1)
+
+            const updated = await update(String(data._id), { eventTokenVersion: 99, triggers: { event: { enabled: false } } })
+
+            expect(updated.data.eventTokenVersion).toBe(1)
+        })
+
+        it('adds an event to a schedule without moving the next run', async () => {
+            const { data: automation } = await create()
+            jest.setSystemTime(new Date('2026-10-14T12:30:00Z'))
+
+            const { data } = await update(String(automation._id), { triggers: { event: {} } })
+
+            expect(data.triggers?.event).toEqual({ enabled: true })
+            expect(data.eventTokenVersion).toBe(1)
+            expect(nextRunAt(data)).toBe('2026-10-14T13:00:00.000Z')
+        })
+
+        it('turns the event off and on keeping its token version', async () => {
+            const { data: automation } = await create(valid({ triggers: { schedule, event: {} } }))
+            const id = String(automation._id)
+            stored().eventTokenVersion = 4
+
+            const off = await update(id, { triggers: { event: { enabled: false } } })
+            expect(off.data.triggers?.event).toEqual({ enabled: false })
+            expect(off.data.eventTokenVersion).toBe(4)
+            expect(off.data.triggers?.schedule?.enabled).toBe(true)
+
+            const on = await update(id, { triggers: { event: { enabled: true } } })
+            expect(on.data.triggers?.event).toEqual({ enabled: true })
+            expect(on.data.eventTokenVersion).toBe(4)
+        })
+
+        it('turns the schedule off without touching the event', async () => {
+            const { data: automation } = await create(valid({ triggers: { schedule, event: {} } }))
+
+            const { data } = await update(String(automation._id), { triggers: { schedule: { enabled: false } } })
+
+            expect(data.triggers?.schedule?.enabled).toBe(false)
+            expect(data.triggers?.schedule?.nextRunAt).toBeUndefined()
+            expect(data.triggers?.event?.enabled).toBe(true)
+        })
+
+        it('removes the schedule with null and its next run goes with it', async () => {
+            const { data: automation } = await create(valid({ triggers: { schedule, event: {} } }))
+
+            await update(String(automation._id), { triggers: { schedule: null } })
+
+            expect(stored().triggers).toEqual({ event: { enabled: true } })
+            expect(stored().eventTokenVersion).toBe(1)
+        })
+
+        it('removes the event with null, keeps the schedule and counts it as a rotation of the tokens', async () => {
+            const { data: automation } = await create(valid({ triggers: { schedule, event: {} } }))
+
+            await update(String(automation._id), { triggers: { event: null } })
+
+            expect(stored().eventTokenVersion).toBe(2)
+
+            expect(stored().triggers.event).toBeUndefined()
+            expect(stored().triggers.schedule.enabled).toBe(true)
+            expect(new Date(stored().triggers.schedule.nextRunAt).toISOString()).toBe('2026-10-14T13:00:00.000Z')
+        })
+
+        it('does not let the last trigger be removed', async () => {
+            const { data: automation } = await create()
+
+            await expect(update(String(automation._id), { triggers: { schedule: null } })).rejects.toThrow(/at least one trigger/)
+            expect(stored().triggers.schedule).toBeDefined()
+        })
+
+        it('needs a recurrence and a timezone to add a schedule', async () => {
+            const { data: automation } = await create(valid({ triggers: { event: {} } }))
+
+            await expect(update(String(automation._id), { triggers: { schedule: { enabled: true } } })).rejects.toThrow(/recurrence is required/)
+
+            const { data } = await update(String(automation._id), { triggers: { schedule } })
+            expect(nextRunAt(data)).toBe('2026-10-14T13:00:00.000Z')
+        })
+
+        it('rejects the fields of the previous shape', async () => {
+            const { data: automation } = await create()
+
+            await expect(update(String(automation._id), { trigger: { type: 'schedule' } })).rejects.toThrow(/replaced by triggers/)
+            await expect(update(String(automation._id), { enabled: false })).rejects.toThrow(/belongs to each trigger/)
         })
     })
 
@@ -219,7 +339,7 @@ describe('automations', () => {
             await remove.execute({ id: String(automation._id), currentUser: user })
 
             expect(stored().deletedAt).toBeInstanceOf(Date)
-            expect(stored().nextRunAt).toBeUndefined()
+            expect(stored().triggers.schedule.nextRunAt).toBeUndefined()
             expect((await container.resolve(ListAutomationsByUserUseCase).execute({ currentUser: user })).data).toHaveLength(0)
         })
 

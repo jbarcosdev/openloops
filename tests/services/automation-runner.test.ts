@@ -1,6 +1,7 @@
 import 'reflect-metadata'
 import { container } from 'tsyringe'
 import { CurrentUser } from '@common/base'
+import { Agent } from '@harness/agent'
 import { inputGuards } from '@guardrails/index'
 import { createAutomationRunner } from '@services/automations/runner/automation-runner'
 import { CreateAutomationUseCase } from '@services/automations/use-cases/create-automation.use-case'
@@ -31,7 +32,7 @@ describe('the runner of automations', () => {
             payload: {
                 name: 'Report',
                 instructions: 'Summarize my open tickets',
-                trigger: { type: 'schedule', recurrence: { type: 'daily', time: '08:00' }, timezone: 'UTC' },
+                triggers: { schedule: { recurrence: { type: 'daily', time: '08:00' }, timezone: 'UTC' } },
                 modelProvider: 'anthropic',
                 modelName: 'claude-haiku-5-5',
                 ...extra,
@@ -39,7 +40,7 @@ describe('the runner of automations', () => {
             currentUser: owner,
         })
 
-        if (due) automations().docs.find(doc => String(doc._id) === String(data._id))!.nextRunAt = new Date(Date.now() - HOUR)
+        if (due) automations().docs.find(doc => String(doc._id) === String(data._id))!.triggers.schedule.nextRunAt = new Date(Date.now() - HOUR)
 
         return String(data._id)
     }
@@ -160,6 +161,19 @@ describe('the runner of automations', () => {
             expect(env.llm.calls).toHaveLength(0)
         })
 
+        it('gives the agent the timezone of the user and not the one of the schedule', async () => {
+            env.llm.script(say('Here is the report'))
+            const run = jest.spyOn(Agent.prototype, 'run')
+            owner.preferences = { timezone: { ianaIdentifier: 'Asia/Tokyo' } } as any
+            await createAutomationFixture({ triggers: { schedule: { recurrence: { type: 'daily', time: '08:00' }, timezone: 'America/Lima' } } })
+            const runner = createAutomationRunner()
+
+            await runner.tick()
+            await runner.stop()
+
+            expect(run.mock.calls[0][0].currentSession?.location?.timezone).toBe('Asia/Tokyo')
+        })
+
         it('fails when the owner of the automation does not exist', async () => {
             jest.spyOn(CurrentUser, 'asyncFromDB').mockResolvedValue(undefined)
             await createAutomationFixture()
@@ -169,7 +183,7 @@ describe('the runner of automations', () => {
             await runner.stop()
 
             expect(runs().docs[0]).toMatchObject({ status: 'failed', error: { code: 'OWNER_NOT_FOUND' } })
-            expect(automations().docs[0].enabled).toBe(true)
+            expect(automations().docs[0].triggers.schedule.enabled).toBe(true)
         })
 
         it('does not start more runs than it can run at once', async () => {
@@ -262,7 +276,7 @@ describe('the runner of automations', () => {
 
             await runner.tick()
             await runner.stop()
-            automations().docs[0].nextRunAt = new Date(Date.now() - 1000)
+            automations().docs[0].triggers.schedule.nextRunAt = new Date(Date.now() - 1000)
             await runner.tick()
             await runner.stop()
 
@@ -275,7 +289,7 @@ describe('the runner of automations', () => {
     describe('events', () => {
         const createEvent = async (): Promise<{ id: string, token: string }> => {
             const { data } = await container.resolve(CreateAutomationUseCase).execute({
-                payload: { name: 'Cost alerts', instructions: 'Analyze the cost alert', trigger: { type: 'event' }, modelProvider: 'anthropic', modelName: 'claude-haiku-5-5' } as any,
+                payload: { name: 'Cost alerts', instructions: 'Analyze the cost alert', triggers: { event: {} }, modelProvider: 'anthropic', modelName: 'claude-haiku-5-5' } as any,
                 currentUser: owner,
             })
             const id = String(data._id)
@@ -337,14 +351,14 @@ describe('the runner of automations', () => {
         it('tells the integrator when a queued event is skipped', async () => {
             const { id, token } = await createEvent()
             await send(id, token, 'late')
-            automations().docs[0].enabled = false
+            automations().docs[0].triggers.event.enabled = false
             const onRunFinished = jest.fn()
             const runner = createAutomationRunner({ onRunFinished })
 
             await runner.tick()
             await runner.stop()
 
-            expect(onRunFinished).toHaveBeenCalledWith(expect.objectContaining({ run: expect.objectContaining({ status: 'skipped', skipReason: 'The automation is turned off' }) }))
+            expect(onRunFinished).toHaveBeenCalledWith(expect.objectContaining({ run: expect.objectContaining({ status: 'skipped', skipReason: 'The event trigger of the automation is turned off' }) }))
         })
 
         it('leaves a queued event to only one of several runners', async () => {
@@ -365,7 +379,7 @@ describe('the runner of automations', () => {
         it('starts at once, returns the run and keeps the schedule', async () => {
             env.llm.script(say('Manual report'))
             const id = await createAutomationFixture({}, false)
-            const next = String(automations().docs[0].nextRunAt)
+            const next = String(automations().docs[0].triggers.schedule.nextRunAt)
             const runner = createAutomationRunner()
 
             const { run } = await runner.runNow({ automationId: id })
@@ -375,7 +389,7 @@ describe('the runner of automations', () => {
             await runner.stop()
 
             expect(runs().docs[0]).toMatchObject({ status: 'completed', trigger: 'manual' })
-            expect(String(automations().docs[0].nextRunAt)).toBe(next)
+            expect(String(automations().docs[0].triggers.schedule.nextRunAt)).toBe(next)
         })
 
         it('is refused while the automation is running', async () => {
@@ -404,12 +418,12 @@ describe('the runner of automations', () => {
             await jest.advanceTimersByTimeAsync(10)
             expect(runs().docs).toHaveLength(1)
 
-            automations().docs[0].nextRunAt = new Date(Date.now() - 1000)
+            automations().docs[0].triggers.schedule.nextRunAt = new Date(Date.now() - 1000)
             await jest.advanceTimersByTimeAsync(60000)
             expect(runs().docs).toHaveLength(2)
 
             await runner.stop()
-            automations().docs[0].nextRunAt = new Date(Date.now() - 1000)
+            automations().docs[0].triggers.schedule.nextRunAt = new Date(Date.now() - 1000)
             await jest.advanceTimersByTimeAsync(180000)
             expect(runs().docs).toHaveLength(2)
         })
