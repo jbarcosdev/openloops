@@ -24,9 +24,9 @@ To log a user in and get a token, see [authentication](authentication.md).
 ```typescript
 const result = await createUser({
     payload: {
-        firstName: 'John',
-        lastName: 'Smith',
-        email: 'john.smith@example.com',
+        firstName: 'Jose',
+        lastName: 'Barcos',
+        email: 'jose@openloops.xyz',
         password: 'a-real-password',
         role: UserRole.USER,
     },
@@ -54,7 +54,7 @@ The returned user never includes the password field.
 
 ```typescript
 const result = await ListUsersByProps({
-    where: { firstName: 'John' },
+    where: { firstName: 'Jose' },
     options: { page: 1, limit: 10 },
     currentUser,
 })
@@ -66,8 +66,8 @@ const result = await ListUsersByProps({
 const result = await updateUser({
     id: userId,
     payload: {
-        firstName: 'John',
-        lastName: 'Doe',
+        firstName: 'Jose',
+        lastName: 'Developer',
     },
     currentUser,
 })
