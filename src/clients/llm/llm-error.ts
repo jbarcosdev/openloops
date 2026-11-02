@@ -20,7 +20,7 @@ const RETRYABLE: Record<LLMErrorCode, boolean> = {
 
 const MAX_WAIT_MS = 60000
 const SAMPLING_PARAMETER = /\b(?:temperature|top_p|top_k)\b/i
-const REJECTION = /unsupported|not supported|does not support|doesn't support|deprecated|not allowed|only the default|no longer|removed|cannot be|can't be|must be|invalid/i
+const REJECTION = /unsupported|not supported|does not support|doesn't support|deprecated|not allowed|only the default|may only|no longer|removed|cannot be|can't be|must be|invalid/i
 
 export class LLMError extends Error {
     readonly code: LLMErrorCode

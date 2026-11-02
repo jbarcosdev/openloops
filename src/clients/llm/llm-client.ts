@@ -15,6 +15,7 @@ import { LLMChatParams, LLMResponse } from './llm-types'
 import { toPiContext, fromPiMessage } from './pi-ai-adapter'
 import { numberSetting } from '@common/utils/number-setting'
 import { resolveModel, toModelRef } from './model-resolution'
+import { omitsTemperature } from './sampling-rules'
 import { LLMError, retryDelayMs, rejectsSamplingParameter } from './llm-error'
 
 const DEFAULT_TEMPERATURE = 0.7
@@ -100,10 +101,10 @@ export class LLMClient {
         if (toolChoice === 'required' && !resolvedChoice) throw new Error(`[LLM Client] forced tool choice is not supported for api ${model.api}`)
 
         const context = toPiContext({ messages, tools }, model)
+        const reasoning = thinking && thinking !== 'off' ? thinking : undefined
+        const ruleOmitsTemperature = omitsTemperature(provider, modelName, Boolean(reasoning))
         const send = (omitTemperature: boolean) => this.withDeadline(thinking === 'high' ? this.callTimeoutMs * HIGH_THINKING_TIMEOUT_FACTOR : this.callTimeoutMs, signal => {
-            const options = { ...(omitTemperature ? {} : { temperature }), maxRetries: MAX_RETRIES, signal, ...(sessionId ? { sessionId } : {}) }
-
-            const reasoning = thinking && thinking !== 'off' ? thinking : undefined
+            const options = { ...(omitTemperature || ruleOmitsTemperature ? {} : { temperature }), maxRetries: MAX_RETRIES, signal, ...(sessionId ? { sessionId } : {}) }
 
             return resolvedChoice || thinking
                 ? models.completeSimple(model, context, { ...options, ...(resolvedChoice ? { toolChoice: resolvedChoice as never } : {}), ...(reasoning ? { reasoning } : {}) })
@@ -113,7 +114,7 @@ export class LLMClient {
         const raw = await this.traced(
             { origin, sessionId, answerId, currentUser, modelName, provider, temperature },
             context,
-            () => this.withoutRejectedTemperature(`${provider}/${modelName}`, send),
+            () => this.withoutRejectedTemperature({ provider, model: modelName, thinking: Boolean(reasoning) }, send),
         )
 
         if (raw.stopReason === 'error' || raw.stopReason === 'aborted') {
@@ -177,14 +178,15 @@ export class LLMClient {
         }
     }
 
-    private async withoutRejectedTemperature (key: string, send: (omitTemperature: boolean) => Promise<AssistantMessage>): Promise<AssistantMessage> {
+    private async withoutRejectedTemperature (call: { provider: string, model: string, thinking: boolean }, send: (omitTemperature: boolean) => Promise<AssistantMessage>): Promise<AssistantMessage> {
+        const key = `${call.provider}/${call.model}`
         const known = LLMClient.modelsWithoutTemperature.has(key)
         const response = await this.waitingOnRateLimit(() => send(known))
 
         if (known || response.stopReason !== 'error' || !rejectsSamplingParameter(response.errorMessage)) return response
 
         LLMClient.modelsWithoutTemperature.add(key)
-        this.logger.warn({ model: key, error: response.errorMessage }, '[LLM Service] The model rejected the temperature setting, retrying without it')
+        this.logger.warn({ ...call, error: response.errorMessage }, '[LLM Service] The model rejected the temperature setting, retrying without it. Add a rule in sampling-rules.ts to avoid this retry')
 
         return this.waitingOnRateLimit(() => send(true))
     }

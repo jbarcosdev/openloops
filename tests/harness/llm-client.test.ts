@@ -40,6 +40,7 @@ describe('LLMError classification', () => {
         ['400 {"type":"error","error":{"type":"invalid_request_error","message":"`temperature` is not supported for this model"}}'],
         ["Unsupported value: 'temperature' does not support 0.3 with this model. Only the default (1) value is supported."],
         ['top_p: Setting top_p is deprecated for this model'],
+        ['Validation error: `temperature` may only be set to 1 when thinking is enabled or in adaptive mode.'],
     ])('sees a rejected sampling parameter: %s', detail => {
         expect(LLMError.fromProvider(detail).code).toBe('LLM_UNSUPPORTED_PARAMETER')
     })
@@ -129,6 +130,20 @@ describe('LLMClient.chat', () => {
 
             expect(mockModels.complete).not.toHaveBeenCalled()
             expect(mockModels.completeSimple.mock.calls[0][2]).not.toHaveProperty('reasoning')
+        })
+
+        it.each([
+            ['amazon-bedrock', 'us.anthropic.claude-sonnet-5-5-v1:0', 'low', false],
+            ['amazon-bedrock', 'us.anthropic.claude-sonnet-5-5-v1:0', 'off', true],
+            ['amazon-bedrock', 'amazon.nova-pro-v1:0', 'low', true],
+            ['anthropic', 'claude-sonnet-5-5', 'low', true],
+        ])('follows the sampling rules for %s %s with %s thinking', async (provider, modelName, thinking, sendsTemperature) => {
+            mockModels.completeSimple.mockResolvedValue(reply())
+            mockModels.complete.mockResolvedValue(reply())
+            await new LLMClient().chat(params({ provider, modelName, thinking }))
+
+            const options = (mockModels.completeSimple.mock.calls[0] ?? mockModels.complete.mock.calls[0])[2]
+            expect('temperature' in options).toBe(sendsTemperature)
         })
 
         it('combines it with a forced tool choice', async () => {

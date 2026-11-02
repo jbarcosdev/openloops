@@ -2,6 +2,13 @@
 
 All notable changes to `openloops` are written here, newest first. The format follows [Keep a Changelog](https://keepachangelog.com) and the versions follow [semantic versioning](https://semver.org), where a minor version can still break the API while the package is in beta. Changes before 0.4.0 are not recorded here, see the commits and the tags.
 
+## 0.4.4
+
+### Fixed
+
+- Claude models on Amazon Bedrock failed with `temperature may only be set to 1 when thinking is enabled`. The temperature is no longer sent to them when thinking is on. The rules live in `src/clients/llm/sampling-rules.ts`, one entry per provider and model, so another model that rejects the temperature is one more line.
+- A provider error saying the temperature "may only" take some value is now seen as a rejected sampling parameter, so the existing retry without temperature also covers it.
+
 ## 0.4.3
 
 ### Added
