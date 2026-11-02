@@ -2,6 +2,30 @@
 
 All notable changes to `openloops` are written here, newest first. The format follows [Keep a Changelog](https://keepachangelog.com) and the versions follow [semantic versioning](https://semver.org), where a minor version can still break the API while the package is in beta. Changes before 0.4.0 are not recorded here, see the commits and the tags.
 
+## 0.5.0
+
+This version breaks the shape of the automations. Follow the [migration steps](docs/automations.md#migrating-to-050) when you update.
+
+### Added
+
+- An automation can have a schedule and an event trigger at the same time. `triggers` is an object with the optional keys `schedule` and `event`, at least one of them, and never more than one of each type.
+- Every trigger has its own `enabled`. `updateAutomation` merges the triggers key by key, adds a trigger by sending its key and removes it with `null`. The last trigger cannot be removed.
+- `migrateAutomations` also moves `trigger` into `triggers` and replaces the index `enabled_1_nextRunAt_1`. Its report has a new `triggersMoved` count.
+- The documentation of what `issueAutomationEventToken`, `revokeAutomationEventToken` and `rotateAutomationEventTokens` do and which of them changes `eventTokenVersion`.
+- Removing the event trigger counts as a rotation of its tokens, so the tokens issued before do not work again if an event is added later.
+
+### Changed
+
+- `trigger` is now `triggers`. The schedule is `triggers.schedule` with `enabled`, `recurrence`, `timezone` and `nextRunAt`, and the event is `triggers.event` with only `enabled`. The event trigger has no `timezone`. `tokenVersion` is now `eventTokenVersion`, a field of the automation that starts at 1 and only goes up, so it survives when the event trigger is removed.
+- `enabled` and `nextRunAt` moved from the automation to the trigger they belong to. There is no switch for the whole automation, so pausing everything means turning off both triggers. `createAutomation` and `updateAutomation` fail when they receive `trigger` or `enabled`.
+- Events are refused with the reason `disabled` when `triggers.event.enabled` is `false`, and the queued events of an automation without an enabled event trigger are skipped with the reason `The event trigger of the automation is turned off`.
+- The runner gives the agent the timezone of the owner of the automation, taken from their preferences, and not the one of the trigger.
+- The index of the automations is now `{ 'triggers.schedule.enabled': 1, 'triggers.schedule.nextRunAt': 1 }`. Run `ensureIndexes` or the migration.
+
+### Removed
+
+- The fields `trigger`, `enabled` and `nextRunAt` of the automation, and the possibility to keep one trigger only. There are no aliases.
+
 ## 0.4.4
 
 ### Fixed
