@@ -75,8 +75,8 @@ describe('automations with an event trigger', () => {
             const id = await createEvent()
             const update = container.resolve(UpdateAutomationUseCase)
 
-            const off = await update.execute({ id, payload: { triggers: { event: { enabled: false } } } as any, currentUser: user })
-            const on = await update.execute({ id, payload: { triggers: { event: { enabled: true } } } as any, currentUser: user })
+            const off = await update.execute({ id, payload: { triggers: { event: { enabled: false } } }, currentUser: user })
+            const on = await update.execute({ id, payload: { triggers: { event: { enabled: true } } }, currentUser: user })
 
             expect(off.data.triggers?.event?.enabled).toBe(false)
             expect(on.data.triggers).toEqual({ event: { enabled: true } })
@@ -86,7 +86,7 @@ describe('automations with an event trigger', () => {
 
     describe('next to a schedule', () => {
         const both = { triggers: { schedule: { recurrence: { type: 'daily', time: '08:00' }, timezone: 'UTC' }, event: {} } }
-        const update = (id: string, payload: Record<string, any>) => container.resolve(UpdateAutomationUseCase).execute({ id, payload: payload as any, currentUser: user })
+        const update = (id: string, payload: Record<string, any>) => container.resolve(UpdateAutomationUseCase).execute({ id, payload, currentUser: user })
 
         it('keeps receiving events when the schedule is turned off', async () => {
             const id = await createEvent(both)
@@ -319,7 +319,7 @@ describe('automations with an event trigger', () => {
             const id = await createEvent()
             const { token } = await issue(id)
 
-            await container.resolve(UpdateAutomationUseCase).execute({ id, payload: { triggers: { event: { enabled: false } } } as any, currentUser: user })
+            await container.resolve(UpdateAutomationUseCase).execute({ id, payload: { triggers: { event: { enabled: false } } }, currentUser: user })
             expect(await rejection(receive(id, token))).toBe('disabled')
 
             const missing = new ObjectId().toHexString()
@@ -470,7 +470,7 @@ describe('automations with an event trigger', () => {
         it('skips what was queued for an automation that was turned off', async () => {
             const id = await createEvent()
             await receive(id, (await issue(id)).token)
-            await container.resolve(UpdateAutomationUseCase).execute({ id, payload: { triggers: { event: { enabled: false } } } as any, currentUser: user })
+            await container.resolve(UpdateAutomationUseCase).execute({ id, payload: { triggers: { event: { enabled: false } } }, currentUser: user })
 
             const { data } = await claim()
 

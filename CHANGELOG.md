@@ -12,6 +12,7 @@ This version breaks the shape of the automations. Follow the [migration steps](d
 - Every trigger has its own `enabled`. `updateAutomation` merges the triggers key by key, adds a trigger by sending its key and removes it with `null`. The last trigger cannot be removed.
 - `migrateAutomations` also moves `trigger` into `triggers` and replaces the index `enabled_1_nextRunAt_1`. Its report has a new `triggersMoved` count.
 - The documentation of what `issueAutomationEventToken`, `revokeAutomationEventToken` and `rotateAutomationEventTokens` do and which of them changes `eventTokenVersion`.
+- `AutomationPayload`, the type of the payload of `createAutomation` and `updateAutomation`, where a trigger can be sent partially (`event: {}`, `schedule: { enabled: false }`) or as `null` to remove it.
 - Removing the event trigger counts as a rotation of its tokens, so the tokens issued before do not work again if an event is added later.
 
 ### Changed
