@@ -10,8 +10,8 @@ async function updateUserExample () {
     const result = await updateUser({
         id: '6ab56894eb20887d1ef7942c',
         payload: {
-            firstName: 'John',
-            lastName: 'Doe',
+            firstName: 'Jose',
+            lastName: 'Developer',
         },
         currentUser,
     })
