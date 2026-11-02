@@ -107,7 +107,7 @@ describe('running automations', () => {
         })
 
         it('does not take an automation that is off', async () => {
-            await container.resolve(UpdateAutomationUseCase).execute({ id, payload: { triggers: { schedule: { enabled: false } } } as any, currentUser: user })
+            await container.resolve(UpdateAutomationUseCase).execute({ id, payload: { triggers: { schedule: { enabled: false } } }, currentUser: user })
 
             expect((await claim('w1', new Date('2026-10-14T09:00:00Z'))).data.claimed).toHaveLength(0)
         })
@@ -157,7 +157,7 @@ describe('running automations', () => {
 
         it('does not turn on again an automation that the user turned off while it was running', async () => {
             const { data } = await claim('w1', new Date('2026-10-14T08:00:00Z'))
-            await container.resolve(UpdateAutomationUseCase).execute({ id, payload: { triggers: { schedule: { enabled: false } } } as any, currentUser: user })
+            await container.resolve(UpdateAutomationUseCase).execute({ id, payload: { triggers: { schedule: { enabled: false } } }, currentUser: user })
             await finish(data.claimed[0].run._id, 'w1', 'completed', new Date('2026-10-14T08:03:00Z'))
 
             expect(schedule().enabled).toBe(false)

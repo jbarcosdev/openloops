@@ -1,11 +1,11 @@
 import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
-import { Automation, AutomationProps } from '../entities'
+import { Automation, AutomationPayload, AutomationProps } from '../entities'
 import { AutomationRepository } from '../repositories'
 import { readAutomationFields, assertModel } from '../utils/automation-fields'
 
 export interface Params extends BaseUseCaseParams {
-	payload?: AutomationProps
+	payload?: AutomationPayload
 }
 
 export interface Output extends BaseUseCaseOutput {

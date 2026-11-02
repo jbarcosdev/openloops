@@ -1,13 +1,13 @@
 import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
 import { VersionConflictError } from '@common/repositories/mongo-db.repository'
-import { Automation, AutomationProps } from '../entities'
+import { Automation, AutomationPayload, AutomationProps } from '../entities'
 import { AutomationRepository } from '../repositories'
 import { readAutomationFields, assertModel } from '../utils/automation-fields'
 
 export interface Params extends BaseUseCaseParams {
 	id: string
-	payload?: AutomationProps
+	payload?: AutomationPayload
 }
 
 export interface Output extends BaseUseCaseOutput {
@@ -54,7 +54,7 @@ export class UpdateAutomationUseCase extends BaseUseCase<Params, Output> {
 		if (removed.includes('event')) automation.eventTokenVersion = (existing.eventTokenVersion as number) + 1
 
 		const schedule = automation.triggers?.schedule
-		const scheduleChanged = (payload.triggers as Record<string, unknown> | undefined)?.schedule !== undefined
+		const scheduleChanged = payload.triggers?.schedule !== undefined
 
 		if (schedule && (scheduleChanged || (schedule.enabled && !schedule.nextRunAt))) {
 			automation.scheduleNextRun()

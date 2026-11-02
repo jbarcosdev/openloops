@@ -1,6 +1,6 @@
 import { ObjectId } from 'mongodb'
 import { BaseEntity, BaseEntityProps } from '@common/base/base.entity'
-import { AutomationTriggers } from './trigger'
+import { AutomationTriggers, AutomationTriggersInput } from './trigger'
 import { computeNextRun } from '../utils/next-run'
 import type { AutomationRunStatus } from './automation-run.entity'
 
@@ -17,6 +17,8 @@ export interface AutomationProps extends BaseEntityProps {
 	lockedUntil?: string | Date | null
 	activeRunId?: string | ObjectId | null
 }
+
+export type AutomationPayload = Omit<AutomationProps, 'triggers'> & { triggers?: AutomationTriggersInput }
 
 const toDate = (value?: string | Date | null): Date | undefined => {
 	if (!value) return undefined

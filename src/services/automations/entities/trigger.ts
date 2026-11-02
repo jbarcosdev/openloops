@@ -17,6 +17,11 @@ export interface AutomationTriggers {
 	event?: EventTrigger
 }
 
+export interface AutomationTriggersInput {
+	schedule?: Partial<Pick<ScheduleTrigger, 'enabled' | 'recurrence' | 'timezone'>> | null
+	event?: Partial<EventTrigger> | null
+}
+
 const isRecord = (value: unknown): value is Record<string, unknown> => Boolean(value) && typeof value === 'object' && !Array.isArray(value)
 
 const readEnabled = (value: unknown, fallback: boolean): boolean => {
