@@ -10,7 +10,7 @@ async function createEventAutomation () {
         payload: {
             name: 'Cost anomaly analysis',
             instructions: 'Find the cause of the cost alert in AWS and send a short summary to the channel #costs',
-            trigger: { type: 'event' },
+            triggers: { event: {} },
         },
         currentUser,
     })

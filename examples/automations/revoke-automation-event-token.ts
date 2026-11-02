@@ -17,7 +17,7 @@ async function rotateAll () {
 
     const result = await rotateAutomationEventTokens({ id: '6ad0c9a6d3ea4199c9b7ba10', currentUser })
 
-    logger.info({ trigger: result.data.trigger }, '[Demo] Every token issued before stopped working, issue a new one')
+    logger.info({ eventTokenVersion: result.data.eventTokenVersion }, '[Demo] Every token issued before stopped working, issue a new one')
 }
 
 revokeLeakedToken()
