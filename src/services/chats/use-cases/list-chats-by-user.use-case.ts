@@ -1,6 +1,6 @@
 import { autoInjectable, inject } from 'tsyringe'
 import { ObjectId } from 'mongodb'
-import { QueryOptions } from '@common/repositories'
+import { QueryOptions, Scope } from '@common/repositories'
 import { escapeRegex } from '@common/helpers'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
 import { ChatRepository } from '../repositories'
@@ -31,6 +31,7 @@ export class ListChatsByUserUseCase extends BaseUseCase<Params, Output> {
 		const term = escapeRegex(search?.trim())
 
 		const result = await this.chatRepository?._.findManyPaginated({
+			scope: params.scope ?? Scope.canView(currentUser),
 			where: { 
 				ownerId: new ObjectId(currentUser?.userId),
 				...(executionMode === 'autonomous' ? { 'settings.executionMode': 'autonomous' } : {}),

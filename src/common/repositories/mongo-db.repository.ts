@@ -217,8 +217,12 @@ export class MongoRepository<T> {
 		if (!where || Object.keys(where).length === 0) throw new Error('[Mongo Repository] Where is required for softDelete operation')
 
 		const actor = this.actorId(scope)
-		const extra = this.withoutProtected((payload ?? {}) as Record<string, unknown>, scope)
-		return this.modifyOne(where, { $set: { ...extra, deletedAt: new Date(), ...(actor ? { deletedBy: actor } : {}) } }, scope)
+		const { toUnset, ...rest } = (payload ?? {}) as Document
+		const extra = this.withoutProtected(rest as Record<string, unknown>, scope)
+		return this.modifyOne(where, {
+			$set: { ...extra, deletedAt: new Date(), ...(actor ? { deletedBy: actor } : {}) },
+			...(toUnset ? { $unset: toUnset } : {}),
+		}, scope)
 	}
 
 	private async modifyOne (where: Partial<T>, update: Record<string, unknown>, scope?: Scope, expectedVersion?: number): Promise<T> {

@@ -291,4 +291,12 @@ describe('MongoRepository stamps', () => {
         expect(update.$set.deletedReason).toBe('bye')
         expect(update.$inc).toEqual({ __v: 1 })
     })
+
+    it('unsets the fields that it is asked to when it soft deletes', async () => {
+        await scopedRepo().softDelete({ where: { _id: DOC_ID }, payload: { toUnset: { 'triggers.schedule.nextRunAt': '' } } as any, scope: Scope.canManage(user()) })
+
+        const update = findOneAndUpdate.mock.calls[0][1]
+        expect(update.$unset).toEqual({ 'triggers.schedule.nextRunAt': '' })
+        expect(update.$set.toUnset).toBeUndefined()
+    })
 })

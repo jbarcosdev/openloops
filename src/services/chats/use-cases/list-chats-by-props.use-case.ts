@@ -1,5 +1,5 @@
 import { autoInjectable, inject } from 'tsyringe'
-import { QueryOptions } from '@common/repositories'
+import { QueryOptions, Scope } from '@common/repositories'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
 import { ChatRepository } from '../repositories'
 import { ChatProps } from '../entities'
@@ -21,8 +21,8 @@ export class ListChatsByPropsUseCase extends BaseUseCase<Params, Output> {
 	}
 
 	async execute (params: Params): Promise<Output> {
-		const { where, options } = params
-		const result = await this.chatRepository?.findByProps(where, options || {})
+		const { where, options, currentUser } = params
+		const result = await this.chatRepository?.findByProps(where, options || {}, params.scope ?? Scope.asAdmin(currentUser))
 
 		return { data: result?.items, hasMore: result?.hasMore }
 	}
