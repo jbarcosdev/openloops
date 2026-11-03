@@ -211,7 +211,7 @@ The instructions are the first message, as in any run. When the run comes from a
 
 ### The token
 
-The token is a JWT signed with `JWT_SECRET`. It is not stored: the owner or an admin can ask for it as many times as they want, and every one is different and valid.
+The token is a JWT signed with `JWT_SECRET`. It is not stored: the owner can ask for it as many times as they want, and every one is different and valid.
 
 | Claim | Value |
 | --- | --- |
@@ -330,10 +330,10 @@ An automation runs without the session of its owner, so there is no token of the
 ### Running by hand
 
 ```typescript
-const { run } = await runner.runNow({ automationId })
+const { run } = await runner.runNow({ automationId, currentUser })
 ```
 
-It starts the run at once and returns while it keeps running in the background. It does not change the next scheduled run. It is refused if the automation is already running. Any process that has a runner can call it, it does not need to be the one that called `start()`.
+It starts the run at once, only if the automation is of `currentUser`, and returns while it keeps running in the background. It does not change the next scheduled run. It is refused if the automation is already running. Any process that has a runner can call it, it does not need to be the one that called `start()`.
 
 ### Several instances
 

@@ -19,16 +19,13 @@ This project uses the `openloops` package. Before writing code that uses it, rea
 The package has no controllers: the authorization of every endpoint is the responsibility of this backend.
 ```
 
-## The rule that matters most: authorization is yours
+## The rule that matters most: always pass the user
 
-The use cases trust the `currentUser` you pass and the ids you give them.
+The use cases check who owns every record, in the repository, with the `currentUser` you pass. Read [authorization](authorization.md) once.
 
-- Functions that list by user (`listChatsByUser`, `listMcpServersByUser`, `listAutomationsByUser`, `listAutomationRunsByUser`) only return records of that user.
-- Functions that take an **id** (`getChatById`, `updateChat`, `deleteChat`, `getMcpServerById`, `updateMcpServer`, `deleteMcpServer`, `decideMcpServerTrust`, `getAutomationById`, `updateAutomation`, `deleteAutomation`, `listAutomationRunsByAutomation`, `runner.runNow`) **do not check who owns the record**. The use cases that issue, revoke or rotate the tokens of an automation do check that the user is the owner or an admin.
-
-So, before calling any of the second kind, load the record and check that `ownerId` is the user of the request. Do it in one place, a middleware or a helper, and never pass an id from a request straight to a use case.
-
-Also note that `getChatById` returns `{}` in `data` when the chat does not exist, so check for `data._id`.
+- A record that is not the user's is answered as if it did not exist: a 404 `HttpError` from the functions that update or delete, `{}` in `data` from `getChatById` (so check for `data._id`), and `null` from the other getters.
+- A call without `currentUser` fails with 401. Your endpoint is still the one that authenticates the request and builds the `currentUser` from the token.
+- An administrator acts on the records of other users only with `scope: Scope.asAdmin(currentUser)`, and a worker or a webhook with `Scope.system('reason')`. Never build a scope from a value that comes from a request.
 
 ## Which endpoint calls what
 
@@ -123,7 +120,8 @@ runner.start()
 
 ## Security checklist
 
-- Check ownership before every call that takes an id.
+- Pass the `currentUser` of the request to every call, and build it from the verified token.
+- Never take a `scope` from the body or the query of a request.
 - Mask `headers` and `history` of MCP servers.
 - Add input guards for what your product must never receive, such as card numbers.
 - Mark your own destructive tools with `destructive: true`. The agent asks for confirmation before running them. Do not rely on a tool being treated as destructive by default, because it is not.
