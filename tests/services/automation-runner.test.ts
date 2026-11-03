@@ -382,7 +382,7 @@ describe('the runner of automations', () => {
             const next = String(automations().docs[0].triggers.schedule.nextRunAt)
             const runner = createAutomationRunner()
 
-            const { run } = await runner.runNow({ automationId: id })
+            const { run } = await runner.runNow({ automationId: id, currentUser: owner })
 
             expect(run).toMatchObject({ status: 'running', trigger: 'manual' })
 
@@ -397,8 +397,8 @@ describe('the runner of automations', () => {
             const id = await createAutomationFixture({}, false)
             const runner = createAutomationRunner({ workerId: 'w1' })
 
-            await runner.runNow({ automationId: id })
-            await expect(createAutomationRunner({ workerId: 'w2' }).runNow({ automationId: id })).rejects.toThrow(/already running/)
+            await runner.runNow({ automationId: id, currentUser: owner })
+            await expect(createAutomationRunner({ workerId: 'w2' }).runNow({ automationId: id, currentUser: owner })).rejects.toThrow(/already running/)
 
             await runner.stop()
         })

@@ -1,5 +1,6 @@
 import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { Scope } from '@common/repositories'
 import { AutomationProps } from '../entities'
 import { AutomationRepository } from '../repositories'
 
@@ -18,8 +19,8 @@ export class GetAutomationByIdUseCase extends BaseUseCase<Params, Output> {
 	}
 
 	async execute (params: Params): Promise<Output> {
-		const { id } = params
-		const result = await this.automationRepository?.findById(id)
+		const { id, currentUser } = params
+		const result = await this.automationRepository?.findById(id, params.scope ?? Scope.canView(currentUser))
 
 		return { data: result ?? null }
 	}

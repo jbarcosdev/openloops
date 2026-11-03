@@ -4,6 +4,7 @@ import { Automation } from '@services/automations/entities'
 import { AutomationRepository } from '@services/automations/repositories/automation.repository'
 import { AutomationRunRepository } from '@services/automations/repositories/automation-run.repository'
 import { AutomationRun } from '@services/automations/entities'
+import { Scope } from '@common/repositories/scope'
 import { fakeMongo } from '../support/fake-mongo-client'
 
 jest.mock('@common/utils/secret-manager', () => ({ secretManager: { get: (key: string): string => key === 'OPENLOOPS_DB_NAME' ? 'openloops-test' : '' } }))
@@ -19,6 +20,7 @@ const LEASE = 10 * 60 * 1000
 const HOUR = 60 * 60 * 1000
 
 const automations = () => fakeMongo.collection('automations')
+const scope = Scope.system('test')
 
 describe('automation repository', () => {
     const repository = new AutomationRepository()
@@ -32,12 +34,12 @@ describe('automation repository', () => {
             ownerId: OWNER,
             ...rest,
         })
-        await repository.create(automation)
+        await repository.create(automation, scope)
         return String(automation._id)
     }
 
     const claim = (id: string, workerId: string, now = NOW, nextRunAt: Date | undefined = new Date(NOW.getTime() + 24 * HOUR)) =>
-        repository.claim({ id, workerId, now, leaseMs: LEASE, nextRunAt })
+        repository.claim({ id, workerId, now, leaseMs: LEASE, nextRunAt }, scope)
 
     beforeEach(() => fakeMongo.reset())
 
@@ -51,7 +53,7 @@ describe('automation repository', () => {
             await create({ name: 'never scheduled', nextRunAt: undefined })
             await create({ name: 'deleted', deletedAt: new Date() })
 
-            const found = await repository.findDue(NOW, 10)
+            const found = await repository.findDue(NOW, 10, scope)
 
             expect(found.map(automation => automation.name).sort()).toEqual(['due', 'expired lock'])
             expect(found.map(automation => String(automation._id)).sort()).toEqual([due, expired].sort())
@@ -62,7 +64,7 @@ describe('automation repository', () => {
             await create({ name: 'oldest', nextRunAt: new Date(NOW.getTime() - 3 * HOUR) })
             await create({ name: 'older', nextRunAt: new Date(NOW.getTime() - HOUR) })
 
-            const found = await repository.findDue(NOW, 2)
+            const found = await repository.findDue(NOW, 2, scope)
 
             expect(found.map(automation => automation.name)).toEqual(['oldest', 'older'])
         })
@@ -114,7 +116,7 @@ describe('automation repository', () => {
         it('clears the next run when there is none, as in an automation that runs once', async () => {
             const id = await create()
 
-            const claimed = await repository.claim({ id, workerId: 'a', now: NOW, leaseMs: LEASE })
+            const claimed = await repository.claim({ id, workerId: 'a', now: NOW, leaseMs: LEASE }, scope)
 
             expect(claimed?.triggers?.schedule?.nextRunAt).toBeUndefined()
             expect(automations().docs[0].triggers.schedule.nextRunAt).toBeUndefined()
@@ -134,7 +136,7 @@ describe('automation repository', () => {
             const future = new Date(NOW.getTime() + 5 * HOUR)
             const id = await create({ nextRunAt: future })
 
-            const claimed = await repository.claimManual({ id, workerId: 'a', now: NOW, leaseMs: LEASE })
+            const claimed = await repository.claimManual({ id, workerId: 'a', now: NOW, leaseMs: LEASE }, scope)
 
             expect(claimed).toMatchObject({ lockedBy: 'a' })
             expect(new Date(claimed!.triggers!.schedule!.nextRunAt as Date).getTime()).toBe(future.getTime())
@@ -144,7 +146,7 @@ describe('automation repository', () => {
             const id = await create()
             await claim(id, 'a')
 
-            expect(await repository.claimManual({ id, workerId: 'b', now: NOW, leaseMs: LEASE })).toBeNull()
+            expect(await repository.claimManual({ id, workerId: 'b', now: NOW, leaseMs: LEASE }, scope)).toBeNull()
         })
     })
 
@@ -154,8 +156,8 @@ describe('automation repository', () => {
             await claim(id, 'a')
             const until = new Date(NOW.getTime() + 2 * LEASE)
 
-            expect(await repository.renewLease(id, 'b', until)).toBeNull()
-            const renewed = await repository.renewLease(id, 'a', until)
+            expect(await repository.renewLease(id, 'b', until, scope)).toBeNull()
+            const renewed = await repository.renewLease(id, 'a', until, scope)
 
             expect(new Date(renewed!.lockedUntil as Date).getTime()).toBe(until.getTime())
         })
@@ -164,7 +166,7 @@ describe('automation repository', () => {
             const id = await create()
             await claim(id, 'a')
 
-            const released = await repository.release(id, 'a', { lastRunAt: NOW, lastRunStatus: 'completed' })
+            const released = await repository.release(id, 'a', { lastRunAt: NOW, lastRunStatus: 'completed' }, scope)
 
             expect(released).toMatchObject({ lastRunStatus: 'completed' })
             expect(released?.lockedBy).toBeUndefined()
@@ -175,7 +177,7 @@ describe('automation repository', () => {
             const id = await create()
             await claim(id, 'a')
 
-            expect(await repository.release(id, 'b', { lastRunAt: NOW, lastRunStatus: 'failed' })).toBeNull()
+            expect(await repository.release(id, 'b', { lastRunAt: NOW, lastRunStatus: 'failed' }, scope)).toBeNull()
             expect(automations().docs[0].lockedBy).toBe('a')
         })
 
@@ -184,11 +186,11 @@ describe('automation repository', () => {
             const runId = new ObjectId()
             await claim(id, 'a')
 
-            await repository.release(id, 'a', { lastRunAt: NOW, lastRunStatus: 'paused', activeRunId: runId })
+            await repository.release(id, 'a', { lastRunAt: NOW, lastRunStatus: 'paused', activeRunId: runId }, scope)
             expect(String(automations().docs[0].activeRunId)).toBe(String(runId))
 
             await claim(id, 'a', new Date(NOW.getTime() + 25 * HOUR), new Date(NOW.getTime() + 48 * HOUR))
-            await repository.release(id, 'a', { lastRunAt: NOW, lastRunStatus: 'completed' })
+            await repository.release(id, 'a', { lastRunAt: NOW, lastRunStatus: 'completed' }, scope)
             expect(automations().docs[0].activeRunId).toBeUndefined()
         })
     })
@@ -205,11 +207,11 @@ describe('automation run repository', () => {
         const owner = new ObjectId(OWNER)
 
         for (const [automation, status] of [[automationId, 'completed'], [automationId, 'failed'], [otherJob, 'paused']] as const) {
-            await repository.create(AutomationRun.fromJSON({ automationId: automation, ownerId: owner, status, trigger: 'schedule', createdAt: new Date() }))
+            await repository.create(AutomationRun.fromJSON({ automationId: automation, ownerId: owner, status, trigger: 'schedule', createdAt: new Date() }), scope)
         }
 
-        expect(await repository.findByAutomation(String(automationId), { page: 1, limit: 10 })).toHaveLength(2)
-        expect(await repository.findByOwner(OWNER, { page: 1, limit: 10 })).toHaveLength(3)
-        expect((await repository.findByStatus('paused', 10)).map(run => String(run.automationId))).toEqual([String(otherJob)])
+        expect(await repository.findByAutomation(String(automationId), scope, { page: 1, limit: 10 })).toHaveLength(2)
+        expect(await repository.findByOwner(OWNER, scope, { page: 1, limit: 10 })).toHaveLength(3)
+        expect((await repository.findByStatus('paused', 10, scope)).map(run => String(run.automationId))).toEqual([String(otherJob)])
     })
 })

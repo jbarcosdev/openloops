@@ -18,6 +18,7 @@ import { AttachAutomationRunChatUseCase } from '../use-cases/attach-automation-r
 import { RenewAutomationLeaseUseCase } from '../use-cases/renew-automation-lease.use-case'
 import { SyncAutomationRunsUseCase } from '../use-cases/sync-automation-runs.use-case'
 import { container } from 'tsyringe'
+import { Scope } from '@common/repositories'
 
 const DEFAULT_MAX_CONCURRENT_RUNS = 3
 const DEFAULT_STOP_TIMEOUT_MS = 30000
@@ -115,8 +116,8 @@ export class AutomationRunner {
 		for (const { automation, run } of queued.claimed) this.track(this.execute(automation, run))
 	}
 
-	async runNow (params: { automationId: string }): Promise<{ run: AutomationRunProps }> {
-		const { data } = await container.resolve(StartAutomationRunUseCase).execute({ automationId: params.automationId, workerId: this.workerId, leaseMs: this.options.leaseMs ?? defaultLeaseMs() })
+	async runNow (params: { automationId: string, currentUser?: CurrentUser, scope?: Scope }): Promise<{ run: AutomationRunProps }> {
+		const { data } = await container.resolve(StartAutomationRunUseCase).execute({ automationId: params.automationId, currentUser: params.currentUser, scope: params.scope, workerId: this.workerId, leaseMs: this.options.leaseMs ?? defaultLeaseMs() })
 
 		this.track(this.execute(data.automation, data.run))
 

@@ -8,6 +8,7 @@ import { openRun } from '../utils/open-run'
 import { leaseMs as defaultLeaseMs } from '../utils/settings'
 import { findPausedRun } from '../utils/previous-run'
 import { SyncAutomationRunUseCase } from './sync-automation-run.use-case'
+import { runnerScope } from '../utils/runner-scope'
 
 const DEFAULT_LIMIT = 10
 
@@ -45,7 +46,7 @@ export class ClaimDueAutomationsUseCase extends BaseUseCase<Params, Output> {
 
 		const now = params.now ?? new Date()
 		const leaseMs = params.leaseMs ?? defaultLeaseMs()
-		const due = await this.automationRepository!.findDue(now, params.limit ?? DEFAULT_LIMIT)
+		const due = await this.automationRepository!.findDue(now, params.limit ?? DEFAULT_LIMIT, runnerScope)
 
 		const claimed: ClaimedRun[] = []
 		const skipped: ClaimedRun[] = []
@@ -66,20 +67,20 @@ export class ClaimDueAutomationsUseCase extends BaseUseCase<Params, Output> {
 				continue
 			}
 
-			const automation = await this.automationRepository!.claim({ id, workerId, now, leaseMs, nextRunAt: nextRunAt ?? undefined })
+			const automation = await this.automationRepository!.claim({ id, workerId, now, leaseMs, nextRunAt: nextRunAt ?? undefined }, runnerScope)
 			if (!automation) continue
 
 			const pending = await findPausedRun(this.automationRunRepository!, this.syncRun!, automation, now)
 
 			if (pending) {
-				const run = await openRun(this.automationRunRepository!, { automation, trigger: 'schedule', status: 'skipped', workerId, now, scheduledFor, skipReason: 'The previous run is still waiting for the user' })
-				await this.automationRepository!.release(id, workerId, { activeRunId: pending._id as any })
+				const run = await openRun(this.automationRunRepository!, { scope: runnerScope, automation, trigger: 'schedule', status: 'skipped', workerId, now, scheduledFor, skipReason: 'The previous run is still waiting for the user' })
+				await this.automationRepository!.release(id, workerId, { activeRunId: pending._id as any }, runnerScope)
 				skipped.push({ automation, run: run.toJSON() })
 				continue
 			}
 
-			const run = await openRun(this.automationRunRepository!, { automation, trigger: 'schedule', status: 'running', workerId, now, scheduledFor })
-			await this.automationRepository!.setActiveRun(id, workerId, String(run._id))
+			const run = await openRun(this.automationRunRepository!, { scope: runnerScope, automation, trigger: 'schedule', status: 'running', workerId, now, scheduledFor })
+			await this.automationRepository!.setActiveRun(id, workerId, String(run._id), runnerScope)
 			claimed.push({ automation, run: run.toJSON() })
 		}
 

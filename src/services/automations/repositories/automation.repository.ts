@@ -1,6 +1,6 @@
 import { autoInjectable } from 'tsyringe'
 import { ObjectId } from 'mongodb'
-import { MongoRepository, QueryOptions } from '@common/repositories'
+import { MongoRepository, QueryOptions, Scope } from '@common/repositories'
 import { getDatabaseName } from '@common/utils/database-name'
 import { Automation, AutomationProps, AutomationRunStatus } from '../entities'
 
@@ -17,47 +17,55 @@ export class AutomationRepository {
 	public readonly _ = new MongoRepository<AutomationProps>({
 		database: getDatabaseName(),
 		collection: 'automations',
+		scoped: true,
 	})
 
-	public async create (automation: Automation): Promise<Automation> {
-		const { _id } = await this._.createOne({ payload: automation.toDocument() })
-		automation.setId(_id)
+	public async create (automation: Automation, scope: Scope): Promise<Automation> {
+		const { _id, ownerId, createdAt, createdBy } = await this._.createOne({ payload: automation.toDocument(), scope })
+		Object.assign(automation, { _id, ownerId, createdAt, createdBy })
 		return automation
 	}
 
-	public async update (automation: Automation, options?: { expectedVersion?: number }): Promise<AutomationProps | null> {
+	public async update (automation: Automation, scope: Scope, options?: { expectedVersion?: number }): Promise<AutomationProps | null> {
 		if (options && typeof options.expectedVersion !== 'number') throw new Error('[AutomationRepository] The expected version is required to check for conflicts')
 
 		return await this._.updateOne({
+			scope,
 			where: { _id: automation._id },
 			payload: automation.toFlatDocument(),
 			expectedVersion: options?.expectedVersion,
 		})
 	}
 
-	public async findById (id: string): Promise<AutomationProps | null> {
-		return await this._.findOne({ where: { _id: this._.parseId(id) } })
+	public async findById (id: string, scope: Scope): Promise<AutomationProps | null> {
+		return await this._.findOne({ scope, where: { _id: this._.parseId(id) } })
 	}
 
-	public async findByOwner (ownerId: string, options?: QueryOptions): Promise<AutomationProps[]> {
-		return await this._.findMany({ where: { ownerId: new ObjectId(ownerId) }, options })
+	public async findByOwner (ownerId: string, scope: Scope, options?: QueryOptions): Promise<AutomationProps[]> {
+		return await this._.findMany({ scope, where: { ownerId: new ObjectId(ownerId) }, options })
 	}
 
-	public async deleteById (id: string): Promise<number> {
-		return await this._.deleteOne({ where: { _id: this._.parseId(id) } })
+	public async softDeleteById (id: string, scope: Scope): Promise<AutomationProps | null> {
+		return await this._.softDelete({ scope, where: { _id: this._.parseId(id) }, payload: { toUnset: { 'triggers.schedule.nextRunAt': '' } } as any })
 	}
 
-	public async findDue (now: Date, limit: number): Promise<AutomationProps[]> {
+	public async deleteById (id: string, scope: Scope): Promise<number> {
+		return await this._.deleteOne({ scope, where: { _id: this._.parseId(id) } })
+	}
+
+	public async findDue (now: Date, limit: number, scope: Scope): Promise<AutomationProps[]> {
 		return await this._.findMany({
+			scope,
 			where: { 'triggers.schedule.enabled': true, 'triggers.schedule.nextRunAt': { $lte: now }, ...this.unlocked(now) } as any,
 			options: { page: 1, limit, sortBy: { 'triggers.schedule.nextRunAt': 1 } },
 		})
 	}
 
-	public async claim (params: ClaimParams): Promise<AutomationProps | null> {
+	public async claim (params: ClaimParams, scope: Scope): Promise<AutomationProps | null> {
 		const { id, workerId, now, leaseMs, nextRunAt } = params
 
 		return await this._.updateOne({
+			scope,
 			where: { _id: this._.parseId(id), 'triggers.schedule.enabled': true, 'triggers.schedule.nextRunAt': { $lte: now }, ...this.unlocked(now) } as any,
 			payload: {
 				lockedBy: workerId,
@@ -67,40 +75,45 @@ export class AutomationRepository {
 		})
 	}
 
-	public async claimManual (params: Omit<ClaimParams, 'nextRunAt'>): Promise<AutomationProps | null> {
+	public async claimManual (params: Omit<ClaimParams, 'nextRunAt'>, scope: Scope): Promise<AutomationProps | null> {
 		const { id, workerId, now, leaseMs } = params
 
 		return await this._.updateOne({
+			scope,
 			where: { _id: this._.parseId(id), ...this.unlocked(now) } as any,
 			payload: { lockedBy: workerId, lockedUntil: new Date(now.getTime() + leaseMs) },
 		})
 	}
 
-	public async setActiveRun (id: string, workerId: string, runId: string): Promise<AutomationProps | null> {
+	public async setActiveRun (id: string, workerId: string, runId: string, scope: Scope): Promise<AutomationProps | null> {
 		return await this._.updateOne({
+			scope,
 			where: { _id: this._.parseId(id), lockedBy: workerId } as any,
 			payload: { activeRunId: this._.parseId(runId) } as any,
 		})
 	}
 
-	public async settleRun (id: string, runId: string, status: AutomationRunStatus, at: Date): Promise<AutomationProps | null> {
+	public async settleRun (id: string, runId: string, status: AutomationRunStatus, at: Date, scope: Scope): Promise<AutomationProps | null> {
 		return await this._.updateOne({
+			scope,
 			where: { _id: this._.parseId(id), activeRunId: this._.parseId(runId) } as any,
 			payload: { lastRunStatus: status, lastRunAt: at, toUnset: { activeRunId: '' } } as any,
 		})
 	}
 
-	public async renewLease (id: string, workerId: string, until: Date): Promise<AutomationProps | null> {
+	public async renewLease (id: string, workerId: string, until: Date, scope: Scope): Promise<AutomationProps | null> {
 		return await this._.updateOne({
+			scope,
 			where: { _id: this._.parseId(id), lockedBy: workerId } as any,
 			payload: { lockedUntil: until },
 		})
 	}
 
-	public async release (id: string, workerId: string, result: Pick<AutomationProps, 'lastRunAt' | 'lastRunStatus' | 'activeRunId'>): Promise<AutomationProps | null> {
+	public async release (id: string, workerId: string, result: Pick<AutomationProps, 'lastRunAt' | 'lastRunStatus' | 'activeRunId'>, scope: Scope): Promise<AutomationProps | null> {
 		const { activeRunId, lastRunAt, lastRunStatus } = result
 
 		return await this._.updateOne({
+			scope,
 			where: { _id: this._.parseId(id), lockedBy: workerId } as any,
 			payload: {
 				...(lastRunAt ? { lastRunAt } : {}),

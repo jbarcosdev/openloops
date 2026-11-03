@@ -268,7 +268,7 @@ describe('running automations', () => {
     })
 
     describe('running by hand', () => {
-        const start = (now: Date, worker = 'w1') => container.resolve(StartAutomationRunUseCase).execute({ automationId: id, workerId: worker, now, leaseMs: LEASE })
+        const start = (now: Date, worker = 'w1') => container.resolve(StartAutomationRunUseCase).execute({ automationId: id, workerId: worker, now, leaseMs: LEASE, currentUser: user })
 
         it('runs at once without moving the next run', async () => {
             const before = at(schedule().nextRunAt)
@@ -297,7 +297,7 @@ describe('running automations', () => {
         })
 
         it('fails for an automation that does not exist', async () => {
-            await expect(container.resolve(StartAutomationRunUseCase).execute({ automationId: new ObjectId().toHexString(), workerId: 'w1' })).rejects.toThrow(/not found/)
+            await expect(container.resolve(StartAutomationRunUseCase).execute({ automationId: new ObjectId().toHexString(), workerId: 'w1', currentUser: user })).rejects.toMatchObject({ statusCode: 404 })
         })
     })
 

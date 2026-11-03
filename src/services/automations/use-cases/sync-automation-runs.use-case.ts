@@ -2,6 +2,7 @@ import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
 import { AutomationRunRepository } from '../repositories'
 import { SyncAutomationRunUseCase } from './sync-automation-run.use-case'
+import { runnerScope } from '../utils/runner-scope'
 
 const DEFAULT_LIMIT = 100
 
@@ -26,8 +27,8 @@ export class SyncAutomationRunsUseCase extends BaseUseCase<Params, Output> {
 	async execute (params: Params): Promise<Output> {
 		const limit = params.limit ?? DEFAULT_LIMIT
 		const open = [
-			...(await this.automationRunRepository?.findByStatus('paused', limit) ?? []),
-			...(await this.automationRunRepository?.findByStatus('running', limit) ?? []),
+			...(await this.automationRunRepository?.findByStatus('paused', limit, runnerScope) ?? []),
+			...(await this.automationRunRepository?.findByStatus('running', limit, runnerScope) ?? []),
 		]
 
 		let settled = 0
