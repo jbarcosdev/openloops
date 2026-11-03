@@ -1,9 +1,10 @@
 import 'reflect-metadata'
 import { ObjectId } from 'bson'
-import { AdminOnly, OwnerOnly, handleMaskInLogs } from '@common/decorators'
+import { AdminOnly, handleMaskInLogs } from '@common/decorators'
 import { sanitizeString } from '@common/helpers'
 import { CurrentUser } from '@common/base'
 import { deleteEmptyFields, flattenObject } from './utils'
+import { Share, ShareProps, createShares } from './share'
 
 export interface BaseEntityProps {
     _id?: string | ObjectId
@@ -18,7 +19,7 @@ export interface BaseEntityProps {
     deletedReason?: string
     archivedAt?: string | Date
     archivedBy?: string | ObjectId
-    sharedWith?: string[] | ObjectId[]
+    sharedWith?: ShareProps[]
     toUnset?: Record<string, unknown>
 }
 
@@ -61,8 +62,8 @@ export class BaseEntity {
     @AdminOnly
     archivedBy?: ObjectId
 
-    @OwnerOnly
-    sharedWith?: ObjectId[]
+    @AdminOnly
+    sharedWith?: Share[]
 
     public toUnset?: Record<string, unknown>
 
@@ -103,7 +104,7 @@ export class BaseEntity {
         this.deletedReason = sanitizeString(props.deletedReason)
         this.archivedAt = BaseEntity.toDate(props.archivedAt)
         this.archivedBy = BaseEntity.toObjectId(props.archivedBy)
-        this.sharedWith = props.sharedWith?.length ? props.sharedWith.map(id => BaseEntity.toObjectId(id)!) : undefined
+        this.sharedWith = createShares(props.sharedWith)
     }
 
     public toJSON (): Document {
@@ -120,7 +121,7 @@ export class BaseEntity {
             deletedReason: this.deletedReason,
             archivedAt: this.archivedAt,
             archivedBy: this.archivedBy,
-            sharedWith: this.sharedWith?.length ? this.sharedWith.map(id => id.toHexString()) : undefined,
+            sharedWith: this.sharedWith?.length ? this.sharedWith : undefined,
             toUnset: this.toUnset,
         }
     }
