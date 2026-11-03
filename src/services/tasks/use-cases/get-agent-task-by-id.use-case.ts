@@ -1,5 +1,6 @@
 import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { Scope } from '@common/repositories'
 import { AgentTaskRepository } from '../repositories'
 import { AgentTaskProps } from '../entities'
 
@@ -18,8 +19,8 @@ export class GetAgentTaskByIdUseCase extends BaseUseCase<Params, Output> {
 	}
 
 	async execute (params: Params): Promise<Output> {
-		const { id } = params
-		const data = await this.agentTaskRepository?.findById(id) ?? null
+		const { id, currentUser } = params
+		const data = await this.agentTaskRepository?.findById(id, params.scope ?? Scope.canView(currentUser)) ?? null
 
 		return { data }
 	}

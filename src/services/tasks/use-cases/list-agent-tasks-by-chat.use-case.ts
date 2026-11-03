@@ -1,5 +1,5 @@
 import { autoInjectable, inject } from 'tsyringe'
-import { QueryOptions } from '@common/repositories'
+import { QueryOptions, Scope } from '@common/repositories'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
 import { BaseEntity } from '@common/base/base.entity'
 import { AgentTaskRepository } from '../repositories'
@@ -32,6 +32,7 @@ export class ListAgentTasksByChatUseCase extends BaseUseCase<Params, Output> {
 		const result = await this.agentTaskRepository?.findByProps(
 			{ ownerId: BaseEntity.toObjectId(currentUser?.userId), chatId: BaseEntity.toObjectId(chatId) },
 			{ limit: DEFAULT_LIMIT, sortBy: { _id: -1 }, ...options },
+			params.scope ?? Scope.canView(currentUser),
 		)
 
 		return { data: result?.items ?? [], hasMore: result?.hasMore ?? false }
