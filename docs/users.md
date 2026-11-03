@@ -60,6 +60,8 @@ const result = await ListUsersByProps({
 })
 ```
 
+`ListUsersByProps` is for admins. The `currentUser` must be an admin, or you pass your own `scope`, because it reads the users of other people.
+
 ## Updating a user
 
 ```typescript

@@ -20,7 +20,7 @@ async function hardDeleteChat () {
 
     const result = await deleteChat({
         id: '6abc454162624f9e01929cd8',
-        hardDelete: true,
+        hardDelete: true, // only admins can perform this action
         currentUser,
     })
 
