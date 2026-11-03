@@ -11,8 +11,8 @@ export class UserRepository {
 	})
 
 	public async create (user: User): Promise<User> {
-		const id = await this._.createOne({ payload: user.toDocument() })
-		id && user.setId(id)
+		const { _id } = await this._.createOne({ payload: user.toDocument() })
+		user.setId(_id)
 		return user
 	}
 

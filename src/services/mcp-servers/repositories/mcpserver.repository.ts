@@ -12,8 +12,8 @@ export class McpServerRepository {
 	})
 
 	public async create (mcpServer: McpServer): Promise<McpServer> {
-		const id = await this._.createOne({ payload: mcpServer.toDocument() })
-		id && mcpServer.setId(id)
+		const { _id } = await this._.createOne({ payload: mcpServer.toDocument() })
+		mcpServer.setId(_id)
 		return mcpServer
 	}
 

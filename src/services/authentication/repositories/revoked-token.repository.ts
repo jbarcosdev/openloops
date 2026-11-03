@@ -11,8 +11,8 @@ export class RevokedTokenRepository {
 	})
 
 	public async create (token: RevokedToken): Promise<RevokedToken> {
-		const id = await this._.createOne({ payload: token.toDocument() })
-		id && token.setId(id)
+		const { _id } = await this._.createOne({ payload: token.toDocument() })
+		token.setId(_id)
 		return token
 	}
 

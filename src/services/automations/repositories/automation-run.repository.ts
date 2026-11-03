@@ -12,8 +12,8 @@ export class AutomationRunRepository {
 	})
 
 	public async create (run: AutomationRun): Promise<AutomationRun> {
-		const id = await this._.createOne({ payload: run.toDocument() })
-		id && run.setId(id)
+		const { _id } = await this._.createOne({ payload: run.toDocument() })
+		run.setId(_id)
 		return run
 	}
 

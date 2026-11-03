@@ -19,8 +19,8 @@ export class WorkspaceItemRepository {
 	})
 
 	public async create (item: WorkspaceItem): Promise<WorkspaceItem> {
-		const id = await this._.createOne({ payload: item.toDocument() })
-		id && item.setId(id)
+		const { _id } = await this._.createOne({ payload: item.toDocument() })
+		item.setId(_id)
 		return item
 	}
 

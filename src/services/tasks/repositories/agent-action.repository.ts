@@ -11,8 +11,8 @@ export class AgentActionRepository {
 	})
 
 	public async create (action: AgentAction): Promise<AgentAction> {
-		const id = await this._.createOne({ payload: action.toDocument() })
-		id && action.setId(id)
+		const { _id } = await this._.createOne({ payload: action.toDocument() })
+		action.setId(_id)
 		return action
 	}
 

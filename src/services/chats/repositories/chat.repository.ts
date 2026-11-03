@@ -11,8 +11,8 @@ export class ChatRepository {
 	})
 
 	public async create (chat: Chat): Promise<Chat> {
-		const id = await this._.createOne({ payload: chat.toDocument() })
-		id && chat.setId(id)
+		const { _id } = await this._.createOne({ payload: chat.toDocument() })
+		chat.setId(_id)
 		return chat
 	}
 

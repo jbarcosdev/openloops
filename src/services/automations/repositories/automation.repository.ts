@@ -20,8 +20,8 @@ export class AutomationRepository {
 	})
 
 	public async create (automation: Automation): Promise<Automation> {
-		const id = await this._.createOne({ payload: automation.toDocument() })
-		id && automation.setId(id)
+		const { _id } = await this._.createOne({ payload: automation.toDocument() })
+		automation.setId(_id)
 		return automation
 	}
 

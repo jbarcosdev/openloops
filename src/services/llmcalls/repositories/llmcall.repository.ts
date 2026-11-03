@@ -11,8 +11,8 @@ export class LLMCallRepository {
 	})
 
 	public async create (llmCall: LLMCall): Promise<LLMCall> {
-		const id = await this._.createOne({ payload: llmCall.toDocument() })
-		id && llmCall.setId(id)
+		const { _id } = await this._.createOne({ payload: llmCall.toDocument() })
+		llmCall.setId(_id)
 		return llmCall
 	}
 

@@ -11,8 +11,8 @@ export class AgentTaskRepository {
 	})
 
 	public async create (task: AgentTask): Promise<AgentTask> {
-		const id = await this._.createOne({ payload: task.toDocument() })
-		id && task.setId(id)
+		const { _id } = await this._.createOne({ payload: task.toDocument() })
+		task.setId(_id)
 		return task
 	}
 
