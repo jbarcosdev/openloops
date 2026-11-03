@@ -1,5 +1,5 @@
 import { autoInjectable, inject } from 'tsyringe'
-import { QueryOptions } from '@common/repositories'
+import { QueryOptions, Scope } from '@common/repositories'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
 import { BaseEntity } from '@common/base/base.entity'
 import { AgentTraceRepository } from '../repositories'
@@ -39,6 +39,7 @@ export class ListAgentTracesByChatUseCase extends BaseUseCase<Params, Output> {
 				...(answerId ? { answerId: BaseEntity.toObjectId(answerId) } : {}),
 			},
 			{ limit: DEFAULT_LIMIT, sortBy: { _id: 1 }, ...options },
+			params.scope ?? Scope.canView(currentUser),
 		)
 
 		return { data: result?.items ?? [], hasMore: result?.hasMore ?? false }
