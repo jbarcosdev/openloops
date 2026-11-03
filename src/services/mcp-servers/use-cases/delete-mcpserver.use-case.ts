@@ -1,5 +1,6 @@
 import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { Scope } from '@common/repositories'
 import { McpServer, McpServerProps } from '../entities'
 import { McpServerRepository } from '../repositories'
 
@@ -23,16 +24,12 @@ export class DeleteMcpServerUseCase extends BaseUseCase<Params, Output> {
 		if (!id) throw new Error('Missing id')
 
 		if (hardDelete) {
-			if (!currentUser?.isAdmin()) this.throwError403()
-
-			const result = await this.mcpServerRepository?.deleteById(id)
+			const result = await this.mcpServerRepository?.deleteById(id, params.scope ?? Scope.asAdmin(currentUser))
 			return { data: { deletedCount: result } as any }
 		}
 
-		// soft delete
-		const mcpServer = McpServer.fromJSON({ _id: id })
-		mcpServer.setDeletedBy(currentUser)
-		const result = await this.mcpServerRepository?.update(mcpServer)
+		const result = await this.mcpServerRepository?.softDeleteById(id, params.scope ?? Scope.canManage(currentUser))
+		if (!result) return this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' }) as any
 
 		return { data: result }
 	}

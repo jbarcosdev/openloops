@@ -1,5 +1,6 @@
 import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { Scope } from '@common/repositories'
 import { McpServerRepository } from '../repositories'
 import { McpServerProps } from '../entities'
 
@@ -21,7 +22,7 @@ export class ListAllMcpServersByUserUseCase extends BaseUseCase<Params, Output> 
 
 		if (!currentUser?.userId) throw new Error('CurrentUser is required to list the Mcp Servers')
 
-		const results = await this.mcpServerRepository?.findAllByOwner(currentUser.userId)
+		const results = await this.mcpServerRepository?.findAllByOwner(currentUser.userId, params.scope ?? Scope.canView(currentUser))
 
 		return { data: results ?? [], hasMore: false }
 	}

@@ -1,5 +1,6 @@
 import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { Scope } from '@common/repositories'
 import { VersionConflictError } from '@common/repositories/mongo-db.repository'
 import { McpServerRepository } from '../repositories'
 import { McpServer, McpServerProps } from '../entities'
@@ -30,11 +31,10 @@ export class UpdateMcpServerUseCase extends BaseUseCase<Params, Output> {
 			throw new Error('Payload is required for updating Mcp Server')
 		}
 
-		const existing = await this.mcpServerRepository?.findById(id)
+		const scope = params.scope ?? Scope.canEdit(currentUser)
+		const existing = await this.mcpServerRepository?.findById(id, scope)
 
-		if (!existing) {
-			throw new Error('Mcp Server not found or update failed')
-		}
+		if (!existing) return this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' }) as any
 
 		if (payload.__v !== undefined && payload.__v !== existing.__v) {
 			throw new VersionConflictError()
@@ -44,17 +44,14 @@ export class UpdateMcpServerUseCase extends BaseUseCase<Params, Output> {
 		const headersChanged = payload.headers !== undefined && JSON.stringify(payload.headers) !== JSON.stringify(existing.headers)
 
 		const mcpServer = McpServer.fromJSON({ ...existing, ...payload, _id: id, trust: existing.trust, approvedHash: existing.approvedHash, status: existing.status, lastError: existing.lastError, history: existing.history })
-		mcpServer.setUpdatedBy(currentUser)
 
 		if (endpointChanged) {
 			mcpServer.lockForNewEndpoint()
 		}
 
-		const result = await this.mcpServerRepository?.update(mcpServer, { expectedVersion: existing.__v })
+		const result = await this.mcpServerRepository?.update(mcpServer, scope, { expectedVersion: existing.__v })
 
-		if (!result) {
-			throw new Error('Mcp Server not found or update failed')
-		}
+		if (!result) return this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' }) as any
 
 		if (endpointChanged || headersChanged) {
 			const verified = await this.verifyConnection?.execute({ id, currentUser })
