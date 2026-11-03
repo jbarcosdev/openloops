@@ -17,16 +17,16 @@ jest.mock('@clients/llm/model-resolution', () => ({
 }))
 
 const users = () => fakeMongo.collection('users')
-const admin: any = { userId: new ObjectId().toHexString(), isAdmin: () => true }
+const owner: any = { userId: new ObjectId().toHexString(), isAdmin: () => false }
 
 describe('the default model of a user', () => {
     let id: string
 
-    const update = (payload: Record<string, any>) => container.resolve(UpdateUserUseCase).execute({ id, payload, currentUser: admin })
+    const update = (payload: Record<string, any>) => container.resolve(UpdateUserUseCase).execute({ id, payload, currentUser: owner })
 
     beforeEach(async () => {
         fakeMongo.reset()
-        const { insertedId } = await users().insertOne({ email: 'jose@openloops.xyz', firstName: 'Jose', preferences: { language: { isoCode: 'es' }, currency: { isoCode: 'PEN' } }, __v: 1 })
+        const { insertedId } = await users().insertOne({ _id: new ObjectId(owner.userId), email: 'jose@openloops.xyz', firstName: 'Jose', preferences: { language: { isoCode: 'es' }, currency: { isoCode: 'PEN' } }, __v: 1 })
         id = String(insertedId)
     })
 
@@ -84,7 +84,7 @@ describe('the default model of a user', () => {
     it('is validated when a user is created', async () => {
         const create = (defaultModel: any) => container.resolve(CreateUserUseCase).execute({
             payload: { email: 'new@openloops.xyz', password: 'a-real-password', preferences: { defaultModel } },
-            currentUser: admin,
+            currentUser: owner,
         })
 
         await expect(create({ provider: 'anthropic', model: 'gpt-4o-mini' })).rejects.toThrow(/does not exist/)

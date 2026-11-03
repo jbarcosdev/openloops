@@ -2,6 +2,7 @@ import 'reflect-metadata'
 import { container } from 'tsyringe'
 import { ObjectId } from 'mongodb'
 import { CreateUserUseCase } from '@services/users/use-cases/create-user.use-case'
+import { Scope } from '@common/repositories/scope'
 import { fakeMongo } from '../support/fake-mongo-client'
 
 jest.mock('@common/utils/secret-manager', () => ({ secretManager: { get: (key: string): string => key === 'OPENLOOPS_DB_NAME' ? 'openloops-test' : '' } }))
@@ -20,24 +21,29 @@ describe('creating a user', () => {
 
     beforeEach(() => fakeMongo.reset())
 
-    it('saves createdAt even without a current user', async () => {
-        await create({})
+    it('saves createdAt even when the scope has no user', async () => {
+        await create({ scope: Scope.system('test') })
 
         expect(users().docs[0].createdAt).toBeInstanceOf(Date)
         expect(users().docs[0].createdBy).toBeUndefined()
     })
 
-    it('removes the admin fields by default', async () => {
-        await create({})
+    it('removes the admin fields when a user creates it', async () => {
+        await create({ currentUser: creator })
 
         expect(users().docs[0].role).toBeUndefined()
     })
 
-    it('keeps the admin fields when sanitize is false', async () => {
-        await create({ sanitize: false })
+    it('keeps the admin fields when the scope is trusted', async () => {
+        await create({ scope: Scope.system('test') })
 
         expect(users().docs[0].role).toBe('user')
         expect(users().docs[0].createdAt).toBeInstanceOf(Date)
+    })
+
+    it('refuses to create a user without a user or a scope', async () => {
+        await expect(create({})).rejects.toMatchObject({ statusCode: 401 })
+        expect(users().docs).toHaveLength(0)
     })
 
     it('saves who created the user when there is a current user', async () => {

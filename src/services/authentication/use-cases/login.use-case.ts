@@ -4,6 +4,7 @@ import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/
 import { User, UserProps, UserRole } from '@services/users/entities'
 import { UserRepository } from '@services/users/repositories'
 import { CurrentUser } from '@common/base'
+import { Scope } from '@common/repositories'
 
 export interface Params extends BaseUseCaseParams {
 	payload: {
@@ -32,7 +33,7 @@ export class LoginUseCase extends BaseUseCase<Params, Output> {
 		const { payload } = params
 
 		const { emailOrUsername, password } = payload
-		const user: User | null = await this.userRepository.findByEmailOrUsernameWithPassword(emailOrUsername)
+		const user: User | null = await this.userRepository.findByEmailOrUsernameWithPassword(emailOrUsername, params.scope ?? Scope.system('login: the user is not known before the credentials are checked'))
 		if (!user) {
 			return this.throwHttpError({
 				statusCode: 404,

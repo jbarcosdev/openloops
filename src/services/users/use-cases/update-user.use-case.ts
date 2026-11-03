@@ -1,5 +1,6 @@
 import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { Scope } from '@common/repositories'
 import { UserRepository } from '../repositories'
 import { User, UserProps } from '../entities'
 import { readDefaultModel } from '../utils/default-model'
@@ -29,17 +30,14 @@ export class UpdateUserUseCase extends BaseUseCase<Params, Output> {
 		const model = payload.preferences ? await readDefaultModel(payload.preferences) : undefined
 
 		const user = await User.create({ ...payload, ...(payload.preferences ? { preferences: model!.preferences } : {}), _id: id })
-		user.setUpdatedBy(currentUser)
 
 		if (model?.clear) user.unset(['preferences.defaultModel' as keyof User])
 
 		this.logger.info(`Updating user: ${user.stringify()}`)
 
-		const result = await this.userRepository?.update(user)
+		const result = await this.userRepository?.update(user, params.scope ?? Scope.canEdit(currentUser))
 
-		if (!result) {
-			throw new Error('User not found or update failed')
-		}
+		if (!result) return this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' }) as any
 
 		return { data: result }
 	}
