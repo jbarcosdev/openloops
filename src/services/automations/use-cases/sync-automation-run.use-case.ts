@@ -3,6 +3,7 @@ import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/
 import { getChatById } from '@services/chats'
 import { AutomationRun, AutomationRunProps, AutomationRunStatus } from '../entities'
 import { AutomationRepository, AutomationRunRepository } from '../repositories'
+import { runnerScope } from '../utils/runner-scope'
 
 export interface Params extends BaseUseCaseParams {
 	runId: string
@@ -26,7 +27,7 @@ export class SyncAutomationRunUseCase extends BaseUseCase<Params, Output> {
 
 	async execute (params: Params): Promise<Output> {
 		const now = params.now ?? new Date()
-		const run = await this.automationRunRepository?.findById(params.runId)
+		const run = await this.automationRunRepository?.findById(params.runId, runnerScope)
 
 		if (!run) return { data: null }
 		if (run.status === 'paused') return { data: await this.syncPaused(run, now) }
@@ -38,7 +39,7 @@ export class SyncAutomationRunUseCase extends BaseUseCase<Params, Output> {
 	private async syncPaused (run: AutomationRunProps, now: Date): Promise<AutomationRunProps> {
 		if (!run.chatId) return run
 
-		const { data: chat } = await getChatById({ id: String(run.chatId) })
+		const { data: chat } = await getChatById({ id: String(run.chatId), scope: runnerScope })
 		const status = chat?.state?.status
 
 		if (status === 'idle') return await this.settle(run, 'completed', now)
@@ -48,7 +49,7 @@ export class SyncAutomationRunUseCase extends BaseUseCase<Params, Output> {
 	}
 
 	private async syncRunning (run: AutomationRunProps, now: Date): Promise<AutomationRunProps> {
-		const automation = run.automationId ? await this.automationRepository?.findById(String(run.automationId)) : null
+		const automation = run.automationId ? await this.automationRepository?.findById(String(run.automationId), runnerScope) : null
 		const lockedUntil = automation?.lockedUntil ? new Date(automation.lockedUntil).getTime() : 0
 
 		if (automation && lockedUntil > now.getTime()) return run
@@ -58,9 +59,9 @@ export class SyncAutomationRunUseCase extends BaseUseCase<Params, Output> {
 
 	private async settle (run: AutomationRunProps, status: AutomationRunStatus, now: Date, error?: { code?: string, message: string }): Promise<AutomationRunProps> {
 		const updated = AutomationRun.fromJSON({ ...run, status, finishedAt: now, ...(error ? { error } : {}) })
-		const saved = await this.automationRunRepository?.update(updated)
+		const saved = await this.automationRunRepository?.update(updated, runnerScope)
 
-		if (run.automationId && run._id) await this.automationRepository?.settleRun(String(run.automationId), String(run._id), status, now)
+		if (run.automationId && run._id) await this.automationRepository?.settleRun(String(run.automationId), String(run._id), status, now, runnerScope)
 
 		return saved ?? updated.toJSON()
 	}

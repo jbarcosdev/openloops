@@ -4,10 +4,12 @@ import { listAutomationRunsByAutomation, listAutomationRunsByUser } from 'openlo
 
 async function listRunsOfAnAutomation () {
     const logger = new Logger()
+    const currentUser = await CurrentUser.asyncFromDB('6ab56894eb20887d1ef7942c')
 
     const result = await listAutomationRunsByAutomation({
         automationId: '6ad0c9a6d3ea4199c9b7ba10',
         options: { page: 1, limit: 20 },
+        currentUser,
     })
 
     logger.info(result.data.map(run => ({ status: run.status, startedAt: run.startedAt, chatId: run.chatId, error: run.error })), '[Demo] Runs of the automation')

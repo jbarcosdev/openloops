@@ -1,4 +1,3 @@
-import { AdminOnly } from '@common/decorators'
 import { sanitizeString } from '@common/helpers'
 
 export type UserPlatform = 'ios' | 'android' | 'web'
@@ -11,7 +10,6 @@ export interface UserAcquisitionProps {
 export class UserAcquisition {
 	public readonly platform?: UserPlatform
 
-	@AdminOnly
 	public readonly referrerCode?: string
 
 	constructor (platform?: UserPlatform, referrerCode?: string) {

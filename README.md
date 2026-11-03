@@ -281,13 +281,14 @@ Every pattern above, and a lot more, lives as a runnable example in [`examples/`
 | `openloops/users` | User management |
 | `openloops/authentication` | Login and token issuing |
 | `openloops/llmcalls` | LLM usage and cost tracking |
-| `openloops/base` | `CurrentUser`, `CurrentSession` |
+| `openloops/base` | `CurrentUser`, `CurrentSession`, `Scope` |
 | `openloops/common` | `Logger` and shared utilities |
 | `openloops/clients` | `LLMClient` and the HTTP clients used by built-in tools (e.g. Serper) |
 
 ## Learn more
 
 - [Integration guide](docs/integration-guide.md)
+- [Authorization](docs/authorization.md)
 - [Documentation index](docs/README.md)
 - [The `Agent`](docs/agent.md)
 - [Building an `AgentLoop`](docs/loops.md)

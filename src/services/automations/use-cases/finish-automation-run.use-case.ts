@@ -2,6 +2,7 @@ import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
 import { AutomationRun, AutomationRunError, AutomationRunProps } from '../entities'
 import { AutomationRepository, AutomationRunRepository } from '../repositories'
+import { runnerScope } from '../utils/runner-scope'
 
 export interface Params extends BaseUseCaseParams {
 	runId: string
@@ -28,7 +29,7 @@ export class FinishAutomationRunUseCase extends BaseUseCase<Params, Output> {
 		const { runId, workerId, status, error } = params
 		const now = params.now ?? new Date()
 
-		const run = await this.automationRunRepository!.findById(runId)
+		const run = await this.automationRunRepository!.findById(runId, runnerScope)
 		if (!run) return { data: null }
 
 		const finished = AutomationRun.fromJSON({
@@ -38,14 +39,14 @@ export class FinishAutomationRunUseCase extends BaseUseCase<Params, Output> {
 			...(error ? { error } : {}),
 		})
 
-		const saved = await this.automationRunRepository!.update(finished)
+		const saved = await this.automationRunRepository!.update(finished, runnerScope)
 
 		if (run.automationId) {
 			await this.automationRepository!.release(String(run.automationId), workerId, {
 				lastRunAt: now,
 				lastRunStatus: status,
 				...(status === 'paused' ? { activeRunId: run._id as any } : {}),
-			})
+			}, runnerScope)
 		}
 
 		return { data: saved ?? finished.toJSON() }

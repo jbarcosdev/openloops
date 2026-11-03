@@ -1,5 +1,6 @@
 import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { Scope } from '@common/repositories'
 import { VersionConflictError } from '@common/repositories/mongo-db.repository'
 import { McpServer, McpServerProps, McpManifest } from '../entities'
 import { McpServerRepository } from '../repositories'
@@ -21,13 +22,12 @@ export class VerifyMcpServerConnectionUseCase extends BaseUseCase<Params, Output
 	}
 
 	async execute (params: Params): Promise<Output> {
-		const { id } = params
+		const { id, currentUser } = params
+		const scope = params.scope ?? Scope.canEdit(currentUser)
 
-		const found = await this.mcpServerRepository?.findById(id)
+		const found = await this.mcpServerRepository?.findById(id, scope)
 
-		if (!found) {
-			throw new Error('Mcp Server not found')
-		}
+		if (!found) return this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' }) as any
 
 		const probed = McpServer.fromJSON(found)
 		let manifest: McpManifest | undefined
@@ -40,7 +40,7 @@ export class VerifyMcpServerConnectionUseCase extends BaseUseCase<Params, Output
 		}
 
 		for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-			const current = attempt === 1 ? probed : McpServer.fromJSON((await this.mcpServerRepository?.findById(id)) ?? found)
+			const current = attempt === 1 ? probed : McpServer.fromJSON((await this.mcpServerRepository?.findById(id, scope)) ?? found)
 
 			if (current.url !== probed.url || JSON.stringify(current.headers) !== JSON.stringify(probed.headers)) {
 				return { data: current.toJSON() }
@@ -50,7 +50,7 @@ export class VerifyMcpServerConnectionUseCase extends BaseUseCase<Params, Output
 			else current.markError(failure)
 
 			try {
-				const saved = await this.mcpServerRepository?.update(current, { expectedVersion: current.__v })
+				const saved = await this.mcpServerRepository?.update(current, scope, { expectedVersion: current.__v })
 				return { data: saved ?? current.toJSON() }
 			} catch (error) {
 				if (!(error instanceof VersionConflictError) || attempt === MAX_ATTEMPTS) throw error

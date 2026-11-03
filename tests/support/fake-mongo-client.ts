@@ -44,6 +44,7 @@ function getPath (source: Doc, path: string): any {
 function matches (doc: Doc, filter: Doc): boolean {
     return Object.entries(filter).every(([key, wanted]) => {
         if (key === '$or') return (wanted as Doc[]).some(branch => matches(doc, branch))
+        if (key === '$and') return (wanted as Doc[]).every(branch => matches(doc, branch))
         return matchesValue(getPath(doc, key), wanted)
     })
 }

@@ -1,5 +1,6 @@
 import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { Scope } from '@common/repositories'
 import { Automation, AutomationProps } from '../entities'
 import { AutomationRepository } from '../repositories'
 
@@ -23,17 +24,12 @@ export class DeleteAutomationUseCase extends BaseUseCase<Params, Output> {
 		if (!id) throw new Error('Missing id')
 
 		if (hardDelete) {
-			if (!currentUser?.isAdmin()) this.throwError403()
-
-			const result = await this.automationRepository?.deleteById(id)
+			const result = await this.automationRepository?.deleteById(id, params.scope ?? Scope.asAdmin(currentUser))
 			return { data: { deletedCount: result } as any }
 		}
 
-		const automation = Automation.fromJSON({ _id: id })
-		automation.setDeletedBy(currentUser)
-		automation.unset(['triggers.schedule.nextRunAt' as keyof Automation])
-
-		const result = await this.automationRepository?.update(automation)
+		const result = await this.automationRepository?.softDeleteById(id, params.scope ?? Scope.canManage(currentUser))
+		if (!result) return this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' }) as any
 
 		return { data: result }
 	}

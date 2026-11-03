@@ -1,5 +1,6 @@
 import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { Scope } from '@common/repositories'
 import { AgentTraceRepository } from '../repositories'
 import { AgentTraceEntry, AgentTraceEntryProps } from '../entities'
 
@@ -20,14 +21,9 @@ export class CreateAgentTracesUseCase extends BaseUseCase<Params, Output> {
 	async execute (params: Params): Promise<Output> {
 		const { payload, currentUser } = params
 
-		const entries = (payload ?? []).map(props => {
-			const entry = AgentTraceEntry.fromJSON({ ...props })
-			entry.setCreatedBy(currentUser)
-			entry.setOwner(currentUser)
-			return entry
-		})
+		const entries = (payload ?? []).map(props => AgentTraceEntry.fromJSON({ ...props }))
 
-		const insertedCount = await this.agentTraceRepository?.createMany(entries) ?? 0
+		const insertedCount = await this.agentTraceRepository?.createMany(entries, params.scope ?? Scope.canEdit(currentUser)) ?? 0
 
 		return { data: { insertedCount } }
 	}

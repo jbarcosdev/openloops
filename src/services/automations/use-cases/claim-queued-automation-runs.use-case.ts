@@ -5,6 +5,7 @@ import { AutomationRepository, AutomationRunRepository } from '../repositories'
 import { findPausedRun } from '../utils/previous-run'
 import { leaseMs as defaultLeaseMs } from '../utils/settings'
 import { SyncAutomationRunUseCase } from './sync-automation-run.use-case'
+import { runnerScope } from '../utils/runner-scope'
 
 const SCAN_LIMIT = 200
 
@@ -41,7 +42,7 @@ export class ClaimQueuedAutomationRunsUseCase extends BaseUseCase<Params, Output
 		const now = params.now ?? new Date()
 		const leaseMs = params.leaseMs ?? defaultLeaseMs()
 		const limit = params.limit ?? SCAN_LIMIT
-		const queued = await this.automationRunRepository!.findByStatus('queued', SCAN_LIMIT)
+		const queued = await this.automationRunRepository!.findByStatus('queued', SCAN_LIMIT, runnerScope)
 
 		const claimed: ClaimedRun[] = []
 		const skipped: ClaimedRun[] = []
@@ -54,22 +55,22 @@ export class ClaimQueuedAutomationRunsUseCase extends BaseUseCase<Params, Output
 			if (seen.has(automationId)) continue
 			seen.add(automationId)
 
-			const existing = await this.automationRepository!.findById(automationId)
+			const existing = await this.automationRepository!.findById(automationId, runnerScope)
 			const reason = !existing ? 'The automation no longer exists' : !existing.triggers?.event?.enabled ? 'The event trigger of the automation is turned off' : undefined
 
 			if (reason) {
-				const settled = await this.automationRunRepository!.update(AutomationRun.fromJSON({ ...run, status: 'skipped', finishedAt: now, skipReason: reason }))
+				const settled = await this.automationRunRepository!.update(AutomationRun.fromJSON({ ...run, status: 'skipped', finishedAt: now, skipReason: reason }), runnerScope)
 				if (existing && settled) skipped.push({ automation: existing, run: settled })
 				continue
 			}
 
-			const automation = await this.automationRepository!.claimManual({ id: automationId, workerId, now, leaseMs })
+			const automation = await this.automationRepository!.claimManual({ id: automationId, workerId, now, leaseMs }, runnerScope)
 			if (!automation) continue
 
 			const paused = await findPausedRun(this.automationRunRepository!, this.syncRun!, automation, now)
 
 			if (paused) {
-				await this.automationRepository!.release(automationId, workerId, { activeRunId: paused._id as any })
+				await this.automationRepository!.release(automationId, workerId, { activeRunId: paused._id as any }, runnerScope)
 				continue
 			}
 
@@ -79,14 +80,14 @@ export class ClaimQueuedAutomationRunsUseCase extends BaseUseCase<Params, Output
 				instructions: automation.instructions,
 				modelProvider: automation.modelProvider,
 				modelName: automation.modelName,
-			})
+			}, runnerScope)
 
 			if (!started) {
-				await this.automationRepository!.release(automationId, workerId, {})
+				await this.automationRepository!.release(automationId, workerId, {}, runnerScope)
 				continue
 			}
 
-			await this.automationRepository!.setActiveRun(automationId, workerId, String(started._id))
+			await this.automationRepository!.setActiveRun(automationId, workerId, String(started._id), runnerScope)
 			claimed.push({ automation, run: started })
 		}
 

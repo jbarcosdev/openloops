@@ -1,5 +1,6 @@
 import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { Scope } from '@common/repositories'
 import { ChatRepository } from '../repositories'
 import { Chat, ChatProps } from '../entities'
 
@@ -30,7 +31,6 @@ export class UpdateChatUseCase extends BaseUseCase<Params, Output> {
 		}
 
 		const chat = Chat.fromJSON({ ...payload, _id: id })
-		chat.setUpdatedBy(currentUser)
 
 		if (payload.toUnset) {
 			const flat = chat.toFlatDocument()
@@ -38,11 +38,9 @@ export class UpdateChatUseCase extends BaseUseCase<Params, Output> {
 			if (fields.length) chat.unset(fields as (keyof Chat)[])
 		}
 
-		const result = await this.chatRepository?.update(chat)
+		const result = await this.chatRepository?.update(chat, params.scope ?? Scope.canEdit(currentUser))
 
-		if (!result) {
-			throw new Error('Chat not found or update failed')
-		}
+		if (!result) return this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' }) as any
 
 		return { data: result }
 	}

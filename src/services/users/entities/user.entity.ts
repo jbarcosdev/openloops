@@ -1,4 +1,4 @@
-import { MaskInLogs, AdminOnly } from '@common/decorators'
+import { MaskInLogs } from '@common/decorators'
 import { getCurrency } from 'iso-data'
 import { BaseEntity, BaseEntityProps } from '@common/base/base.entity'
 import { sanitizeString } from '@common/helpers'
@@ -33,7 +33,6 @@ export class User extends BaseEntity {
 	@MaskInLogs
 	public password?: string
 
-	@AdminOnly
 	public role?: UserRole
 
 	constructor (

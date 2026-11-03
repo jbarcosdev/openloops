@@ -6,7 +6,8 @@ Start with the [README](../README.md) for what `openloops` is and how to run it.
 
 | Page | What it covers |
 | --- | --- |
-| [Integration guide](integration-guide.md) | What to write in a backend: which endpoint calls what, the authorization you own and a security checklist. |
+| [Integration guide](integration-guide.md) | What to write in a backend: which endpoint calls what, what you still own and a security checklist. |
+| [Authorization](authorization.md) | How the use cases check who owns a record, the scopes and how to migrate from 0.5. |
 
 ## Run an agent
 

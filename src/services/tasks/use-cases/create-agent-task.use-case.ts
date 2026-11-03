@@ -1,5 +1,6 @@
 import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { Scope } from '@common/repositories'
 import { AgentTaskRepository } from '../repositories'
 import { AgentTask, AgentTaskProps } from '../entities'
 
@@ -23,10 +24,8 @@ export class CreateAgentTaskUseCase extends BaseUseCase<Params, Output> {
 		if (!payload?.chatId) throw new Error('chatId is required to create a task')
 
 		const task = AgentTask.fromJSON({ ...payload })
-		task.setCreatedBy(currentUser)
-		task.setOwner(currentUser)
 
-		const result = await this.agentTaskRepository?.create(task)
+		const result = await this.agentTaskRepository?.create(task, params.scope ?? Scope.canEdit(currentUser))
 
 		return { data: result?.toJSON() }
 	}

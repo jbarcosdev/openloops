@@ -1,5 +1,6 @@
 import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { Scope } from '@common/repositories'
 import { AgentTaskRepository } from '../repositories'
 import { AgentTask, AgentTaskProps } from '../entities'
 
@@ -30,13 +31,10 @@ export class UpdateAgentTaskUseCase extends BaseUseCase<Params, Output> {
 		}
 
 		const task = AgentTask.fromJSON({ ...payload, _id: id })
-		task.setUpdatedBy(currentUser)
 
-		const result = await this.agentTaskRepository?.update(task)
+		const result = await this.agentTaskRepository?.update(task, params.scope ?? Scope.canEdit(currentUser))
 
-		if (!result) {
-			throw new Error('AgentTask not found or update failed')
-		}
+		if (!result) return this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' }) as any
 
 		return { data: result }
 	}

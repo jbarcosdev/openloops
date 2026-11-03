@@ -1,5 +1,5 @@
 import { autoInjectable, inject } from 'tsyringe'
-import { QueryOptions } from '@common/repositories'
+import { QueryOptions, Scope } from '@common/repositories'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
 import { BaseEntity } from '@common/base/base.entity'
 import { WorkspaceItemRepository } from '../repositories'
@@ -40,6 +40,7 @@ export class ListWorkspaceItemsUseCase extends BaseUseCase<Params, Output> {
 
 		const result = await this.workspaceItemRepository?.findManyPaginated(
 			where,
+			params.scope ?? Scope.canView(currentUser),
 			{ content: 0 },
 			{ limit: DEFAULT_LIMIT, sortBy: { _id: -1 }, ...options },
 		)

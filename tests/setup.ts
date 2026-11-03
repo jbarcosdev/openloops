@@ -27,6 +27,7 @@ jest.mock('sanitize-html', () => ({
 
 jest.mock('@common/repositories', () => ({
     MongoRepository: class {},
+    Scope: jest.requireActual('@common/repositories/scope').Scope,
 }))
 
 jest.mock('@services/llmcalls', () => ({

@@ -174,7 +174,7 @@ describe('automations', () => {
             const { data: automation } = await create()
 
             await expect(update(String(automation._id), { name: 'x', __v: (automation.__v as number) - 1 })).rejects.toMatchObject({ code: 'VERSION_CONFLICT' })
-            await expect(update(new ObjectId().toHexString(), { name: 'x' })).rejects.toThrow(/not found/)
+            await expect(update(new ObjectId().toHexString(), { name: 'x' })).rejects.toMatchObject({ statusCode: 404 })
             await expect(update(String(automation._id), {})).rejects.toThrow(/Payload is required/)
         })
 
@@ -311,8 +311,8 @@ describe('automations', () => {
             const { data: automation } = await create()
             const get = container.resolve(GetAutomationByIdUseCase)
 
-            expect((await get.execute({ id: String(automation._id) })).data?.name).toBe('Morning report')
-            expect((await get.execute({ id: new ObjectId().toHexString() })).data).toBeNull()
+            expect((await get.execute({ id: String(automation._id), currentUser: user })).data?.name).toBe('Morning report')
+            expect((await get.execute({ id: new ObjectId().toHexString(), currentUser: user })).data).toBeNull()
         })
 
         it('lists the automations of the user, newest first, with pagination', async () => {
@@ -388,7 +388,7 @@ describe('automations', () => {
 
         it('lists the runs of an automation, newest first', async () => {
             const { automationId } = await seed()
-            const { data } = await container.resolve(ListAutomationRunsByAutomationUseCase).execute({ automationId: String(automationId) })
+            const { data } = await container.resolve(ListAutomationRunsByAutomationUseCase).execute({ automationId: String(automationId), currentUser: user })
 
             expect(data.map(run => run.status)).toEqual(['failed', 'completed'])
         })

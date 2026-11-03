@@ -1,5 +1,5 @@
 import { autoInjectable } from 'tsyringe'
-import { MongoRepository, QueryOptions, QueryParams } from '@common/repositories'
+import { MongoRepository, QueryOptions, QueryParams, Scope } from '@common/repositories'
 import { getDatabaseName } from '@common/utils/database-name'
 import { Chat, ChatProps } from '../entities'
 
@@ -8,30 +8,36 @@ export class ChatRepository {
 	public readonly _ = new MongoRepository<ChatProps>({
 		database: getDatabaseName(),
 		collection: 'chats',
+		scoped: true,
 	})
 
-	public async create (chat: Chat): Promise<Chat> {
-		const id = await this._.createOne({ payload: chat.toDocument() })
-		id && chat.setId(id)
+	public async create (chat: Chat, scope: Scope): Promise<Chat> {
+		const { _id, ownerId, createdAt, createdBy } = await this._.createOne({ payload: chat.toDocument(), scope })
+		Object.assign(chat, { _id, ownerId, createdAt, createdBy })
 		return chat
 	}
 
-	public async update(chat: Chat): Promise<ChatProps | null> {
+	public async update (chat: Chat, scope: Scope): Promise<ChatProps | null> {
 		return await this._.updateOne({
+			scope,
 			where: { _id: chat._id },
 			payload: chat.toFlatDocument(),
 		})
 	}
 
-	public async findById(id: string, select?: QueryParams<ChatProps>['select']): Promise<ChatProps | null> {
-		return await this._.findOne({ where: { _id: this._.parseId(id) }, select })
+	public async findById (id: string, scope: Scope, select?: QueryParams<ChatProps>['select']): Promise<ChatProps | null> {
+		return await this._.findOne({ scope, where: { _id: this._.parseId(id) }, select })
 	}
 
-	public async deleteById (id: string): Promise<number> {
-		return await this._.deleteOne({ where: { _id: this._.parseId(id) } })
+	public async softDeleteById (id: string, scope: Scope): Promise<ChatProps | null> {
+		return await this._.softDelete({ scope, where: { _id: this._.parseId(id) } })
 	}
 
-	public async findByProps (where: ChatProps, options: QueryOptions): Promise<{ items: ChatProps[], hasMore: boolean }> {
-		return await this._.findManyPaginated({ where, options })
+	public async deleteById (id: string, scope: Scope): Promise<number> {
+		return await this._.deleteOne({ scope, where: { _id: this._.parseId(id) } })
+	}
+
+	public async findByProps (where: ChatProps, options: QueryOptions, scope: Scope): Promise<{ items: ChatProps[], hasMore: boolean }> {
+		return await this._.findManyPaginated({ scope, where, options })
 	}
 }

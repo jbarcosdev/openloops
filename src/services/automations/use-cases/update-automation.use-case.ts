@@ -1,5 +1,6 @@
 import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { Scope } from '@common/repositories'
 import { VersionConflictError } from '@common/repositories/mongo-db.repository'
 import { Automation, AutomationPayload, AutomationProps } from '../entities'
 import { AutomationRepository } from '../repositories'
@@ -25,8 +26,9 @@ export class UpdateAutomationUseCase extends BaseUseCase<Params, Output> {
 
 		if (!payload || Object.keys(payload).length === 0) throw new Error('Payload is required for updating an automation')
 
-		const existing = await this.automationRepository?.findById(id)
-		if (!existing) throw new Error('Automation not found or update failed')
+		const scope = params.scope ?? Scope.canEdit(currentUser)
+		const existing = await this.automationRepository?.findById(id, scope)
+		if (!existing) return this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' }) as any
 
 		if (payload.__v !== undefined && payload.__v !== existing.__v) throw new VersionConflictError()
 
@@ -45,8 +47,6 @@ export class UpdateAutomationUseCase extends BaseUseCase<Params, Output> {
 			_id: id,
 		})
 
-		automation.setUpdatedBy(currentUser)
-
 		if (!provider) automation.unset(['modelProvider', 'modelName'])
 
 		const removed = (['schedule', 'event'] as const).filter(key => existing.triggers?.[key] && !automation.triggers?.[key])
@@ -61,8 +61,8 @@ export class UpdateAutomationUseCase extends BaseUseCase<Params, Output> {
 			if (schedule.enabled && !schedule.nextRunAt) throw new Error('The date of the recurrence has already passed')
 		}
 
-		const result = await this.automationRepository?.update(automation, { expectedVersion: existing.__v })
-		if (!result) throw new Error('Automation not found or update failed')
+		const result = await this.automationRepository?.update(automation, scope, { expectedVersion: existing.__v })
+		if (!result) return this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' }) as any
 
 		return { data: result }
 	}

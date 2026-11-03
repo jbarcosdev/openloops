@@ -30,17 +30,17 @@ const result = await createUser({
         password: 'a-real-password',
         role: UserRole.USER,
     },
-    sanitize: false,
+    scope: Scope.system('sign up'),
 })
 ```
 
 `email` and `password` are required. Passwords are hashed before being stored and are never returned.
 
-### `sanitize`
+### The scope
 
-By default `createUser` removes the fields only admins can set, such as `role`, unless the `currentUser` is an admin. This is what protects you from someone escalating privileges through the payload.
+When a user creates the account, `createUser` removes the fields only a trusted scope can set, such as `role`. This is what protects you from someone escalating privileges through the payload.
 
-If you send `role`, pass `sanitize: false`, otherwise it is discarded. Do it only when your code builds the payload itself, with the fields you choose. Never pass the raw body of a request from an API.
+If you send `role`, pass a trusted scope, otherwise it is discarded. Do it only when your code builds the payload itself, with the fields you choose, and never with the raw body of a request. See [authorization](authorization.md).
 
 ## Getting a user
 
@@ -59,6 +59,8 @@ const result = await ListUsersByProps({
     currentUser,
 })
 ```
+
+`ListUsersByProps` is for admins. The `currentUser` must be an admin, or you pass your own `scope`, because it reads the users of other people.
 
 ## Updating a user
 

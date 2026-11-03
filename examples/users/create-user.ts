@@ -1,4 +1,5 @@
 import { createUser, UserRole } from 'openloops/users'
+import { Scope } from 'openloops/base'
 import { Logger } from 'openloops/common'
 
 async function createUserExample () {
@@ -12,7 +13,7 @@ async function createUserExample () {
             password: 'openloops!',
             role: UserRole.USER
         },
-        sanitize: false
+        scope: Scope.system('demo')
     })
 
     logger.info(result, '[Demo] Created user:')

@@ -2,6 +2,33 @@
 
 All notable changes to `openloops` are written here, newest first. The format follows [Keep a Changelog](https://keepachangelog.com) and the versions follow [semantic versioning](https://semver.org), where a minor version can still break the API while the package is in beta. Changes before 0.4.0 are not recorded here, see the commits and the tags.
 
+## 0.6.0
+
+This version breaks the API of the use cases. The functions that read or write the records of a user need the `currentUser` or a `scope` (login, the tokens, the preview of runs, the events and the functions of the runner do not), creating a record takes its owner from the scope and not from the payload, and the ownership of the records is checked by the repository. Follow the [migration steps](docs/authorization.md#migrating-from-05) when you update.
+
+### Added
+
+- `Scope`, exported from `openloops/base`. Every repository receives one and filters by owner in the same query that reads or writes, so a record that is not the user's is answered as not found (a 404 `HttpError`, `{}` in `getChatById`, `null` in the other getters). `Scope.canView`, `canEdit` and `canManage` take the `currentUser`, `Scope.asAdmin` fails with 403 when the user is not an admin, and `Scope.system(reason)` is for workers and flows without a user.
+- Every use case accepts `scope`, to override the one it builds from `currentUser`.
+- The repository removes the fields of control (`ownerId`, `sharedWith`, `createdAt`, `createdBy`, `updatedAt`, `updatedBy`, `deletedAt`, `deletedBy`, `archivedAt`, `archivedBy`, `__v`, and `role`, `marketing.drawNumber` and `acquisition.referrerCode` in the users) from the payload of a user and fills them in itself. `createOne` returns the stored document, and there are `softDelete` and `createMany` with the same behavior.
+- `docs/authorization.md`.
+
+### Changed
+
+- **Creating records.** `createChat`, `createMcpServer`, `createAutomation`, `createUser`, `createLLMCall`, `createAgentTask`, `createAgentAction`, `createAgentTraces` and `saveWorkspaceItem` set the owner and the author from the scope. A user scope ignores the `ownerId` and the other fields of control of the payload, and a record cannot be created without a `currentUser` or a `scope` (401). To create a record for another user, or without a user, pass `Scope.asAdmin(currentUser)` or `Scope.system(reason)`. See [creating records](docs/authorization.md#creating-records).
+- `getAutomationById`, `listAutomationRunsByAutomation`, `startAutomationRun` and `runner.runNow` need the `currentUser` and only reach the automations of that user. `runner.runNow` also accepts `scope`.
+- A call without `currentUser` and without `scope` fails with 401.
+- `issueAutomationEventToken`, `revokeAutomationEventToken` and `rotateAutomationEventTokens` are for the owner, and an admin needs `Scope.asAdmin`. They answer 404, not 403, to anyone else.
+- The hard delete is for `Scope.asAdmin` or `Scope.system`, and a user that asks for it gets 403.
+- Updating or deleting a record that does not exist or is not the user's answers a 404 `HttpError` and not a generic error.
+- `sharedWith` is a list of `{ userId, permission }`, where `permission` is `read`, `write` or `manage`, and not a list of ids. Nothing reads it yet.
+- `createUser` creates the account with the scope you pass, and keeps `role`, the draw number and the referrer code only with a trusted scope.
+
+### Removed
+
+- The `sanitize` parameter of `createUser`.
+- `setOwner`, `setCreatedBy`, `setUpdatedBy`, `setDeletedBy` and `setArchivedBy` of `BaseEntity`, and the `AdminOnly` and `OwnerOnly` decorators. The repository does that work.
+
 ## 0.5.0
 
 This version breaks the shape of the automations. Follow the [migration steps](docs/automations.md#migrating-to-050) when you update.

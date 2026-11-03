@@ -1,5 +1,6 @@
 import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { Scope } from '@common/repositories'
 import { McpServer, McpServerProps } from '../entities'
 import { McpServerRepository } from '../repositories'
 
@@ -20,26 +21,23 @@ export class DecideMcpServerTrustUseCase extends BaseUseCase<Params, Output> {
 	}
 
 	async execute (params: Params): Promise<Output> {
-		const { id, decision, manifestHash } = params
+		const { id, decision, manifestHash, currentUser } = params
+		const scope = params.scope ?? Scope.canEdit(currentUser)
 
 		if (decision === 'approve' && !manifestHash) {
 			throw new Error('The reviewed manifest hash is required to approve a Mcp Server')
 		}
 
-		const found = await this.mcpServerRepository?.findById(id)
+		const found = await this.mcpServerRepository?.findById(id, scope)
 
-		if (!found) {
-			throw new Error('Mcp Server not found')
-		}
+		if (!found) return this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' }) as any
 
 		const mcpServer = McpServer.fromJSON(found)
 
 		if (decision === 'approve') mcpServer.approve(manifestHash!)
 		else mcpServer.block()
 
-		mcpServer.setUpdatedBy(params.currentUser)
-
-		const saved = await this.mcpServerRepository?.update(mcpServer, { expectedVersion: found.__v })
+		const saved = await this.mcpServerRepository?.update(mcpServer, scope, { expectedVersion: found.__v })
 
 		return { data: saved ?? mcpServer.toJSON() }
 	}

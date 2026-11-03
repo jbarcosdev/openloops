@@ -11,6 +11,7 @@ import { ReceiveAutomationEventUseCase } from '@services/automations/use-cases/r
 import { ClaimQueuedAutomationRunsUseCase } from '@services/automations/use-cases/claim-queued-automation-runs.use-case'
 import { FinishAutomationRunUseCase } from '@services/automations/use-cases/finish-automation-run.use-case'
 import { AutomationEventError } from '@services/automations/utils/automation-event-error'
+import { Scope } from '@common/repositories/scope'
 import { fakeMongo } from '../support/fake-mongo-client'
 
 jest.mock('@common/utils/secret-manager', () => ({ secretManager: { get: (key: string): string => key === 'OPENLOOPS_DB_NAME' ? 'openloops-test' : key === 'JWT_SECRET' ? 'test-secret' : key === 'AUTOMATIONS_MAX_QUEUED_RUNS' ? '3' : '' } }))
@@ -193,11 +194,12 @@ describe('automations with an event trigger', () => {
             await expect(issue(id, expiresIn)).rejects.toThrow(/positive duration/)
         })
 
-        it('is only given to the owner or an admin, and only for an event automation', async () => {
+        it('is only given to the owner, or to an admin that asks with an admin scope, and only for an event automation', async () => {
             const id = await createEvent()
 
-            await expect(issue(id, undefined, stranger)).rejects.toMatchObject({ statusCode: 403 })
-            await expect(issue(id, undefined, admin)).resolves.toMatchObject({ token: expect.any(String) })
+            await expect(issue(id, undefined, stranger)).rejects.toMatchObject({ statusCode: 404 })
+            await expect(issue(id, undefined, admin)).rejects.toMatchObject({ statusCode: 404 })
+            await expect(container.resolve(IssueAutomationEventTokenUseCase).execute({ id, currentUser: admin, scope: Scope.asAdmin(admin) })).resolves.toMatchObject({ data: { token: expect.any(String) } })
 
             const { data } = await container.resolve(CreateAutomationUseCase).execute({
                 payload: { name: 'Daily', instructions: 'Do it', triggers: { schedule: { recurrence: { type: 'daily', time: '08:00' }, timezone: 'UTC' } } } as any,
@@ -361,14 +363,14 @@ describe('automations with an event trigger', () => {
             expect(new Date(revoked().docs[0].expiresAt).toISOString()).toBe(expiresAt?.toISOString())
         })
 
-        it('only works with a token of the same automation, and for its owner or an admin', async () => {
+        it('only works with a token of the same automation, and for its owner', async () => {
             const id = await createEvent()
             const other = await createEvent({ name: 'Other' })
             const { token } = await issue(other)
             const revoke = container.resolve(RevokeAutomationEventTokenUseCase)
 
             await expect(revoke.execute({ id, token, currentUser: user })).rejects.toThrow(/does not belong/)
-            await expect(revoke.execute({ id: other, token, currentUser: stranger })).rejects.toMatchObject({ statusCode: 403 })
+            await expect(revoke.execute({ id: other, token, currentUser: stranger })).rejects.toMatchObject({ statusCode: 404 })
             await expect(revoke.execute({ id: other, token: 'junk', currentUser: user })).rejects.toBeInstanceOf(AutomationEventError)
         })
     })
@@ -387,10 +389,10 @@ describe('automations with an event trigger', () => {
             expect((await receive(id, after.token)).data.status).toBe('queued')
         })
 
-        it('is only for the owner or an admin', async () => {
+        it('is only for the owner', async () => {
             const id = await createEvent()
 
-            await expect(container.resolve(RotateAutomationEventTokensUseCase).execute({ id, currentUser: stranger })).rejects.toMatchObject({ statusCode: 403 })
+            await expect(container.resolve(RotateAutomationEventTokensUseCase).execute({ id, currentUser: stranger })).rejects.toMatchObject({ statusCode: 404 })
         })
     })
 

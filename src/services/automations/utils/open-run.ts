@@ -1,8 +1,10 @@
 import { ObjectId } from 'mongodb'
+import { Scope } from '@common/repositories'
 import { AutomationProps, AutomationRun, AutomationRunStatus, AutomationRunTrigger } from '../entities'
 import { AutomationRunRepository } from '../repositories'
 
 export interface OpenRunParams {
+	scope: Scope,
 	automation: AutomationProps
 	trigger: AutomationRunTrigger
 	status: Extract<AutomationRunStatus, 'queued' | 'running' | 'skipped'>
@@ -15,7 +17,7 @@ export interface OpenRunParams {
 }
 
 export async function openRun (repository: AutomationRunRepository, params: OpenRunParams): Promise<AutomationRun> {
-	const { automation, trigger, status, workerId, now, scheduledFor, skipReason, payload, idempotencyKey } = params
+	const { scope, automation, trigger, status, workerId, now, scheduledFor, skipReason, payload, idempotencyKey } = params
 
 	const run = AutomationRun.fromJSON({
 		automationId: automation._id as ObjectId,
@@ -34,7 +36,7 @@ export async function openRun (repository: AutomationRunRepository, params: Open
 		createdAt: now,
 	})
 
-	await repository.create(run)
+	await repository.create(run, scope)
 
 	return run
 }

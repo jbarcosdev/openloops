@@ -7,6 +7,7 @@ import { AutomationEventError } from '../utils/automation-event-error'
 import { readEventToken } from '../utils/event-token'
 import { openRun } from '../utils/open-run'
 import { maxQueuedRuns } from '../utils/settings'
+import { eventScope } from '../utils/runner-scope'
 
 const MAX_PAYLOAD_CHARS = 50000
 const MAX_KEY_CHARS = 200
@@ -47,7 +48,7 @@ export class ReceiveAutomationEventUseCase extends BaseUseCase<Params, Output> {
 		const claims = readEventToken(token)
 		if (claims.sub !== automationId) throw new AutomationEventError('invalid')
 
-		const automation = await this.automationRepository!.findById(automationId)
+		const automation = await this.automationRepository!.findById(automationId, eventScope)
 		if (!automation) throw new AutomationEventError('not_found')
 		const event = automation.triggers?.event
 		if (!event || automation.eventTokenVersion !== claims.v) throw new AutomationEventError('invalid')
@@ -63,22 +64,22 @@ export class ReceiveAutomationEventUseCase extends BaseUseCase<Params, Output> {
 		if (idempotencyKey && idempotencyKey.length > MAX_KEY_CHARS) throw new Error(`The idempotency key cannot be longer than ${MAX_KEY_CHARS} characters`)
 
 		if (idempotencyKey) {
-			const duplicate = await this.automationRunRepository!.findByIdempotencyKey(automationId, idempotencyKey)
+			const duplicate = await this.automationRunRepository!.findByIdempotencyKey(automationId, idempotencyKey, eventScope)
 			if (duplicate) return { data: { status: 'duplicate', run: duplicate } }
 		}
 
-		if (await this.automationRunRepository!.countQueued(automationId) >= maxQueuedRuns()) {
-			const skipped = await openRun(this.automationRunRepository!, { automation, trigger: 'event', status: 'skipped', now, payload, skipReason: 'The queue of this automation is full' })
+		if (await this.automationRunRepository!.countQueued(automationId, eventScope) >= maxQueuedRuns()) {
+			const skipped = await openRun(this.automationRunRepository!, { scope: eventScope, automation, trigger: 'event', status: 'skipped', now, payload, skipReason: 'The queue of this automation is full' })
 			return { data: { status: 'skipped', run: skipped.toJSON() } }
 		}
 
 		try {
-			const run = await openRun(this.automationRunRepository!, { automation, trigger: 'event', status: 'queued', now, payload, idempotencyKey })
+			const run = await openRun(this.automationRunRepository!, { scope: eventScope, automation, trigger: 'event', status: 'queued', now, payload, idempotencyKey })
 			return { data: { status: 'queued', run: run.toJSON() } }
 		} catch (error: any) {
 			if (!idempotencyKey || error?.code !== 11000) throw error
 
-			const duplicate = await this.automationRunRepository!.findByIdempotencyKey(automationId, idempotencyKey)
+			const duplicate = await this.automationRunRepository!.findByIdempotencyKey(automationId, idempotencyKey, eventScope)
 			if (!duplicate) throw error
 
 			return { data: { status: 'duplicate', run: duplicate } }

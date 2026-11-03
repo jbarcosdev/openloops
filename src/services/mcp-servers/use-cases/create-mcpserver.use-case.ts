@@ -1,5 +1,6 @@
 import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { Scope } from '@common/repositories'
 import { McpServer, McpServerProps } from '../entities'
 import { McpServerRepository } from '../repositories'
 import { VerifyMcpServerConnectionUseCase } from './verify-mcpserver-connection.use-case'
@@ -25,11 +26,9 @@ export class CreateMcpServerUseCase extends BaseUseCase<Params, Output> {
 		const { payload, currentUser } = params
 
 		const mcpServer = McpServer.fromJSON({ ...payload })
-		mcpServer.setCreatedBy(currentUser)
-		mcpServer.setOwner(currentUser)
 		mcpServer.initialize()
 
-		await this.mcpServerRepository?.create(mcpServer)
+		await this.mcpServerRepository?.create(mcpServer, params.scope ?? Scope.canEdit(currentUser))
 
 		const verified = await this.verifyConnection?.execute({ id: String(mcpServer._id), currentUser })
 

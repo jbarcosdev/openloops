@@ -1,5 +1,6 @@
 import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { Scope } from '@common/repositories'
 import { revokeToken } from '@services/authentication'
 import { AutomationRepository } from '../repositories'
 import { EVENT_TOKEN_AUDIENCE, readEventToken } from '../utils/event-token'
@@ -22,10 +23,8 @@ export class RevokeAutomationEventTokenUseCase extends BaseUseCase<Params, Outpu
 	async execute (params: Params): Promise<Output> {
 		const { id, token, currentUser } = params
 
-		const automation = await this.automationRepository?.findById(id)
-		if (!automation) throw new Error('Automation not found')
-
-		if (!currentUser?.isAdmin() && String(automation.ownerId) !== currentUser?.userId) this.throwError403()
+		const automation = await this.automationRepository?.findById(id, params.scope ?? Scope.canManage(currentUser))
+		if (!automation) return this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' }) as any
 
 		const claims = readEventToken(token, { ignoreExpiration: true })
 		if (claims.sub !== id) throw new Error('The token does not belong to this automation')

@@ -1,5 +1,5 @@
 import { autoInjectable } from 'tsyringe'
-import { MongoRepository, QueryOptions } from '@common/repositories'
+import { MongoRepository, QueryOptions, Scope } from '@common/repositories'
 import { getDatabaseName } from '@common/utils/database-name'
 import { AgentAction, AgentActionProps } from '../entities'
 
@@ -8,24 +8,26 @@ export class AgentActionRepository {
 	public readonly _ = new MongoRepository<AgentActionProps>({
 		database: getDatabaseName(),
 		collection: 'agent_actions',
+		scoped: true,
 	})
 
-	public async create (action: AgentAction): Promise<AgentAction> {
-		const id = await this._.createOne({ payload: action.toDocument() })
-		id && action.setId(id)
+	public async create (action: AgentAction, scope: Scope): Promise<AgentAction> {
+		const { _id, ownerId, createdAt, createdBy } = await this._.createOne({ payload: action.toDocument(), scope })
+		Object.assign(action, { _id, ownerId, createdAt, createdBy })
 		return action
 	}
 
-	public async update (action: AgentAction): Promise<AgentActionProps | null> {
+	public async update (action: AgentAction, scope: Scope): Promise<AgentActionProps | null> {
 		const toUnset = action.clearedFields
 
 		return await this._.updateOne({
+			scope,
 			where: { _id: action._id },
 			payload: { ...action.toDocument(), ...(Object.keys(toUnset).length ? { toUnset } : {}) },
 		})
 	}
 
-	public async findByProps (where: AgentActionProps, options: QueryOptions): Promise<{ items: AgentActionProps[], hasMore: boolean }> {
-		return await this._.findManyPaginated({ where, options })
+	public async findByProps (where: AgentActionProps, options: QueryOptions, scope: Scope): Promise<{ items: AgentActionProps[], hasMore: boolean }> {
+		return await this._.findManyPaginated({ scope, where, options })
 	}
 }

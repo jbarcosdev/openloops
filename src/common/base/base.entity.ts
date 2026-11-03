@@ -1,9 +1,9 @@
 import 'reflect-metadata'
 import { ObjectId } from 'bson'
-import { AdminOnly, OwnerOnly, handleMaskInLogs } from '@common/decorators'
+import { handleMaskInLogs } from '@common/decorators'
 import { sanitizeString } from '@common/helpers'
-import { CurrentUser } from '@common/base'
 import { deleteEmptyFields, flattenObject } from './utils'
+import { Share, ShareProps, createShares } from './share'
 
 export interface BaseEntityProps {
     _id?: string | ObjectId
@@ -18,7 +18,7 @@ export interface BaseEntityProps {
     deletedReason?: string
     archivedAt?: string | Date
     archivedBy?: string | ObjectId
-    sharedWith?: string[] | ObjectId[]
+    sharedWith?: ShareProps[]
     toUnset?: Record<string, unknown>
 }
 
@@ -29,40 +29,29 @@ export interface Document extends BaseEntityProps {
 export class BaseEntity {
     _id?: ObjectId
 
-    @AdminOnly
     __v?: number
 
-    @AdminOnly
     ownerId?: ObjectId
 
-    @AdminOnly
     createdAt?: Date
 
-    @AdminOnly
     createdBy?: ObjectId
 
-    @AdminOnly
     updatedAt?: Date
 
-    @AdminOnly
     updatedBy?: ObjectId
 
-    @AdminOnly
     deletedAt?: Date
 
-    @AdminOnly
     deletedBy?: ObjectId
 
     deletedReason?: string
 
-    @AdminOnly
     archivedAt?: Date
 
-    @AdminOnly
     archivedBy?: ObjectId
 
-    @OwnerOnly
-    sharedWith?: ObjectId[]
+    sharedWith?: Share[]
 
     public toUnset?: Record<string, unknown>
 
@@ -103,7 +92,7 @@ export class BaseEntity {
         this.deletedReason = sanitizeString(props.deletedReason)
         this.archivedAt = BaseEntity.toDate(props.archivedAt)
         this.archivedBy = BaseEntity.toObjectId(props.archivedBy)
-        this.sharedWith = props.sharedWith?.length ? props.sharedWith.map(id => BaseEntity.toObjectId(id)!) : undefined
+        this.sharedWith = createShares(props.sharedWith)
     }
 
     public toJSON (): Document {
@@ -120,7 +109,7 @@ export class BaseEntity {
             deletedReason: this.deletedReason,
             archivedAt: this.archivedAt,
             archivedBy: this.archivedBy,
-            sharedWith: this.sharedWith?.length ? this.sharedWith.map(id => id.toHexString()) : undefined,
+            sharedWith: this.sharedWith?.length ? this.sharedWith : undefined,
             toUnset: this.toUnset,
         }
     }
@@ -131,39 +120,6 @@ export class BaseEntity {
 
     public setId (id: string | ObjectId): void {
         this._id = BaseEntity.toObjectId(id)
-    }
-
-    public setOwner (currentUser?: CurrentUser): void {
-        if (!currentUser) return
-        this.ownerId = BaseEntity.toObjectId(currentUser.userId)
-    }
-
-    public setCreatedBy (currentUser?: CurrentUser, sanitize = true): void {
-        if (sanitize) this.sanitize(currentUser)
-        this.createdAt = new Date()
-        this.createdBy = BaseEntity.toObjectId(currentUser?.userId)
-        this.setDefaults()
-    }
-
-    public setUpdatedBy (currentUser?: CurrentUser): void {
-        if (!currentUser) return
-        this.sanitize(currentUser)
-        this.updatedAt = new Date()
-        this.updatedBy = BaseEntity.toObjectId(currentUser.userId)
-    }
-
-    public setDeletedBy (currentUser?: CurrentUser): void {
-        if (!currentUser) return
-        this.sanitize(currentUser)
-        this.deletedAt = new Date()
-        this.deletedBy = BaseEntity.toObjectId(currentUser.userId)
-    }
-
-    public setArchivedBy (currentUser?: CurrentUser): void {
-        if (!currentUser) return
-        this.sanitize(currentUser)
-        this.archivedAt = new Date()
-        this.archivedBy = BaseEntity.toObjectId(currentUser.userId)
     }
 
     public toDocument (): Document {
@@ -194,14 +150,4 @@ export class BaseEntity {
         })
     }
 
-    private sanitize (currentUser?: CurrentUser): void {
-        if (!currentUser?.isAdmin()) {
-            for (const key in this) {
-                const isAdminOnly = Reflect.getMetadata('adminOnly', this.constructor.prototype, key)
-                if (isAdminOnly) {
-                    delete this[key]
-                }
-            }
-        }
-    }
 }

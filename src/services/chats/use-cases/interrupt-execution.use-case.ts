@@ -1,5 +1,6 @@
 import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { Scope } from '@common/repositories'
 import { Chat, ChatProps } from '../entities'
 import { ChatRepository } from '../repositories'
 
@@ -27,14 +28,11 @@ export class InterruptExecutionUseCase extends BaseUseCase<Params, Output> {
 		const chat = Chat.fromJSON({ _id: id })
 		chat.setAgentState({} as any)
 		chat.state?.interruptExecution()
-		chat.setUpdatedBy(currentUser)
 
 		this.logger.debug(chat, '[AGENT] Interrupting execution...')
-		const result = await this.chatRepository?.update(chat)
+		const result = await this.chatRepository?.update(chat, params.scope ?? Scope.canEdit(currentUser))
 
-		if (!result) {
-			throw new Error('Chat not found or update failed')
-		}
+		if (!result) return this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' }) as any
 
 		return { data: result }
 	}

@@ -1,5 +1,6 @@
 import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { Scope } from '@common/repositories'
 import { UserRepository } from '../repositories'
 import { UserProps } from '../entities'
 
@@ -18,8 +19,9 @@ export class GetUserByIdUseCase extends BaseUseCase<Params, Output> {
 	}
 
 	async execute (params: Params): Promise<Output> {
-		const { id } = params
-		const result = await this.userRepository?.findById(id)
+		const { id, currentUser } = params
+		const result = await this.userRepository?.findById(id, params.scope ?? Scope.canView(currentUser))
+		if (!result) return this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' }) as any
 
 		return { data: result }
 	}

@@ -7,6 +7,7 @@ Start with the integration guide, then read only the pages you need. All pages a
 ## Start here
 
 - [Integration guide](integration-guide.md): what to write in a backend, which endpoint calls what, and the security checklist
+- [Authorization](authorization.md): the scope that every use case uses to check who owns a record, and how to migrate from 0.5
 - [README](../README.md): what it is, the quick start and the package structure
 
 ## Run an agent
