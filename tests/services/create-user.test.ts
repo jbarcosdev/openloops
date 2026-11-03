@@ -46,6 +46,18 @@ describe('creating a user', () => {
         expect(users().docs).toHaveLength(0)
     })
 
+    it('removes the draw number and the referrer code when a user creates it, and keeps them with a trusted scope', async () => {
+        const extra = { marketing: { drawNumber: '1234' }, acquisition: { platform: 'ios', referrerCode: 'abc' } }
+
+        await create({ currentUser: creator, payload: { ...payload, ...extra } })
+        await create({ scope: Scope.system('test'), payload: { ...payload, email: 'other@openloops.xyz', ...extra } })
+
+        expect(users().docs[0].marketing).toBeUndefined()
+        expect(users().docs[0].acquisition?.referrerCode).toBeUndefined()
+        expect(users().docs[1].marketing?.drawNumber).toBe('1234')
+        expect(users().docs[1].acquisition?.referrerCode).toBe('abc')
+    })
+
     it('saves who created the user when there is a current user', async () => {
         await create({ currentUser: creator })
 

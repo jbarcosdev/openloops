@@ -80,7 +80,28 @@ export class MongoRepository<T> {
 	private withoutProtected (payload: Record<string, unknown>, scope?: Scope): Record<string, unknown> {
 		if (!scope || scope.trusted) return payload
 
-		return Object.fromEntries(Object.entries(payload).filter(([key]) => !this.protectedFields.includes(key)))
+		const kept = Object.fromEntries(Object.entries(payload).filter(([key]) => !this.protectedFields.includes(key)))
+
+		return this.protectedFields.filter(path => path.includes('.')).reduce((result, path) => this.withoutPath(result, path.split('.')), kept)
+	}
+
+	private withoutPath (node: Record<string, unknown>, path: string[]): Record<string, unknown> {
+		const [head, ...rest] = path
+		if (!(head in node)) return node
+
+		if (!rest.length) {
+			const { [head]: removed, ...others } = node
+			return others
+		}
+
+		const child = node[head]
+		if (!child || typeof child !== 'object' || Array.isArray(child) || child instanceof Date || child instanceof ObjectId) return node
+
+		const cleaned = this.withoutPath(child as Record<string, unknown>, rest)
+		if (Object.keys(cleaned).length) return { ...node, [head]: cleaned }
+
+		const { [head]: dropped, ...others } = node
+		return others
 	}
 
 	public parseId (id: string | undefined): ObjectId | undefined {

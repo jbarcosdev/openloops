@@ -10,7 +10,7 @@ export class UserRepository {
 		collection: 'users',
 		scoped: true,
 		ownerField: '_id',
-		protectedFields: ['role'],
+		protectedFields: ['role', 'marketing.drawNumber', 'acquisition.referrerCode'],
 	})
 
 	public async create (user: User, scope: Scope): Promise<User> {

@@ -221,6 +221,26 @@ describe('MongoRepository stamps', () => {
         expect(insertOne.mock.calls[1][0].role).toBe('ADMIN')
     })
 
+    it('also drops a protected field inside an object, on create and on a flat update, and the object when it ends up empty', async () => {
+        const repo = new MongoRepository<any>({ database: 'app', collection: 'users', scoped: true, ownerField: '_id', protectedFields: ['marketing.drawNumber', 'acquisition.referrerCode'] })
+        const payload = { name: 'sofi', marketing: { drawNumber: '1234' }, acquisition: { platform: 'ios', referrerCode: 'abc' } }
+
+        await repo.createOne({ payload: payload as any, scope: Scope.canEdit(user()) })
+        await repo.createOne({ payload: payload as any, scope: Scope.system('test') })
+        await repo.updateOne({ where: { _id: DOC_ID }, payload: { 'marketing.drawNumber': '1234', 'acquisition.referrerCode': 'abc', 'acquisition.platform': 'ios' } as any, scope: Scope.canEdit(user()) })
+
+        const [byUser, bySystem] = insertOne.mock.calls.map(call => call[0])
+        expect(byUser.marketing).toBeUndefined()
+        expect(byUser.acquisition).toEqual({ platform: 'ios' })
+        expect(bySystem.marketing).toEqual({ drawNumber: '1234' })
+        expect(bySystem.acquisition).toEqual({ platform: 'ios', referrerCode: 'abc' })
+
+        const { $set } = findOneAndUpdate.mock.calls[0][1]
+        expect($set['marketing.drawNumber']).toBeUndefined()
+        expect($set['acquisition.referrerCode']).toBeUndefined()
+        expect($set['acquisition.platform']).toBe('ios')
+    })
+
     it('keeps the owner of the payload when the scope is trusted', async () => {
         await scopedRepo().createOne({ payload: clientPayload(), scope: Scope.asAdmin(user(USER, true)) })
         await scopedRepo().createOne({ payload: clientPayload(), scope: Scope.system('test') })
