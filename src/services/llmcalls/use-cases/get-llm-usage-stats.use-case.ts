@@ -1,6 +1,6 @@
 import { autoInjectable, inject } from 'tsyringe'
 import { ObjectId } from 'mongodb'
-import { PipelineStage } from '@common/repositories'
+import { PipelineStage, Scope } from '@common/repositories'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
 import { LLMCallRepository } from '../repositories'
 import { UsageTotals, round, usageSums, toUsageTotals } from '../utils/usage-totals'
@@ -138,7 +138,7 @@ export class GetLLMUsageStatsUseCase extends BaseUseCase<Params, Output> {
 		const periods = enumeratePeriods(groupBy, from, to)
 
 		const pipeline = buildUsageStatsPipeline({ ownerId: new ObjectId(ownerId), timezone, from, to, groupBy, provider, model })
-		const [facets] = await this.llmCallRepository?._.aggregate(pipeline) as Partial<Facets>[]
+		const [facets] = await this.llmCallRepository?._.aggregate(pipeline, params.scope ?? Scope.canView(currentUser)) as Partial<Facets>[]
 
 		return { data: shapeUsageStats(facets, periods) }
 	}

@@ -1,6 +1,7 @@
 import { autoInjectable, inject } from 'tsyringe'
 import { ObjectId } from 'mongodb'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { Scope } from '@common/repositories'
 import { LLMCallRepository } from '../repositories'
 import { UsageReport, usageReportPipeline, toUsageReport } from '../utils/usage-totals'
 
@@ -27,7 +28,7 @@ export class GetLLMUsageByChatUseCase extends BaseUseCase<Params, Output> {
 		const rows = await this.llmCallRepository?._.aggregate(usageReportPipeline({
 			ownerId: new ObjectId(currentUser.userId),
 			sessionId: new ObjectId(chatId),
-		}) as any[])
+		}) as any[], params.scope ?? Scope.canView(currentUser))
 
 		return { data: toUsageReport(rows as any[]) }
 	}
