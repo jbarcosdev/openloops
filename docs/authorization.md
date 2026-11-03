@@ -65,7 +65,8 @@ await createUser({ payload, scope: Scope.system('sign up') })
 
 ## Migrating from 0.5
 
-- Pass `currentUser`, or a `scope`, to every call that creates, reads or writes. The ones that did not need it before are `getAutomationById`, `listAutomationRunsByAutomation`, `startAutomationRun` and `runner.runNow`. The `create` ones are described in [creating records](#creating-records).
+- Pass `currentUser`, or a `scope`, to every function that reads or writes the records of a user: the ones that take an id (`getChatById`, `updateChat`, `deleteChat`, `getMcpServerById`, `updateMcpServer`, `deleteMcpServer`, `decideMcpServerTrust`, `verifyMcpServerConnection`, `getLLMCallById`, `getUserById`, `updateUser`, `deleteUser`, `updateAutomation`, `deleteAutomation`), the ones that create (see [creating records](#creating-records)) and the ones that list. Many of them accepted a call without a user before and did not check the owner. `getAutomationById`, `listAutomationRunsByAutomation`, `startAutomationRun` and `runner.runNow` did not read the user at all.
+- You do not need to pass anything to `login`, `revokeToken`, `isTokenRevoked`, `previewAutomationRuns` and `receiveAutomationEvent`, which do not belong to a user, nor to the functions of the runner (`claimDueAutomations`, `claimQueuedAutomationRuns`, `finishAutomationRun`, `syncAutomationRun`, `syncAutomationRuns`, `attachAutomationRunChat` and `renewAutomationLease`), which use their own system scope.
 - Pass `currentUser` to `getAutomationById`, `listAutomationRunsByAutomation`, `startAutomationRun` and `runner.runNow`. They did not need it before.
 - Replace `sanitize: false` in `createUser` with a `scope`, as shown above.
 - Where an admin used to act on the record of another user, pass `scope: Scope.asAdmin(currentUser)`.
