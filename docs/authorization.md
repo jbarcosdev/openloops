@@ -32,7 +32,7 @@ Every use case accepts `scope`. Use it only from code you wrote, never from a va
 
 ## What the repository does with the fields of control
 
-When a user writes, the repository removes `ownerId`, `sharedWith`, `createdAt`, `createdBy`, `updatedAt`, `updatedBy`, `deletedAt`, `deletedBy`, `archivedAt`, `archivedBy` and `__v` from the payload, and fills them in itself with the user of the scope. In the users collection it also removes `role`. A `system` or `admin` scope keeps the payload as it is, because the code that uses it is trusted.
+When a user writes, the repository removes `ownerId`, `sharedWith`, `createdAt`, `createdBy`, `updatedAt`, `updatedBy`, `deletedAt`, `deletedBy`, `archivedAt`, `archivedBy` and `__v` from the payload, and fills them in itself with the user of the scope. In the users collection it also removes `role`, `marketing.drawNumber` and `acquisition.referrerCode`. A `system` or `admin` scope keeps the payload as it is, because the code that uses it is trusted.
 
 So `createUser` no longer has `sanitize`. Pass the scope that says who is creating the account:
 

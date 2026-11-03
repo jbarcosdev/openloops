@@ -10,7 +10,7 @@ This version breaks how the use cases authorize. Follow the [migration steps](do
 
 - `Scope`, exported from `openloops/base`. Every repository receives one and filters by owner in the same query that reads or writes, so a record that is not the user's is answered as not found (a 404 `HttpError`, `{}` in `getChatById`, `null` in the other getters). `Scope.canView`, `canEdit` and `canManage` take the `currentUser`, `Scope.asAdmin` fails with 403 when the user is not an admin, and `Scope.system(reason)` is for workers and flows without a user.
 - Every use case accepts `scope`, to override the one it builds from `currentUser`.
-- The repository removes the fields of control (`ownerId`, `sharedWith`, `createdAt`, `createdBy`, `updatedAt`, `updatedBy`, `deletedAt`, `deletedBy`, `archivedAt`, `archivedBy`, `__v`, and `role` in the users) from the payload of a user and fills them in itself. `createOne` returns the stored document, and there are `softDelete` and `createMany` with the same behavior.
+- The repository removes the fields of control (`ownerId`, `sharedWith`, `createdAt`, `createdBy`, `updatedAt`, `updatedBy`, `deletedAt`, `deletedBy`, `archivedAt`, `archivedBy`, `__v`, and `role`, `marketing.drawNumber` and `acquisition.referrerCode` in the users) from the payload of a user and fills them in itself. `createOne` returns the stored document, and there are `softDelete` and `createMany` with the same behavior.
 - `docs/authorization.md`.
 
 ### Changed
@@ -21,7 +21,7 @@ This version breaks how the use cases authorize. Follow the [migration steps](do
 - The hard delete is for `Scope.asAdmin` or `Scope.system`, and a user that asks for it gets 403.
 - Updating or deleting a record that does not exist or is not the user's answers a 404 `HttpError` and not a generic error.
 - `sharedWith` is a list of `{ userId, permission }`, where `permission` is `read`, `write` or `manage`, and not a list of ids. Nothing reads it yet.
-- `createUser` creates the account with the scope you pass, and keeps `role` only with a trusted scope.
+- `createUser` creates the account with the scope you pass, and keeps `role`, the draw number and the referrer code only with a trusted scope.
 
 ### Removed
 
