@@ -1,5 +1,6 @@
 import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { Scope } from '@common/repositories'
 import { BaseEntity } from '@common/base/base.entity'
 import { WorkspaceItemRepository } from '../repositories'
 
@@ -25,6 +26,8 @@ export class DeleteWorkspaceItemUseCase extends BaseUseCase<Params, Output> {
 		if (!chatId || !name) throw new Error('chatId and name are required')
 		if (!currentUser) this.throwError403()
 
+		const scope = params.scope ?? Scope.canManage(currentUser)
+
 		const existing = await this.workspaceItemRepository?.findByName(
 			{
 				ownerId: BaseEntity.toObjectId(currentUser?.userId),
@@ -32,12 +35,13 @@ export class DeleteWorkspaceItemUseCase extends BaseUseCase<Params, Output> {
 				taskId: BaseEntity.toObjectId(taskId),
 				name,
 			},
+			scope,
 			{ _id: 1 },
 		)
 
 		if (!existing?._id) return { data: { deletedCount: 0 } }
 
-		const deletedCount = await this.workspaceItemRepository?.deleteById(existing._id.toString())
+		const deletedCount = await this.workspaceItemRepository?.deleteById(existing._id.toString(), scope)
 
 		return { data: { deletedCount: deletedCount ?? 0 } }
 	}

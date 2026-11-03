@@ -1,5 +1,6 @@
 import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { Scope } from '@common/repositories'
 import { BaseEntity } from '@common/base/base.entity'
 import { WorkspaceItemRepository } from '../repositories'
 import { WorkspaceItem, WorkspaceItemProps } from '../entities'
@@ -30,25 +31,23 @@ export class SaveWorkspaceItemUseCase extends BaseUseCase<Params, Output> {
 		const item = WorkspaceItem.fromJSON({ ...payload })
 		item.refreshSize()
 
+		const scope = params.scope ?? Scope.canEdit(currentUser)
+
 		const existing = await this.workspaceItemRepository?.findByName(
 			{ ownerId, chatId: item.chatId!, taskId: item.taskId, name: item.name! },
+			scope,
 			{ _id: 1 },
 		)
 
 		if (existing?._id) {
 			item.setId(existing._id)
-			item.setUpdatedBy(currentUser)
-
-			const result = await this.workspaceItemRepository?.update(item)
-			if (!result) throw new Error('Workspace item update failed')
+			const result = await this.workspaceItemRepository?.update(item, scope)
+			if (!result) return this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' }) as any
 
 			return { data: result }
 		}
 
-		item.setCreatedBy(currentUser)
-		item.setOwner(currentUser)
-
-		const created = await this.workspaceItemRepository?.create(item)
+		const created = await this.workspaceItemRepository?.create(item, scope)
 
 		return { data: created!.toJSON() }
 	}

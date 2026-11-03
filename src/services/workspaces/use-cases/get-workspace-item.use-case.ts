@@ -1,5 +1,6 @@
 import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { Scope } from '@common/repositories'
 import { BaseEntity } from '@common/base/base.entity'
 import { WorkspaceItemRepository } from '../repositories'
 import { WorkspaceItemProps } from '../entities'
@@ -36,7 +37,7 @@ export class GetWorkspaceItemUseCase extends BaseUseCase<Params, Output> {
 		]
 
 		for (const lookup of lookups) {
-			const data = await this.workspaceItemRepository?.findByName(lookup, select)
+			const data = await this.workspaceItemRepository?.findByName(lookup, params.scope ?? Scope.canView(currentUser), select)
 			if (data) return { data }
 		}
 

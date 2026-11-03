@@ -12,6 +12,28 @@ function provide (token: unknown, value: unknown): void {
     container.register(token as any, { useValue: value })
 }
 
+const PROTECTED = ['__v', 'ownerId', 'sharedWith', 'createdAt', 'createdBy', 'updatedAt', 'updatedBy', 'deletedAt', 'deletedBy', 'archivedAt', 'archivedBy']
+
+function actorOf (scope: any): ObjectId | undefined {
+    return scope?.kind !== 'system' && scope?.userId ? new ObjectId(scope.userId) : undefined
+}
+
+function stampCreate (doc: Doc, scope: any): Doc {
+    if (!scope) return doc
+
+    const actor = actorOf(scope)
+    const base = scope.trusted ? doc : Object.fromEntries(Object.entries(doc).filter(([key]) => !PROTECTED.includes(key)))
+    return { ...base, ...(scope.trusted ? {} : { ownerId: actor }), createdAt: new Date(), ...(actor ? { createdBy: actor } : {}) }
+}
+
+function stampUpdate (doc: Doc, scope: any): Doc {
+    if (!scope) return doc
+
+    const actor = actorOf(scope)
+    const base = scope.trusted ? doc : Object.fromEntries(Object.entries(doc).filter(([key]) => !PROTECTED.includes(key)))
+    return { ...base, updatedAt: new Date(), ...(actor ? { updatedBy: actor } : {}) }
+}
+
 function clone<T> (value: T): T {
     if (value instanceof ObjectId) return new ObjectId(value.toHexString()) as T
     if (value instanceof Date) return new Date(value.getTime()) as T
@@ -169,87 +191,87 @@ export class MemoryDb {
         const db = this
 
         provide(ChatRepository, {
-            async create (chat: any) {
-                chat.setId(db.chats.insert(chat.toDocument()))
+            async create (chat: any, scope: any) {
+                chat.setId(db.chats.insert(stampCreate(chat.toDocument(), scope)))
                 return chat
             },
-            async update (chat: any) {
-                const json = chat.toJSON()
-                return db.chats.patch(chat._id, json, Object.keys(json.toUnset ?? {}), { merge: true })
+            async update (chat: any, scope: any) {
+                const json = stampUpdate(chat.toJSON(), scope)
+                return db.chats.patch(chat._id, json, Object.keys(chat.toJSON().toUnset ?? {}), { merge: true })
             },
-            async findById (id: string, select?: Doc) {
+            async findById (id: string, _scope: any, select?: Doc) {
                 return db.chats.findById(id, select)
             },
-            async deleteById (id: string) {
+            async deleteById (id: string, _scope: any) {
                 return db.chats.remove(id)
             },
-            async findByProps (where: Doc, options: Doc) {
+            async findByProps (where: Doc, options: Doc, _scope: any) {
                 return { items: db.chats.find(where, undefined, options), hasMore: false }
             },
         })
 
         provide(AgentTaskRepository, {
-            async create (task: any) {
-                task.setId(db.tasks.insert(task.toDocument()))
+            async create (task: any, scope: any) {
+                task.setId(db.tasks.insert(stampCreate(task.toDocument(), scope)))
                 return task
             },
-            async update (task: any) {
-                return db.tasks.patch(task._id, task.toDocument(), Object.keys(task.clearedFields))
+            async update (task: any, scope: any) {
+                return db.tasks.patch(task._id, stampUpdate(task.toDocument(), scope), Object.keys(task.clearedFields))
             },
-            async findById (id: string, select?: Doc) {
+            async findById (id: string, _scope: any, select?: Doc) {
                 return db.tasks.findById(id, select)
             },
-            async findByProps (where: Doc, options: Doc) {
+            async findByProps (where: Doc, options: Doc, _scope: any) {
                 return { items: db.tasks.find(where, undefined, options), hasMore: false }
             },
         })
 
         provide(AgentActionRepository, {
-            async create (action: any) {
-                action.setId(db.actions.insert(action.toDocument()))
+            async create (action: any, scope: any) {
+                action.setId(db.actions.insert(stampCreate(action.toDocument(), scope)))
                 return action
             },
-            async update (action: any) {
-                return db.actions.patch(action._id, action.toDocument(), Object.keys(action.clearedFields))
+            async update (action: any, scope: any) {
+                return db.actions.patch(action._id, stampUpdate(action.toDocument(), scope), Object.keys(action.clearedFields))
             },
-            async findByProps (where: Doc, options: Doc) {
+            async findByProps (where: Doc, options: Doc, _scope: any) {
                 return { items: db.actions.find(where, undefined, options), hasMore: false }
             },
         })
 
         provide(WorkspaceItemRepository, {
-            async create (item: any) {
-                item.setId(db.workspace.insert(item.toDocument()))
+            async create (item: any, scope: any) {
+                item.setId(db.workspace.insert(stampCreate(item.toDocument(), scope)))
                 return item
             },
-            async update (item: any) {
-                return db.workspace.patch(item._id, item.toDocument())
+            async update (item: any, scope: any) {
+                return db.workspace.patch(item._id, stampUpdate(item.toDocument(), scope))
             },
-            async findById (id: string, select?: Doc) {
+            async findById (id: string, _scope: any, select?: Doc) {
                 return db.workspace.findById(id, select)
             },
-            async findByName (lookup: Doc, select?: Doc) {
+            async findByName (lookup: Doc, _scope: any, select?: Doc) {
                 const { ownerId, chatId, taskId, name } = lookup
                 const rows = db.workspace.find({ ...(ownerId ? { ownerId } : {}), chatId, taskId: taskId ?? null, name }, select)
                 return rows[0] ?? null
             },
-            async findMany (where: Doc, select?: Doc, options?: Doc) {
+            async findMany (where: Doc, _scope: any, select?: Doc, options?: Doc) {
                 return db.workspace.find(where, select, options)
             },
-            async findManyPaginated (where: Doc, select?: Doc, options?: Doc) {
+            async findManyPaginated (where: Doc, _scope: any, select?: Doc, options?: Doc) {
                 return { items: db.workspace.find(where, select, options), hasMore: false }
             },
-            async deleteById (id: string) {
+            async deleteById (id: string, _scope: any) {
                 return db.workspace.remove(id)
             },
         })
 
         provide(AgentTraceRepository, {
-            async createMany (entries: any[]) {
-                entries.forEach(entry => db.traces.insert(entry.toDocument()))
+            async createMany (entries: any[], scope: any) {
+                entries.forEach(entry => db.traces.insert(stampCreate(entry.toDocument(), scope)))
                 return entries.length
             },
-            async findByProps (where: Doc, options: Doc) {
+            async findByProps (where: Doc, options: Doc, _scope: any) {
                 return { items: db.traces.find(where, undefined, options), hasMore: false }
             },
         })
