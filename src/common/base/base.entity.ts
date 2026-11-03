@@ -1,8 +1,7 @@
 import 'reflect-metadata'
 import { ObjectId } from 'bson'
-import { AdminOnly, handleMaskInLogs } from '@common/decorators'
+import { handleMaskInLogs } from '@common/decorators'
 import { sanitizeString } from '@common/helpers'
-import { CurrentUser } from '@common/base'
 import { deleteEmptyFields, flattenObject } from './utils'
 import { Share, ShareProps, createShares } from './share'
 
@@ -30,39 +29,28 @@ export interface Document extends BaseEntityProps {
 export class BaseEntity {
     _id?: ObjectId
 
-    @AdminOnly
     __v?: number
 
-    @AdminOnly
     ownerId?: ObjectId
 
-    @AdminOnly
     createdAt?: Date
 
-    @AdminOnly
     createdBy?: ObjectId
 
-    @AdminOnly
     updatedAt?: Date
 
-    @AdminOnly
     updatedBy?: ObjectId
 
-    @AdminOnly
     deletedAt?: Date
 
-    @AdminOnly
     deletedBy?: ObjectId
 
     deletedReason?: string
 
-    @AdminOnly
     archivedAt?: Date
 
-    @AdminOnly
     archivedBy?: ObjectId
 
-    @AdminOnly
     sharedWith?: Share[]
 
     public toUnset?: Record<string, unknown>
@@ -134,39 +122,6 @@ export class BaseEntity {
         this._id = BaseEntity.toObjectId(id)
     }
 
-    public setOwner (currentUser?: CurrentUser): void {
-        if (!currentUser) return
-        this.ownerId = BaseEntity.toObjectId(currentUser.userId)
-    }
-
-    public setCreatedBy (currentUser?: CurrentUser, sanitize = true): void {
-        if (sanitize) this.sanitize(currentUser)
-        this.createdAt = new Date()
-        this.createdBy = BaseEntity.toObjectId(currentUser?.userId)
-        this.setDefaults()
-    }
-
-    public setUpdatedBy (currentUser?: CurrentUser): void {
-        if (!currentUser) return
-        this.sanitize(currentUser)
-        this.updatedAt = new Date()
-        this.updatedBy = BaseEntity.toObjectId(currentUser.userId)
-    }
-
-    public setDeletedBy (currentUser?: CurrentUser): void {
-        if (!currentUser) return
-        this.sanitize(currentUser)
-        this.deletedAt = new Date()
-        this.deletedBy = BaseEntity.toObjectId(currentUser.userId)
-    }
-
-    public setArchivedBy (currentUser?: CurrentUser): void {
-        if (!currentUser) return
-        this.sanitize(currentUser)
-        this.archivedAt = new Date()
-        this.archivedBy = BaseEntity.toObjectId(currentUser.userId)
-    }
-
     public toDocument (): Document {
         return deleteEmptyFields(this.toJSON())
     }
@@ -195,14 +150,4 @@ export class BaseEntity {
         })
     }
 
-    private sanitize (currentUser?: CurrentUser): void {
-        if (!currentUser?.isAdmin()) {
-            for (const key in this) {
-                const isAdminOnly = Reflect.getMetadata('adminOnly', this.constructor.prototype, key)
-                if (isAdminOnly) {
-                    delete this[key]
-                }
-            }
-        }
-    }
 }

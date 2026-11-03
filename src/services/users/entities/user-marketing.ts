@@ -1,4 +1,3 @@
-import { AdminOnly } from '@common/decorators'
 import { sanitizeString } from '@common/helpers'
 
 export interface UserMarketingProps {
@@ -6,7 +5,6 @@ export interface UserMarketingProps {
 }
 
 export class UserMarketing {
-	@AdminOnly
 	public readonly drawNumber?: string
 
 	constructor (drawNumber?: string) {
