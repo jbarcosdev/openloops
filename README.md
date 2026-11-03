@@ -1,6 +1,6 @@
 # openloops
 
-**Build production-grade enterprise agents in minutes, not days, weeks, or months.**
+**Build production-grade enterprise agents in minutes, not days, weeks, or months.** · [openloops.xyz](https://openloops.xyz)
 
 `openloops` is an open source **harness** for AI agents. An agent is three things: a **model** that thinks (the engine), a **harness** that gives it hands, memory and rules (the chassis), and a **loop** that decides what it is for (the body). `openloops` is the harness, and it ships the loop. Change the model, or the loop, and the rest stays the same.
 
