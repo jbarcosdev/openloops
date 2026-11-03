@@ -1,5 +1,7 @@
 # Authorization
 
+> **Breaking change.** Since this version every call that creates, reads or writes a record needs the `currentUser`, or a `scope` you build yourself. The calls that worked without one, or that created a record for the user in the payload, now fail with 401. Read [what changes when you create records](#creating-records) and the [migration steps](#migrating-from-05).
+
 Every use case that reads or writes a record of a user checks who owns it. The check is not in a controller, it is in the repository, inside the same query that reads or writes the record, so it does not cost an extra read and cannot be forgotten.
 
 ## The scope
@@ -24,6 +26,23 @@ await deleteChat({ id, currentUser, scope: Scope.asAdmin(currentUser) })
 
 Every use case accepts `scope`. Use it only from code you wrote, never from a value that comes from a request.
 
+## Creating records
+
+Every `create...` use case (`createChat`, `createMcpServer`, `createAutomation`, `createUser`, `createLLMCall`, `createAgentTask`, `createAgentAction`, `createAgentTraces`, `saveWorkspaceItem`) now takes the owner and the author from the scope, not from the payload:
+
+- With a user scope, the new record belongs to the `currentUser`. `ownerId`, `createdBy`, `createdAt` and the other fields of control are set by the repository, and the ones you put in the payload are discarded. You cannot create a record for another user by sending his `ownerId`.
+- To create a record for someone else, or without a user (a sign up, a webhook, a worker), pass a trusted scope: `Scope.system('reason')` or `Scope.asAdmin(currentUser)`. The payload is kept as you send it, and `ownerId` is the one you send. With `system` there is no `createdBy`, unless you send it.
+- Without `currentUser` and without `scope` the call fails with 401. Before, `createChat` and the others created the record without an owner.
+- The record that returns has its `_id`, `ownerId`, `createdAt` and `createdBy`.
+
+```typescript
+await createChat({ payload, currentUser })
+
+await createUser({ payload, scope: Scope.system('sign up') })
+
+await createAutomation({ payload: { ...payload, ownerId: otherUserId }, scope: Scope.asAdmin(currentUser) })
+```
+
 ## What changes in your endpoints
 
 - A record that is not the user's is answered as if it did not exist. The functions that update or delete throw a 404 `HttpError` with the message `{{resource_not_found}}`, `getChatById` returns `{}` in `data`, and the other getters return `null` or throw the same 404. Nobody can learn that an id exists by getting a 403.
@@ -46,6 +65,7 @@ await createUser({ payload, scope: Scope.system('sign up') })
 
 ## Migrating from 0.5
 
+- Pass `currentUser`, or a `scope`, to every call that creates, reads or writes. The ones that did not need it before are `getAutomationById`, `listAutomationRunsByAutomation`, `startAutomationRun` and `runner.runNow`. The `create` ones are described in [creating records](#creating-records).
 - Pass `currentUser` to `getAutomationById`, `listAutomationRunsByAutomation`, `startAutomationRun` and `runner.runNow`. They did not need it before.
 - Replace `sanitize: false` in `createUser` with a `scope`, as shown above.
 - Where an admin used to act on the record of another user, pass `scope: Scope.asAdmin(currentUser)`.

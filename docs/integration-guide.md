@@ -43,7 +43,7 @@ The use cases check who owns every record, in the repository, with the `currentU
 | Receive an event from another system | `receiveAutomationEvent`, public endpoint, authenticated only by the token of the automation |
 | Tokens of an event automation | `issueAutomationEventToken`, `revokeAutomationEventToken`, `rotateAutomationEventTokens` |
 | History of runs | `listAutomationRunsByAutomation`, `listAutomationRunsByUser` |
-| "Run now" | `runner.runNow({ automationId })` |
+| "Run now" | `runner.runNow({ automationId, currentUser })` |
 | Sign in, users | `login`, `createUser`, `getUserById`, `updateUser`, `deleteUser` |
 
 ## Running the agent for a message

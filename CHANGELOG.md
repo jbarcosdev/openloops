@@ -4,7 +4,7 @@ All notable changes to `openloops` are written here, newest first. The format fo
 
 ## Unreleased
 
-This version breaks how the use cases authorize. Follow the [migration steps](docs/authorization.md#migrating-from-05) when you update.
+This version breaks the API of the use cases. They need the `currentUser` or a `scope` in every call, creating a record takes its owner from the scope and not from the payload, and the ownership of the records is checked by the repository. Follow the [migration steps](docs/authorization.md#migrating-from-05) when you update.
 
 ### Added
 
@@ -15,6 +15,7 @@ This version breaks how the use cases authorize. Follow the [migration steps](do
 
 ### Changed
 
+- **Creating records.** `createChat`, `createMcpServer`, `createAutomation`, `createUser`, `createLLMCall`, `createAgentTask`, `createAgentAction`, `createAgentTraces` and `saveWorkspaceItem` set the owner and the author from the scope. A user scope ignores the `ownerId` and the other fields of control of the payload, and a record cannot be created without a `currentUser` or a `scope` (401). To create a record for another user, or without a user, pass `Scope.asAdmin(currentUser)` or `Scope.system(reason)`. See [creating records](docs/authorization.md#creating-records).
 - `getAutomationById`, `listAutomationRunsByAutomation`, `startAutomationRun` and `runner.runNow` need the `currentUser` and only reach the automations of that user. `runner.runNow` also accepts `scope`.
 - A call without `currentUser` and without `scope` fails with 401.
 - `issueAutomationEventToken`, `revokeAutomationEventToken` and `rotateAutomationEventTokens` are for the owner, and an admin needs `Scope.asAdmin`. They answer 404, not 403, to anyone else.

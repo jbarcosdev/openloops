@@ -245,7 +245,7 @@ A revoked token is checked after its signature, so an invalid token never reache
 Every execution is a run.
 
 ```typescript
-const byAutomation = await listAutomationRunsByAutomation({ automationId, options: { page: 1, limit: 20 } })
+const byAutomation = await listAutomationRunsByAutomation({ automationId, options: { page: 1, limit: 20 }, currentUser })
 
 const byUser = await listAutomationRunsByUser({ status: 'failed', currentUser })
 ```
