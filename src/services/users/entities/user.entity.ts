@@ -1,7 +1,6 @@
 import { MaskInLogs } from '@common/decorators'
 import { getCurrency } from 'iso-data'
 import { BaseEntity, BaseEntityProps } from '@common/base/base.entity'
-import { sanitizeString } from '@common/helpers'
 import { UserPassword } from './user-password.value-object'
 import { UserEmail } from './user-email.value-object'
 import { UserPreferences, UserPreferencesProps } from './user-preferences'
@@ -55,11 +54,11 @@ export class User extends BaseEntity {
 	static fromJSON (json: UserProps) {
 		return new User(
 			json,
-			sanitizeString(json.firstName),
-			sanitizeString(json.lastName),
+			BaseEntity.toText(json.firstName),
+			BaseEntity.toText(json.lastName),
 			UserEmail.create(json.email),
 			json.password,
-			sanitizeString(json.role) as UserRole,
+			BaseEntity.toText(json.role) as UserRole,
 			json.acquisition && UserAcquisition.fromJSON(json.acquisition),
 			json.marketing && UserMarketing.fromJSON(json.marketing),
 			json.preferences && UserPreferences.fromJSON(json.preferences),
@@ -99,7 +98,7 @@ export class User extends BaseEntity {
 	}
 
 	get fullName (): string {
-		return `${this.firstName} ${this.lastName}`
+		return [this.firstName, this.lastName].filter(Boolean).join(' ')
 	}
 
 	public async verifyPassword (password: string) : Promise<boolean> {

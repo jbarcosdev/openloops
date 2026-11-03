@@ -1,5 +1,5 @@
 import { getCountry } from 'iso-data'
-import { sanitizeString } from '@common/helpers'
+import { BaseEntity } from '@common/base/base.entity'
 
 export interface CountryProps {
 	isoCode?: string
@@ -14,7 +14,7 @@ export class Country {
 	}
 
 	static fromJSON (props: CountryProps): Country {
-		return new Country(sanitizeString(props.isoCode))
+		return new Country(BaseEntity.toText(props.isoCode))
 	}
 
 	toJSON (): CountryProps {

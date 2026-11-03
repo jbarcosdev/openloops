@@ -1,4 +1,4 @@
-import { sanitizeString } from '@common/helpers'
+import { BaseEntity } from '@common/base/base.entity'
 
 export interface CurrencyProps {
 	isoCode?: string
@@ -14,7 +14,7 @@ export class Currency {
 	) {}
 
 	static fromJSON (props: CurrencyProps): Currency {
-		return new Currency(sanitizeString(props.isoCode), sanitizeString(props.label), sanitizeString(props.symbol))
+		return new Currency(BaseEntity.toText(props.isoCode), BaseEntity.toText(props.label), BaseEntity.toText(props.symbol))
 	}
 
 	toJSON (): CurrencyProps {

@@ -1,4 +1,4 @@
-import { sanitizeString } from '@common/helpers'
+import { BaseEntity } from '@common/base/base.entity'
 import { getLanguage } from 'iso-data'
 
 export interface LanguageProps {
@@ -14,7 +14,7 @@ export class Language {
 	}
 
 	static fromJSON (props: LanguageProps): Language {
-		return new Language(sanitizeString(props.isoCode))
+		return new Language(BaseEntity.toText(props.isoCode))
 	}
 
 	toJSON (): LanguageProps {

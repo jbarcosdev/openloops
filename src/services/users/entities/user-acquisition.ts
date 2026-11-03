@@ -1,4 +1,4 @@
-import { sanitizeString } from '@common/helpers'
+import { BaseEntity } from '@common/base/base.entity'
 
 export type UserPlatform = 'ios' | 'android' | 'web'
 
@@ -18,7 +18,7 @@ export class UserAcquisition {
 	}
 
 	static fromJSON (props: UserAcquisitionProps): UserAcquisition {
-		return new UserAcquisition(sanitizeString(props.platform) as UserPlatform, sanitizeString(props.referrerCode))
+		return new UserAcquisition(BaseEntity.toText(props.platform) as UserPlatform, BaseEntity.toText(props.referrerCode))
 	}
 
 	toJSON (): UserAcquisitionProps {

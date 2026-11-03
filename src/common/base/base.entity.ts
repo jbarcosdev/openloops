@@ -1,6 +1,7 @@
 import 'reflect-metadata'
 import { ObjectId } from 'bson'
 import { handleMaskInLogs } from '@common/decorators'
+import { HttpError } from '@common/error'
 import { sanitizeString } from '@common/helpers'
 import { deleteEmptyFields, flattenObject } from './utils'
 import { Share, ShareProps, createShares } from './share'
@@ -62,6 +63,12 @@ export class BaseEntity {
         return new ObjectId(id)
     }
 
+    public static toText (value?: string): string | undefined {
+        if (value === undefined || value === null) return undefined
+        if (typeof value !== 'string') throw new HttpError({ statusCode: 400, errorMessage: '{{value_must_be_a_string}}' })
+        return sanitizeString(value.trim())
+    }
+
     private static toDate (value?: string | Date): Date | undefined {
         if (!value) return undefined
         const date = new Date(value)
@@ -89,7 +96,7 @@ export class BaseEntity {
         this.updatedBy = BaseEntity.toObjectId(props.updatedBy)
         this.deletedAt = BaseEntity.toDate(props.deletedAt)
         this.deletedBy = BaseEntity.toObjectId(props.deletedBy)
-        this.deletedReason = sanitizeString(props.deletedReason)
+        this.deletedReason = BaseEntity.toText(props.deletedReason)
         this.archivedAt = BaseEntity.toDate(props.archivedAt)
         this.archivedBy = BaseEntity.toObjectId(props.archivedBy)
         this.sharedWith = createShares(props.sharedWith)

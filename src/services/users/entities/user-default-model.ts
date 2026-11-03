@@ -1,4 +1,4 @@
-import { sanitizeString } from '@common/helpers'
+import { BaseEntity } from '@common/base/base.entity'
 
 export interface DefaultModelProps {
 	provider?: string
@@ -9,7 +9,7 @@ export class DefaultModel {
 	constructor (public provider?: string, public model?: string) {}
 
 	static fromJSON (props: DefaultModelProps): DefaultModel {
-		return new DefaultModel(sanitizeString(props.provider), sanitizeString(props.model))
+		return new DefaultModel(BaseEntity.toText(props.provider), BaseEntity.toText(props.model))
 	}
 
 	toJSON (): DefaultModelProps {

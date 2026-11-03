@@ -1,4 +1,4 @@
-import { sanitizeString } from '@common/helpers'
+import { BaseEntity } from '@common/base/base.entity'
 import { getTimezone } from 'iso-data'
 
 export interface TimezoneProps {
@@ -8,7 +8,7 @@ export interface TimezoneProps {
 
 export class Timezone {
     static fromJSON (props: TimezoneProps): Timezone {
-		return new Timezone(sanitizeString(props.ianaIdentifier))
+		return new Timezone(BaseEntity.toText(props.ianaIdentifier))
 	}
 
 	constructor (public ianaIdentifier?: string) {}

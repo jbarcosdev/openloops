@@ -1,4 +1,4 @@
-import { sanitizeString } from '@common/helpers'
+import { BaseEntity } from '@common/base/base.entity'
 
 export interface UserMarketingProps {
 	drawNumber?: string
@@ -12,7 +12,7 @@ export class UserMarketing {
 	}
 
 	static fromJSON (props: UserMarketingProps): UserMarketing {
-		return new UserMarketing(sanitizeString(props.drawNumber))
+		return new UserMarketing(BaseEntity.toText(props.drawNumber))
 	}
 
 	toJSON (): UserMarketingProps {
