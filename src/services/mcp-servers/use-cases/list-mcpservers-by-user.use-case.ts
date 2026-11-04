@@ -1,5 +1,5 @@
 import { ObjectId } from 'mongodb'
-import { QueryOptions } from '@common/repositories'
+import { QueryOptions, Scope } from '@common/repositories'
 import { BaseUseCase, BaseUseCaseParams } from '@common/base/base.use-case'
 import { McpServerRepository } from '../repositories'
 import { McpServerProps } from '../entities'
@@ -24,6 +24,7 @@ export class ListMcpServersByUserUseCase extends BaseUseCase<Params, Output> {
 		const { page = 1, limit: pageSize = 10 } = options || {}
 
 		const result = await this.mcpServerRepository._.findManyPaginated({
+			scope: params.scope ?? Scope.canView(currentUser),
 			where: { 
 				ownerId: new ObjectId(currentUser?.userId),
 			},
