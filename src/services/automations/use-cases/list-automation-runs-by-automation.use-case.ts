@@ -1,4 +1,3 @@
-import { autoInjectable, inject } from 'tsyringe'
 import { ObjectId } from 'mongodb'
 import { QueryOptions, Scope } from '@common/repositories'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
@@ -15,9 +14,8 @@ export interface Output extends BaseUseCaseOutput {
 	hasMore?: boolean
 }
 
-@autoInjectable()
 export class ListAutomationRunsByAutomationUseCase extends BaseUseCase<Params, Output> {
-	constructor (@inject(AutomationRunRepository) private readonly automationRunRepository?: AutomationRunRepository) {
+	constructor (private readonly automationRunRepository = new AutomationRunRepository()) {
 		super()
 	}
 
@@ -26,7 +24,7 @@ export class ListAutomationRunsByAutomationUseCase extends BaseUseCase<Params, O
 		if (!automationId) throw new Error('Missing automationId')
 
 		const { page = 1, limit = 10, sortBy = { createdAt: -1 } } = options || {}
-		const result = await this.automationRunRepository?._.findManyPaginated({
+		const result = await this.automationRunRepository._.findManyPaginated({
 			scope: params.scope ?? Scope.canView(currentUser),
 			where: { automationId: new ObjectId(automationId) },
 			options: { page, limit, sortBy },

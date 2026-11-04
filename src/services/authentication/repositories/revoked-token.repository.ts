@@ -1,9 +1,7 @@
-import { autoInjectable } from 'tsyringe'
 import { MongoRepository, Scope } from '@common/repositories'
 import { getDatabaseName } from '@common/utils/database-name'
 import { RevokedToken, RevokedTokenProps } from '../entities'
 
-@autoInjectable()
 export class RevokedTokenRepository {
 	public readonly _ = new MongoRepository<RevokedTokenProps>({
 		database: getDatabaseName(),

@@ -1,3 +1,4 @@
+import 'reflect-metadata'
 import { isPlainObject } from "@common/base/utils"
 
 const METADATA_KEY = "maskInLogs"

@@ -1,10 +1,8 @@
-import { autoInjectable } from 'tsyringe'
 import { ObjectId } from 'mongodb'
 import { MongoRepository, QueryOptions, Scope } from '@common/repositories'
 import { getDatabaseName } from '@common/utils/database-name'
 import { McpServer, McpServerProps } from '../entities'
 
-@autoInjectable()
 export class McpServerRepository {
 	public readonly _ = new MongoRepository<McpServerProps>({
 		database: getDatabaseName(),

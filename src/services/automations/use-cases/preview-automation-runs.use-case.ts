@@ -1,4 +1,3 @@
-import { autoInjectable } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
 import { validateRecurrence } from '../entities'
 import { assertTimezone, previewNextRuns } from '../utils/next-run'
@@ -16,7 +15,6 @@ export interface Output extends BaseUseCaseOutput {
 	data: { runs: Date[] }
 }
 
-@autoInjectable()
 export class PreviewAutomationRunsUseCase extends BaseUseCase<Params, Output> {
 	async execute (params: Params): Promise<Output> {
 		const recurrence = validateRecurrence(params.recurrence)

@@ -1,9 +1,7 @@
-import { autoInjectable } from 'tsyringe'
 import { MongoRepository, QueryOptions, Scope } from '@common/repositories'
 import { getDatabaseName } from '@common/utils/database-name'
 import { LLMCall, LLMCallProps } from '../entities'
 
-@autoInjectable()
 export class LLMCallRepository {
 	public readonly _ = new MongoRepository<LLMCallProps>({
 		database: getDatabaseName(),

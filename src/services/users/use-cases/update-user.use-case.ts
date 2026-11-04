@@ -1,4 +1,3 @@
-import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
 import { Scope } from '@common/repositories'
 import { UserRepository } from '../repositories'
@@ -14,9 +13,8 @@ export interface Output extends BaseUseCaseOutput {
 	data: UserProps
 }
 
-@autoInjectable()
 export class UpdateUserUseCase extends BaseUseCase<Params, Output> {
-	constructor (@inject(UserRepository) private readonly userRepository?: UserRepository) {
+	constructor (private readonly userRepository = new UserRepository()) {
 		super()
 	}
 
@@ -35,7 +33,7 @@ export class UpdateUserUseCase extends BaseUseCase<Params, Output> {
 
 		this.logger.info(`Updating user: ${user.stringify()}`)
 
-		const result = await this.userRepository?.update(user, params.scope ?? Scope.canEdit(currentUser))
+		const result = await this.userRepository.update(user, params.scope ?? Scope.canEdit(currentUser))
 
 		if (!result) return this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' }) as any
 

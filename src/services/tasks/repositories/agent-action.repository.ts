@@ -1,9 +1,7 @@
-import { autoInjectable } from 'tsyringe'
 import { MongoRepository, QueryOptions, Scope } from '@common/repositories'
 import { getDatabaseName } from '@common/utils/database-name'
 import { AgentAction, AgentActionProps } from '../entities'
 
-@autoInjectable()
 export class AgentActionRepository {
 	public readonly _ = new MongoRepository<AgentActionProps>({
 		database: getDatabaseName(),

@@ -1,4 +1,3 @@
-import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
 import { AutomationRun, AutomationRunProps } from '../entities'
 import { AutomationRunRepository } from '../repositories'
@@ -13,9 +12,8 @@ export interface Output extends BaseUseCaseOutput {
 	data: AutomationRunProps | null
 }
 
-@autoInjectable()
 export class AttachAutomationRunChatUseCase extends BaseUseCase<Params, Output> {
-	constructor (@inject(AutomationRunRepository) private readonly automationRunRepository?: AutomationRunRepository) {
+	constructor (private readonly automationRunRepository = new AutomationRunRepository()) {
 		super()
 	}
 

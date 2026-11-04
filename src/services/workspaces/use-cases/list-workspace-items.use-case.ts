@@ -1,4 +1,3 @@
-import { autoInjectable, inject } from 'tsyringe'
 import { QueryOptions, Scope } from '@common/repositories'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
 import { BaseEntity } from '@common/base/base.entity'
@@ -19,9 +18,8 @@ export interface Output extends BaseUseCaseOutput {
 	hasMore?: boolean
 }
 
-@autoInjectable()
 export class ListWorkspaceItemsUseCase extends BaseUseCase<Params, Output> {
-	constructor (@inject(WorkspaceItemRepository) private readonly workspaceItemRepository?: WorkspaceItemRepository) {
+	constructor (private readonly workspaceItemRepository = new WorkspaceItemRepository()) {
 		super()
 	}
 
@@ -38,7 +36,7 @@ export class ListWorkspaceItemsUseCase extends BaseUseCase<Params, Output> {
 			...(kind ? { kind } : {}),
 		}
 
-		const result = await this.workspaceItemRepository?.findManyPaginated(
+		const result = await this.workspaceItemRepository.findManyPaginated(
 			where,
 			params.scope ?? Scope.canView(currentUser),
 			{ content: 0 },

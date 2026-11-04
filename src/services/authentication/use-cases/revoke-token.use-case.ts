@@ -1,4 +1,3 @@
-import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
 import { RevokedToken, RevokedTokenProps } from '../entities'
 import { RevokedTokenRepository } from '../repositories'
@@ -12,9 +11,8 @@ export interface Output extends BaseUseCaseOutput {
 	data: RevokedTokenProps
 }
 
-@autoInjectable()
 export class RevokeTokenUseCase extends BaseUseCase<Params, Output> {
-	constructor (@inject(RevokedTokenRepository) private readonly revokedTokenRepository?: RevokedTokenRepository) {
+	constructor (private readonly revokedTokenRepository = new RevokedTokenRepository()) {
 		super()
 	}
 

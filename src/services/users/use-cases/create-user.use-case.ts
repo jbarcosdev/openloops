@@ -1,4 +1,3 @@
-import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
 import { Scope } from '@common/repositories'
 import { UserRepository } from '../repositories'
@@ -13,9 +12,8 @@ export interface Output extends BaseUseCaseOutput {
 	data: UserProps
 }
 
-@autoInjectable()
 export class CreateUserUseCase extends BaseUseCase<Params, Output> {
-	constructor (@inject(UserRepository) private readonly userRepository?: UserRepository) {
+	constructor (private readonly userRepository = new UserRepository()) {
 		super()
 	}
 
@@ -28,7 +26,7 @@ export class CreateUserUseCase extends BaseUseCase<Params, Output> {
 
 		const user = await User.create({ ...payload, ...(payload.preferences ? { preferences: model!.preferences } : {}) })
 
-		await this.userRepository?.create(user, params.scope ?? Scope.canEdit(currentUser))
+		await this.userRepository.create(user, params.scope ?? Scope.canEdit(currentUser))
 
 		const { password, ...rest } = user.toJSON()
 

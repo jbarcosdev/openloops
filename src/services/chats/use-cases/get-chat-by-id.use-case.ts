@@ -1,4 +1,3 @@
-import { autoInjectable, inject } from 'tsyringe'
 import { QueryParams, Scope } from '@common/repositories'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
 import { ChatRepository } from '../repositories'
@@ -15,15 +14,14 @@ export interface Output extends BaseUseCaseOutput {
 	data: ChatProps | null
 }
 
-@autoInjectable()
 export class GetChatByIdUseCase extends BaseUseCase<Params, Output> {
-	constructor (@inject(ChatRepository) private readonly chatRepository?: ChatRepository) {
+	constructor (private readonly chatRepository = new ChatRepository()) {
 		super()
 	}
 
 	async execute (params: Params): Promise<Output> {
 		const { id, select, currentUser } = params
-		const data = await this.chatRepository?.findById(id, params.scope ?? Scope.canView(currentUser), select) || {}
+		const data = await this.chatRepository.findById(id, params.scope ?? Scope.canView(currentUser), select) || {}
 
 		if (data.state?.status === AgentStatus.PROCESSING) data.state.currentActivity = deprecatedActivity(id)
 

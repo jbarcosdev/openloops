@@ -1,4 +1,3 @@
-import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
 import { Scope } from '@common/repositories'
 import { AgentTaskRepository } from '../repositories'
@@ -12,9 +11,8 @@ export interface Output extends BaseUseCaseOutput {
 	data: AgentTaskProps | null | undefined
 }
 
-@autoInjectable()
 export class CreateAgentTaskUseCase extends BaseUseCase<Params, Output> {
-	constructor (@inject(AgentTaskRepository) private readonly agentTaskRepository?: AgentTaskRepository) {
+	constructor (private readonly agentTaskRepository = new AgentTaskRepository()) {
 		super()
 	}
 
@@ -25,7 +23,7 @@ export class CreateAgentTaskUseCase extends BaseUseCase<Params, Output> {
 
 		const task = AgentTask.fromJSON({ ...payload })
 
-		const result = await this.agentTaskRepository?.create(task, params.scope ?? Scope.canEdit(currentUser))
+		const result = await this.agentTaskRepository.create(task, params.scope ?? Scope.canEdit(currentUser))
 
 		return { data: result?.toJSON() }
 	}

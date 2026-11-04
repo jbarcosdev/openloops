@@ -1,4 +1,3 @@
-import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
 import { Scope } from '@common/repositories'
 import { ChatRepository } from '../repositories'
@@ -13,9 +12,8 @@ export interface Output extends BaseUseCaseOutput {
 	data: ChatProps
 }
 
-@autoInjectable()
 export class UpdateChatUseCase extends BaseUseCase<Params, Output> {
-	constructor (@inject(ChatRepository) private readonly chatRepository?: ChatRepository) {
+	constructor (private readonly chatRepository = new ChatRepository()) {
 		super()
 	}
 
@@ -38,7 +36,7 @@ export class UpdateChatUseCase extends BaseUseCase<Params, Output> {
 			if (fields.length) chat.unset(fields as (keyof Chat)[])
 		}
 
-		const result = await this.chatRepository?.update(chat, params.scope ?? Scope.canEdit(currentUser))
+		const result = await this.chatRepository.update(chat, params.scope ?? Scope.canEdit(currentUser))
 
 		if (!result) return this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' }) as any
 

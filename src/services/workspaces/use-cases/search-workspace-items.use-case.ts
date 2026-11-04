@@ -1,4 +1,3 @@
-import { autoInjectable, inject } from 'tsyringe'
 import { QueryOptions, Scope } from '@common/repositories'
 import { escapeRegex } from '@common/helpers'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
@@ -21,9 +20,8 @@ export interface Output extends BaseUseCaseOutput {
 	hasMore?: boolean
 }
 
-@autoInjectable()
 export class SearchWorkspaceItemsUseCase extends BaseUseCase<Params, Output> {
-	constructor (@inject(WorkspaceItemRepository) private readonly workspaceItemRepository?: WorkspaceItemRepository) {
+	constructor (private readonly workspaceItemRepository = new WorkspaceItemRepository()) {
 		super()
 	}
 
@@ -44,7 +42,7 @@ export class SearchWorkspaceItemsUseCase extends BaseUseCase<Params, Output> {
 			$or: [{ name: pattern }, { description: pattern }],
 		}
 
-		const result = await this.workspaceItemRepository?.findManyPaginated(
+		const result = await this.workspaceItemRepository.findManyPaginated(
 			where,
 			params.scope ?? Scope.canView(currentUser),
 			{ content: 0 },

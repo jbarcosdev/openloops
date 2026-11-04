@@ -1,4 +1,3 @@
-import 'reflect-metadata'
 import { ObjectId } from 'bson'
 import { handleMaskInLogs } from '@common/decorators'
 import { HttpError } from '@common/error'

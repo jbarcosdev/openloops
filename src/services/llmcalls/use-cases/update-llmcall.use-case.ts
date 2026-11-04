@@ -1,4 +1,3 @@
-import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
 import { Scope } from '@common/repositories'
 import { LLMCallRepository } from '../repositories'
@@ -13,9 +12,8 @@ export interface Output extends BaseUseCaseOutput {
 	data: LLMCallProps
 }
 
-@autoInjectable()
 export class UpdateLLMCallUseCase extends BaseUseCase<Params, Output> {
-	constructor (@inject(LLMCallRepository) private readonly llmCallRepository?: LLMCallRepository) {
+	constructor (private readonly llmCallRepository = new LLMCallRepository()) {
 		super()
 	}
 
@@ -30,7 +28,7 @@ export class UpdateLLMCallUseCase extends BaseUseCase<Params, Output> {
 
 		this.logger.info(`Updating LLMCall: ${llmCall.stringify()}`)
 
-		const result = await this.llmCallRepository?.update(llmCall, params.scope ?? Scope.canEdit(currentUser))
+		const result = await this.llmCallRepository.update(llmCall, params.scope ?? Scope.canEdit(currentUser))
 
 		if (!result) return this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' }) as any
 

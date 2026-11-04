@@ -1,4 +1,3 @@
-import 'reflect-metadata'
 import { ObjectId } from 'mongodb'
 import { Logger } from '@common/logger'
 import { CurrentUser, CurrentSession } from '@common/base'

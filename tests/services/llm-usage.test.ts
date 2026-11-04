@@ -1,4 +1,3 @@
-import 'reflect-metadata'
 import { ObjectId } from 'mongodb'
 import { GetLLMUsageByMessageUseCase } from '@services/llmcalls/use-cases/get-llm-usage-by-message.use-case'
 import { GetLLMUsageByChatUseCase } from '@services/llmcalls/use-cases/get-llm-usage-by-chat.use-case'

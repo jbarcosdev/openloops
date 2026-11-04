@@ -1,5 +1,3 @@
-import 'reflect-metadata'
-import { container } from 'tsyringe'
 import { CreateAutomationUseCase, Params as CParams, Output as COutput } from './use-cases/create-automation.use-case'
 import { UpdateAutomationUseCase, Params as UParams, Output as UOutput } from './use-cases/update-automation.use-case'
 import { GetAutomationByIdUseCase, Params as GParams, Output as GOutput } from './use-cases/get-automation-by-id.use-case'
@@ -22,101 +20,101 @@ import { ReceiveAutomationEventUseCase, Params as REParams, Output as REOutput }
 import { ClaimQueuedAutomationRunsUseCase, Params as CQParams, Output as CQOutput } from './use-cases/claim-queued-automation-runs.use-case'
 
 export async function createAutomation (props: CParams): Promise<COutput> {
-    const createAutomationUseCase = container.resolve(CreateAutomationUseCase)
+    const createAutomationUseCase = new CreateAutomationUseCase()
     return createAutomationUseCase.execute(props)
 }
 
 export async function updateAutomation (props: UParams): Promise<UOutput> {
-    const updateAutomationUseCase = container.resolve(UpdateAutomationUseCase)
+    const updateAutomationUseCase = new UpdateAutomationUseCase()
     return updateAutomationUseCase.execute(props)
 }
 
 export async function getAutomationById (props: GParams): Promise<GOutput> {
-    const getAutomationByIdUseCase = container.resolve(GetAutomationByIdUseCase)
+    const getAutomationByIdUseCase = new GetAutomationByIdUseCase()
     return getAutomationByIdUseCase.execute(props)
 }
 
 export async function listAutomationsByUser (props: LParams): Promise<LOutput> {
-    const listAutomationsByUserUseCase = container.resolve(ListAutomationsByUserUseCase)
+    const listAutomationsByUserUseCase = new ListAutomationsByUserUseCase()
     return listAutomationsByUserUseCase.execute(props)
 }
 
 export async function deleteAutomation (props: DParams): Promise<DOutput> {
-    const deleteAutomationUseCase = container.resolve(DeleteAutomationUseCase)
+    const deleteAutomationUseCase = new DeleteAutomationUseCase()
     return deleteAutomationUseCase.execute(props)
 }
 
 export async function previewAutomationRuns (props: PParams): Promise<POutput> {
-    const previewAutomationRunsUseCase = container.resolve(PreviewAutomationRunsUseCase)
+    const previewAutomationRunsUseCase = new PreviewAutomationRunsUseCase()
     return previewAutomationRunsUseCase.execute(props)
 }
 
 export async function listAutomationRunsByAutomation (props: RJParams): Promise<RJOutput> {
-    const listAutomationRunsByAutomationUseCase = container.resolve(ListAutomationRunsByAutomationUseCase)
+    const listAutomationRunsByAutomationUseCase = new ListAutomationRunsByAutomationUseCase()
     return listAutomationRunsByAutomationUseCase.execute(props)
 }
 
 export async function listAutomationRunsByUser (props: RUParams): Promise<RUOutput> {
-    const listAutomationRunsByUserUseCase = container.resolve(ListAutomationRunsByUserUseCase)
+    const listAutomationRunsByUserUseCase = new ListAutomationRunsByUserUseCase()
     return listAutomationRunsByUserUseCase.execute(props)
 }
 
 export async function claimDueAutomations (props: CDParams): Promise<CDOutput> {
-    const claimDueAutomationsUseCase = container.resolve(ClaimDueAutomationsUseCase)
+    const claimDueAutomationsUseCase = new ClaimDueAutomationsUseCase()
     return claimDueAutomationsUseCase.execute(props)
 }
 
 export async function startAutomationRun (props: SRParams): Promise<SROutput> {
-    const startAutomationRunUseCase = container.resolve(StartAutomationRunUseCase)
+    const startAutomationRunUseCase = new StartAutomationRunUseCase()
     return startAutomationRunUseCase.execute(props)
 }
 
 export async function finishAutomationRun (props: FRParams): Promise<FROutput> {
-    const finishAutomationRunUseCase = container.resolve(FinishAutomationRunUseCase)
+    const finishAutomationRunUseCase = new FinishAutomationRunUseCase()
     return finishAutomationRunUseCase.execute(props)
 }
 
 export async function syncAutomationRun (props: SYParams): Promise<SYOutput> {
-    const syncAutomationRunUseCase = container.resolve(SyncAutomationRunUseCase)
+    const syncAutomationRunUseCase = new SyncAutomationRunUseCase()
     return syncAutomationRunUseCase.execute(props)
 }
 
 export async function syncAutomationRuns (props: SYSParams = {}): Promise<SYSOutput> {
-    const syncAutomationRunsUseCase = container.resolve(SyncAutomationRunsUseCase)
+    const syncAutomationRunsUseCase = new SyncAutomationRunsUseCase()
     return syncAutomationRunsUseCase.execute(props)
 }
 
 export async function attachAutomationRunChat (props: ACParams): Promise<ACOutput> {
-    const attachAutomationRunChatUseCase = container.resolve(AttachAutomationRunChatUseCase)
+    const attachAutomationRunChatUseCase = new AttachAutomationRunChatUseCase()
     return attachAutomationRunChatUseCase.execute(props)
 }
 
 export async function renewAutomationLease (props: RLParams): Promise<RLOutput> {
-    const renewAutomationLeaseUseCase = container.resolve(RenewAutomationLeaseUseCase)
+    const renewAutomationLeaseUseCase = new RenewAutomationLeaseUseCase()
     return renewAutomationLeaseUseCase.execute(props)
 }
 
 export async function issueAutomationEventToken (props: ITParams): Promise<ITOutput> {
-    const issueAutomationEventTokenUseCase = container.resolve(IssueAutomationEventTokenUseCase)
+    const issueAutomationEventTokenUseCase = new IssueAutomationEventTokenUseCase()
     return issueAutomationEventTokenUseCase.execute(props)
 }
 
 export async function revokeAutomationEventToken (props: RTParams): Promise<RTOutput> {
-    const revokeAutomationEventTokenUseCase = container.resolve(RevokeAutomationEventTokenUseCase)
+    const revokeAutomationEventTokenUseCase = new RevokeAutomationEventTokenUseCase()
     return revokeAutomationEventTokenUseCase.execute(props)
 }
 
 export async function rotateAutomationEventTokens (props: ROParams): Promise<ROOutput> {
-    const rotateAutomationEventTokensUseCase = container.resolve(RotateAutomationEventTokensUseCase)
+    const rotateAutomationEventTokensUseCase = new RotateAutomationEventTokensUseCase()
     return rotateAutomationEventTokensUseCase.execute(props)
 }
 
 export async function receiveAutomationEvent (props: REParams): Promise<REOutput> {
-    const receiveAutomationEventUseCase = container.resolve(ReceiveAutomationEventUseCase)
+    const receiveAutomationEventUseCase = new ReceiveAutomationEventUseCase()
     return receiveAutomationEventUseCase.execute(props)
 }
 
 export async function claimQueuedAutomationRuns (props: CQParams): Promise<CQOutput> {
-    const claimQueuedAutomationRunsUseCase = container.resolve(ClaimQueuedAutomationRunsUseCase)
+    const claimQueuedAutomationRunsUseCase = new ClaimQueuedAutomationRunsUseCase()
     return claimQueuedAutomationRunsUseCase.execute(props)
 }

@@ -1,5 +1,3 @@
-import 'reflect-metadata'
-import { container } from 'tsyringe'
 import { ObjectId } from 'mongodb'
 import { CreateUserUseCase } from '@services/users/use-cases/create-user.use-case'
 import { Scope } from '@common/repositories/scope'
@@ -17,7 +15,7 @@ const payload = { email: 'new@openloops.xyz', password: 'a-real-password', role:
 const creator: any = { userId: new ObjectId().toHexString(), isAdmin: () => false }
 
 describe('creating a user', () => {
-    const create = (params: Record<string, any>) => container.resolve(CreateUserUseCase).execute({ payload, ...params })
+    const create = (params: Record<string, any>) => new CreateUserUseCase().execute({ payload, ...params })
 
     beforeEach(() => fakeMongo.reset())
 

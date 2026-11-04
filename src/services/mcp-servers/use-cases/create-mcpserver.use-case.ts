@@ -1,4 +1,3 @@
-import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
 import { Scope } from '@common/repositories'
 import { McpServer, McpServerProps } from '../entities'
@@ -13,11 +12,10 @@ export interface Output extends BaseUseCaseOutput {
 	data: McpServerProps | null
 }
 
-@autoInjectable()
 export class CreateMcpServerUseCase extends BaseUseCase<Params, Output> {
 	constructor (
-		@inject(McpServerRepository) private readonly mcpServerRepository?: McpServerRepository,
-		@inject(VerifyMcpServerConnectionUseCase) private readonly verifyConnection?: VerifyMcpServerConnectionUseCase,
+		private readonly mcpServerRepository = new McpServerRepository(),
+		private readonly verifyConnection = new VerifyMcpServerConnectionUseCase(),
 	) {
 		super()
 	}
@@ -28,9 +26,9 @@ export class CreateMcpServerUseCase extends BaseUseCase<Params, Output> {
 		const mcpServer = McpServer.fromJSON({ ...payload })
 		mcpServer.initialize()
 
-		await this.mcpServerRepository?.create(mcpServer, params.scope ?? Scope.canEdit(currentUser))
+		await this.mcpServerRepository.create(mcpServer, params.scope ?? Scope.canEdit(currentUser))
 
-		const verified = await this.verifyConnection?.execute({ id: String(mcpServer._id), currentUser })
+		const verified = await this.verifyConnection.execute({ id: String(mcpServer._id), currentUser })
 
 		return { data: verified?.data ?? mcpServer.toJSON() }
 	}

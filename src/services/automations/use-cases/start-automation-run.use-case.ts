@@ -1,4 +1,3 @@
-import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
 import { AutomationProps, AutomationRunProps } from '../entities'
 import { AutomationRepository, AutomationRunRepository } from '../repositories'
@@ -18,11 +17,10 @@ export interface Output extends BaseUseCaseOutput {
 	data: { automation: AutomationProps, run: AutomationRunProps }
 }
 
-@autoInjectable()
 export class StartAutomationRunUseCase extends BaseUseCase<Params, Output> {
 	constructor (
-		@inject(AutomationRepository) private readonly automationRepository?: AutomationRepository,
-		@inject(AutomationRunRepository) private readonly automationRunRepository?: AutomationRunRepository,
+		private readonly automationRepository = new AutomationRepository(),
+		private readonly automationRunRepository = new AutomationRunRepository(),
 	) {
 		super()
 	}

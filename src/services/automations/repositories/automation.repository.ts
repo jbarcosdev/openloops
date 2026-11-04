@@ -1,4 +1,3 @@
-import { autoInjectable } from 'tsyringe'
 import { ObjectId } from 'mongodb'
 import { MongoRepository, QueryOptions, Scope } from '@common/repositories'
 import { getDatabaseName } from '@common/utils/database-name'
@@ -12,7 +11,6 @@ export interface ClaimParams {
 	nextRunAt?: Date
 }
 
-@autoInjectable()
 export class AutomationRepository {
 	public readonly _ = new MongoRepository<AutomationProps>({
 		database: getDatabaseName(),

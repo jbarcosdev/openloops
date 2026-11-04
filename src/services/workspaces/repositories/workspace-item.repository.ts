@@ -1,5 +1,4 @@
 import { ObjectId } from 'mongodb'
-import { autoInjectable } from 'tsyringe'
 import { MongoRepository, QueryOptions, QueryParams, Scope } from '@common/repositories'
 import { getDatabaseName } from '@common/utils/database-name'
 import { WorkspaceItem, WorkspaceItemProps } from '../entities'
@@ -11,7 +10,6 @@ export interface WorkspaceItemLookup {
 	name: string
 }
 
-@autoInjectable()
 export class WorkspaceItemRepository {
 	public readonly _ = new MongoRepository<WorkspaceItemProps>({
 		database: getDatabaseName(),

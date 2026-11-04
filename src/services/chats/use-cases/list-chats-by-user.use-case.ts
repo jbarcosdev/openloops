@@ -1,4 +1,3 @@
-import { autoInjectable, inject } from 'tsyringe'
 import { ObjectId } from 'mongodb'
 import { QueryOptions, Scope } from '@common/repositories'
 import { escapeRegex } from '@common/helpers'
@@ -18,9 +17,8 @@ export interface Output extends BaseUseCaseOutput {
 	hasMore?: boolean
 }
 
-@autoInjectable()
 export class ListChatsByUserUseCase extends BaseUseCase<Params, Output> {
-	constructor (@inject(ChatRepository) private readonly chatRepository?: ChatRepository) {
+	constructor (private readonly chatRepository = new ChatRepository()) {
 		super()
 	}
 
@@ -30,7 +28,7 @@ export class ListChatsByUserUseCase extends BaseUseCase<Params, Output> {
 
 		const term = escapeRegex(search?.trim())
 
-		const result = await this.chatRepository?._.findManyPaginated({
+		const result = await this.chatRepository._.findManyPaginated({
 			scope: params.scope ?? Scope.canView(currentUser),
 			where: { 
 				ownerId: new ObjectId(currentUser?.userId),

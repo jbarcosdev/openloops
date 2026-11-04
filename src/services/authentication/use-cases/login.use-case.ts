@@ -1,5 +1,4 @@
 import jwt from 'jsonwebtoken'
-import { autoInjectable } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
 import { User, UserProps, UserRole } from '@services/users/entities'
 import { UserRepository } from '@services/users/repositories'
@@ -20,9 +19,8 @@ export interface Output extends BaseUseCaseOutput {
 	}
 }
 
-@autoInjectable()
 export class LoginUseCase extends BaseUseCase<Params, Output> {
-	constructor (private readonly userRepository: UserRepository) {
+	constructor (private readonly userRepository = new UserRepository()) {
 		super()
 	}
 

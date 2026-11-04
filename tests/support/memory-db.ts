@@ -1,5 +1,3 @@
-import 'reflect-metadata'
-import { container } from 'tsyringe'
 import { ObjectId } from 'mongodb'
 import { ChatRepository } from '@services/chats/repositories'
 import { AgentTaskRepository, AgentActionRepository } from '@services/tasks/repositories'
@@ -8,8 +6,10 @@ import { AgentTraceRepository } from '@services/traces/repositories'
 
 type Doc = Record<string, any>
 
-function provide (token: unknown, value: unknown): void {
-    container.register(token as any, { useValue: value })
+function provide (repository: { prototype: object }, methods: Record<string, (...args: any[]) => unknown>): void {
+    for (const [name, implementation] of Object.entries(methods)) {
+        jest.spyOn(repository.prototype as any, name).mockImplementation(implementation as any)
+    }
 }
 
 const PROTECTED = ['__v', 'ownerId', 'sharedWith', 'createdAt', 'createdBy', 'updatedAt', 'updatedBy', 'deletedAt', 'deletedBy', 'archivedAt', 'archivedBy']

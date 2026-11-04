@@ -1,4 +1,3 @@
-import 'reflect-metadata'
 import { ObjectId } from 'mongodb'
 import { BaseEntity } from '@common/base/base.entity'
 

@@ -1,4 +1,3 @@
-import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
 import { Scope } from '@common/repositories'
 import { UserRepository } from '../repositories'
@@ -14,9 +13,8 @@ export interface Output extends BaseUseCaseOutput {
 	data: UserProps
 }
 
-@autoInjectable()
 export class DeleteUserUseCase extends BaseUseCase<Params, Output> {
-	constructor (@inject(UserRepository) private readonly userRepository?: UserRepository) {
+	constructor (private readonly userRepository = new UserRepository()) {
 		super()
 	}
 
@@ -25,11 +23,11 @@ export class DeleteUserUseCase extends BaseUseCase<Params, Output> {
 		if (!id) throw new Error('Missing id')
 
 		if (hardDelete) {
-			const result = await this.userRepository?.deleteById(id, params.scope ?? Scope.asAdmin(currentUser))
+			const result = await this.userRepository.deleteById(id, params.scope ?? Scope.asAdmin(currentUser))
 			return { data: { deletedCount: result } as any }
 		}
 
-		const result = await this.userRepository?.softDeleteById(id, params.scope ?? Scope.canManage(currentUser), accountDeletionReason)
+		const result = await this.userRepository.softDeleteById(id, params.scope ?? Scope.canManage(currentUser), accountDeletionReason)
 		if (!result) return this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' }) as any
 
 		return { data: result }

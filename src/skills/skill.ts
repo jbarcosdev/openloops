@@ -1,4 +1,3 @@
-import { container } from 'tsyringe'
 import { extractJSON } from '@common/helpers'
 import { LLMClient } from '@clients/llm/llm-client'
 import { LLMMessage, LLMToolDefinition, ThinkingEffort } from '@clients/llm/llm-types'
@@ -94,7 +93,7 @@ export class Skill<TResponse = Record<string, any>> {
         if (history.length && chatHistory.length) throw new Error(`[SKILL:${this.name}] history and chatHistory cannot be used together`)
 
         try {
-            const llmClient = container.resolve(LLMClient)
+            const llmClient = new LLMClient()
 
             const context = {
                 ...buildRuntimeContext({ currentUser, currentSession, chat }),

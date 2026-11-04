@@ -1,4 +1,3 @@
-import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
 import { Scope } from '@common/repositories'
 import { BaseEntity } from '@common/base/base.entity'
@@ -13,9 +12,8 @@ export interface Output extends BaseUseCaseOutput {
 	data: WorkspaceItemProps
 }
 
-@autoInjectable()
 export class SaveWorkspaceItemUseCase extends BaseUseCase<Params, Output> {
-	constructor (@inject(WorkspaceItemRepository) private readonly workspaceItemRepository?: WorkspaceItemRepository) {
+	constructor (private readonly workspaceItemRepository = new WorkspaceItemRepository()) {
 		super()
 	}
 
@@ -33,7 +31,7 @@ export class SaveWorkspaceItemUseCase extends BaseUseCase<Params, Output> {
 
 		const scope = params.scope ?? Scope.canEdit(currentUser)
 
-		const existing = await this.workspaceItemRepository?.findByName(
+		const existing = await this.workspaceItemRepository.findByName(
 			{ ownerId, chatId: item.chatId!, taskId: item.taskId, name: item.name! },
 			scope,
 			{ _id: 1 },
@@ -41,13 +39,13 @@ export class SaveWorkspaceItemUseCase extends BaseUseCase<Params, Output> {
 
 		if (existing?._id) {
 			item.setId(existing._id)
-			const result = await this.workspaceItemRepository?.update(item, scope)
+			const result = await this.workspaceItemRepository.update(item, scope)
 			if (!result) return this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' }) as any
 
 			return { data: result }
 		}
 
-		const created = await this.workspaceItemRepository?.create(item, scope)
+		const created = await this.workspaceItemRepository.create(item, scope)
 
 		return { data: created!.toJSON() }
 	}

@@ -1,9 +1,7 @@
-import { autoInjectable } from 'tsyringe'
 import { MongoRepository, QueryOptions, QueryParams, Scope } from '@common/repositories'
 import { getDatabaseName } from '@common/utils/database-name'
 import { Chat, ChatProps } from '../entities'
 
-@autoInjectable()
 export class ChatRepository {
 	public readonly _ = new MongoRepository<ChatProps>({
 		database: getDatabaseName(),

@@ -1,4 +1,3 @@
-import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
 import { AutomationRepository } from '../repositories'
 import { leaseMs as defaultLeaseMs } from '../utils/settings'
@@ -15,9 +14,8 @@ export interface Output extends BaseUseCaseOutput {
 	data: { renewed: boolean }
 }
 
-@autoInjectable()
 export class RenewAutomationLeaseUseCase extends BaseUseCase<Params, Output> {
-	constructor (@inject(AutomationRepository) private readonly automationRepository?: AutomationRepository) {
+	constructor (private readonly automationRepository = new AutomationRepository()) {
 		super()
 	}
 

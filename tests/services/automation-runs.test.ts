@@ -1,5 +1,3 @@
-import 'reflect-metadata'
-import { container } from 'tsyringe'
 import { ObjectId } from 'mongodb'
 import { CreateAutomationUseCase } from '@services/automations/use-cases/create-automation.use-case'
 import { UpdateAutomationUseCase } from '@services/automations/use-cases/update-automation.use-case'
@@ -31,17 +29,17 @@ const automation = () => automations().docs[0]
 const at = (value: any) => new Date(value).toISOString()
 const schedule = () => automation().triggers.schedule
 
-const claim = (workerId: string, now: Date) => container.resolve(ClaimDueAutomationsUseCase).execute({ workerId, now, leaseMs: LEASE })
+const claim = (workerId: string, now: Date) => new ClaimDueAutomationsUseCase().execute({ workerId, now, leaseMs: LEASE })
 const finish = (runId: any, workerId: string, status: 'completed' | 'paused' | 'failed', now: Date, error?: any) =>
-    container.resolve(FinishAutomationRunUseCase).execute({ runId: String(runId), workerId, status, now, error })
-const sync = (runId: any, now: Date) => container.resolve(SyncAutomationRunUseCase).execute({ runId: String(runId), now })
+    new FinishAutomationRunUseCase().execute({ runId: String(runId), workerId, status, now, error })
+const sync = (runId: any, now: Date) => new SyncAutomationRunUseCase().execute({ runId: String(runId), now })
 const seedChat = (state: Record<string, any>) => fakeMongo.collection('chats').insertOne({ state, __v: 1 }).then(result => result.insertedId)
 
 describe('running automations', () => {
     let id: string
 
     const createAutomationFixture = async (recurrence: any = { type: 'daily', time: '08:00' }) => {
-        const { data } = await container.resolve(CreateAutomationUseCase).execute({
+        const { data } = await new CreateAutomationUseCase().execute({
             payload: { name: 'Report', instructions: 'Summarize', triggers: { schedule: { recurrence, timezone: 'UTC' } }, modelProvider: 'anthropic', modelName: 'claude-haiku-5-5' } as any,
             currentUser: user,
         })
@@ -107,7 +105,7 @@ describe('running automations', () => {
         })
 
         it('does not take an automation that is off', async () => {
-            await container.resolve(UpdateAutomationUseCase).execute({ id, payload: { triggers: { schedule: { enabled: false } } }, currentUser: user })
+            await new UpdateAutomationUseCase().execute({ id, payload: { triggers: { schedule: { enabled: false } } }, currentUser: user })
 
             expect((await claim('w1', new Date('2026-10-14T09:00:00Z'))).data.claimed).toHaveLength(0)
         })
@@ -157,7 +155,7 @@ describe('running automations', () => {
 
         it('does not turn on again an automation that the user turned off while it was running', async () => {
             const { data } = await claim('w1', new Date('2026-10-14T08:00:00Z'))
-            await container.resolve(UpdateAutomationUseCase).execute({ id, payload: { triggers: { schedule: { enabled: false } } }, currentUser: user })
+            await new UpdateAutomationUseCase().execute({ id, payload: { triggers: { schedule: { enabled: false } } }, currentUser: user })
             await finish(data.claimed[0].run._id, 'w1', 'completed', new Date('2026-10-14T08:03:00Z'))
 
             expect(schedule().enabled).toBe(false)
@@ -268,7 +266,7 @@ describe('running automations', () => {
     })
 
     describe('running by hand', () => {
-        const start = (now: Date, worker = 'w1') => container.resolve(StartAutomationRunUseCase).execute({ automationId: id, workerId: worker, now, leaseMs: LEASE, currentUser: user })
+        const start = (now: Date, worker = 'w1') => new StartAutomationRunUseCase().execute({ automationId: id, workerId: worker, now, leaseMs: LEASE, currentUser: user })
 
         it('runs at once without moving the next run', async () => {
             const before = at(schedule().nextRunAt)
@@ -297,7 +295,7 @@ describe('running automations', () => {
         })
 
         it('fails for an automation that does not exist', async () => {
-            await expect(container.resolve(StartAutomationRunUseCase).execute({ automationId: new ObjectId().toHexString(), workerId: 'w1', currentUser: user })).rejects.toMatchObject({ statusCode: 404 })
+            await expect(new StartAutomationRunUseCase().execute({ automationId: new ObjectId().toHexString(), workerId: 'w1', currentUser: user })).rejects.toMatchObject({ statusCode: 404 })
         })
     })
 
@@ -309,7 +307,7 @@ describe('running automations', () => {
             Object.assign(automation(), { lockedBy: undefined, lockedUntil: undefined })
             const lost = await runs().insertOne({ automationId: new ObjectId(), ownerId: new ObjectId(OWNER), status: 'running', startedAt: new Date('2026-10-14T08:00:00Z'), __v: 1 })
 
-            const result = await container.resolve(SyncAutomationRunsUseCase).execute({ now: new Date('2026-10-14T09:00:00Z') })
+            const result = await new SyncAutomationRunsUseCase().execute({ now: new Date('2026-10-14T09:00:00Z') })
 
             expect(result.data).toEqual({ checked: 2, settled: 2 })
             expect(runs().docs.find(run => String(run._id) === String(data.claimed[0].run._id))!.status).toBe('completed')

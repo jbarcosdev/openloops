@@ -1,4 +1,3 @@
-import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
 import { Scope } from '@common/repositories'
 import { ChatRepository } from '../repositories'
@@ -13,9 +12,8 @@ export interface Output extends BaseUseCaseOutput {
 	data: ChatProps
 }
 
-@autoInjectable()
 export class DeleteChatUseCase extends BaseUseCase<Params, Output> {
-	constructor (@inject(ChatRepository) private readonly chatRepository?: ChatRepository) {
+	constructor (private readonly chatRepository = new ChatRepository()) {
 		super()
 	}
 
@@ -24,11 +22,11 @@ export class DeleteChatUseCase extends BaseUseCase<Params, Output> {
 		if (!id) throw new Error('Missing id')
 
 		if (hardDelete) {
-			const result = await this.chatRepository?.deleteById(id, params.scope ?? Scope.asAdmin(currentUser))
+			const result = await this.chatRepository.deleteById(id, params.scope ?? Scope.asAdmin(currentUser))
 			return { data: { deletedCount: result } as any }
 		}
 
-		const result = await this.chatRepository?.softDeleteById(id, params.scope ?? Scope.canManage(currentUser))
+		const result = await this.chatRepository.softDeleteById(id, params.scope ?? Scope.canManage(currentUser))
 		if (!result) return this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' }) as any
 
 		return { data: result }

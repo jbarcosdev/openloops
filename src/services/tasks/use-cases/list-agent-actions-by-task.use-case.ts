@@ -1,4 +1,3 @@
-import { autoInjectable, inject } from 'tsyringe'
 import { QueryOptions, Scope } from '@common/repositories'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
 import { BaseEntity } from '@common/base/base.entity'
@@ -17,9 +16,8 @@ export interface Output extends BaseUseCaseOutput {
 	hasMore?: boolean
 }
 
-@autoInjectable()
 export class ListAgentActionsByTaskUseCase extends BaseUseCase<Params, Output> {
-	constructor (@inject(AgentActionRepository) private readonly agentActionRepository?: AgentActionRepository) {
+	constructor (private readonly agentActionRepository = new AgentActionRepository()) {
 		super()
 	}
 
@@ -29,7 +27,7 @@ export class ListAgentActionsByTaskUseCase extends BaseUseCase<Params, Output> {
 		if (!taskId) throw new Error('taskId is required')
 		if (!currentUser) this.throwError403()
 
-		const result = await this.agentActionRepository?.findByProps(
+		const result = await this.agentActionRepository.findByProps(
 			{ ownerId: BaseEntity.toObjectId(currentUser?.userId), taskId: BaseEntity.toObjectId(taskId) },
 			{ limit: DEFAULT_LIMIT, sortBy: { _id: 1 }, ...options },
 			params.scope ?? Scope.canView(currentUser),

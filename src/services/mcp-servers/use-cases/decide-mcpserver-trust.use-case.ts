@@ -1,4 +1,3 @@
-import { autoInjectable, inject } from 'tsyringe'
 import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
 import { Scope } from '@common/repositories'
 import { McpServer, McpServerProps } from '../entities'
@@ -14,9 +13,8 @@ export interface Output extends BaseUseCaseOutput {
 	data: McpServerProps
 }
 
-@autoInjectable()
 export class DecideMcpServerTrustUseCase extends BaseUseCase<Params, Output> {
-	constructor (@inject(McpServerRepository) private readonly mcpServerRepository?: McpServerRepository) {
+	constructor (private readonly mcpServerRepository = new McpServerRepository()) {
 		super()
 	}
 
@@ -28,7 +26,7 @@ export class DecideMcpServerTrustUseCase extends BaseUseCase<Params, Output> {
 			throw new Error('The reviewed manifest hash is required to approve a Mcp Server')
 		}
 
-		const found = await this.mcpServerRepository?.findById(id, scope)
+		const found = await this.mcpServerRepository.findById(id, scope)
 
 		if (!found) return this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' }) as any
 
@@ -37,7 +35,7 @@ export class DecideMcpServerTrustUseCase extends BaseUseCase<Params, Output> {
 		if (decision === 'approve') mcpServer.approve(manifestHash!)
 		else mcpServer.block()
 
-		const saved = await this.mcpServerRepository?.update(mcpServer, scope, { expectedVersion: found.__v })
+		const saved = await this.mcpServerRepository.update(mcpServer, scope, { expectedVersion: found.__v })
 
 		return { data: saved ?? mcpServer.toJSON() }
 	}

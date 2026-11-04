@@ -1,5 +1,3 @@
-import 'reflect-metadata'
-import { container } from 'tsyringe'
 import { ObjectId } from 'mongodb'
 import { CreateAutomationUseCase } from '@services/automations/use-cases/create-automation.use-case'
 import { UpdateAutomationUseCase } from '@services/automations/use-cases/update-automation.use-case'
@@ -36,10 +34,10 @@ const valid = (extra: Record<string, any> = {}) => ({
 })
 
 const create = (payload: Record<string, any> = valid(), currentUser = user) =>
-    container.resolve(CreateAutomationUseCase).execute({ payload, currentUser })
+    new CreateAutomationUseCase().execute({ payload, currentUser })
 
 const update = (id: string, payload: Record<string, any>, currentUser = user) =>
-    container.resolve(UpdateAutomationUseCase).execute({ id, payload, currentUser })
+    new UpdateAutomationUseCase().execute({ id, payload, currentUser })
 
 describe('automations', () => {
     beforeEach(() => {
@@ -97,7 +95,7 @@ describe('automations', () => {
         })
 
         it('needs a user', async () => {
-            await expect(container.resolve(CreateAutomationUseCase).execute({ payload: valid() as any })).rejects.toThrow(/CurrentUser/)
+            await expect(new CreateAutomationUseCase().execute({ payload: valid() as any })).rejects.toThrow(/CurrentUser/)
         })
 
         it('keeps the model chosen for the automation', async () => {
@@ -309,7 +307,7 @@ describe('automations', () => {
     describe('reading', () => {
         it('gets one automation and returns null when there is none', async () => {
             const { data: automation } = await create()
-            const get = container.resolve(GetAutomationByIdUseCase)
+            const get = new GetAutomationByIdUseCase()
 
             expect((await get.execute({ id: String(automation._id), currentUser: user })).data?.name).toBe('Morning report')
             expect((await get.execute({ id: new ObjectId().toHexString(), currentUser: user })).data).toBeNull()
@@ -322,7 +320,7 @@ describe('automations', () => {
             }
             await create(valid({ name: 'someone else' }), { userId: new ObjectId().toHexString(), isAdmin: () => false })
 
-            const list = container.resolve(ListAutomationsByUserUseCase)
+            const list = new ListAutomationsByUserUseCase()
             const first = await list.execute({ currentUser: user, options: { page: 1, limit: 2 } })
             const second = await list.execute({ currentUser: user, options: { page: 2, limit: 2 } })
 
@@ -334,18 +332,18 @@ describe('automations', () => {
     describe('deleting', () => {
         it('removes it from the lists and from what the worker takes', async () => {
             const { data: automation } = await create()
-            const remove = container.resolve(DeleteAutomationUseCase)
+            const remove = new DeleteAutomationUseCase()
 
             await remove.execute({ id: String(automation._id), currentUser: user })
 
             expect(stored().deletedAt).toBeInstanceOf(Date)
             expect(stored().triggers.schedule.nextRunAt).toBeUndefined()
-            expect((await container.resolve(ListAutomationsByUserUseCase).execute({ currentUser: user })).data).toHaveLength(0)
+            expect((await new ListAutomationsByUserUseCase().execute({ currentUser: user })).data).toHaveLength(0)
         })
 
         it('only lets an admin delete it for good', async () => {
             const { data: automation } = await create()
-            const remove = container.resolve(DeleteAutomationUseCase)
+            const remove = new DeleteAutomationUseCase()
 
             await expect(remove.execute({ id: String(automation._id), hardDelete: true, currentUser: user })).rejects.toBeDefined()
             expect(automations().docs).toHaveLength(1)
@@ -357,14 +355,14 @@ describe('automations', () => {
 
     describe('previewing', () => {
         it('lists the next runs of a recurrence without saving anything', async () => {
-            const { data } = await container.resolve(PreviewAutomationRunsUseCase).execute({ recurrence: { type: 'weekly', days: [1, 5], time: '08:00' }, timezone: 'UTC', count: 3 })
+            const { data } = await new PreviewAutomationRunsUseCase().execute({ recurrence: { type: 'weekly', days: [1, 5], time: '08:00' }, timezone: 'UTC', count: 3 })
 
             expect(data.runs.map(date => date.toISOString())).toEqual(['2026-10-16T08:00:00.000Z', '2026-10-19T08:00:00.000Z', '2026-10-23T08:00:00.000Z'])
             expect(automations().docs).toHaveLength(0)
         })
 
         it('validates what it receives', async () => {
-            const preview = container.resolve(PreviewAutomationRunsUseCase)
+            const preview = new PreviewAutomationRunsUseCase()
 
             await expect(preview.execute({ recurrence: { type: 'daily', time: 'x' }, timezone: 'UTC' })).rejects.toThrow(/HH:mm/)
             await expect(preview.execute({ recurrence: { type: 'daily', time: '08:00' }, timezone: 'Nope/Nope' })).rejects.toThrow(/IANA/)
@@ -388,22 +386,22 @@ describe('automations', () => {
 
         it('lists the runs of an automation, newest first', async () => {
             const { automationId } = await seed()
-            const { data } = await container.resolve(ListAutomationRunsByAutomationUseCase).execute({ automationId: String(automationId), currentUser: user })
+            const { data } = await new ListAutomationRunsByAutomationUseCase().execute({ automationId: String(automationId), currentUser: user })
 
             expect(data.map(run => run.status)).toEqual(['failed', 'completed'])
         })
 
         it('lists the runs of a user and can filter by status', async () => {
             await seed()
-            const list = container.resolve(ListAutomationRunsByUserUseCase)
+            const list = new ListAutomationRunsByUserUseCase()
 
             expect((await list.execute({ currentUser: user })).data.map(run => run.status)).toEqual(['paused', 'failed', 'completed'])
             expect((await list.execute({ currentUser: user, status: 'paused' })).data).toHaveLength(1)
         })
 
         it('needs a user and an automation', async () => {
-            await expect(container.resolve(ListAutomationRunsByUserUseCase).execute({})).rejects.toThrow(/CurrentUser/)
-            await expect(container.resolve(ListAutomationRunsByAutomationUseCase).execute({ automationId: '' })).rejects.toThrow(/automationId/)
+            await expect(new ListAutomationRunsByUserUseCase().execute({})).rejects.toThrow(/CurrentUser/)
+            await expect(new ListAutomationRunsByAutomationUseCase().execute({ automationId: '' })).rejects.toThrow(/automationId/)
         })
     })
 })

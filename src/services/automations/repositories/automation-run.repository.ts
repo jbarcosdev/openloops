@@ -1,10 +1,8 @@
-import { autoInjectable } from 'tsyringe'
 import { ObjectId } from 'mongodb'
 import { MongoRepository, QueryOptions, Scope } from '@common/repositories'
 import { getDatabaseName } from '@common/utils/database-name'
 import { AutomationRun, AutomationRunProps, AutomationRunStatus } from '../entities'
 
-@autoInjectable()
 export class AutomationRunRepository {
 	public readonly _ = new MongoRepository<AutomationRunProps>({
 		database: getDatabaseName(),

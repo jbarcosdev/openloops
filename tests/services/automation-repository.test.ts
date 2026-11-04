@@ -1,4 +1,3 @@
-import 'reflect-metadata'
 import { ObjectId } from 'mongodb'
 import { Automation } from '@services/automations/entities'
 import { AutomationRepository } from '@services/automations/repositories/automation.repository'
