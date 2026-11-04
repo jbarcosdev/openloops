@@ -17,7 +17,6 @@ export default defineSkillEval({
     }, ['can_answer', 'answer', 'reasoning', 'detected_language']),
     scenarios: SCENARIOS,
     load () {
-        require('reflect-metadata')
         return require('@loops/shared/skills').fastResponder
     },
 })

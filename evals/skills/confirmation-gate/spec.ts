@@ -16,7 +16,6 @@ export default defineSkillEval({
     }, ['decision', 'reasoning']),
     scenarios: SCENARIOS,
     load () {
-        require('reflect-metadata')
         return require('@harness/skills').confirmationGate
     },
 })

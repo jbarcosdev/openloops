@@ -542,7 +542,6 @@ export default defineSkillEval({
     nativeTools: [defineTool('respond', 'Deliver the final answer.', { answer: { type: 'string' } })],
     finals: { respond: 'answer' },
     load () {
-        require('reflect-metadata')
         return require('@loops/agi/skills/reasoning-engine').reasoningEngine
     },
 })
@@ -570,7 +569,6 @@ export default defineSkillEval({
         check: answer => /acme/i.test(String(answerJson(answer)?.question)) ? { ok: true } : { ok: false, reason: 'does not mention the customer' },
     }],
     load () {
-        require('reflect-metadata')
         return require('@loops/shared/skills').approvalRequest
     },
 })

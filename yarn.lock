@@ -6151,7 +6151,6 @@ __metadata:
     mongodb: "npm:^7.8.0"
     pino: "npm:^10.4.0"
     pino-pretty: "npm:^13.2.0"
-    reflect-metadata: "npm:^0.2.2"
     sanitize-html: "npm:^2.18.1"
     ts-jest: "npm:^29.4.15"
     tsc-alias: "npm:^1.9.9"
@@ -6754,13 +6753,6 @@ __metadata:
   version: 1.0.0
   resolution: "real-require@npm:1.0.0"
   checksum: 10c0/74d44b360b8b662d29c646f4688da462c4b10243b11d22ff9635395e81951a9c1ed349393411c4911ca6f3474c3e10e812bf4767052706abb863ba59bde0813b
-  languageName: node
-  linkType: hard
-
-"reflect-metadata@npm:^0.2.2":
-  version: 0.2.2
-  resolution: "reflect-metadata@npm:0.2.2"
-  checksum: 10c0/1cd93a15ea291e420204955544637c264c216e7aac527470e393d54b4bb075f10a17e60d8168ec96600c7e0b9fcc0cb0bb6e91c3fbf5b0d8c9056f04e6ac1ec2
   languageName: node
   linkType: hard
 
