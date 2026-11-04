@@ -2,6 +2,9 @@ import { Logger } from 'openloops/common'
 import { CurrentUser } from 'openloops/base'
 import { verifyMcpServerConnection } from 'openloops/mcps'
 
+/**
+ * Checks the connection of a server: it reads the manifest and saves the status (`ok` or `error`). Use it in a "test connection" button, it also feeds a green or red dot.
+ */
 async function verifyMcp () {
     const logger = new Logger()
     const currentUser = await CurrentUser.asyncFromDB('6ab56894eb20887d1ef7942c')

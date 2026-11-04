@@ -2,6 +2,9 @@ import { Logger } from 'openloops/common'
 import { updateUser } from 'openloops/users'
 import { CurrentUser } from 'openloops/base'
 
+/**
+ * Updates the profile of the user. To change the password use `changePassword`.
+ */
 async function updateUserExample () {
     const logger = new Logger()
     const currentUser = await CurrentUser.asyncFromDB('6ab56894eb20887d1ef7942c')

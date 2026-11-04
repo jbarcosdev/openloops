@@ -2,6 +2,9 @@ import { Logger } from 'openloops/common'
 import { CurrentUser } from 'openloops/base'
 import { listMcpServersByUser } from 'openloops/mcps'
 
+/**
+ * Lists the MCP servers of the user in pages, for a management screen. The internal servers never appear here.
+ */
 async function getMcpById () {
     const logger = new Logger()
     const currentUser = await CurrentUser.asyncFromDB('6ab56894eb20887d1ef7942c')

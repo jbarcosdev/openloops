@@ -3,6 +3,9 @@ import { Logger } from 'openloops/common'
 import { CurrentUser } from 'openloops/base'
 import { AgiLoop } from 'openloops/loops'
 
+/**
+ * Runs the agent with nobody in the chat. It does not ask questions: it decides by itself or pauses when something needs a human. When it pauses, the chat is waiting and the user answers in it.
+ */
 async function runAgentAutonomous () {
     const logger = new Logger()
     const currentUser = await CurrentUser.asyncFromDB('6ab56894eb20887d1ef7942c')

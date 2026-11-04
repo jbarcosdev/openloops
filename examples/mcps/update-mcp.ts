@@ -2,6 +2,11 @@ import { Logger } from 'openloops/common'
 import { CurrentUser } from 'openloops/base'
 import { updateMcpServer } from 'openloops/mcps'
 
+/**
+ * Updates a server of the user. Here the header carries a fixed token: the user wrote it, and it is sent as it is.
+ *
+ * Changing the headers checks the connection again and keeps the approval. Changing the `url` locks the server again.
+ */
 async function updateMcp () {
     const logger = new Logger()
     const currentUser = await CurrentUser.asyncFromDB('6ab56894eb20887d1ef7942c')

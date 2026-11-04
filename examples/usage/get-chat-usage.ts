@@ -2,6 +2,9 @@ import { Logger } from 'openloops/common'
 import { CurrentUser } from 'openloops/base'
 import { getLLMUsageByChat } from 'openloops/llmcalls'
 
+/**
+ * Tokens and cost of a whole chat, with the breakdown by model.
+ */
 async function getChatUsage () {
     const logger = new Logger()
     const currentUser = await CurrentUser.asyncFromDB('6ab56894eb20887d1ef7942c')

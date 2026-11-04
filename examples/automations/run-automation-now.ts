@@ -3,6 +3,9 @@ import { CurrentUser } from 'openloops/base'
 import { createAutomationRunner } from 'openloops/automations'
 import { webSearchTool } from 'openloops/tools'
 
+/**
+ * Starts a run of an automation by hand, outside its schedule, for example from a "run now" button. The run goes on in the background.
+ */
 async function runNow () {
     const logger = new Logger()
     const currentUser = await CurrentUser.asyncFromDB('6ab56894eb20887d1ef7942c')

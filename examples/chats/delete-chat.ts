@@ -2,6 +2,9 @@ import { Logger } from 'openloops/common'
 import { CurrentUser } from 'openloops/base'
 import { deleteChat } from 'openloops/chats'
 
+/**
+ * Deletes a chat of the user without removing it from the database (soft delete).
+ */
 async function softDeleteChat () {
     const logger = new Logger()
     const currentUser = await CurrentUser.asyncFromDB('6ab56894eb20887d1ef7942c')
@@ -14,6 +17,9 @@ async function softDeleteChat () {
     logger.info(result, '[Demo] Deleted chat')
 }
 
+/**
+ * Removes a chat from the database for good. Only an admin can do it.
+ */
 async function hardDeleteChat () {
     const logger = new Logger()
     const currentUser = await CurrentUser.asyncFromDB('6ab56894eb20887d1ef7942c')

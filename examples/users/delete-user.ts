@@ -2,6 +2,9 @@ import { Logger } from 'openloops/common'
 import { deleteUser } from 'openloops/users'
 import { CurrentUser } from 'openloops/base'
 
+/**
+ * Deletes the account of a user without removing it from the database. The reason is optional.
+ */
 async function softDeleteUser () {
     const logger = new Logger()
     const currentUser = await CurrentUser.asyncFromDB('6ab56894eb20887d1ef7942c')
@@ -16,6 +19,9 @@ async function softDeleteUser () {
     logger.info(result, '[Demo] Deleted user')
 }
 
+/**
+ * Removes the user from the database for good. Only an admin can do it.
+ */
 async function hardDeleteUser () {
     const logger = new Logger()
     const currentUser = await CurrentUser.asyncFromDB('6ab56894eb20887d1ef7942c')

@@ -10,6 +10,9 @@ interface Output {
     }
 }
 
+/**
+ * A destructive tool: `destructive: true` makes the agent ask the user to confirm before it runs.
+ */
 export const deleteNoteTool = new Tool({
     name: 'delete_note',
     description: 'Permanently delete a note by its id',

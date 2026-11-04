@@ -2,6 +2,9 @@ import { Agent } from 'openloops/core'
 import { Logger } from 'openloops/common'
 import { CurrentUser } from 'openloops/base'
 
+/**
+ * Asks a running chat to stop. The loop stops before its next node, so a node that is already running finishes first.
+ */
 async function interruptAgent () {
     const logger = new Logger()
     const currentUser = await CurrentUser.asyncFromDB('6ab56894eb20887d1ef7942c')

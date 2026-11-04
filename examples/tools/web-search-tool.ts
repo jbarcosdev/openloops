@@ -11,6 +11,9 @@ interface Output {
     data: SerperSearchResponse | undefined
 }
 
+/**
+ * A tool that calls an external service. It needs `SERPER_API_KEY` in the environment.
+ */
 export const webSearchTool = new Tool({
     name: 'web_search',
     description: 'Search on web',

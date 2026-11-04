@@ -2,6 +2,9 @@ import { Logger } from 'openloops/common'
 import { CurrentUser } from 'openloops/base'
 import { listAutomationRunsByAutomation, listAutomationRunsByUser } from 'openloops/automations'
 
+/**
+ * Lists the history of runs of one automation, with its status and the chat where each run happened.
+ */
 async function listRunsOfAnAutomation () {
     const logger = new Logger()
     const currentUser = await CurrentUser.asyncFromDB('6ab56894eb20887d1ef7942c')
@@ -15,6 +18,9 @@ async function listRunsOfAnAutomation () {
     logger.info(result.items.map(run => ({ status: run.status, startedAt: run.startedAt, chatId: run.chatId, error: run.error })), '[Demo] Runs of the automation')
 }
 
+/**
+ * Counts the runs of the user that are paused (waiting for an answer in the chat) or failed, to show them in a screen of pending items.
+ */
 async function listRunsThatNeedAttention () {
     const logger = new Logger()
     const currentUser = await CurrentUser.asyncFromDB('6ab56894eb20887d1ef7942c')

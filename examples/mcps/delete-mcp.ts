@@ -2,6 +2,9 @@ import { Logger } from 'openloops/common'
 import { CurrentUser } from 'openloops/base'
 import { deleteMcpServer } from 'openloops/mcps'
 
+/**
+ * Deletes a server of the user without removing it from the database.
+ */
 async function softDeleteMcp () {
     const logger = new Logger()
     const currentUser = await CurrentUser.asyncFromDB('6ab56894eb20887d1ef7942c')
@@ -14,6 +17,9 @@ async function softDeleteMcp () {
     logger.info(result, '[Demo] Deleted mcp result')
 }
 
+/**
+ * Removes a server from the database for good. Only an admin can do it.
+ */
 async function hardDeleteMcp () {
     const logger = new Logger()
     const currentUser = await CurrentUser.asyncFromDB('6ab56894eb20887d1ef7942c')

@@ -3,6 +3,9 @@ import { getUserById } from 'openloops/users'
 import { CurrentUser } from 'openloops/base'
 
 // Note: return the user without the password field
+/**
+ * Gets a user by id. The password is never returned.
+ */
 async function getUserByIdExample () {
     const logger = new Logger()
     const currentUser = await CurrentUser.asyncFromDB('6ab56894eb20887d1ef7942c')

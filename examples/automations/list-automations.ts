@@ -2,6 +2,9 @@ import { Logger } from 'openloops/common'
 import { CurrentUser } from 'openloops/base'
 import { listAutomationsByUser } from 'openloops/automations'
 
+/**
+ * Lists the automations of the user with the state of their triggers and the result of the last run.
+ */
 async function listAutomations () {
     const logger = new Logger()
     const currentUser = await CurrentUser.asyncFromDB('6ab56894eb20887d1ef7942c')

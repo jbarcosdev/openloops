@@ -3,6 +3,9 @@ import { Logger } from 'openloops/common'
 import { CurrentUser } from 'openloops/base'
 import { AgiLoop } from 'openloops/loops'
 
+/**
+ * Gives the agent a name, a gender and a role, so it answers as that persona.
+ */
 async function runAgentWithIdentity () {
     const logger = new Logger()
     const currentUser = await CurrentUser.asyncFromDB('6ab56894eb20887d1ef7942c')

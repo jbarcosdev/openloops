@@ -4,6 +4,9 @@ import { CurrentUser } from 'openloops/base'
 import { AgiLoop } from 'openloops/loops'
 import { inputGuards } from 'openloops/guardrails'
 
+/**
+ * Adds input guards, in the options and with `addGuard`. A blocked message gets the reply of the guard and never reaches the model.
+ */
 async function runAgentWithGuards () {
     const logger = new Logger()
     const currentUser = await CurrentUser.asyncFromDB('6ab56894eb20887d1ef7942c')

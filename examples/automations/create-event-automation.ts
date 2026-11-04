@@ -2,6 +2,11 @@ import { Logger } from 'openloops/common'
 import { CurrentUser } from 'openloops/base'
 import { createAutomation, issueAutomationEventToken } from 'openloops/automations'
 
+/**
+ * Creates an automation that starts when another system sends it an event, and issues the token that system must use.
+ *
+ * The token is not stored: the owner can issue as many as they want. It expires in 90 days here, and without `expiresIn` it never expires.
+ */
 async function createEventAutomation () {
     const logger = new Logger()
     const currentUser = await CurrentUser.asyncFromDB('6ab56894eb20887d1ef7942c')

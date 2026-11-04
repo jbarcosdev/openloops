@@ -2,6 +2,9 @@ import { Logger } from 'openloops/common'
 import { CurrentUser } from 'openloops/base'
 import { getMcpServerById } from 'openloops/mcps'
 
+/**
+ * Gets one MCP server of the user, with its manifest history.
+ */
 async function getMcpById () {
     const logger = new Logger()
     const currentUser = await CurrentUser.asyncFromDB('6ab56894eb20887d1ef7942c')

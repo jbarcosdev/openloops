@@ -3,6 +3,9 @@ import { Logger } from 'openloops/common'
 import { CurrentUser } from 'openloops/base'
 import { AgiLoop } from 'openloops/loops'
 
+/**
+ * Hooks that run before and after the execution, for example to send a notification when the run finishes and the user asked for it.
+ */
 async function runAgentWithHooks () {
     const logger = new Logger()
     const currentUser = await CurrentUser.asyncFromDB('6ab56894eb20887d1ef7942c')
@@ -47,6 +50,9 @@ async function runAgentWithHooks () {
     }
 }
 
+/**
+ * Stands for the service of notifications of your app.
+ */
 async function sendNotificationMock (params: any) {
     const logger = new Logger()
     logger.info(params, '[Notification Service] Sending notification to user...')

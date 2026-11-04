@@ -2,6 +2,9 @@ import { Logger } from 'openloops/common'
 import { CurrentUser } from 'openloops/base'
 import { getLLMUsageStats } from 'openloops/llmcalls'
 
+/**
+ * Usage between two dates, grouped by month and filtered by provider and model.
+ */
 async function getRangeStats () {
     const logger = new Logger()
     const currentUser = await CurrentUser.asyncFromDB('6ab56894eb20887d1ef7942c')

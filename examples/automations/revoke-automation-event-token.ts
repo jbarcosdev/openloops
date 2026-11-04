@@ -2,6 +2,9 @@ import { Logger } from 'openloops/common'
 import { CurrentUser } from 'openloops/base'
 import { revokeAutomationEventToken, rotateAutomationEventTokens } from 'openloops/automations'
 
+/**
+ * Revokes one token of an automation, for example one that leaked, by presenting it. The other tokens keep working.
+ */
 async function revokeLeakedToken () {
     const logger = new Logger()
     const currentUser = await CurrentUser.asyncFromDB('6ab56894eb20887d1ef7942c')
@@ -11,6 +14,9 @@ async function revokeLeakedToken () {
     logger.info({ jti: result.jti }, '[Demo] That token no longer works, the others still do')
 }
 
+/**
+ * Invalidates every token issued for the automation at once. Issue a new one afterwards.
+ */
 async function rotateAll () {
     const logger = new Logger()
     const currentUser = await CurrentUser.asyncFromDB('6ab56894eb20887d1ef7942c')

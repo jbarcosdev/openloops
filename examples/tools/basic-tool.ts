@@ -10,6 +10,9 @@ interface Output {
     }
 }
 
+/**
+ * A basic tool. The model reads `name`, `description` and `parameters` to decide when to call it, and the handler returns `{ data }`. It is not destructive, so it runs without asking.
+ */
 export const greetUserTool = new Tool({
     name: 'greet_user',
     description: 'Greet the user',

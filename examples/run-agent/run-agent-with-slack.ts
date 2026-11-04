@@ -4,6 +4,9 @@ import { CurrentUser } from 'openloops/base'
 import { AgiLoop } from 'openloops/loops'
 import { webSearchTool, sendSlackMessageTool } from 'openloops/tools'
 
+/**
+ * Adds two tools: a web search and a message to Slack. The agent decides by itself when to use each one.
+ */
 async function runAgentWithSlack () {
     const logger = new Logger()
     const currentUser = await CurrentUser.asyncFromDB('6ab56894eb20887d1ef7942c')

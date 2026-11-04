@@ -4,6 +4,9 @@ import { CurrentUser } from 'openloops/base'
 import { AgiLoop } from 'openloops/loops'
 import { webSearchTool } from 'openloops/tools'
 
+/**
+ * Adds a tool to the agent. The model decides when to call it, and you can add more with `addTool` or in the options.
+ */
 async function runAgentWithTools () {
     const logger = new Logger()
     const currentUser = await CurrentUser.asyncFromDB('6ab56894eb20887d1ef7942c')

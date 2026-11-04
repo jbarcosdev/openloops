@@ -3,6 +3,9 @@ import { Logger } from 'openloops/common'
 import { CurrentUser } from 'openloops/base'
 import { AgiLoop } from 'openloops/loops'
 
+/**
+ * Sets the model that is used when neither the run, the user nor the chat choose one.
+ */
 async function runAgentWithFallbackModel () {
     const logger = new Logger()
     const currentUser = await CurrentUser.asyncFromDB('6ab56894eb20887d1ef7942c')

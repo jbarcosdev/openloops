@@ -4,6 +4,9 @@ import { CurrentUser } from 'openloops/base'
 import { AgiLoop } from 'openloops/loops'
 import { Tool } from 'openloops/tools'
 
+/**
+ * A destructive tool. Before it runs, the agent asks the user to confirm.
+ */
 const deleteNoteTool = new Tool({
     name: 'delete_note',
     description: 'Permanently delete a note by its id',
@@ -18,6 +21,9 @@ const deleteNoteTool = new Tool({
     handler: async ({ noteId }: { noteId: string }) => ({ data: { deleted: noteId } }),
 })
 
+/**
+ * Two runs of the same chat: the first one ends with a question for the user, the second one carries the answer and the tool runs.
+ */
 async function runAgentWithConfirmation () {
     const logger = new Logger()
     const currentUser = await CurrentUser.asyncFromDB('6ab56894eb20887d1ef7942c')

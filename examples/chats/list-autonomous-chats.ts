@@ -2,6 +2,9 @@ import { Logger } from 'openloops/common'
 import { CurrentUser } from 'openloops/base'
 import { listChatsByUser } from 'openloops/chats'
 
+/**
+ * Lists the chats created by autonomous runs, and keeps the ones that need the user: waiting for a confirmation, waiting for an answer, or failed.
+ */
 async function listAutonomousChats () {
     const logger = new Logger()
     const currentUser = await CurrentUser.asyncFromDB('6ab56894eb20887d1ef7942c')

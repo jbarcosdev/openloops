@@ -2,6 +2,11 @@ import { Logger } from 'openloops/common'
 import { CurrentUser } from 'openloops/base'
 import { createAutomation } from 'openloops/automations'
 
+/**
+ * Creates an automation that runs on a schedule: a weekly report at 08:00, Monday to Friday, in the timezone of the schedule.
+ *
+ * The run uses the model that you set here. The next run is calculated and returned in `triggers.schedule.nextRunAt`.
+ */
 async function createSchedule () {
     const logger = new Logger()
     const currentUser = await CurrentUser.asyncFromDB('6ab56894eb20887d1ef7942c')

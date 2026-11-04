@@ -2,6 +2,9 @@ import { Logger } from 'openloops/common'
 import { CurrentUser } from 'openloops/base'
 import { getChatById } from 'openloops/chats'
 
+/**
+ * Gets a chat with its messages.
+ */
 async function getChat () {
     const logger = new Logger()
     const currentUser = await CurrentUser.asyncFromDB('6ab56894eb20887d1ef7942c')
@@ -14,6 +17,9 @@ async function getChat () {
     logger.info(result?.messages, '[Demo] Messages')
 }
 
+/**
+ * Gets only the state of a chat, with `select`, which is lighter. Use it to know if a run is still going or is waiting for the user.
+ */
 async function getChatStatus () {
     const logger = new Logger()
     const currentUser = await CurrentUser.asyncFromDB('6ab56894eb20887d1ef7942c')

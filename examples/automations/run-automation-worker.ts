@@ -8,6 +8,13 @@ async function notifyOwner (message: string) {
     logger.info({ message }, '[Notification Service] Sending notification to the owner...')
 }
 
+/**
+ * Worker that runs the automations. Start it in its own process: it looks for due schedules and queued events and runs each one in autonomous mode.
+ *
+ * The internal MCP `crm` uses the token of the user when there is one. An automation has no session of the user, so there it uses `autonomousToken`, the token of a service account, and the agent also sends the id of the owner in `X-User-Id`.
+ *
+ * `onRunFinished` is where you notify the owner when a run fails, is paused or is skipped.
+ */
 const runner = createAutomationRunner({
     agent: {
         tools: [webSearchTool],
