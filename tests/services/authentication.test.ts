@@ -1,7 +1,7 @@
 import { ObjectId } from 'mongodb'
 import jwt from 'jsonwebtoken'
 import { login, refreshSession, logout, issuePasswordResetToken, resetPassword, revokeUserSessions, verifySessionToken, TokenError } from '@services/authentication'
-import { hashToken } from '@services/authentication/helpers/tokens'
+import { hashToken, signToken, verifyToken } from '@services/authentication/helpers/tokens'
 import { changePassword, updateUser } from '@services/users'
 import { UserPassword } from '@services/users/entities/user-password.value-object'
 import { fakeMongo } from '../support/fake-mongo-client'
@@ -201,6 +201,23 @@ describe('authentication', () => {
 
             for (const token of [reset, noIssuer, legacy, forged, 'nope', undefined, '']) expect(() => verifySessionToken(token)).toThrow(TokenError)
             expect(() => verifySessionToken(expired)).toThrow(expect.objectContaining({ reason: 'expired' }))
+        })
+    })
+
+    describe('the token primitives', () => {
+        it('gives the expiration as a date, and none when the token does not expire', () => {
+            const expiring = signToken({ audience: 'session', subject: userId, expiresIn: '2h' })
+            const forever = signToken({ audience: 'session', subject: userId })
+
+            expect(verifyToken(expiring.token, 'session').expiresAt).toEqual(expiring.expiresAt)
+            expect(expiring.expiresAt!.getTime() - Date.now()).toBeGreaterThan(1.9 * 60 * 60 * 1000)
+            expect(verifyToken(forever.token, 'session').expiresAt).toBeUndefined()
+        })
+
+        it('accepts a number of seconds or a positive duration, and refuses any other text', () => {
+            expect(() => signToken({ audience: 'session', subject: userId, expiresIn: 60 })).not.toThrow()
+            for (const expiresIn of ['30m', '12h', '30d', '2w']) expect(() => signToken({ audience: 'session', subject: userId, expiresIn })).not.toThrow()
+            for (const expiresIn of ['0d', '-5m', '10', 'soon', '1.5h']) expect(() => signToken({ audience: 'session', subject: userId, expiresIn })).toThrow('positive duration')
         })
     })
 

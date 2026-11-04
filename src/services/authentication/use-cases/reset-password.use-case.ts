@@ -29,7 +29,7 @@ export class ResetPasswordUseCase extends BaseUseCase<Params, Output> {
 		if (!user?.userId) this.throwError401()
 
 		const isFirstUse = await this.revokeToken.execute({
-			payload: { jti: claims.jti, audience: PASSWORD_RESET_AUDIENCE, subject: user.userId, expiresAt: claims.exp ? new Date(claims.exp * 1000) : undefined },
+			payload: { jti: claims.jti, audience: PASSWORD_RESET_AUDIENCE, subject: user.userId, expiresAt: claims.expiresAt },
 		})
 		if (!isFirstUse) this.throwError401()
 

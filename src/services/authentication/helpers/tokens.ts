@@ -22,6 +22,7 @@ export interface TokenClaims {
 	aud: string
 	iat: number
 	exp?: number
+	expiresAt?: Date
 	jti?: string
 	[claim: string]: unknown
 }
@@ -34,6 +35,8 @@ export interface SignTokenParams {
 	claims?: Record<string, unknown>
 }
 
+const DURATION = /^[1-9]\d*[smhdw]$/
+
 const secret = (): string => {
 	const value = secretManager.get('JWT_SECRET')
 	if (!value) throw new Error('{{jwt_secret_not_found}}')
@@ -43,6 +46,8 @@ const secret = (): string => {
 
 export function signToken (params: SignTokenParams): { token: string, expiresAt?: Date } {
 	const { audience, subject, expiresIn, jti, claims } = params
+
+	if (typeof expiresIn === 'string' && !DURATION.test(expiresIn)) throw new Error('The expiration must be a positive duration such as 30m, 12h, 30d or 2w')
 
 	const token = jwt.sign({ ...claims }, secret(), {
 		algorithm: 'HS256',
@@ -66,7 +71,7 @@ export function verifyToken (token: unknown, audience: string, options: { ignore
 
 		if (typeof claims.sub !== 'string' || !claims.sub) throw new TokenError('invalid')
 
-		return claims as TokenClaims
+		return { ...claims, expiresAt: claims.exp ? new Date(claims.exp * 1000) : undefined } as TokenClaims
 	} catch (error: any) {
 		if (error instanceof TokenError) throw error
 		if (error?.name === 'TokenExpiredError') throw new TokenError('expired')

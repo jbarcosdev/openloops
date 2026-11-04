@@ -2,7 +2,8 @@ import { BaseUseCase, BaseUseCaseParams } from '@common/base/base.use-case'
 import { Scope } from '@common/repositories'
 import { revokeToken } from '@services/authentication'
 import { AutomationRepository } from '../repositories'
-import { EVENT_TOKEN_AUDIENCE, readEventToken } from '../utils/event-token'
+import { AUTOMATION_EVENT_AUDIENCE } from '@services/authentication/helpers/tokens'
+import { readEventToken } from '../utils/event-token'
 
 export interface Params extends BaseUseCaseParams {
 	id: string
@@ -26,7 +27,7 @@ export class RevokeAutomationEventTokenUseCase extends BaseUseCase<Params, Outpu
 		if (claims.sub !== id) throw new Error('The token does not belong to this automation')
 
 		await revokeToken({
-			payload: { jti: claims.jti, audience: EVENT_TOKEN_AUDIENCE, subject: id, expiresAt: claims.exp ? new Date(claims.exp * 1000) : undefined },
+			payload: { jti: claims.jti, audience: AUTOMATION_EVENT_AUDIENCE, subject: id, expiresAt: claims.expiresAt },
 			currentUser,
 		})
 
