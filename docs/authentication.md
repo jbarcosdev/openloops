@@ -16,8 +16,8 @@ const result = await login({
     },
 })
 
-result.data.token
-result.data.user
+result.token
+result.user
 ```
 
 - `token` is a JWT signed with `JWT_SECRET`. Its payload carries `userId`, `email`, `firstName` and `lastName`.
@@ -46,7 +46,7 @@ A signed token cannot be taken back, so `openloops` keeps a list of the ids (`jt
 ```typescript
 await revokeToken({ payload: { jti, audience: 'automation-event', subject: automationId, expiresAt }, currentUser })
 
-const { data } = await isTokenRevoked({ jti })
+const data = await isTokenRevoked({ jti })
 
 data.revoked
 ```

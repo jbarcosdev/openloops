@@ -1,4 +1,4 @@
-import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { BaseUseCase, BaseUseCaseParams } from '@common/base/base.use-case'
 import { Scope } from '@common/repositories'
 import { VersionConflictError } from '@common/repositories/mongo-db.repository'
 import { McpServer, McpServerProps, McpManifest } from '../entities'
@@ -10,9 +10,7 @@ export interface Params extends BaseUseCaseParams {
 	id: string
 }
 
-export interface Output extends BaseUseCaseOutput {
-	data: McpServerProps
-}
+export type Output = McpServerProps
 
 export class VerifyMcpServerConnectionUseCase extends BaseUseCase<Params, Output> {
 	constructor (private readonly mcpServerRepository = new McpServerRepository()) {
@@ -25,7 +23,7 @@ export class VerifyMcpServerConnectionUseCase extends BaseUseCase<Params, Output
 
 		const found = await this.mcpServerRepository.findById(id, scope)
 
-		if (!found) return this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' }) as any
+		if (!found) this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' })
 
 		const probed = McpServer.fromJSON(found)
 		let manifest: McpManifest | undefined
@@ -41,7 +39,7 @@ export class VerifyMcpServerConnectionUseCase extends BaseUseCase<Params, Output
 			const current = attempt === 1 ? probed : McpServer.fromJSON((await this.mcpServerRepository.findById(id, scope)) ?? found)
 
 			if (current.url !== probed.url || JSON.stringify(current.headers) !== JSON.stringify(probed.headers)) {
-				return { data: current.toJSON() }
+				return current.toJSON()
 			}
 
 			if (manifest) current.addManifest(manifest)
@@ -49,7 +47,7 @@ export class VerifyMcpServerConnectionUseCase extends BaseUseCase<Params, Output
 
 			try {
 				const saved = await this.mcpServerRepository.update(current, scope, { expectedVersion: current.__v })
-				return { data: saved ?? current.toJSON() }
+				return saved ?? current.toJSON()
 			} catch (error) {
 				if (!(error instanceof VersionConflictError) || attempt === MAX_ATTEMPTS) throw error
 			}

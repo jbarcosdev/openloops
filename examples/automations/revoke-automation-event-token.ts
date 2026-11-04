@@ -8,7 +8,7 @@ async function revokeLeakedToken () {
 
     const result = await revokeAutomationEventToken({ id: '6ad0c9a6d3ea4199c9b7ba10', token: 'eyJ...', currentUser })
 
-    logger.info({ jti: result.data.jti }, '[Demo] That token no longer works, the others still do')
+    logger.info({ jti: result.jti }, '[Demo] That token no longer works, the others still do')
 }
 
 async function rotateAll () {
@@ -17,7 +17,7 @@ async function rotateAll () {
 
     const result = await rotateAutomationEventTokens({ id: '6ad0c9a6d3ea4199c9b7ba10', currentUser })
 
-    logger.info({ eventTokenVersion: result.data.eventTokenVersion }, '[Demo] Every token issued before stopped working, issue a new one')
+    logger.info({ eventTokenVersion: result.eventTokenVersion }, '[Demo] Every token issued before stopped working, issue a new one')
 }
 
 revokeLeakedToken()

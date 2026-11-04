@@ -1,4 +1,4 @@
-import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { BaseUseCase, BaseUseCaseParams } from '@common/base/base.use-case'
 import { Scope } from '@common/repositories'
 import { McpServer, McpServerProps } from '../entities'
 import { McpServerRepository } from '../repositories'
@@ -9,9 +9,7 @@ export interface Params extends BaseUseCaseParams {
 	manifestHash?: string
 }
 
-export interface Output extends BaseUseCaseOutput {
-	data: McpServerProps
-}
+export type Output = McpServerProps
 
 export class DecideMcpServerTrustUseCase extends BaseUseCase<Params, Output> {
 	constructor (private readonly mcpServerRepository = new McpServerRepository()) {
@@ -28,7 +26,7 @@ export class DecideMcpServerTrustUseCase extends BaseUseCase<Params, Output> {
 
 		const found = await this.mcpServerRepository.findById(id, scope)
 
-		if (!found) return this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' }) as any
+		if (!found) this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' })
 
 		const mcpServer = McpServer.fromJSON(found)
 
@@ -37,6 +35,6 @@ export class DecideMcpServerTrustUseCase extends BaseUseCase<Params, Output> {
 
 		const saved = await this.mcpServerRepository.update(mcpServer, scope, { expectedVersion: found.__v })
 
-		return { data: saved ?? mcpServer.toJSON() }
+		return saved ?? mcpServer.toJSON()
 	}
 }

@@ -1,4 +1,4 @@
-import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { BaseUseCase, BaseUseCaseParams } from '@common/base/base.use-case'
 import { Scope } from '@common/repositories'
 import { revokeToken } from '@services/authentication'
 import { AutomationRepository } from '../repositories'
@@ -9,9 +9,7 @@ export interface Params extends BaseUseCaseParams {
 	token: string
 }
 
-export interface Output extends BaseUseCaseOutput {
-	data: { jti: string }
-}
+export type Output = { jti: string }
 
 export class RevokeAutomationEventTokenUseCase extends BaseUseCase<Params, Output> {
 	constructor (private readonly automationRepository = new AutomationRepository()) {
@@ -22,7 +20,7 @@ export class RevokeAutomationEventTokenUseCase extends BaseUseCase<Params, Outpu
 		const { id, token, currentUser } = params
 
 		const automation = await this.automationRepository.findById(id, params.scope ?? Scope.canManage(currentUser))
-		if (!automation) return this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' }) as any
+		if (!automation) this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' })
 
 		const claims = readEventToken(token, { ignoreExpiration: true })
 		if (claims.sub !== id) throw new Error('The token does not belong to this automation')
@@ -32,6 +30,6 @@ export class RevokeAutomationEventTokenUseCase extends BaseUseCase<Params, Outpu
 			currentUser,
 		})
 
-		return { data: { jti: claims.jti } }
+		return { jti: claims.jti }
 	}
 }

@@ -49,7 +49,7 @@ describe('automations', () => {
 
     describe('creating', () => {
         it('saves the automation as active with the first run calculated in its timezone', async () => {
-            const { data } = await create()
+            const data = await create()
 
             expect(data).toMatchObject({ name: 'Morning report', triggers: { schedule: { enabled: true, timezone: 'America/Lima' } } })
             expect(data.triggers?.event).toBeUndefined()
@@ -58,14 +58,14 @@ describe('automations', () => {
         })
 
         it('can be created turned off, without a next run', async () => {
-            const { data } = await create(valid({ triggers: { schedule: { enabled: false, recurrence: { type: 'daily', time: '08:00' }, timezone: 'America/Lima' } } }))
+            const data = await create(valid({ triggers: { schedule: { enabled: false, recurrence: { type: 'daily', time: '08:00' }, timezone: 'America/Lima' } } }))
 
             expect(data.triggers?.schedule?.enabled).toBe(false)
             expect(data.triggers?.schedule?.nextRunAt).toBeUndefined()
         })
 
         it('ignores the fields that only the system sets', async () => {
-            const { data } = await create(valid({ triggers: { schedule: { recurrence: { type: 'daily', time: '08:00' }, timezone: 'America/Lima', nextRunAt: '2020-01-01T00:00:00Z' } }, lockedBy: 'x', lockedUntil: '2099-01-01T00:00:00Z', lastRunStatus: 'completed', activeRunId: new ObjectId().toHexString() }))
+            const data = await create(valid({ triggers: { schedule: { recurrence: { type: 'daily', time: '08:00' }, timezone: 'America/Lima', nextRunAt: '2020-01-01T00:00:00Z' } }, lockedBy: 'x', lockedUntil: '2099-01-01T00:00:00Z', lastRunStatus: 'completed', activeRunId: new ObjectId().toHexString() }))
 
             expect(nextRunAt(data)).toBe('2026-10-14T13:00:00.000Z')
             expect(data.lockedBy).toBeUndefined()
@@ -99,7 +99,7 @@ describe('automations', () => {
         })
 
         it('keeps the model chosen for the automation', async () => {
-            const { data } = await create(valid({ modelProvider: 'anthropic', modelName: 'claude-haiku-5-5' }))
+            const data = await create(valid({ modelProvider: 'anthropic', modelName: 'claude-haiku-5-5' }))
 
             expect(data).toMatchObject({ modelProvider: 'anthropic', modelName: 'claude-haiku-5-5' })
         })
@@ -107,46 +107,46 @@ describe('automations', () => {
 
     describe('updating', () => {
         it('changes the fields and keeps the rest', async () => {
-            const { data: automation } = await create()
-            const { data } = await update(String(automation._id), { name: 'Evening report', __v: automation.__v })
+            const automation = await create()
+            const data = await update(String(automation._id), { name: 'Evening report', __v: automation.__v })
 
             expect(data).toMatchObject({ name: 'Evening report', instructions: 'Summarize my open tickets' })
             expect(nextRunAt(data)).toBe('2026-10-14T13:00:00.000Z')
         })
 
         it('recalculates the next run when the recurrence or the timezone change', async () => {
-            const { data: automation } = await create()
+            const automation = await create()
 
             const weekly = await update(String(automation._id), { triggers: { schedule: { recurrence: { type: 'weekly', days: [1], time: '09:00' } } } })
-            expect(nextRunAt(weekly.data)).toBe('2026-10-19T14:00:00.000Z')
+            expect(nextRunAt(weekly)).toBe('2026-10-19T14:00:00.000Z')
 
             const moved = await update(String(automation._id), { triggers: { schedule: { timezone: 'Europe/Madrid' } } })
-            expect(nextRunAt(moved.data)).toBe('2026-10-19T07:00:00.000Z')
+            expect(nextRunAt(moved)).toBe('2026-10-19T07:00:00.000Z')
         })
 
         it('turns off without a next run and turns on again counting from now', async () => {
-            const { data: automation } = await create()
+            const automation = await create()
             const id = String(automation._id)
 
             const off = await update(id, { triggers: { schedule: { enabled: false } } })
-            expect(off.data.triggers?.schedule?.enabled).toBe(false)
-            expect(off.data.triggers?.schedule?.nextRunAt).toBeUndefined()
+            expect(off.triggers?.schedule?.enabled).toBe(false)
+            expect(off.triggers?.schedule?.nextRunAt).toBeUndefined()
             expect(stored().triggers.schedule.nextRunAt).toBeUndefined()
 
             jest.setSystemTime(new Date('2026-10-20T20:00:00Z'))
             const on = await update(id, { triggers: { schedule: { enabled: true } } })
 
-            expect(on.data.triggers?.schedule?.enabled).toBe(true)
-            expect(nextRunAt(on.data)).toBe('2026-10-21T13:00:00.000Z')
+            expect(on.triggers?.schedule?.enabled).toBe(true)
+            expect(nextRunAt(on)).toBe('2026-10-21T13:00:00.000Z')
         })
 
         it('does not let the payload change what the system manages', async () => {
-            const { data: automation } = await create()
+            const automation = await create()
             const id = String(automation._id)
             const claimedAt = new Date('2026-10-14T12:00:00Z')
             Object.assign(stored(), { lockedBy: 'worker-1', lockedUntil: new Date(claimedAt.getTime() + 600000), lastRunStatus: 'failed' })
 
-            const { data } = await update(id, { name: 'x', triggers: { schedule: { nextRunAt: '2030-01-01T00:00:00Z' } }, lockedBy: 'hacker', lockedUntil: '2000-01-01T00:00:00Z', lastRunStatus: 'completed', ownerId: new ObjectId().toHexString() })
+            const data = await update(id, { name: 'x', triggers: { schedule: { nextRunAt: '2030-01-01T00:00:00Z' } }, lockedBy: 'hacker', lockedUntil: '2000-01-01T00:00:00Z', lastRunStatus: 'completed', ownerId: new ObjectId().toHexString() })
 
             expect(data).toMatchObject({ lockedBy: 'worker-1', lastRunStatus: 'failed' })
             expect(nextRunAt(data)).toBe('2026-10-14T13:00:00.000Z')
@@ -154,7 +154,7 @@ describe('automations', () => {
         })
 
         it('clears the model with an empty value', async () => {
-            const { data: automation } = await create(valid({ modelProvider: 'anthropic', modelName: 'claude-haiku-5-5' }))
+            const automation = await create(valid({ modelProvider: 'anthropic', modelName: 'claude-haiku-5-5' }))
 
             await update(String(automation._id), { modelProvider: null, modelName: null })
 
@@ -163,13 +163,13 @@ describe('automations', () => {
         })
 
         it('rejects a change that leaves only one of provider and name', async () => {
-            const { data: automation } = await create(valid({ modelProvider: 'anthropic', modelName: 'claude-haiku-5-5' }))
+            const automation = await create(valid({ modelProvider: 'anthropic', modelName: 'claude-haiku-5-5' }))
 
             await expect(update(String(automation._id), { modelName: null })).rejects.toThrow(/both the model provider and the model name/)
         })
 
         it('rejects a stale version and a missing automation', async () => {
-            const { data: automation } = await create()
+            const automation = await create()
 
             await expect(update(String(automation._id), { name: 'x', __v: (automation.__v as number) - 1 })).rejects.toMatchObject({ code: 'VERSION_CONFLICT' })
             await expect(update(new ObjectId().toHexString(), { name: 'x' })).rejects.toMatchObject({ statusCode: 404 })
@@ -177,7 +177,7 @@ describe('automations', () => {
         })
 
         it('does not turn on an automation whose single date has passed', async () => {
-            const { data: automation } = await create(valid({ triggers: { schedule: { recurrence: { type: 'once', at: '2026-10-14T10:00' }, timezone: 'America/Lima' } } }))
+            const automation = await create(valid({ triggers: { schedule: { recurrence: { type: 'once', at: '2026-10-14T10:00' }, timezone: 'America/Lima' } } }))
             const id = String(automation._id)
             await update(id, { triggers: { schedule: { enabled: false } } })
             jest.setSystemTime(new Date('2026-12-01T00:00:00Z'))
@@ -186,9 +186,9 @@ describe('automations', () => {
         })
 
         it('works for an admin as for any user', async () => {
-            const { data: automation } = await create(valid(), admin)
+            const automation = await create(valid(), admin)
 
-            const { data } = await update(String(automation._id), { name: 'x' }, admin)
+            const data = await update(String(automation._id), { name: 'x' }, admin)
 
             expect(data.name).toBe('x')
         })
@@ -198,14 +198,14 @@ describe('automations', () => {
         const schedule = { recurrence: { type: 'daily', time: '08:00' }, timezone: 'America/Lima' }
 
         it('can have only an event, with no schedule and no next run', async () => {
-            const { data } = await create(valid({ triggers: { event: {} } }))
+            const data = await create(valid({ triggers: { event: {} } }))
 
             expect(data.triggers).toEqual({ event: { enabled: true } })
             expect(data.eventTokenVersion).toBe(1)
         })
 
         it('can have a schedule and an event at the same time', async () => {
-            const { data } = await create(valid({ triggers: { schedule, event: { enabled: false } } }))
+            const data = await create(valid({ triggers: { schedule, event: { enabled: false } } }))
 
             expect(data.triggers?.event).toEqual({ enabled: false })
             expect(data.triggers?.schedule).toMatchObject({ enabled: true, timezone: 'America/Lima' })
@@ -213,21 +213,21 @@ describe('automations', () => {
         })
 
         it('ignores the token version that the payload sends', async () => {
-            const { data } = await create(valid({ triggers: { event: { tokenVersion: 99 } }, eventTokenVersion: 99 }))
+            const data = await create(valid({ triggers: { event: { tokenVersion: 99 } }, eventTokenVersion: 99 }))
 
             expect(data.triggers?.event).toEqual({ enabled: true })
             expect(data.eventTokenVersion).toBe(1)
 
             const updated = await update(String(data._id), { eventTokenVersion: 99, triggers: { event: { enabled: false } } })
 
-            expect(updated.data.eventTokenVersion).toBe(1)
+            expect(updated.eventTokenVersion).toBe(1)
         })
 
         it('adds an event to a schedule without moving the next run', async () => {
-            const { data: automation } = await create()
+            const automation = await create()
             jest.setSystemTime(new Date('2026-10-14T12:30:00Z'))
 
-            const { data } = await update(String(automation._id), { triggers: { event: {} } })
+            const data = await update(String(automation._id), { triggers: { event: {} } })
 
             expect(data.triggers?.event).toEqual({ enabled: true })
             expect(data.eventTokenVersion).toBe(1)
@@ -235,24 +235,24 @@ describe('automations', () => {
         })
 
         it('turns the event off and on keeping its token version', async () => {
-            const { data: automation } = await create(valid({ triggers: { schedule, event: {} } }))
+            const automation = await create(valid({ triggers: { schedule, event: {} } }))
             const id = String(automation._id)
             stored().eventTokenVersion = 4
 
             const off = await update(id, { triggers: { event: { enabled: false } } })
-            expect(off.data.triggers?.event).toEqual({ enabled: false })
-            expect(off.data.eventTokenVersion).toBe(4)
-            expect(off.data.triggers?.schedule?.enabled).toBe(true)
+            expect(off.triggers?.event).toEqual({ enabled: false })
+            expect(off.eventTokenVersion).toBe(4)
+            expect(off.triggers?.schedule?.enabled).toBe(true)
 
             const on = await update(id, { triggers: { event: { enabled: true } } })
-            expect(on.data.triggers?.event).toEqual({ enabled: true })
-            expect(on.data.eventTokenVersion).toBe(4)
+            expect(on.triggers?.event).toEqual({ enabled: true })
+            expect(on.eventTokenVersion).toBe(4)
         })
 
         it('turns the schedule off without touching the event', async () => {
-            const { data: automation } = await create(valid({ triggers: { schedule, event: {} } }))
+            const automation = await create(valid({ triggers: { schedule, event: {} } }))
 
-            const { data } = await update(String(automation._id), { triggers: { schedule: { enabled: false } } })
+            const data = await update(String(automation._id), { triggers: { schedule: { enabled: false } } })
 
             expect(data.triggers?.schedule?.enabled).toBe(false)
             expect(data.triggers?.schedule?.nextRunAt).toBeUndefined()
@@ -260,7 +260,7 @@ describe('automations', () => {
         })
 
         it('removes the schedule with null and its next run goes with it', async () => {
-            const { data: automation } = await create(valid({ triggers: { schedule, event: {} } }))
+            const automation = await create(valid({ triggers: { schedule, event: {} } }))
 
             await update(String(automation._id), { triggers: { schedule: null } })
 
@@ -269,7 +269,7 @@ describe('automations', () => {
         })
 
         it('removes the event with null, keeps the schedule and counts it as a rotation of the tokens', async () => {
-            const { data: automation } = await create(valid({ triggers: { schedule, event: {} } }))
+            const automation = await create(valid({ triggers: { schedule, event: {} } }))
 
             await update(String(automation._id), { triggers: { event: null } })
 
@@ -281,23 +281,23 @@ describe('automations', () => {
         })
 
         it('does not let the last trigger be removed', async () => {
-            const { data: automation } = await create()
+            const automation = await create()
 
             await expect(update(String(automation._id), { triggers: { schedule: null } })).rejects.toThrow(/at least one trigger/)
             expect(stored().triggers.schedule).toBeDefined()
         })
 
         it('needs a recurrence and a timezone to add a schedule', async () => {
-            const { data: automation } = await create(valid({ triggers: { event: {} } }))
+            const automation = await create(valid({ triggers: { event: {} } }))
 
             await expect(update(String(automation._id), { triggers: { schedule: { enabled: true } } })).rejects.toThrow(/recurrence is required/)
 
-            const { data } = await update(String(automation._id), { triggers: { schedule } })
+            const data = await update(String(automation._id), { triggers: { schedule } })
             expect(nextRunAt(data)).toBe('2026-10-14T13:00:00.000Z')
         })
 
         it('rejects the fields of the previous shape', async () => {
-            const { data: automation } = await create()
+            const automation = await create()
 
             await expect(update(String(automation._id), { trigger: { type: 'schedule' } })).rejects.toThrow(/replaced by triggers/)
             await expect(update(String(automation._id), { enabled: false })).rejects.toThrow(/belongs to each trigger/)
@@ -306,11 +306,11 @@ describe('automations', () => {
 
     describe('reading', () => {
         it('gets one automation and returns null when there is none', async () => {
-            const { data: automation } = await create()
+            const automation = await create()
             const get = new GetAutomationByIdUseCase()
 
-            expect((await get.execute({ id: String(automation._id), currentUser: user })).data?.name).toBe('Morning report')
-            expect((await get.execute({ id: new ObjectId().toHexString(), currentUser: user })).data).toBeNull()
+            expect((await get.execute({ id: String(automation._id), currentUser: user }))?.name).toBe('Morning report')
+            expect((await get.execute({ id: new ObjectId().toHexString(), currentUser: user }))).toBeNull()
         })
 
         it('lists the automations of the user, newest first, with pagination', async () => {
@@ -324,25 +324,25 @@ describe('automations', () => {
             const first = await list.execute({ currentUser: user, options: { page: 1, limit: 2 } })
             const second = await list.execute({ currentUser: user, options: { page: 2, limit: 2 } })
 
-            expect(first.data.map(automation => automation.name)).toEqual(['c', 'b'])
-            expect(second.data.map(automation => automation.name)).toEqual(['a'])
+            expect(first.items.map(automation => automation.name)).toEqual(['c', 'b'])
+            expect(second.items.map(automation => automation.name)).toEqual(['a'])
         })
     })
 
     describe('deleting', () => {
         it('removes it from the lists and from what the worker takes', async () => {
-            const { data: automation } = await create()
+            const automation = await create()
             const remove = new DeleteAutomationUseCase()
 
             await remove.execute({ id: String(automation._id), currentUser: user })
 
             expect(stored().deletedAt).toBeInstanceOf(Date)
             expect(stored().triggers.schedule.nextRunAt).toBeUndefined()
-            expect((await new ListAutomationsByUserUseCase().execute({ currentUser: user })).data).toHaveLength(0)
+            expect((await new ListAutomationsByUserUseCase().execute({ currentUser: user })).items).toHaveLength(0)
         })
 
         it('only lets an admin delete it for good', async () => {
-            const { data: automation } = await create()
+            const automation = await create()
             const remove = new DeleteAutomationUseCase()
 
             await expect(remove.execute({ id: String(automation._id), hardDelete: true, currentUser: user })).rejects.toBeDefined()
@@ -355,7 +355,7 @@ describe('automations', () => {
 
     describe('previewing', () => {
         it('lists the next runs of a recurrence without saving anything', async () => {
-            const { data } = await new PreviewAutomationRunsUseCase().execute({ recurrence: { type: 'weekly', days: [1, 5], time: '08:00' }, timezone: 'UTC', count: 3 })
+            const data = await new PreviewAutomationRunsUseCase().execute({ recurrence: { type: 'weekly', days: [1, 5], time: '08:00' }, timezone: 'UTC', count: 3 })
 
             expect(data.runs.map(date => date.toISOString())).toEqual(['2026-10-16T08:00:00.000Z', '2026-10-19T08:00:00.000Z', '2026-10-23T08:00:00.000Z'])
             expect(automations().docs).toHaveLength(0)
@@ -386,7 +386,7 @@ describe('automations', () => {
 
         it('lists the runs of an automation, newest first', async () => {
             const { automationId } = await seed()
-            const { data } = await new ListAutomationRunsByAutomationUseCase().execute({ automationId: String(automationId), currentUser: user })
+            const { items: data } = await new ListAutomationRunsByAutomationUseCase().execute({ automationId: String(automationId), currentUser: user })
 
             expect(data.map(run => run.status)).toEqual(['failed', 'completed'])
         })
@@ -395,8 +395,8 @@ describe('automations', () => {
             await seed()
             const list = new ListAutomationRunsByUserUseCase()
 
-            expect((await list.execute({ currentUser: user })).data.map(run => run.status)).toEqual(['paused', 'failed', 'completed'])
-            expect((await list.execute({ currentUser: user, status: 'paused' })).data).toHaveLength(1)
+            expect((await list.execute({ currentUser: user })).items.map(run => run.status)).toEqual(['paused', 'failed', 'completed'])
+            expect((await list.execute({ currentUser: user, status: 'paused' })).items).toHaveLength(1)
         })
 
         it('needs a user and an automation', async () => {

@@ -1,4 +1,4 @@
-import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { BaseUseCase, BaseUseCaseParams } from '@common/base/base.use-case'
 import { Scope } from '@common/repositories'
 import { McpServer, McpServerProps } from '../entities'
 import { McpServerRepository } from '../repositories'
@@ -8,9 +8,7 @@ export interface Params extends BaseUseCaseParams {
 	payload?: McpServerProps
 }
 
-export interface Output extends BaseUseCaseOutput {
-	data: McpServerProps | null
-}
+export type Output = McpServerProps | null
 
 export class CreateMcpServerUseCase extends BaseUseCase<Params, Output> {
 	constructor (
@@ -28,8 +26,6 @@ export class CreateMcpServerUseCase extends BaseUseCase<Params, Output> {
 
 		await this.mcpServerRepository.create(mcpServer, params.scope ?? Scope.canEdit(currentUser))
 
-		const verified = await this.verifyConnection.execute({ id: String(mcpServer._id), currentUser })
-
-		return { data: verified?.data ?? mcpServer.toJSON() }
+		return await this.verifyConnection.execute({ id: String(mcpServer._id), currentUser })
 	}
 }

@@ -7,7 +7,7 @@ async function approveMcp () {
     const currentUser = await CurrentUser.asyncFromDB('6ab56894eb20887d1ef7942c')
     const id = '6ab59c88d3ea4199c9b7ba09'
 
-    const { data: server } = await getMcpServerById({ id, currentUser })
+    const server = await getMcpServerById({ id, currentUser })
     const latest = server?.history?.[0]
 
     if (!latest) throw new Error('[Demo] the server has no manifest yet, verify its connection first')
@@ -19,7 +19,7 @@ async function approveMcp () {
         currentUser,
     })
 
-    logger.info({ trust: result.data.trust, approvedHash: result.data.approvedHash }, '[Demo] Approved mcp')
+    logger.info({ trust: result.trust, approvedHash: result.approvedHash }, '[Demo] Approved mcp')
 }
 
 async function blockMcp () {
@@ -32,7 +32,7 @@ async function blockMcp () {
         currentUser,
     })
 
-    logger.info({ trust: result.data.trust }, '[Demo] Blocked mcp')
+    logger.info({ trust: result.trust }, '[Demo] Blocked mcp')
 }
 
 approveMcp()

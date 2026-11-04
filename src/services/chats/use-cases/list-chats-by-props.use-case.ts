@@ -1,5 +1,5 @@
 import { QueryOptions, Scope } from '@common/repositories'
-import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { BaseUseCase, BaseUseCaseParams } from '@common/base/base.use-case'
 import { ChatRepository } from '../repositories'
 import { ChatProps } from '../entities'
 
@@ -8,9 +8,9 @@ export interface Params extends BaseUseCaseParams {
 	options?: QueryOptions
 }
 
-export interface Output extends BaseUseCaseOutput {
-	data: ChatProps[] | null | undefined
-	hasMore?: boolean
+export interface Output {
+	items: ChatProps[]
+	hasMore: boolean
 }
 
 export class ListChatsByPropsUseCase extends BaseUseCase<Params, Output> {
@@ -22,6 +22,6 @@ export class ListChatsByPropsUseCase extends BaseUseCase<Params, Output> {
 		const { where, options, currentUser } = params
 		const result = await this.chatRepository.findByProps(where, options || {}, params.scope ?? Scope.asAdmin(currentUser))
 
-		return { data: result?.items, hasMore: result?.hasMore }
+		return { items: result?.items ?? [], hasMore: result?.hasMore ?? false }
 	}
 }

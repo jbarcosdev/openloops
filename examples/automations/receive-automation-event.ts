@@ -5,7 +5,7 @@ async function receive (automationId: string, authorization: string, body: unkno
     const logger = new Logger()
 
     try {
-        const { data } = await receiveAutomationEvent({
+        const data = await receiveAutomationEvent({
             automationId,
             token: authorization.replace(/^Bearer /, ''),
             payload: body,

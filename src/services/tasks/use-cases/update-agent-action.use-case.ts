@@ -1,4 +1,4 @@
-import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { BaseUseCase, BaseUseCaseParams } from '@common/base/base.use-case'
 import { Scope } from '@common/repositories'
 import { AgentActionRepository } from '../repositories'
 import { AgentAction, AgentActionProps } from '../entities'
@@ -8,9 +8,7 @@ export interface Params extends BaseUseCaseParams {
 	payload?: AgentActionProps
 }
 
-export interface Output extends BaseUseCaseOutput {
-	data: AgentActionProps
-}
+export type Output = AgentActionProps
 
 export class UpdateAgentActionUseCase extends BaseUseCase<Params, Output> {
 	constructor (private readonly agentActionRepository = new AgentActionRepository()) {
@@ -32,8 +30,8 @@ export class UpdateAgentActionUseCase extends BaseUseCase<Params, Output> {
 
 		const result = await this.agentActionRepository.update(action, params.scope ?? Scope.canEdit(currentUser))
 
-		if (!result) return this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' }) as any
+		if (!result) this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' })
 
-		return { data: result }
+		return result
 	}
 }

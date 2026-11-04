@@ -1,4 +1,4 @@
-import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { BaseUseCase, BaseUseCaseParams } from '@common/base/base.use-case'
 import { getChatById } from '@services/chats'
 import { AutomationRun, AutomationRunProps, AutomationRunStatus } from '../entities'
 import { AutomationRepository, AutomationRunRepository } from '../repositories'
@@ -9,9 +9,7 @@ export interface Params extends BaseUseCaseParams {
 	now?: Date
 }
 
-export interface Output extends BaseUseCaseOutput {
-	data: AutomationRunProps | null
-}
+export type Output = AutomationRunProps | null
 
 export const LOST_WORKER_MESSAGE = 'The worker that was running this automation was lost before it finished'
 
@@ -27,17 +25,17 @@ export class SyncAutomationRunUseCase extends BaseUseCase<Params, Output> {
 		const now = params.now ?? new Date()
 		const run = await this.automationRunRepository.findById(params.runId, runnerScope)
 
-		if (!run) return { data: null }
-		if (run.status === 'paused') return { data: await this.syncPaused(run, now) }
-		if (run.status === 'running') return { data: await this.syncRunning(run, now) }
+		if (!run) return null
+		if (run.status === 'paused') return await this.syncPaused(run, now)
+		if (run.status === 'running') return await this.syncRunning(run, now)
 
-		return { data: run }
+		return run
 	}
 
 	private async syncPaused (run: AutomationRunProps, now: Date): Promise<AutomationRunProps> {
 		if (!run.chatId) return run
 
-		const { data: chat } = await getChatById({ id: String(run.chatId), scope: runnerScope })
+		const chat = await getChatById({ id: String(run.chatId), scope: runnerScope })
 		const status = chat?.state?.status
 
 		if (status === 'idle') return await this.settle(run, 'completed', now)

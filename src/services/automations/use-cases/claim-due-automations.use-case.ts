@@ -1,5 +1,5 @@
 import { Logger } from '@common/logger'
-import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { BaseUseCase, BaseUseCaseParams } from '@common/base/base.use-case'
 import { AutomationProps, AutomationRunProps } from '../entities'
 import { AutomationRepository, AutomationRunRepository } from '../repositories'
 import { computeNextRun } from '../utils/next-run'
@@ -23,9 +23,7 @@ export interface ClaimedRun {
 	run: AutomationRunProps
 }
 
-export interface Output extends BaseUseCaseOutput {
-	data: { claimed: ClaimedRun[], skipped: ClaimedRun[] }
-}
+export type Output = { claimed: ClaimedRun[], skipped: ClaimedRun[] }
 
 export class ClaimDueAutomationsUseCase extends BaseUseCase<Params, Output> {
 	private readonly log = new Logger()
@@ -82,6 +80,6 @@ export class ClaimDueAutomationsUseCase extends BaseUseCase<Params, Output> {
 			claimed.push({ automation, run: run.toJSON() })
 		}
 
-		return { data: { claimed, skipped } }
+		return { claimed, skipped }
 	}
 }

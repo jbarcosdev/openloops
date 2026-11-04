@@ -17,7 +17,7 @@ export async function findPausedRun (runs: AutomationRunRepository, syncRun: Syn
 
 	if (previous.status !== 'paused') return null
 
-	const { data } = await syncRun.execute({ runId: String(previous._id), now })
+	const data = await syncRun.execute({ runId: String(previous._id), now })
 
 	return data?.status === 'paused' ? data : null
 }

@@ -9,9 +9,9 @@ async function getCurrentMonthStats () {
     const result = await getLLMUsageStats({ currentUser })
 
     logger.info({
-        summary: result.data.summary,
-        models: result.data.models,
-        series: result.data.series,
+        summary: result.summary,
+        models: result.models,
+        series: result.series,
     }, '[Demo] This month usage by day')
 }
 

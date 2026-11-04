@@ -1,4 +1,4 @@
-import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { BaseUseCase, BaseUseCaseParams } from '@common/base/base.use-case'
 import { Scope } from '@common/repositories'
 import { LLMCallRepository } from '../repositories'
 import { LLMCallProps } from '../entities'
@@ -7,9 +7,7 @@ export interface Params extends BaseUseCaseParams {
 	id: string
 }
 
-export interface Output extends BaseUseCaseOutput {
-	data: LLMCallProps | null | undefined
-}
+export type Output = LLMCallProps | null
 
 export class GetLLMCallByIdUseCase extends BaseUseCase<Params, Output> {
 	constructor (private readonly llmCallRepository = new LLMCallRepository()) {
@@ -19,8 +17,8 @@ export class GetLLMCallByIdUseCase extends BaseUseCase<Params, Output> {
 	async execute (params: Params): Promise<Output> {
 		const { id, currentUser } = params
 		const result = await this.llmCallRepository.findById(id, params.scope ?? Scope.canView(currentUser))
-		if (!result) return this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' }) as any
+		if (!result) this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' })
 
-		return { data: result }
+		return result
 	}
 }

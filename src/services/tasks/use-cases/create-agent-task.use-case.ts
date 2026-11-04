@@ -1,4 +1,4 @@
-import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { BaseUseCase, BaseUseCaseParams } from '@common/base/base.use-case'
 import { Scope } from '@common/repositories'
 import { AgentTaskRepository } from '../repositories'
 import { AgentTask, AgentTaskProps } from '../entities'
@@ -7,9 +7,7 @@ export interface Params extends BaseUseCaseParams {
 	payload?: AgentTaskProps
 }
 
-export interface Output extends BaseUseCaseOutput {
-	data: AgentTaskProps | null | undefined
-}
+export type Output = AgentTaskProps
 
 export class CreateAgentTaskUseCase extends BaseUseCase<Params, Output> {
 	constructor (private readonly agentTaskRepository = new AgentTaskRepository()) {
@@ -25,6 +23,6 @@ export class CreateAgentTaskUseCase extends BaseUseCase<Params, Output> {
 
 		const result = await this.agentTaskRepository.create(task, params.scope ?? Scope.canEdit(currentUser))
 
-		return { data: result?.toJSON() }
+		return result.toJSON()
 	}
 }

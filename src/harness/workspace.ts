@@ -41,7 +41,7 @@ export class AgentWorkspace implements Workspace {
     ) {}
 
     async save (input: WorkspaceSaveInput): Promise<WorkspaceItemProps> {
-        const { data } = await saveWorkspaceItem({
+        const data = await saveWorkspaceItem({
             payload: {
                 chatId: this.chatId,
                 taskId: input.taskId,
@@ -60,7 +60,7 @@ export class AgentWorkspace implements Workspace {
     }
 
     async get (name: string, opts?: { taskId?: string; includeContent?: boolean }): Promise<WorkspaceItemProps | null> {
-        const { data } = await getWorkspaceItem({
+        const data = await getWorkspaceItem({
             chatId: this.chatId,
             name,
             taskId: opts?.taskId,
@@ -72,7 +72,7 @@ export class AgentWorkspace implements Workspace {
     }
 
     async list (filters?: WorkspaceFilters): Promise<WorkspaceItemProps[]> {
-        const { data } = await listWorkspaceItems({
+        const { items } = await listWorkspaceItems({
             chatId: this.chatId,
             taskId: filters?.taskId,
             kind: filters?.kind,
@@ -80,11 +80,11 @@ export class AgentWorkspace implements Workspace {
             currentUser: this.currentUser,
         })
 
-        return data
+        return items
     }
 
     async search (query: string, filters?: WorkspaceFilters): Promise<WorkspaceItemProps[]> {
-        const { data } = await searchWorkspaceItems({
+        const { items } = await searchWorkspaceItems({
             chatId: this.chatId,
             query,
             taskId: filters?.taskId,
@@ -93,11 +93,11 @@ export class AgentWorkspace implements Workspace {
             currentUser: this.currentUser,
         })
 
-        return data
+        return items
     }
 
     async remove (name: string, opts?: { taskId?: string }): Promise<number> {
-        const { data } = await deleteWorkspaceItem({
+        const data = await deleteWorkspaceItem({
             chatId: this.chatId,
             name,
             taskId: opts?.taskId,

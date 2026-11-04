@@ -1,4 +1,4 @@
-import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { BaseUseCase, BaseUseCaseParams } from '@common/base/base.use-case'
 import { Scope } from '@common/repositories'
 import { LLMCallRepository } from '../repositories'
 import { LLMCall, LLMCallProps } from '../entities'
@@ -8,9 +8,7 @@ export interface Params extends BaseUseCaseParams {
 	payload?: LLMCallProps
 }
 
-export interface Output extends BaseUseCaseOutput {
-	data: LLMCallProps
-}
+export type Output = LLMCallProps
 
 export class UpdateLLMCallUseCase extends BaseUseCase<Params, Output> {
 	constructor (private readonly llmCallRepository = new LLMCallRepository()) {
@@ -30,8 +28,8 @@ export class UpdateLLMCallUseCase extends BaseUseCase<Params, Output> {
 
 		const result = await this.llmCallRepository.update(llmCall, params.scope ?? Scope.canEdit(currentUser))
 
-		if (!result) return this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' }) as any
+		if (!result) this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' })
 
-		return { data: result }
+		return result
 	}
 }

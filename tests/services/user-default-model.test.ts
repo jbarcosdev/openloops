@@ -39,7 +39,7 @@ describe('the default model of a user', () => {
     })
 
     it('is returned with the preferences of the user', async () => {
-        const { data } = await update({ preferences: { defaultModel: { provider: ' anthropic ', model: ' claude-haiku-5-5 ' } } })
+        const data = await update({ preferences: { defaultModel: { provider: ' anthropic ', model: ' claude-haiku-5-5 ' } } })
 
         expect(data.preferences?.defaultModel).toEqual({ provider: 'anthropic', model: 'claude-haiku-5-5' })
     })
@@ -87,7 +87,7 @@ describe('the default model of a user', () => {
 
         await expect(create({ provider: 'anthropic', model: 'gpt-4o-mini' })).rejects.toThrow(/does not exist/)
 
-        const { data } = await create({ provider: 'anthropic', model: 'claude-haiku-5-5' })
+        const data = await create({ provider: 'anthropic', model: 'claude-haiku-5-5' })
         expect(data.preferences?.defaultModel).toEqual({ provider: 'anthropic', model: 'claude-haiku-5-5' })
     })
 })

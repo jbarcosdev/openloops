@@ -1,4 +1,4 @@
-import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { BaseUseCase, BaseUseCaseParams } from '@common/base/base.use-case'
 import { Scope } from '@common/repositories'
 import { McpServerRepository } from '../repositories'
 import { McpServerProps } from '../entities'
@@ -7,9 +7,7 @@ export interface Params extends BaseUseCaseParams {
 	id: string
 }
 
-export interface Output extends BaseUseCaseOutput {
-	data: McpServerProps | null | undefined
-}
+export type Output = McpServerProps | null
 
 export class GetMcpServerByIdUseCase extends BaseUseCase<Params, Output> {
 	constructor (private readonly mcpServerRepository = new McpServerRepository()) {
@@ -20,6 +18,6 @@ export class GetMcpServerByIdUseCase extends BaseUseCase<Params, Output> {
 		const { id, currentUser } = params
 		const result = await this.mcpServerRepository.findById(id, params.scope ?? Scope.canView(currentUser))
 
-		return { data: result }
+		return result
 	}
 }

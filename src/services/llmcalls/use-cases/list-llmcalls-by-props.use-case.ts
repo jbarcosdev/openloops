@@ -1,4 +1,4 @@
-import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { BaseUseCase, BaseUseCaseParams } from '@common/base/base.use-case'
 import { LLMCallRepository } from '../repositories'
 import { QueryOptions, Scope } from '@common/repositories'
 import { LLMCallProps } from '../entities'
@@ -8,9 +8,9 @@ export interface Params extends BaseUseCaseParams {
 	options?: QueryOptions
 }
 
-export interface Output extends BaseUseCaseOutput {
-	data: LLMCallProps[] | null | undefined
-	hasMore?: boolean
+export interface Output {
+	items: LLMCallProps[]
+	hasMore: boolean
 }
 
 export class ListLLMCallsByPropsUseCase extends BaseUseCase<Params, Output> {
@@ -22,6 +22,6 @@ export class ListLLMCallsByPropsUseCase extends BaseUseCase<Params, Output> {
 		const { where, options, currentUser } = params
 		const result = await this.llmCallRepository.findByProps(where, params.scope ?? Scope.asAdmin(currentUser), options)
 
-		return { data: result?.items, hasMore: result?.hasMore }
+		return { items: result?.items ?? [], hasMore: result?.hasMore ?? false }
 	}
 }

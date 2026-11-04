@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken'
-import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { BaseUseCase, BaseUseCaseParams } from '@common/base/base.use-case'
 import { User, UserProps, UserRole } from '@services/users/entities'
 import { UserRepository } from '@services/users/repositories'
 import { CurrentUser } from '@common/base'
@@ -12,12 +12,10 @@ export interface Params extends BaseUseCaseParams {
 	}
 }
 
-export interface Output extends BaseUseCaseOutput {
-	data: {
+export type Output = {
 		token: string
 		user: UserProps
 	}
-}
 
 export class LoginUseCase extends BaseUseCase<Params, Output> {
 	constructor (private readonly userRepository = new UserRepository()) {
@@ -33,18 +31,18 @@ export class LoginUseCase extends BaseUseCase<Params, Output> {
 		const { emailOrUsername, password } = payload
 		const user: User | null = await this.userRepository.findByEmailOrUsernameWithPassword(emailOrUsername, params.scope ?? Scope.system('login: the user is not known before the credentials are checked'))
 		if (!user) {
-			return this.throwHttpError({
+			this.throwHttpError({
 				statusCode: 404,
 				errorMessage: `{{user_not_found}}: ${emailOrUsername}`,
-			}) as any
+			})
 		}
 
 		const isValidPassword = await user.verifyPassword(password)
 		if (isValidPassword !== true) {
-			return this.throwHttpError({
+			this.throwHttpError({
 				statusCode: 401,
 				errorMessage: '{{invalid_password}}',
-			}) as any
+			})
 		}
 
 		const expiresIn = user.role === UserRole.ADMIN ? '1h' : '7d'
@@ -59,6 +57,6 @@ export class LoginUseCase extends BaseUseCase<Params, Output> {
 		const token = jwt.sign(payloadData, SECRET_KEY, { expiresIn: expiresIn })
 
 		const { password: _password, ...userWithoutPassword } = user.toJSON()
-		return { data: { token, user: userWithoutPassword } }
+		return { token, user: userWithoutPassword }
 	}
 }

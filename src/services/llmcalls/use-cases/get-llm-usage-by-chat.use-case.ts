@@ -1,5 +1,5 @@
 import { ObjectId } from 'mongodb'
-import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { BaseUseCase, BaseUseCaseParams } from '@common/base/base.use-case'
 import { Scope } from '@common/repositories'
 import { LLMCallRepository } from '../repositories'
 import { UsageReport, usageReportPipeline, toUsageReport } from '../utils/usage-totals'
@@ -8,9 +8,7 @@ export interface Params extends BaseUseCaseParams {
 	chatId: string
 }
 
-export interface Output extends BaseUseCaseOutput {
-	data: UsageReport
-}
+export type Output = UsageReport
 
 export class GetLLMUsageByChatUseCase extends BaseUseCase<Params, Output> {
 	constructor (private readonly llmCallRepository = new LLMCallRepository()) {
@@ -28,6 +26,6 @@ export class GetLLMUsageByChatUseCase extends BaseUseCase<Params, Output> {
 			sessionId: new ObjectId(chatId),
 		}) as any[], params.scope ?? Scope.canView(currentUser))
 
-		return { data: toUsageReport(rows as any[]) }
+		return toUsageReport(rows as any[])
 	}
 }

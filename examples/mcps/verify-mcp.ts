@@ -11,7 +11,7 @@ async function verifyMcp () {
         currentUser,
     })
 
-    logger.info({ status: result.data.status, lastError: result.data.lastError }, '[Demo] Connection check')
+    logger.info({ status: result.status, lastError: result.lastError }, '[Demo] Connection check')
 }
 
 verifyMcp()

@@ -1,4 +1,4 @@
-import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { BaseUseCase, BaseUseCaseParams } from '@common/base/base.use-case'
 import { AutomationRun, AutomationRunError, AutomationRunProps } from '../entities'
 import { AutomationRepository, AutomationRunRepository } from '../repositories'
 import { runnerScope } from '../utils/runner-scope'
@@ -11,9 +11,7 @@ export interface Params extends BaseUseCaseParams {
 	now?: Date
 }
 
-export interface Output extends BaseUseCaseOutput {
-	data: AutomationRunProps | null
-}
+export type Output = AutomationRunProps | null
 
 export class FinishAutomationRunUseCase extends BaseUseCase<Params, Output> {
 	constructor (
@@ -28,7 +26,7 @@ export class FinishAutomationRunUseCase extends BaseUseCase<Params, Output> {
 		const now = params.now ?? new Date()
 
 		const run = await this.automationRunRepository!.findById(runId, runnerScope)
-		if (!run) return { data: null }
+		if (!run) return null
 
 		const finished = AutomationRun.fromJSON({
 			...run,
@@ -47,6 +45,6 @@ export class FinishAutomationRunUseCase extends BaseUseCase<Params, Output> {
 			}, runnerScope)
 		}
 
-		return { data: saved ?? finished.toJSON() }
+		return saved ?? finished.toJSON()
 	}
 }

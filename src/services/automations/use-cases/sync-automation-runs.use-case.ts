@@ -1,4 +1,4 @@
-import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { BaseUseCase, BaseUseCaseParams } from '@common/base/base.use-case'
 import { AutomationRunRepository } from '../repositories'
 import { SyncAutomationRunUseCase } from './sync-automation-run.use-case'
 import { runnerScope } from '../utils/runner-scope'
@@ -10,9 +10,7 @@ export interface Params extends BaseUseCaseParams {
 	now?: Date
 }
 
-export interface Output extends BaseUseCaseOutput {
-	data: { checked: number, settled: number }
-}
+export type Output = { checked: number, settled: number }
 
 export class SyncAutomationRunsUseCase extends BaseUseCase<Params, Output> {
 	constructor (
@@ -32,10 +30,10 @@ export class SyncAutomationRunsUseCase extends BaseUseCase<Params, Output> {
 		let settled = 0
 
 		for (const run of open) {
-			const { data } = await this.syncRun!.execute({ runId: String(run._id), now: params.now })
+			const data = await this.syncRun!.execute({ runId: String(run._id), now: params.now })
 			if (data && data.status !== run.status) settled++
 		}
 
-		return { data: { checked: open.length, settled } }
+		return { checked: open.length, settled }
 	}
 }

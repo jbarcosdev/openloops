@@ -1,4 +1,4 @@
-import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { BaseUseCase, BaseUseCaseParams } from '@common/base/base.use-case'
 import { RevokedToken, RevokedTokenProps } from '../entities'
 import { RevokedTokenRepository } from '../repositories'
 import { Scope } from '@common/repositories'
@@ -7,9 +7,7 @@ export interface Params extends BaseUseCaseParams {
 	payload?: Pick<RevokedTokenProps, 'jti' | 'audience' | 'subject' | 'expiresAt'>
 }
 
-export interface Output extends BaseUseCaseOutput {
-	data: RevokedTokenProps
-}
+export type Output = RevokedTokenProps
 
 export class RevokeTokenUseCase extends BaseUseCase<Params, Output> {
 	constructor (private readonly revokedTokenRepository = new RevokedTokenRepository()) {
@@ -24,7 +22,7 @@ export class RevokeTokenUseCase extends BaseUseCase<Params, Output> {
 		const scope = params.scope ?? Scope.system('revoked tokens are checked by jti, not by owner')
 
 		const existing = await this.revokedTokenRepository!.findByJti(payload.jti, scope)
-		if (existing) return { data: existing }
+		if (existing) return existing
 
 		const revoked = RevokedToken.fromJSON({ jti: payload.jti, audience: payload.audience, subject: payload.subject, expiresAt: payload.expiresAt, createdBy: currentUser?.userId })
 
@@ -34,6 +32,6 @@ export class RevokeTokenUseCase extends BaseUseCase<Params, Output> {
 			if (error?.code !== 11000) throw error
 		}
 
-		return { data: revoked.toJSON() }
+		return revoked.toJSON()
 	}
 }

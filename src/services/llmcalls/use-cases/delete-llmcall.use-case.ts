@@ -1,4 +1,4 @@
-import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { BaseUseCase, BaseUseCaseParams } from '@common/base/base.use-case'
 import { Scope } from '@common/repositories'
 import { LLMCall, LLMCallProps } from '../entities'
 import { LLMCallRepository } from '../repositories'
@@ -8,9 +8,7 @@ export interface Params extends BaseUseCaseParams {
 	hardDelete?: boolean
 }
 
-export interface Output extends BaseUseCaseOutput {
-	data: LLMCallProps | null | undefined
-}
+export type Output = LLMCallProps | null | { deletedCount: number }
 
 export class DeleteLLMCallUseCase extends BaseUseCase<Params, Output> {
 	constructor (private readonly llmCallRepository = new LLMCallRepository()) {
@@ -23,12 +21,12 @@ export class DeleteLLMCallUseCase extends BaseUseCase<Params, Output> {
 
 		if (hardDelete) {
 			const result = await this.llmCallRepository.deleteById(id, params.scope ?? Scope.asAdmin(currentUser))
-			return { data: { deletedCount: result } as any }
+			return { deletedCount: result }
 		}
 
 		const result = await this.llmCallRepository.softDeleteById(id, params.scope ?? Scope.canManage(currentUser))
-		if (!result) return this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' }) as any
+		if (!result) this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' })
 
-		return { data: result }
+		return result
 	}
 }

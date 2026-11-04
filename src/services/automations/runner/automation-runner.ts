@@ -99,7 +99,7 @@ export class AutomationRunner {
 
 		if (capacity <= 0) return
 
-		const { data } = await new ClaimDueAutomationsUseCase().execute({ workerId: this.workerId, limit: capacity, leaseMs: this.options.leaseMs ?? defaultLeaseMs() })
+		const data = await new ClaimDueAutomationsUseCase().execute({ workerId: this.workerId, limit: capacity, leaseMs: this.options.leaseMs ?? defaultLeaseMs() })
 
 		for (const { automation, run } of data.skipped) await this.notify({ automation, run })
 
@@ -108,7 +108,7 @@ export class AutomationRunner {
 		const remaining = capacity - data.claimed.length
 		if (remaining <= 0) return
 
-		const { data: queued } = await new ClaimQueuedAutomationRunsUseCase().execute({ workerId: this.workerId, limit: remaining, leaseMs: this.options.leaseMs ?? defaultLeaseMs() })
+		const queued = await new ClaimQueuedAutomationRunsUseCase().execute({ workerId: this.workerId, limit: remaining, leaseMs: this.options.leaseMs ?? defaultLeaseMs() })
 
 		for (const { automation, run } of queued.skipped) await this.notify({ automation, run })
 
@@ -116,7 +116,7 @@ export class AutomationRunner {
 	}
 
 	async runNow (params: { automationId: string, currentUser?: CurrentUser, scope?: Scope }): Promise<{ run: AutomationRunProps }> {
-		const { data } = await new StartAutomationRunUseCase().execute({ automationId: params.automationId, currentUser: params.currentUser, scope: params.scope, workerId: this.workerId, leaseMs: this.options.leaseMs ?? defaultLeaseMs() })
+		const data = await new StartAutomationRunUseCase().execute({ automationId: params.automationId, currentUser: params.currentUser, scope: params.scope, workerId: this.workerId, leaseMs: this.options.leaseMs ?? defaultLeaseMs() })
 
 		this.track(this.execute(data.automation, data.run))
 
@@ -175,7 +175,7 @@ export class AutomationRunner {
 			clearInterval(heartbeat)
 		}
 
-		const { data } = await new FinishAutomationRunUseCase().execute({ runId, workerId: this.workerId, status, error })
+		const data = await new FinishAutomationRunUseCase().execute({ runId, workerId: this.workerId, status, error })
 
 		await this.notify({ automation, run: data ?? run, chat })
 	}
@@ -195,7 +195,7 @@ export class AutomationRunner {
 		if (model.modelProvider) draft.settings?.setModelProvider(model.modelProvider)
 		if (model.modelName) draft.settings?.setModelName(model.modelName)
 
-		const { data: created } = await createChat({ payload: draft.toJSON(), currentUser })
+		const created = await createChat({ payload: draft.toJSON(), currentUser })
 		const chatId = String(created?._id)
 
 		await new AttachAutomationRunChatUseCase().execute({ runId: String(run._id), chatId })

@@ -1,5 +1,5 @@
 import { QueryOptions, Scope } from '@common/repositories'
-import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { BaseUseCase, BaseUseCaseParams } from '@common/base/base.use-case'
 import { BaseEntity } from '@common/base/base.entity'
 import { AgentTraceRepository } from '../repositories'
 import { AgentTraceEntryProps } from '../entities'
@@ -13,9 +13,9 @@ export interface Params extends BaseUseCaseParams {
 	options?: QueryOptions
 }
 
-export interface Output extends BaseUseCaseOutput {
-	data: AgentTraceEntryProps[]
-	hasMore?: boolean
+export interface Output {
+	items: AgentTraceEntryProps[]
+	hasMore: boolean
 }
 
 export class ListAgentTracesByChatUseCase extends BaseUseCase<Params, Output> {
@@ -40,6 +40,6 @@ export class ListAgentTracesByChatUseCase extends BaseUseCase<Params, Output> {
 			params.scope ?? Scope.canView(currentUser),
 		)
 
-		return { data: result?.items ?? [], hasMore: result?.hasMore ?? false }
+		return { items: result?.items ?? [], hasMore: result?.hasMore ?? false }
 	}
 }

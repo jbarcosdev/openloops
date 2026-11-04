@@ -1,4 +1,4 @@
-import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { BaseUseCase, BaseUseCaseParams } from '@common/base/base.use-case'
 import { Scope } from '@common/repositories'
 import { ChatRepository } from '../repositories'
 import { Chat, ChatProps } from '../entities'
@@ -7,9 +7,7 @@ export interface Params extends BaseUseCaseParams {
 	payload?: ChatProps
 }
 
-export interface Output extends BaseUseCaseOutput {
-	data: ChatProps | null | undefined
-}
+export type Output = ChatProps
 
 export class CreateChatUseCase extends BaseUseCase<Params, Output> {
 	constructor (private readonly chatRepository = new ChatRepository()) {
@@ -23,6 +21,6 @@ export class CreateChatUseCase extends BaseUseCase<Params, Output> {
 
 		const result = await this.chatRepository.create(chat, params.scope ?? Scope.canEdit(currentUser))
 
-		return { data: result }
+		return result.toJSON()
 	}
 }

@@ -1,4 +1,4 @@
-import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { BaseUseCase, BaseUseCaseParams } from '@common/base/base.use-case'
 import { Scope } from '@common/repositories'
 import { BaseEntity } from '@common/base/base.entity'
 import { WorkspaceItemRepository } from '../repositories'
@@ -8,9 +8,7 @@ export interface Params extends BaseUseCaseParams {
 	payload?: WorkspaceItemProps
 }
 
-export interface Output extends BaseUseCaseOutput {
-	data: WorkspaceItemProps
-}
+export type Output = WorkspaceItemProps
 
 export class SaveWorkspaceItemUseCase extends BaseUseCase<Params, Output> {
 	constructor (private readonly workspaceItemRepository = new WorkspaceItemRepository()) {
@@ -40,13 +38,13 @@ export class SaveWorkspaceItemUseCase extends BaseUseCase<Params, Output> {
 		if (existing?._id) {
 			item._id = BaseEntity.toObjectId(existing._id)
 			const result = await this.workspaceItemRepository.update(item, scope)
-			if (!result) return this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' }) as any
+			if (!result) this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' })
 
-			return { data: result }
+			return result
 		}
 
 		const created = await this.workspaceItemRepository.create(item, scope)
 
-		return { data: created!.toJSON() }
+		return created!.toJSON()
 	}
 }

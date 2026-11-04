@@ -1,4 +1,4 @@
-import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { BaseUseCase, BaseUseCaseParams } from '@common/base/base.use-case'
 import { Scope } from '@common/repositories'
 import { Automation, AutomationPayload, AutomationProps } from '../entities'
 import { AutomationRepository } from '../repositories'
@@ -8,9 +8,7 @@ export interface Params extends BaseUseCaseParams {
 	payload?: AutomationPayload
 }
 
-export interface Output extends BaseUseCaseOutput {
-	data: AutomationProps
-}
+export type Output = AutomationProps
 
 export class CreateAutomationUseCase extends BaseUseCase<Params, Output> {
 	constructor (private readonly automationRepository = new AutomationRepository()) {
@@ -41,6 +39,6 @@ export class CreateAutomationUseCase extends BaseUseCase<Params, Output> {
 
 		await this.automationRepository.create(automation, params.scope ?? Scope.canEdit(currentUser))
 
-		return { data: automation.toJSON() }
+		return automation.toJSON()
 	}
 }

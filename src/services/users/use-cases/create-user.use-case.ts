@@ -1,4 +1,4 @@
-import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { BaseUseCase, BaseUseCaseParams } from '@common/base/base.use-case'
 import { Scope } from '@common/repositories'
 import { UserRepository } from '../repositories'
 import { User, UserProps } from '../entities'
@@ -8,9 +8,7 @@ export interface Params extends BaseUseCaseParams {
 	payload?: UserProps
 }
 
-export interface Output extends BaseUseCaseOutput {
-	data: UserProps
-}
+export type Output = UserProps
 
 export class CreateUserUseCase extends BaseUseCase<Params, Output> {
 	constructor (private readonly userRepository = new UserRepository()) {
@@ -30,6 +28,6 @@ export class CreateUserUseCase extends BaseUseCase<Params, Output> {
 
 		const { password, ...rest } = user.toJSON()
 
-		return { data: rest }
+		return rest
 	}
 }

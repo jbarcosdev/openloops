@@ -1,4 +1,4 @@
-import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { BaseUseCase, BaseUseCaseParams } from '@common/base/base.use-case'
 import { Scope } from '@common/repositories'
 import { LLMCall, LLMCallProps } from '../entities'
 import { LLMCallRepository } from '../repositories'
@@ -7,9 +7,7 @@ export interface Params extends BaseUseCaseParams {
 	payload?: LLMCallProps
 }
 
-export interface Output extends BaseUseCaseOutput {
-	data: LLMCallProps | null
-}
+export type Output = LLMCallProps
 
 export class CreateLLMCallUseCase extends BaseUseCase<Params, Output> {
 	constructor (private readonly llmCallRepository = new LLMCallRepository()) {
@@ -23,6 +21,6 @@ export class CreateLLMCallUseCase extends BaseUseCase<Params, Output> {
 
 		const result = await this.llmCallRepository.create(llmCall, params.scope ?? Scope.canEdit(currentUser))
 
-		return { data: llmCall.toJSON() }
+		return llmCall.toJSON()
 	}
 }

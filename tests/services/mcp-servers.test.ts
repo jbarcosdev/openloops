@@ -38,7 +38,7 @@ describe.each([['regular user', regular], ['admin', admin]])('MCP server use cas
     afterEach(() => jest.restoreAllMocks())
 
     it('creates a locked server and records its manifest', async () => {
-        const { data } = await create()
+        const data = await create()
 
         expect(data?.trust).toBe('locked')
         expect(data?.status).toBe('ok')
@@ -50,7 +50,7 @@ describe.each([['regular user', regular], ['admin', admin]])('MCP server use cas
         await create()
         const before = stored().__v
 
-        const { data } = await new UpdateMcpServerUseCase().execute({ id: String(stored()._id), payload: { name: 'renamed', __v: before }, currentUser })
+        const data = await new UpdateMcpServerUseCase().execute({ id: String(stored()._id), payload: { name: 'renamed', __v: before }, currentUser })
 
         expect(data.name).toBe('renamed')
         expect(stored().__v).toBe(before + 1)
@@ -81,7 +81,7 @@ describe.each([['regular user', regular], ['admin', admin]])('MCP server use cas
         await create()
         const before = stored().__v
 
-        const { data } = await new DecideMcpServerTrustUseCase().execute({ id: String(stored()._id), decision: 'approve', manifestHash: live.hash, currentUser })
+        const data = await new DecideMcpServerTrustUseCase().execute({ id: String(stored()._id), decision: 'approve', manifestHash: live.hash, currentUser })
 
         expect(data.trust).toBe('approved')
         expect(data.approvedHash).toBe(live.hash)
@@ -138,7 +138,7 @@ describe.each([['regular user', regular], ['admin', admin]])('MCP server use cas
         for (let index = 0; index < 12; index++) await create(`srv${String(index).padStart(2, '0')}`)
         await collection().insertOne({ name: 'foreign', ownerId: new ObjectId(), createdAt: new Date(), __v: 1 })
 
-        const { data } = await new ListAllMcpServersByUserUseCase().execute({ currentUser })
+        const { items: data } = await new ListAllMcpServersByUserUseCase().execute({ currentUser })
 
         expect(data.map(item => item.name)).toEqual(Array.from({ length: 12 }, (_, index) => `srv${String(index).padStart(2, '0')}`))
     })

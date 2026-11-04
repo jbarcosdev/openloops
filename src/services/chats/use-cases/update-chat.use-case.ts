@@ -1,4 +1,4 @@
-import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { BaseUseCase, BaseUseCaseParams } from '@common/base/base.use-case'
 import { Scope } from '@common/repositories'
 import { ChatRepository } from '../repositories'
 import { Chat, ChatProps } from '../entities'
@@ -9,9 +9,7 @@ export interface Params extends BaseUseCaseParams {
 	unset?: Record<string, ''>
 }
 
-export interface Output extends BaseUseCaseOutput {
-	data: ChatProps
-}
+export type Output = ChatProps
 
 export class UpdateChatUseCase extends BaseUseCase<Params, Output> {
 	constructor (private readonly chatRepository = new ChatRepository()) {
@@ -35,8 +33,8 @@ export class UpdateChatUseCase extends BaseUseCase<Params, Output> {
 
 		const result = await this.chatRepository.update(chat, params.scope ?? Scope.canEdit(currentUser))
 
-		if (!result) return this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' }) as any
+		if (!result) this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' })
 
-		return { data: result }
+		return result
 	}
 }

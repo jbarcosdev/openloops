@@ -1,4 +1,4 @@
-import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { BaseUseCase, BaseUseCaseParams } from '@common/base/base.use-case'
 import { Scope } from '@common/repositories'
 import { AgentTraceRepository } from '../repositories'
 import { AgentTraceEntry, AgentTraceEntryProps } from '../entities'
@@ -7,9 +7,7 @@ export interface Params extends BaseUseCaseParams {
 	payload?: AgentTraceEntryProps[]
 }
 
-export interface Output extends BaseUseCaseOutput {
-	data: { insertedCount: number }
-}
+export type Output = { insertedCount: number }
 
 export class CreateAgentTracesUseCase extends BaseUseCase<Params, Output> {
 	constructor (private readonly agentTraceRepository = new AgentTraceRepository()) {
@@ -23,6 +21,6 @@ export class CreateAgentTracesUseCase extends BaseUseCase<Params, Output> {
 
 		const insertedCount = await this.agentTraceRepository.createMany(entries, params.scope ?? Scope.canEdit(currentUser)) ?? 0
 
-		return { data: { insertedCount } }
+		return { insertedCount }
 	}
 }

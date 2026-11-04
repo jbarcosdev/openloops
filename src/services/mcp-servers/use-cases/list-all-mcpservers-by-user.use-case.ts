@@ -1,13 +1,13 @@
-import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { BaseUseCase, BaseUseCaseParams } from '@common/base/base.use-case'
 import { Scope } from '@common/repositories'
 import { McpServerRepository } from '../repositories'
 import { McpServerProps } from '../entities'
 
 export interface Params extends BaseUseCaseParams {}
 
-export interface Output extends BaseUseCaseOutput {
-	data: McpServerProps[]
-	hasMore?: boolean
+export interface Output {
+	items: McpServerProps[]
+	hasMore: boolean
 }
 
 export class ListAllMcpServersByUserUseCase extends BaseUseCase<Params, Output> {
@@ -22,6 +22,6 @@ export class ListAllMcpServersByUserUseCase extends BaseUseCase<Params, Output> 
 
 		const results = await this.mcpServerRepository.findAllByOwner(currentUser.userId, params.scope ?? Scope.canView(currentUser))
 
-		return { data: results ?? [], hasMore: false }
+		return { items: results ?? [], hasMore: false }
 	}
 }

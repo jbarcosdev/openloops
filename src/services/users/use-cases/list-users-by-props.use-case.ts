@@ -1,4 +1,4 @@
-import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { BaseUseCase, BaseUseCaseParams } from '@common/base/base.use-case'
 import { QueryOptions, Scope } from '@common/repositories'
 import { UserRepository } from '../repositories'
 import { UserProps } from '../entities'
@@ -8,9 +8,9 @@ export interface Params extends BaseUseCaseParams {
 	options?: QueryOptions
 }
 
-export interface Output extends BaseUseCaseOutput {
-	data: UserProps[] | null | undefined
-	hasMore?: boolean
+export interface Output {
+	items: UserProps[]
+	hasMore: boolean
 }
 
 export class ListUsersByPropsUseCase extends BaseUseCase<Params, Output> {
@@ -22,6 +22,6 @@ export class ListUsersByPropsUseCase extends BaseUseCase<Params, Output> {
 		const { where, options, currentUser } = params
 		const result = await this.userRepository.findByProps(where, options || {}, params.scope ?? Scope.asAdmin(currentUser))
 
-		return { data: result?.items, hasMore: result?.hasMore }
+		return { items: result?.items ?? [], hasMore: result?.hasMore ?? false }
 	}
 }

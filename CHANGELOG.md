@@ -4,7 +4,7 @@ All notable changes to `openloops` are written here, newest first. The format fo
 
 ## 0.7.0
 
-This version breaks the API of the entities and of the repository, and removes `tsyringe`. The use cases and their parameters do not change, except for `updateChat`, which accepts `unset`.
+This version breaks the API of the entities, of the repository and of the results of the use cases, and removes `tsyringe`. The parameters of the use cases do not change, except for `updateChat`, which accepts `unset`.
 
 ### Added
 
@@ -16,13 +16,15 @@ This version breaks the API of the entities and of the repository, and removes `
 
 ### Changed
 
+- **The use cases and the functions of the services return the result itself, no longer `{ data }`.** `const { data } = await getChatById(...)` becomes `const chat = await getChatById(...)`. The lists return `{ items, hasMore }` (`hasMore` is always there), the functions that delete return the record, or `{ deletedCount }` on a hard delete, and `execute` does not return an `HttpError` anymore: it throws. `BaseUseCaseOutput` is gone. `Agent.run` and the tools are not affected, they still use `{ data, error }` and `{ data }`.
+- A getter that finds nothing answers `null`, also `getChatById`, which answered `{}`.
 - `BaseEntity` is the one with `toJSON` only. Its static `toDate` and `toNumber` are public, an invalid id, date or number is a 400 `HttpError` and not a plain `Error`, and `toText` answers `undefined` for a blank text (it answered `''`).
 - The repositories save with `patchOne`, so a text that is blank inside a document is removed and not stored as `''`, and the inserts and the patches ignore the `undefined` values, also inside arrays.
 - The use cases take their repositories as default parameters of the constructor (`new XUseCase(repository)` still works).
 
 ### Removed
 
-- `tsyringe`, `reflect-metadata` and the `MaskInLogs` decorator.
+- `tsyringe`, `reflect-metadata`, the `MaskInLogs` decorator and `BaseUseCaseOutput`.
 - `toDocument`, `toFlatDocument`, `toUnset`, `unset`, `setId`, `setDefaults`, `stringify` and `clean` of `BaseEntity`, and the `Document` type.
 - `MongoRepository.updateOne`, replaced by `patchOne`.
 

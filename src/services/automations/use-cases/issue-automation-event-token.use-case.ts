@@ -1,4 +1,4 @@
-import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { BaseUseCase, BaseUseCaseParams } from '@common/base/base.use-case'
 import { Scope } from '@common/repositories'
 import { AutomationRepository } from '../repositories'
 import { signEventToken } from '../utils/event-token'
@@ -8,9 +8,7 @@ export interface Params extends BaseUseCaseParams {
 	expiresIn?: string | null
 }
 
-export interface Output extends BaseUseCaseOutput {
-	data: { token: string, expiresAt?: Date }
-}
+export type Output = { token: string, expiresAt?: Date }
 
 export class IssueAutomationEventTokenUseCase extends BaseUseCase<Params, Output> {
 	constructor (private readonly automationRepository = new AutomationRepository()) {
@@ -21,10 +19,10 @@ export class IssueAutomationEventTokenUseCase extends BaseUseCase<Params, Output
 		const { id, expiresIn, currentUser } = params
 
 		const automation = await this.automationRepository.findById(id, params.scope ?? Scope.canManage(currentUser))
-		if (!automation) return this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' }) as any
+		if (!automation) this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' })
 
 		if (!automation.triggers?.event) throw new Error('Only an automation with an event trigger has a token')
 
-		return { data: signEventToken({ automationId: id, tokenVersion: automation.eventTokenVersion as number, expiresIn }) }
+		return signEventToken({ automationId: id, tokenVersion: automation.eventTokenVersion as number, expiresIn })
 	}
 }

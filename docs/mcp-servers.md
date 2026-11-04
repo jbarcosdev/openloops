@@ -118,7 +118,7 @@ Connects, reads the manifest and stores it in `history` if it is new, or stores 
 await decideMcpServerTrust({
     id: mcpServerId,
     decision: 'approve',
-    manifestHash: result.data.history[0].hash,
+    manifestHash: result.history[0].hash,
     currentUser,
 })
 

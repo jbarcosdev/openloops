@@ -1,6 +1,6 @@
 import { ObjectId } from 'mongodb'
 import { QueryOptions, Scope } from '@common/repositories'
-import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { BaseUseCase, BaseUseCaseParams } from '@common/base/base.use-case'
 import { AutomationRunProps, AutomationRunStatus } from '../entities'
 import { AutomationRunRepository } from '../repositories'
 
@@ -9,9 +9,9 @@ export interface Params extends BaseUseCaseParams {
 	options?: QueryOptions
 }
 
-export interface Output extends BaseUseCaseOutput {
-	data: AutomationRunProps[]
-	hasMore?: boolean
+export interface Output {
+	items: AutomationRunProps[]
+	hasMore: boolean
 }
 
 export class ListAutomationRunsByUserUseCase extends BaseUseCase<Params, Output> {
@@ -31,6 +31,6 @@ export class ListAutomationRunsByUserUseCase extends BaseUseCase<Params, Output>
 			options: { page, limit, sortBy },
 		})
 
-		return { data: result?.items ?? [], hasMore: result?.hasMore ?? false }
+		return { items: result?.items ?? [], hasMore: result?.hasMore ?? false }
 	}
 }

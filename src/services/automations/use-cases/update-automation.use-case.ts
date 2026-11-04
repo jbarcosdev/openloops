@@ -1,4 +1,4 @@
-import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { BaseUseCase, BaseUseCaseParams } from '@common/base/base.use-case'
 import { Scope } from '@common/repositories'
 import { VersionConflictError } from '@common/repositories/mongo-db.repository'
 import { Automation, AutomationPayload, AutomationProps } from '../entities'
@@ -10,9 +10,7 @@ export interface Params extends BaseUseCaseParams {
 	payload?: AutomationPayload
 }
 
-export interface Output extends BaseUseCaseOutput {
-	data: AutomationProps
-}
+export type Output = AutomationProps
 
 export class UpdateAutomationUseCase extends BaseUseCase<Params, Output> {
 	constructor (private readonly automationRepository = new AutomationRepository()) {
@@ -26,7 +24,7 @@ export class UpdateAutomationUseCase extends BaseUseCase<Params, Output> {
 
 		const scope = params.scope ?? Scope.canEdit(currentUser)
 		const existing = await this.automationRepository.findById(id, scope)
-		if (!existing) return this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' }) as any
+		if (!existing) this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' })
 
 		if (payload.__v !== undefined && payload.__v !== existing.__v) throw new VersionConflictError()
 
@@ -60,8 +58,8 @@ export class UpdateAutomationUseCase extends BaseUseCase<Params, Output> {
 		}
 
 		const result = await this.automationRepository.update(automation, scope, { expectedVersion: existing.__v })
-		if (!result) return this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' }) as any
+		if (!result) this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' })
 
-		return { data: result }
+		return result
 	}
 }

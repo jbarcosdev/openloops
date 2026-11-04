@@ -1,4 +1,4 @@
-import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { BaseUseCase, BaseUseCaseParams } from '@common/base/base.use-case'
 import { isTokenRevoked } from '@services/authentication'
 import { AutomationRunProps } from '../entities'
 import { AutomationRepository, AutomationRunRepository } from '../repositories'
@@ -21,9 +21,7 @@ export interface Params extends BaseUseCaseParams {
 	now?: Date
 }
 
-export interface Output extends BaseUseCaseOutput {
-	data: { status: AutomationEventStatus, run: AutomationRunProps }
-}
+export type Output = { status: AutomationEventStatus, run: AutomationRunProps }
 
 const serialize = (payload: unknown): string | undefined => {
 	const text = typeof payload === 'string' ? payload : JSON.stringify(payload)
@@ -52,7 +50,7 @@ export class ReceiveAutomationEventUseCase extends BaseUseCase<Params, Output> {
 		if (!event || automation.eventTokenVersion !== claims.v) throw new AutomationEventError('invalid')
 		if (!event.enabled) throw new AutomationEventError('disabled')
 
-		const { data: { revoked } } = await isTokenRevoked({ jti: claims.jti })
+		const { revoked } = await isTokenRevoked({ jti: claims.jti })
 		if (revoked) throw new AutomationEventError('revoked')
 
 		const payload = serialize(params.payload)
@@ -63,24 +61,24 @@ export class ReceiveAutomationEventUseCase extends BaseUseCase<Params, Output> {
 
 		if (idempotencyKey) {
 			const duplicate = await this.automationRunRepository!.findByIdempotencyKey(automationId, idempotencyKey, eventScope)
-			if (duplicate) return { data: { status: 'duplicate', run: duplicate } }
+			if (duplicate) return { status: 'duplicate', run: duplicate }
 		}
 
 		if (await this.automationRunRepository!.countQueued(automationId, eventScope) >= maxQueuedRuns()) {
 			const skipped = await openRun(this.automationRunRepository!, { scope: eventScope, automation, trigger: 'event', status: 'skipped', now, payload, skipReason: 'The queue of this automation is full' })
-			return { data: { status: 'skipped', run: skipped.toJSON() } }
+			return { status: 'skipped', run: skipped.toJSON() }
 		}
 
 		try {
 			const run = await openRun(this.automationRunRepository!, { scope: eventScope, automation, trigger: 'event', status: 'queued', now, payload, idempotencyKey })
-			return { data: { status: 'queued', run: run.toJSON() } }
+			return { status: 'queued', run: run.toJSON() }
 		} catch (error: any) {
 			if (!idempotencyKey || error?.code !== 11000) throw error
 
 			const duplicate = await this.automationRunRepository!.findByIdempotencyKey(automationId, idempotencyKey, eventScope)
 			if (!duplicate) throw error
 
-			return { data: { status: 'duplicate', run: duplicate } }
+			return { status: 'duplicate', run: duplicate }
 		}
 	}
 }

@@ -1,6 +1,6 @@
 import { ObjectId } from 'mongodb'
 import { PipelineStage, Scope } from '@common/repositories'
-import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { BaseUseCase, BaseUseCaseParams } from '@common/base/base.use-case'
 import { LLMCallRepository } from '../repositories'
 import { UsageTotals, round, usageSums, toUsageTotals } from '../utils/usage-totals'
 import { PERIODS, UsagePeriod, addDays, enumeratePeriods, resolveRange, resolveTimezone } from '../utils/usage-periods'
@@ -39,9 +39,7 @@ export interface UsageStats {
 	series: PeriodUsage[]
 }
 
-export interface Output extends BaseUseCaseOutput {
-	data: UsageStats
-}
+export type Output = UsageStats
 
 interface Facets {
 	summary: { calls: number, totalTokens: number, totalCost: number }[]
@@ -138,6 +136,6 @@ export class GetLLMUsageStatsUseCase extends BaseUseCase<Params, Output> {
 		const pipeline = buildUsageStatsPipeline({ ownerId: new ObjectId(ownerId), timezone, from, to, groupBy, provider, model })
 		const [facets] = await this.llmCallRepository._.aggregate(pipeline, params.scope ?? Scope.canView(currentUser)) as Partial<Facets>[]
 
-		return { data: shapeUsageStats(facets, periods) }
+		return shapeUsageStats(facets, periods)
 	}
 }
