@@ -127,17 +127,31 @@ class FakeCollection {
         return { deletedCount: 1 }
     }
 
-    async findOneAndUpdate (filter: Doc, update: { $set?: Doc, $unset?: Doc, $inc?: Record<string, number> }) {
+    async findOneAndUpdate (filter: Doc, update: { $set?: Doc, $unset?: Doc, $inc?: Record<string, number> }, options: { returnDocument?: 'before' | 'after' } = {}) {
         this.beforeUpdate?.()
 
         const doc = this.docs.find(candidate => matches(candidate, filter))
         if (!doc) return null
 
+        const before = clone(doc)
+
+        this.apply(doc, update)
+
+        return options.returnDocument === 'before' ? before : clone(doc)
+    }
+
+    async updateMany (filter: Doc, update: { $set?: Doc, $unset?: Doc, $inc?: Record<string, number> }) {
+        const found = this.docs.filter(candidate => matches(candidate, filter))
+
+        for (const doc of found) this.apply(doc, update)
+
+        return { modifiedCount: found.length }
+    }
+
+    private apply (doc: Doc, update: { $set?: Doc, $unset?: Doc, $inc?: Record<string, number> }) {
         for (const [path, value] of Object.entries(update.$set ?? {})) setPath(doc, path, clone(value))
         for (const path of Object.keys(update.$unset ?? {})) deletePath(doc, path)
         for (const [path, amount] of Object.entries(update.$inc ?? {})) doc[path] = (doc[path] ?? 0) + amount
-
-        return clone(doc)
     }
 }
 

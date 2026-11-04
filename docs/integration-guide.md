@@ -44,7 +44,7 @@ The use cases check who owns every record, in the repository, with the `currentU
 | Tokens of an event automation | `issueAutomationEventToken`, `revokeAutomationEventToken`, `rotateAutomationEventTokens` |
 | History of runs | `listAutomationRunsByAutomation`, `listAutomationRunsByUser` |
 | "Run now" | `runner.runNow({ automationId, currentUser })` |
-| Sign in, users | `login`, `createUser`, `getUserById`, `updateUser`, `deleteUser` |
+| Sign in, sessions, users | `login`, `refreshSession`, `logout`, `issuePasswordResetToken`, `resetPassword`, `changePassword`, `createUser`, `getUserById`, `updateUser`, `deleteUser` |
 
 ## Running the agent for a message
 

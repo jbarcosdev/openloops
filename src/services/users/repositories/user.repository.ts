@@ -1,4 +1,4 @@
-import { entityPatch } from '@common/base/utils'
+import { Patch, entityPatch } from '@common/base/utils'
 import { MongoRepository, QueryOptions, Scope } from '@common/repositories'
 import { getDatabaseName } from '@common/utils/database-name'
 import { User, UserProps } from '../entities'
@@ -20,6 +20,13 @@ export class UserRepository {
 
 	public async update (user: User, scope: Scope): Promise<UserProps | null> {
 		const updated = await this._.patchOne({ scope, where: { _id: user._id }, ...entityPatch(user) })
+		if (!updated) return null
+		const { password, ...rest } = updated
+		return rest
+	}
+
+	public async patchById (id: string, patch: Patch, scope: Scope): Promise<UserProps | null> {
+		const updated = await this._.patchOne({ scope, where: { _id: this._.parseId(id) }, ...patch })
 		if (!updated) return null
 		const { password, ...rest } = updated
 		return rest

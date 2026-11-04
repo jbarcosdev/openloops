@@ -215,6 +215,7 @@ The token is a JWT signed with `JWT_SECRET`. It is not stored: the owner can ask
 
 | Claim | Value |
 | --- | --- |
+| `iss` | `openloops`, like every token of the package (see [authentication](authentication.md#the-tokens)). |
 | `aud` | `automation-event`. A session token of a user is refused, and this one does not log anybody in. |
 | `sub` | The id of the automation. It must be the one of the URL. |
 | `v` | The `eventTokenVersion` of the automation when the token was issued. |

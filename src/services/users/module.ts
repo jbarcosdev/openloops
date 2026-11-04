@@ -3,6 +3,7 @@ import { UpdateUserUseCase, Params as UParams, Output as UOutput } from './use-c
 import { GetUserByIdUseCase, Params as GParams, Output as GOutput } from './use-cases/get-user-by-id.use-case'
 import { ListUsersByPropsUseCase, Params as LParams, Output as LOutput } from './use-cases/list-users-by-props.use-case'
 import { DeleteUserUseCase, Params as DParams, Output as DOutput } from './use-cases/delete-user.use-case'
+import { ChangePasswordUseCase, Params as PParams, Output as POutput } from './use-cases/change-password.use-case'
 
 export async function createUser (props: CParams): Promise<COutput> {
     const createUserUseCase = new CreateUserUseCase()
@@ -27,4 +28,9 @@ export async function ListUsersByProps (props: LParams): Promise<LOutput> {
 export async function deleteUser (props: DParams): Promise<DOutput> {
     const deleteUserUseCase = new DeleteUserUseCase()
     return deleteUserUseCase.execute(props)
+}
+
+export async function changePassword (props: PParams): Promise<POutput> {
+    const changePasswordUseCase = new ChangePasswordUseCase()
+    return changePasswordUseCase.execute(props)
 }

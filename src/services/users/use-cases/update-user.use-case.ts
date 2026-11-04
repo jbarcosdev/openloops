@@ -23,6 +23,8 @@ export class UpdateUserUseCase extends BaseUseCase<Params, Output> {
 			throw new Error('Payload is required for updating user')
 		}
 
+		if ('password' in payload) this.throwHttpError({ statusCode: 400, errorMessage: 'The password cannot be changed with this request, use changePassword' })
+
 		const model = payload.preferences ? await readDefaultModel(payload.preferences) : undefined
 
 		const user = await User.create({ ...payload, ...(payload.preferences ? { preferences: model!.preferences } : {}), _id: id })

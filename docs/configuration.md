@@ -10,7 +10,7 @@
 | `SECRET_MANAGER_KEY` | yes | Key used to decrypt values that start with `ENC:`. The library throws when it loads without it. |
 | `ANTHROPIC_API_KEY` | for the default model | API key of the default provider, `anthropic`. |
 | `OPENAI_API_KEY`, `GEMINI_API_KEY` | for those providers | API keys of the other providers you choose per chat. |
-| `JWT_SECRET` | for `login` and for event automations | Secret that signs the tokens of the users and the tokens of [event automations](automations.md#the-token). See [authentication](authentication.md). |
+| `JWT_SECRET` | for `login` and for event automations | Secret that signs the tokens of the sessions, of the reset of a password and of [event automations](automations.md#the-token). See [authentication](authentication.md). |
 | `SERPER_API_KEY` | for `webSearchTool` | See [tools](tools.md#built-in-tools). |
 | `SLACK_BOT_TOKEN` | for `sendSlackMessageTool` | See [tools](tools.md#built-in-tools). |
 | `INTERNAL_MCP_TOKEN` | for internal MCP servers in automations | Token sent to the internal MCP servers when an automation runs without the session of its owner. See [automations](automations.md#internal-mcp-servers-in-a-automation). |
