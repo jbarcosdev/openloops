@@ -526,8 +526,8 @@ export class Agent {
         }
     }
 
-    private fingerprint (entity: { toDocument: () => unknown }): string {
-        return JSON.stringify(entity.toDocument())
+    private fingerprint (entity: { toJSON: () => unknown }): string {
+        return JSON.stringify(entity.toJSON())
     }
 
     private async loadTasks (): Promise<void> {
@@ -965,14 +965,15 @@ export class Agent {
 
         const id = this.currentChat._id.toString()
         const payload = this.currentChat.toJSON()
+        const unset = { ...this.currentChat.clearedFields }
         const key = `chat:${id}`
-        const current = JSON.stringify(payload)
+        const current = JSON.stringify({ payload, unset })
 
         if (this.snapshots.get(key) === current) return
 
         this.logger.debug('[AGENT] Updating chat...')
 
-        await updateChat({ id, payload, currentUser: this.currentUser })
+        await updateChat({ id, payload, unset, currentUser: this.currentUser })
 
         this.snapshots.set(key, current)
     }

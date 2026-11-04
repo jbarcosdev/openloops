@@ -10,6 +10,13 @@ function clone<T> (value: T): T {
     return value
 }
 
+function withoutUndefined<T> (value: T): T {
+    if (value instanceof ObjectId || value instanceof Date) return value
+    if (Array.isArray(value)) return value.map(item => withoutUndefined(item)) as T
+    if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).filter(([, item]) => item !== undefined).map(([key, item]) => [key, withoutUndefined(item)])) as T
+    return value
+}
+
 const comparable = (value: any): any => value instanceof Date ? value.getTime() : value instanceof ObjectId ? value.toHexString() : value
 
 function isOperators (value: any): boolean {
@@ -71,7 +78,7 @@ class FakeCollection {
     beforeUpdate?: () => void
 
     async insertOne (doc: Doc) {
-        const stored = clone({ _id: new ObjectId(), ...doc })
+        const stored = clone({ _id: new ObjectId(), ...withoutUndefined(doc) })
         this.docs.push(stored)
         return { insertedId: stored._id }
     }

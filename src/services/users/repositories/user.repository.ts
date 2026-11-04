@@ -1,3 +1,4 @@
+import { entityPatch } from '@common/base/utils'
 import { MongoRepository, QueryOptions, Scope } from '@common/repositories'
 import { getDatabaseName } from '@common/utils/database-name'
 import { User, UserProps } from '../entities'
@@ -12,17 +13,13 @@ export class UserRepository {
 	})
 
 	public async create (user: User, scope: Scope): Promise<User> {
-		const { _id, ownerId, createdAt, createdBy } = await this._.createOne({ payload: user.toDocument(), scope })
+		const { _id, ownerId, createdAt, createdBy } = await this._.createOne({ payload: user.toJSON(), scope })
 		Object.assign(user, { _id, ownerId, createdAt, createdBy })
 		return user
 	}
 
 	public async update (user: User, scope: Scope): Promise<UserProps | null> {
-		const updated = await this._.updateOne({
-			scope,
-			payload: user.toFlatDocument(),
-			where: { _id: user._id }
-		})
+		const updated = await this._.patchOne({ scope, where: { _id: user._id }, ...entityPatch(user) })
 		if (!updated) return null
 		const { password, ...rest } = updated
 		return rest

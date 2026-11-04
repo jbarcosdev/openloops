@@ -10,7 +10,7 @@ export class RevokedTokenRepository {
 	})
 
 	public async create (token: RevokedToken, scope: Scope): Promise<RevokedToken> {
-		const { _id, ownerId, createdAt, createdBy } = await this._.createOne({ payload: token.toDocument(), scope })
+		const { _id, ownerId, createdAt, createdBy } = await this._.createOne({ payload: token.toJSON(), scope })
 		Object.assign(token, { _id, ownerId, createdAt, createdBy })
 		return token
 	}

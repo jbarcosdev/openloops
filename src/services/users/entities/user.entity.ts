@@ -1,4 +1,3 @@
-import { MaskInLogs } from '@common/decorators'
 import { getCurrency } from 'iso-data'
 import { BaseEntity, BaseEntityProps } from '@common/base/base.entity'
 import { UserPassword } from './user-password.value-object'
@@ -29,8 +28,9 @@ export interface UserProps extends BaseEntityProps {
 }
 
 export class User extends BaseEntity {
-	@MaskInLogs
 	public password?: string
+
+	public clearedFields: Record<string, ''> = {}
 
 	public role?: UserRole
 

@@ -9,12 +9,12 @@ describe('BaseEntity sharedWith', () => {
         const entity = new BaseEntity({ sharedWith: [{ userId: OTHER, permission: 'write' }] })
 
         expect(entity.sharedWith).toEqual([{ userId: new ObjectId(OTHER), permission: 'write' }])
-        expect(entity.toDocument().sharedWith).toEqual([{ userId: new ObjectId(OTHER), permission: 'write' }])
+        expect(entity.toJSON().sharedWith).toEqual([{ userId: new ObjectId(OTHER), permission: 'write' }])
     })
 
     it('has no sharedWith when nobody is listed', () => {
         expect(new BaseEntity({}).sharedWith).toBeUndefined()
-        expect(new BaseEntity({ sharedWith: [] }).toDocument().sharedWith).toBeUndefined()
+        expect(new BaseEntity({ sharedWith: [] }).toJSON().sharedWith).toBeUndefined()
     })
 
     it('rejects an unknown permission and an invalid user id', () => {

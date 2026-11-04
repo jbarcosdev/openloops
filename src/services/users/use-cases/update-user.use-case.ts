@@ -29,9 +29,9 @@ export class UpdateUserUseCase extends BaseUseCase<Params, Output> {
 
 		const user = await User.create({ ...payload, ...(payload.preferences ? { preferences: model!.preferences } : {}), _id: id })
 
-		if (model?.clear) user.unset(['preferences.defaultModel' as keyof User])
+		if (model?.clear) user.clearedFields['preferences.defaultModel'] = ''
 
-		this.logger.info(`Updating user: ${user.stringify()}`)
+		this.logger.info({ userId: id }, '[Users] Updating user')
 
 		const result = await this.userRepository.update(user, params.scope ?? Scope.canEdit(currentUser))
 

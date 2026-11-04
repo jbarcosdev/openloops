@@ -41,6 +41,7 @@ export class Chat extends BaseEntity {
 	}
 
 	public tasks: AgentTask[] = []
+	public clearedFields: Record<string, ''> = {}
 	private pendingTraces: AgentTrace[] = []
 
 	constructor (
@@ -151,7 +152,7 @@ export class Chat extends BaseEntity {
 	private clearActiveTaskIdIfMatches (task?: AgentTask): void {
 		if (task?.id === this.state?.activeTaskId) {
 			this.state?.setActiveTaskId(undefined)
-			this.unset(['state.activeTaskId' as keyof this])
+			this.clearedFields['state.activeTaskId'] = ''
 		}
 	}
 
@@ -159,7 +160,7 @@ export class Chat extends BaseEntity {
 		if (this.settings?.loopName && this.settings.loopName !== loopName) {
 			this.activeTask?.pause()
 			this.state?.setActiveTaskId(undefined)
-			this.unset(['state.activeTaskId' as keyof this])
+			this.clearedFields['state.activeTaskId'] = ''
 		}
 		this.settings?.setLoopName(loopName)
 	}

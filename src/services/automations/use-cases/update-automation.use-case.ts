@@ -45,10 +45,10 @@ export class UpdateAutomationUseCase extends BaseUseCase<Params, Output> {
 			_id: id,
 		})
 
-		if (!provider) automation.unset(['modelProvider', 'modelName'])
+		if (!provider) Object.assign(automation.clearedFields, { modelProvider: '', modelName: '' })
 
 		const removed = (['schedule', 'event'] as const).filter(key => existing.triggers?.[key] && !automation.triggers?.[key])
-		if (removed.length) automation.toUnset = Object.fromEntries(removed.map(key => [`triggers.${key}`, '']))
+		if (removed.length) Object.assign(automation.clearedFields, Object.fromEntries(removed.map(key => [`triggers.${key}`, ''])))
 		if (removed.includes('event')) automation.eventTokenVersion = (existing.eventTokenVersion as number) + 1
 
 		const schedule = automation.triggers?.schedule

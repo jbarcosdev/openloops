@@ -1,4 +1,5 @@
 import { ObjectId } from 'mongodb'
+import { entityPatch } from '@common/base/utils'
 import { MongoRepository, QueryOptions, Scope } from '@common/repositories'
 import { getDatabaseName } from '@common/utils/database-name'
 import { AutomationRun, AutomationRunProps, AutomationRunStatus } from '../entities'
@@ -11,17 +12,13 @@ export class AutomationRunRepository {
 	})
 
 	public async create (run: AutomationRun, scope: Scope): Promise<AutomationRun> {
-		const { _id, ownerId, createdAt, createdBy } = await this._.createOne({ payload: run.toDocument(), scope })
+		const { _id, ownerId, createdAt, createdBy } = await this._.createOne({ payload: run.toJSON(), scope })
 		Object.assign(run, { _id, ownerId, createdAt, createdBy })
 		return run
 	}
 
 	public async update (run: AutomationRun, scope: Scope): Promise<AutomationRunProps | null> {
-		return await this._.updateOne({
-			scope,
-			where: { _id: run._id },
-			payload: run.toFlatDocument(),
-		})
+		return await this._.patchOne({ scope, where: { _id: run._id }, ...entityPatch(run) })
 	}
 
 	public async findById (id: string, scope: Scope): Promise<AutomationRunProps | null> {
@@ -49,10 +46,10 @@ export class AutomationRunRepository {
 	}
 
 	public async claimQueued (id: string, fields: Pick<AutomationRunProps, 'workerId' | 'startedAt' | 'instructions' | 'modelProvider' | 'modelName'>, scope: Scope): Promise<AutomationRunProps | null> {
-		return await this._.updateOne({
+		return await this._.patchOne({
 			scope,
 			where: { _id: this._.parseId(id), status: 'queued' } as any,
-			payload: { ...fields, status: 'running' },
+			set: { ...fields, status: 'running' },
 		})
 	}
 }

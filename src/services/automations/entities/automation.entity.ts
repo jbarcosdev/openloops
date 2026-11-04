@@ -39,6 +39,8 @@ const readTriggerDates = (triggers?: AutomationTriggers): AutomationTriggers | u
 }
 
 export class Automation extends BaseEntity {
+	public clearedFields: Record<string, ''> = {}
+
 	static fromJSON (props: AutomationProps): Automation {
 		return new Automation(
 			props,
@@ -100,7 +102,7 @@ export class Automation extends BaseEntity {
 			schedule.nextRunAt = next
 		} else {
 			delete schedule.nextRunAt
-			this.toUnset = { ...this.toUnset, 'triggers.schedule.nextRunAt': '' }
+			this.clearedFields['triggers.schedule.nextRunAt'] = ''
 		}
 
 		return this

@@ -6,6 +6,7 @@ import { Chat, ChatProps } from '../entities'
 export interface Params extends BaseUseCaseParams {
 	id: string
 	payload?: ChatProps
+	unset?: Record<string, ''>
 }
 
 export interface Output extends BaseUseCaseOutput {
@@ -18,7 +19,7 @@ export class UpdateChatUseCase extends BaseUseCase<Params, Output> {
 	}
 
 	async execute (params: Params): Promise<Output> {
-		const { payload, id, currentUser } = params
+		const { payload, unset, id, currentUser } = params
 
 		if (!id) {
 			throw new Error('Id is required for updating Chat')
@@ -30,11 +31,7 @@ export class UpdateChatUseCase extends BaseUseCase<Params, Output> {
 
 		const chat = Chat.fromJSON({ ...payload, _id: id })
 
-		if (payload.toUnset) {
-			const flat = chat.toFlatDocument()
-			const fields = Object.keys(payload.toUnset).filter(field => flat[field] === undefined)
-			if (fields.length) chat.unset(fields as (keyof Chat)[])
-		}
+		Object.assign(chat.clearedFields, unset)
 
 		const result = await this.chatRepository.update(chat, params.scope ?? Scope.canEdit(currentUser))
 

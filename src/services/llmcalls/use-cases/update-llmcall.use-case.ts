@@ -26,7 +26,7 @@ export class UpdateLLMCallUseCase extends BaseUseCase<Params, Output> {
 
 		const llmCall = LLMCall.fromJSON({ ...payload, _id: id })
 
-		this.logger.info(`Updating LLMCall: ${llmCall.stringify()}`)
+		this.logger.info({ llmCallId: id }, '[LLMCalls] Updating LLMCall')
 
 		const result = await this.llmCallRepository.update(llmCall, params.scope ?? Scope.canEdit(currentUser))
 

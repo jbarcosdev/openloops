@@ -1,3 +1,4 @@
+import { entityPatch } from '@common/base/utils'
 import { MongoRepository, QueryOptions, Scope } from '@common/repositories'
 import { getDatabaseName } from '@common/utils/database-name'
 import { LLMCall, LLMCallProps } from '../entities'
@@ -10,17 +11,13 @@ export class LLMCallRepository {
 	})
 
 	public async create (llmCall: LLMCall, scope: Scope): Promise<LLMCall> {
-		const { _id, ownerId, createdAt, createdBy } = await this._.createOne({ payload: llmCall.toDocument(), scope })
+		const { _id, ownerId, createdAt, createdBy } = await this._.createOne({ payload: llmCall.toJSON(), scope })
 		Object.assign(llmCall, { _id, ownerId, createdAt, createdBy })
 		return llmCall
 	}
 
 	public async update (llmCall: LLMCall, scope: Scope): Promise<LLMCallProps | null> {
-		return await this._.updateOne({
-			scope,
-			where: { _id: llmCall._id },
-			payload: llmCall.toFlatDocument(),
-		})
+		return await this._.patchOne({ scope, where: { _id: llmCall._id }, ...entityPatch(llmCall) })
 	}
 
 	public async findById (id: string, scope: Scope): Promise<LLMCallProps | null> {

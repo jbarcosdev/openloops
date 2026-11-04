@@ -1,4 +1,5 @@
 import { ObjectId } from 'mongodb'
+import { entityPatch } from '@common/base/utils'
 import { MongoRepository, QueryOptions, QueryParams, Scope } from '@common/repositories'
 import { getDatabaseName } from '@common/utils/database-name'
 import { WorkspaceItem, WorkspaceItemProps } from '../entities'
@@ -18,17 +19,13 @@ export class WorkspaceItemRepository {
 	})
 
 	public async create (item: WorkspaceItem, scope: Scope): Promise<WorkspaceItem> {
-		const { _id, ownerId, createdAt, createdBy } = await this._.createOne({ payload: item.toDocument(), scope })
+		const { _id, ownerId, createdAt, createdBy } = await this._.createOne({ payload: item.toJSON(), scope })
 		Object.assign(item, { _id, ownerId, createdAt, createdBy })
 		return item
 	}
 
 	public async update (item: WorkspaceItem, scope: Scope): Promise<WorkspaceItemProps | null> {
-		return await this._.updateOne({
-			scope,
-			where: { _id: item._id },
-			payload: item.toDocument(),
-		})
+		return await this._.patchOne({ scope, where: { _id: item._id }, ...entityPatch(item) })
 	}
 
 	public async findById (id: string, scope: Scope, select?: QueryParams<WorkspaceItemProps>['select']): Promise<WorkspaceItemProps | null> {

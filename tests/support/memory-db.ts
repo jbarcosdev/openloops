@@ -1,4 +1,5 @@
 import { ObjectId } from 'mongodb'
+import { entityPatch } from '@common/base/utils'
 import { ChatRepository } from '@services/chats/repositories'
 import { AgentTaskRepository, AgentActionRepository } from '@services/tasks/repositories'
 import { WorkspaceItemRepository } from '@services/workspaces/repositories'
@@ -192,12 +193,12 @@ export class MemoryDb {
 
         provide(ChatRepository, {
             async create (chat: any, scope: any) {
-                chat.setId(db.chats.insert(stampCreate(chat.toDocument(), scope)))
+                chat._id = db.chats.insert(stampCreate(chat.toJSON(), scope))
                 return chat
             },
             async update (chat: any, scope: any) {
                 const json = stampUpdate(chat.toJSON(), scope)
-                return db.chats.patch(chat._id, json, Object.keys(chat.toJSON().toUnset ?? {}), { merge: true })
+                return db.chats.patch(chat._id, json, Object.keys(entityPatch(chat).unset), { merge: true })
             },
             async findById (id: string, _scope: any, select?: Doc) {
                 return db.chats.findById(id, select)
@@ -212,11 +213,11 @@ export class MemoryDb {
 
         provide(AgentTaskRepository, {
             async create (task: any, scope: any) {
-                task.setId(db.tasks.insert(stampCreate(task.toDocument(), scope)))
+                task._id = db.tasks.insert(stampCreate(task.toJSON(), scope))
                 return task
             },
             async update (task: any, scope: any) {
-                return db.tasks.patch(task._id, stampUpdate(task.toDocument(), scope), Object.keys(task.clearedFields))
+                return db.tasks.patch(task._id, stampUpdate(task.toJSON(), scope), Object.keys(task.clearedFields))
             },
             async findById (id: string, _scope: any, select?: Doc) {
                 return db.tasks.findById(id, select)
@@ -228,11 +229,11 @@ export class MemoryDb {
 
         provide(AgentActionRepository, {
             async create (action: any, scope: any) {
-                action.setId(db.actions.insert(stampCreate(action.toDocument(), scope)))
+                action._id = db.actions.insert(stampCreate(action.toJSON(), scope))
                 return action
             },
             async update (action: any, scope: any) {
-                return db.actions.patch(action._id, stampUpdate(action.toDocument(), scope), Object.keys(action.clearedFields))
+                return db.actions.patch(action._id, stampUpdate(action.toJSON(), scope), Object.keys(action.clearedFields))
             },
             async findByProps (where: Doc, options: Doc, _scope: any) {
                 return { items: db.actions.find(where, undefined, options), hasMore: false }
@@ -241,11 +242,11 @@ export class MemoryDb {
 
         provide(WorkspaceItemRepository, {
             async create (item: any, scope: any) {
-                item.setId(db.workspace.insert(stampCreate(item.toDocument(), scope)))
+                item._id = db.workspace.insert(stampCreate(item.toJSON(), scope))
                 return item
             },
             async update (item: any, scope: any) {
-                return db.workspace.patch(item._id, stampUpdate(item.toDocument(), scope))
+                return db.workspace.patch(item._id, stampUpdate(item.toJSON(), scope))
             },
             async findById (id: string, _scope: any, select?: Doc) {
                 return db.workspace.findById(id, select)
@@ -268,7 +269,7 @@ export class MemoryDb {
 
         provide(AgentTraceRepository, {
             async createMany (entries: any[], scope: any) {
-                entries.forEach(entry => db.traces.insert(stampCreate(entry.toDocument(), scope)))
+                entries.forEach(entry => db.traces.insert(stampCreate(entry.toJSON(), scope)))
                 return entries.length
             },
             async findByProps (where: Doc, options: Doc, _scope: any) {

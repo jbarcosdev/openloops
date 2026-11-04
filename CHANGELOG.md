@@ -2,6 +2,30 @@
 
 All notable changes to `openloops` are written here, newest first. The format follows [Keep a Changelog](https://keepachangelog.com) and the versions follow [semantic versioning](https://semver.org), where a minor version can still break the API while the package is in beta. Changes before 0.4.0 are not recorded here, see the commits and the tags.
 
+## 0.7.0
+
+This version breaks the API of the entities and of the repository, and removes `tsyringe`. The use cases and their parameters do not change, except for `updateChat`, which accepts `unset`.
+
+### Added
+
+- `MongoRepository.patchOne`, `archiveByPatch` and `claimOne`. `patchOne` takes `set` and `unset` (paths with dots), stamps who and when, drops the paths of control of a user scope, never writes `_id`, `__v`, `createdAt` nor `createdBy`, and accepts `expectedVersion` to detect conflicts. `claimOne` gives back the document as it was before the change.
+- `softDelete` accepts `unset`.
+- `toPatch` and `entityPatch` in `@common/base/utils`: the first turns an object into `set` and `unset` (a `null` or a blank text removes the field), the second adds the `clearedFields` of an entity.
+- `clearedFields` in `Chat`, `Automation` and `User`, for the fields that an entity removes from the stored document.
+- `updateChat` accepts `unset`, with the paths to remove.
+
+### Changed
+
+- `BaseEntity` is the one with `toJSON` only. Its static `toDate` and `toNumber` are public, an invalid id, date or number is a 400 `HttpError` and not a plain `Error`, and `toText` answers `undefined` for a blank text (it answered `''`).
+- The repositories save with `patchOne`, so a text that is blank inside a document is removed and not stored as `''`, and the inserts and the patches ignore the `undefined` values, also inside arrays.
+- The use cases take their repositories as default parameters of the constructor (`new XUseCase(repository)` still works).
+
+### Removed
+
+- `tsyringe`, `reflect-metadata` and the `MaskInLogs` decorator.
+- `toDocument`, `toFlatDocument`, `toUnset`, `unset`, `setId`, `setDefaults`, `stringify` and `clean` of `BaseEntity`, and the `Document` type.
+- `MongoRepository.updateOne`, replaced by `patchOne`.
+
 ## 0.6.0
 
 This version breaks the API of the use cases. The functions that read or write the records of a user need the `currentUser` or a `scope` (login, the tokens, the preview of runs, the events and the functions of the runner do not), creating a record takes its owner from the scope and not from the payload, and the ownership of the records is checked by the repository. Follow the [migration steps](docs/authorization.md#migrating-from-05) when you update.

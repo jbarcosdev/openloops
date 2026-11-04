@@ -12,7 +12,7 @@ export class AgentTraceRepository {
 	public async createMany (entries: AgentTraceEntry[], scope: Scope): Promise<number> {
 		if (!entries.length) return 0
 
-		const ids = await this._.createMany({ scope, payload: entries.map(entry => entry.toDocument()) })
+		const ids = await this._.createMany({ scope, payload: entries.map(entry => entry.toJSON()) })
 		return Object.keys(ids).length
 	}
 

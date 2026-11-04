@@ -144,7 +144,7 @@ describe('Agent with a finished active task', () => {
         const chatId = first.data._id.toString()
 
         const task = AgentTask.factory({ chatId, goal: 'old', status: status as any })
-        env.db.tasks.insert(task.toDocument())
+        env.db.tasks.insert(task.toJSON())
         env.db.chats.patch(chatId, { state: { activeTaskId: task.id } }, [], { merge: true })
 
         let seen: unknown = 'unset'
@@ -160,7 +160,7 @@ describe('Agent with a finished active task', () => {
         const chatId = first.data._id.toString()
 
         const task = AgentTask.factory({ chatId, goal: 'open', status: 'awaiting_user' as any })
-        env.db.tasks.insert(task.toDocument())
+        env.db.tasks.insert(task.toJSON())
         env.db.chats.patch(chatId, { state: { activeTaskId: task.id } }, [], { merge: true })
 
         let seen: unknown

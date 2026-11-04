@@ -38,7 +38,7 @@ export class SaveWorkspaceItemUseCase extends BaseUseCase<Params, Output> {
 		)
 
 		if (existing?._id) {
-			item.setId(existing._id)
+			item._id = BaseEntity.toObjectId(existing._id)
 			const result = await this.workspaceItemRepository.update(item, scope)
 			if (!result) return this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' }) as any
 
