@@ -323,7 +323,7 @@ describe('automations with an event trigger', () => {
             expect(await rejection(receive(id, token))).toBe('disabled')
 
             const missing = new ObjectId().toHexString()
-            const orphan = jwt.sign({ v: 1 }, 'test-secret', { audience: 'automation-event', subject: missing, jwtid: 'z' })
+            const orphan = jwt.sign({ v: 1 }, 'test-secret', { issuer: 'openloops', audience: 'automation-event', subject: missing, jwtid: 'z' })
             expect(await rejection(receive(missing, orphan))).toBe('not_found')
         })
     })
