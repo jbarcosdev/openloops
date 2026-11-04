@@ -24,6 +24,7 @@ export interface McpServerProps extends BaseEntityProps {
     lastError?: string | null
     internal?: boolean
     enabled?: boolean
+    environment?: string
 }
 
 export class McpServer extends BaseEntity {
@@ -43,6 +44,7 @@ export class McpServer extends BaseEntity {
             props.lastError,
             props.internal,
             props.enabled,
+            props.environment,
         )
     }
 
@@ -59,6 +61,7 @@ export class McpServer extends BaseEntity {
         public lastError?: string | null,
         public internal?: boolean,
         public enabled?: boolean,
+        public environment?: string,
     ) {
         super(props)
     }
@@ -77,6 +80,7 @@ export class McpServer extends BaseEntity {
             lastError: this.lastError,
             internal: this.internal,
             enabled: this.enabled,
+            environment: this.environment,
         }
     }
 

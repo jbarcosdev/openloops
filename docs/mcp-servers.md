@@ -44,6 +44,7 @@ Creating a server connects to it once to read its manifest (tools and instructio
 | Field | Meaning |
 | --- | --- |
 | `name`, `url`, `type`, `headers` | What you registered. |
+| `environment` | Optional free text that says which environment the server belongs to (for example `staging` or `production`). It is only a label: the agent does not use it. A blank text removes it. |
 | `trust` | `locked` (never approved, also the value of old records without one), `approved` or `blocked`. |
 | `approvedHash` | Hash of the manifest the user approved. |
 | `history` | The last 5 manifests the server has shown, newest first. The approved one is never dropped. |
@@ -209,7 +210,7 @@ await updateInternalMcp({ id: mcp._id, payload: { enabled: false, __v: mcp.__v }
 ```
 
 - Every function needs an admin as `currentUser` and answers 403 otherwise. The sub-route separates the code, the permission is what protects it.
-- `name` and `url` are required, `type` is always `http`, and `enabled` defaults to `true`. A disabled server is not loaded. The name must be unique among the internal servers (409).
+- `name` and `url` are required, `type` is always `http`, `environment` is optional and `enabled` defaults to `true`. A disabled server is not loaded. The name must be unique among the internal servers (409).
 - A header with `{{token}}` works as in the declared ones: it uses `mcpTokens[name]` of the run, or the service token in an automation. A header with the token written in it (`Bearer eyj...`) is sent as it is and needs nothing from the run.
 - Deleting is permanent. Internal servers have no owner, so they are not listed to any user.
 - The normal functions (`getMcpServerById`, `updateMcpServer`, `deleteMcpServer`, `decideMcpServerTrust`, and the lists) never see them, not even for an admin, and `internal` and `enabled` in the payload of a user are ignored.

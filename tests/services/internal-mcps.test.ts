@@ -29,7 +29,7 @@ const collection = () => fakeMongo.collection('mcp_servers')
 const regular: any = { userId: new ObjectId().toHexString(), isAdmin: () => false }
 const admin: any = { userId: new ObjectId().toHexString(), isAdmin: () => true }
 
-const payload = { name: 'crm', url: 'http://fake/crm', headers: { Authorization: 'Bearer {{token}}' } }
+const payload: any = { name: 'crm', url: 'http://fake/crm', headers: { Authorization: 'Bearer {{token}}' } }
 
 describe('internal MCP servers of the back office', () => {
     const createInternal = (body = payload, currentUser = admin) => new CreateInternalMcpUseCase().execute({ payload: body, currentUser })
@@ -72,6 +72,15 @@ describe('internal MCP servers of the back office', () => {
             expect(stored().trust).toBeUndefined()
             expect(stored().history).toBeUndefined()
             expect(McpServer.prototype.fetchManifest).not.toHaveBeenCalled()
+        })
+
+        it('stores the environment and lets it change', async () => {
+            const created = await createInternal({ ...payload, environment: 'staging' })
+            expect(created.environment).toBe('staging')
+
+            const updated = await new UpdateInternalMcpUseCase().execute({ id: String(created._id), payload: { environment: 'production', __v: stored().__v }, currentUser: admin })
+            expect(updated.environment).toBe('production')
+            expect(stored().environment).toBe('production')
         })
 
         it('needs a name and a url', async () => {

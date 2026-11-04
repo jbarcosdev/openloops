@@ -6,7 +6,7 @@ import { McpServerRepository } from '../../repositories'
 
 export interface Params extends BaseUseCaseParams {
     id: string
-    payload?: Pick<McpServerProps, 'name' | 'url' | 'headers' | 'enabled' | '__v'>
+    payload?: Pick<McpServerProps, 'name' | 'url' | 'headers' | 'enabled' | 'environment' | '__v'>
 }
 
 export type Output = McpServerProps
@@ -36,8 +36,8 @@ export class UpdateInternalMcpUseCase extends BaseUseCase<Params, Output> {
 
         if (payload.url !== undefined && !payload.url) this.throwHttpError({ statusCode: 400, errorMessage: 'An internal MCP needs a name and a url' })
 
-        const { name, url, headers, enabled } = payload
-        const mcpServer = McpServer.fromJSON({ ...existing, ...(name !== undefined && { name }), ...(url !== undefined && { url }), ...(headers !== undefined && { headers }), ...(enabled !== undefined && { enabled }), _id: id, internal: true })
+        const { name, url, headers, enabled, environment } = payload
+        const mcpServer = McpServer.fromJSON({ ...existing, ...(name !== undefined && { name }), ...(url !== undefined && { url }), ...(headers !== undefined && { headers }), ...(enabled !== undefined && { enabled }), ...(environment !== undefined && { environment }), _id: id, internal: true })
 
         const result = await this.mcpServerRepository.update(mcpServer, scope, { expectedVersion: existing.__v })
 

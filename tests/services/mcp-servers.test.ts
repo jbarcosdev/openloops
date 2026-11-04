@@ -46,6 +46,22 @@ describe.each([['regular user', regular], ['admin', admin]])('MCP server use cas
         expect(String(stored().ownerId)).toBe(OWNER_ID)
     })
 
+    it('stores the environment, changes it and removes it with a blank text', async () => {
+        const created = await new CreateMcpServerUseCase().execute({ payload: { name: 'srv', url: 'http://fake/srv', type: 'http', environment: 'staging' }, currentUser })
+        const id = String(stored()._id)
+        expect(created?.environment).toBe('staging')
+        expect(stored().environment).toBe('staging')
+
+        await new UpdateMcpServerUseCase().execute({ id, payload: { environment: 'production', __v: stored().__v }, currentUser })
+        expect(stored().environment).toBe('production')
+
+        await new UpdateMcpServerUseCase().execute({ id, payload: { name: 'srv2', __v: stored().__v }, currentUser })
+        expect(stored().environment).toBe('production')
+
+        await new UpdateMcpServerUseCase().execute({ id, payload: { environment: '', __v: stored().__v }, currentUser })
+        expect(stored().environment).toBeUndefined()
+    })
+
     it('updates a server and bumps its version', async () => {
         await create()
         const before = stored().__v
