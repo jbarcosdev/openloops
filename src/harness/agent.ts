@@ -25,6 +25,7 @@ import { approvalRequest, confirmationGate, mcpChangeReview, autonomousAnswer } 
 import { inputCheck } from '@guardrails/input/input-check'
 import { createBlockInputOversize } from '@guardrails/input/create-block-input-oversize'
 import { listAllMcpServersByUser, verifyMcpServerConnection, decideMcpServerTrust } from '@services/mcp-servers'
+import { listActiveInternalMcps } from '@services/mcp-servers/internal'
 import { rankToolsByKeywords, WeightedKeyword, ScoredTool } from './utils/rank-tools-by-keywords'
 import { AgentLoop, AgentLoopNode, Harness, RunContext } from './agent-loop'
 import { AgentStatus, ActivityListener } from './agent-state'
@@ -652,11 +653,20 @@ export class Agent {
     private async listMcps (): Promise<void> {
         if (!this.currentUser) return
 
-        this._mcps = this._internalMcps.map(mcp => this.toInternalEntry(mcp))
+        const internals = [...this._internalMcps]
+
+        try {
+            for (const mcp of await listActiveInternalMcps()) if (!internals.some(candidate => candidate.name === mcp.name)) internals.push(mcp)
+        } catch (error: any) {
+            this.logger.error({ error: error?.message ?? error }, '[AGENT] Failed to list the internal MCP servers')
+            this.mcpListingFailed = true
+        }
+
+        this._mcps = internals.map(mcp => this.toInternalEntry(mcp))
 
         try {
             const response = await listAllMcpServersByUser({ currentUser: this.currentUser })
-            const reserved = new Set(this._internalMcps.map(mcp => mcp.name))
+            const reserved = new Set(internals.map(mcp => mcp.name))
             const stored = response.items.filter(props => {
                 if (!reserved.has(props.name as string)) return true
 
@@ -712,9 +722,9 @@ export class Agent {
         return headers
     }
 
-    private mask (error: unknown): string {
+    private mask (error: unknown, entry?: McpEntry): string {
         let text = error instanceof Error ? error.message : String(error)
-        for (const secret of [...Object.values(this.mcpTokens), this.serviceToken]) if (secret) text = text.split(secret).join('***')
+        for (const secret of [...Object.values(this.mcpTokens), this.serviceToken, ...Object.values(entry?.server.headers ?? {})]) if (secret) text = text.split(secret).join('***')
         return text
     }
 
@@ -777,7 +787,7 @@ export class Agent {
 
                 return
             } catch (error) {
-                this.logger.error({ error: entry.internal ? this.mask(error) : error, mcpServer: entry.name, attempt: attempt + 1 }, '[AGENT] Failed to connect MCP server')
+                this.logger.error({ error: entry.internal ? this.mask(error, entry) : error, mcpServer: entry.name, attempt: attempt + 1 }, '[AGENT] Failed to connect MCP server')
                 await Promise.resolve().then(() => entry.server.disconnect()).catch(() => undefined)
 
                 const delay = MCP_CONNECT_RETRY_DELAYS_MS[attempt]

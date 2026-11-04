@@ -22,6 +22,8 @@ export interface McpServerProps extends BaseEntityProps {
     history?: McpManifest[]
     status?: McpStatus
     lastError?: string | null
+    internal?: boolean
+    enabled?: boolean
 }
 
 export class McpServer extends BaseEntity {
@@ -39,6 +41,8 @@ export class McpServer extends BaseEntity {
             props.history,
             props.status || undefined,
             props.lastError,
+            props.internal,
+            props.enabled,
         )
     }
 
@@ -53,6 +57,8 @@ export class McpServer extends BaseEntity {
         public history?: McpManifest[],
         public status?: McpStatus,
         public lastError?: string | null,
+        public internal?: boolean,
+        public enabled?: boolean,
     ) {
         super(props)
     }
@@ -69,6 +75,8 @@ export class McpServer extends BaseEntity {
             history: this.history,
             status: this.status,
             lastError: this.lastError,
+            internal: this.internal,
+            enabled: this.enabled,
         }
     }
 
@@ -90,6 +98,15 @@ export class McpServer extends BaseEntity {
         this.history = []
         this.status = 'unknown'
         this.lastError = null
+        this.internal = undefined
+        this.enabled = undefined
+        return this
+    }
+
+    initializeInternal (): this {
+        this.internal = true
+        this.enabled = this.enabled ?? true
+        this.type = this.type ?? 'http'
         return this
     }
 

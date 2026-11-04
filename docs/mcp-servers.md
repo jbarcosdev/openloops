@@ -181,6 +181,42 @@ await agent.run({
 
 In an automation there is no session of the user, so there is no token of theirs. See [automations](automations.md#internal-mcp-servers-in-a-automation).
 
+### Internal servers stored in the database
+
+You can also manage the internal servers from a back office, without a deploy. They are stored in the same collection as the servers of the users, with `internal: true`, and the agent loads the enabled ones at the start of every run next to the ones declared in code. They behave the same way: trusted, no manifest review, no history, no notice of third party, destructive tools still ask.
+
+They live in their own entry point, so the screens of the users never import them:
+
+```typescript
+import {
+    createInternalMcp,
+    updateInternalMcp,
+    getInternalMcpById,
+    listInternalMcps,
+    deleteInternalMcp,
+} from 'openloops/mcps/admin'
+
+const mcp = await createInternalMcp({
+    payload: {
+        name: 'budget',
+        url: 'https://api.example.com/mcp',
+        headers: { Authorization: 'Bearer {{token}}' },
+    },
+    currentUser: admin,
+})
+
+await updateInternalMcp({ id: mcp._id, payload: { enabled: false, __v: mcp.__v }, currentUser: admin })
+```
+
+- Every function needs an admin as `currentUser` and answers 403 otherwise. The sub-route separates the code, the permission is what protects it.
+- `name` and `url` are required, `type` is always `http`, and `enabled` defaults to `true`. A disabled server is not loaded. The name must be unique among the internal servers (409).
+- A header with `{{token}}` works as in the declared ones: it uses `mcpTokens[name]` of the run, or the service token in an automation. A header with the token written in it (`Bearer eyj...`) is sent as it is and needs nothing from the run.
+- Deleting is permanent. Internal servers have no owner, so they are not listed to any user.
+- The normal functions (`getMcpServerById`, `updateMcpServer`, `deleteMcpServer`, `decideMcpServerTrust`, and the lists) never see them, not even for an admin, and `internal` and `enabled` in the payload of a user are ignored.
+- If a server declared in code has the same name, the one in code wins. A server of a user with the same name as an internal one is ignored for that run.
+- `headers` are stored as written, like the ones of the servers of the users. Mask them in your controller before sending a record to a client.
+- Run `ensureIndexes` after updating: it adds the unique index of the names of the internal servers.
+
 ## Tools of MCP servers
 
 Their names are prefixed with the server name, and they are marked as external so the model treats their descriptions as data. A tool is destructive when the server marks it with `destructiveHint`. A tool without that annotation is not treated as destructive, so rely on the server's approval and on your own review of what the server exposes.

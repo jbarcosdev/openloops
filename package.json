@@ -63,6 +63,10 @@
       "types": "./dist/services/mcp-servers/index.d.ts",
       "default": "./dist/services/mcp-servers/index.js"
     },
+    "./mcps/admin": {
+      "types": "./dist/services/mcp-servers/admin/index.d.ts",
+      "default": "./dist/services/mcp-servers/admin/index.js"
+    },
     "./automations": {
       "types": "./dist/services/automations/index.d.ts",
       "default": "./dist/services/automations/index.js"

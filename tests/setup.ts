@@ -39,6 +39,10 @@ jest.mock('@services/mcp-servers', () => ({
     decideMcpServerTrust: (params: any) => require('./support/fake-mcp').fakeMcp.decide(params),
 }))
 
+jest.mock('@services/mcp-servers/internal', () => ({
+    listActiveInternalMcps: () => require('./support/fake-mcp').fakeMcp.listInternals(),
+}))
+
 jest.mock('@services/mcp-servers/entities', () => ({
     ...jest.requireActual('@services/mcp-servers/entities'),
     McpServer: require('./support/fake-mcp').FakeMcpServer,

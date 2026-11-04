@@ -2,6 +2,20 @@
 
 All notable changes to `openloops` are written here, newest first. The format follows [Keep a Changelog](https://keepachangelog.com) and the versions follow [semantic versioning](https://semver.org), where a minor version can still break the API while the package is in beta. Changes before 0.4.0 are not recorded here, see the commits and the tags.
 
+## Unreleased
+
+### Added
+
+- **Internal MCP servers stored in the database**, managed from a back office. `createInternalMcp`, `updateInternalMcp`, `getInternalMcpById`, `listInternalMcps` and `deleteInternalMcp` in the new entry point `openloops/mcps/admin`, all for admins only. The agent loads the enabled ones in every run next to the ones declared in code, with the same rules: trusted, no manifest review, destructive tools still ask. `{{token}}` in a header uses the token of the run, a token written in the header is sent as it is. Read [MCP servers](docs/mcp-servers.md#internal-servers-stored-in-the-database).
+- `internal` and `enabled` in `McpServerProps`. A record without them is a normal server, so no migration is needed.
+- A unique index on the name of the internal servers: run `ensureIndexes`.
+
+### Changed
+
+- The functions of `openloops/mcps` never see an internal server, not even for an admin, and ignore `internal` and `enabled` in the payload of a user.
+- `listMcpServersByUser` failed because it sent no scope to the repository, now it lists the servers of the user.
+- The connection errors of an internal server mask the values of its headers in the logs.
+
 ## 0.7.0
 
 This version breaks the API of the entities, of the repository, of the results of the use cases and of the authentication, and removes `tsyringe`. The tokens that 0.6 issued (logins and event automations) stop working: issue new ones. Read [authentication](docs/authentication.md). The parameters of the use cases do not change, except for `updateChat`, which accepts `unset`.
