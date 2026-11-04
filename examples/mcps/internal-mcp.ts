@@ -14,8 +14,19 @@ async function runAgentWithInternalMcp (sessionToken: string) {
         internalMcps: [
             {
                 name: 'budget',
-                url: 'https://api.example.com/mcp',
+                url: 'https://budget.example.com/mcp',
                 headers: { Authorization: 'Bearer {{token}}' },
+            },
+            {
+                name: 'crm',
+                url: 'https://crm.example.com/mcp',
+                headers: { Authorization: 'Bearer {{token}}' },
+                autonomousToken: process.env.CRM_SERVICE_TOKEN,
+            },
+            {
+                name: 'catalog',
+                url: 'https://catalog.example.com/mcp',
+                headers: { Authorization: `Bearer ${process.env.CATALOG_SERVICE_TOKEN}` },
             },
         ],
     })
@@ -26,7 +37,7 @@ async function runAgentWithInternalMcp (sessionToken: string) {
                 message: 'how much did I spend on food this month?',
             },
             currentUser,
-            mcpTokens: { budget: sessionToken },
+            mcpTokens: { budget: sessionToken, crm: sessionToken },
         })
 
         logger.debug(result, '[Demo] Result')
@@ -35,4 +46,4 @@ async function runAgentWithInternalMcp (sessionToken: string) {
     }
 }
 
-runAgentWithInternalMcp('the-token-of-the-session-of-the-user')
+runAgentWithInternalMcp('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjcm0uZXhhbXBsZS5jb20iLCJzdWIiOiJzdmMtb3Blbmxvb3BzLWNybSIsImF1ZCI6ImNybS1tY3AiLCJzY29wZSI6ImNybTpyZWFkIGNybTp3cml0ZSIsImlhdCI6MTc2MjIxNDQwMCwiZXhwIjoxNzkzNzUwNDAwfQ.YCtd8mv7RZpaZb3Z1aSl25MGP2QRWHc8RtA82MJOH7U')

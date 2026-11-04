@@ -11,6 +11,14 @@ async function notifyOwner (message: string) {
 const runner = createAutomationRunner({
     agent: {
         tools: [webSearchTool],
+        internalMcps: [
+            {
+                name: 'crm',
+                url: 'https://crm.example.com/mcp',
+                headers: { Authorization: 'Bearer {{token}}' },
+                autonomousToken: process.env.CRM_SERVICE_TOKEN,
+            },
+        ],
         guards: [inputGuards.blockCard],
         maxIterations: 30,
     },

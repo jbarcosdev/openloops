@@ -11,6 +11,7 @@ async function createMcp () {
             name: 'gemini_demo_mcp',
             type: 'http',
             url: 'https://gemini-api-demos.uc.r.appspot.com/mcp',
+            environment: 'staging',
             headers: {
                 'Accept': 'text/event-stream'
             }
