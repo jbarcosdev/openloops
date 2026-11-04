@@ -184,6 +184,49 @@ await agent.run({
 
 In an automation there is no session of the user, so there is no token of theirs. See [automations](automations.md#internal-mcp-servers-in-an-automation).
 
+### Which token a server uses
+
+There are three common setups. The difference is what the header says and whether the server has an `autonomousToken`.
+
+```typescript
+const agent = new Agent({
+    loop: new AgiLoop(),
+    internalMcps: [
+        {
+            name: 'budget',
+            url: 'https://budget.example.com/mcp',
+            headers: { Authorization: 'Bearer {{token}}' },
+        },
+        {
+            name: 'crm',
+            url: 'https://crm.example.com/mcp',
+            headers: { Authorization: 'Bearer {{token}}' },
+            autonomousToken: process.env.CRM_SERVICE_TOKEN,
+        },
+        {
+            name: 'catalog',
+            url: 'https://catalog.example.com/mcp',
+            headers: { Authorization: `Bearer ${process.env.CATALOG_SERVICE_TOKEN}` },
+        },
+    ],
+})
+
+await agent.run({
+    input: { message: 'summarize my week' },
+    currentUser,
+    mcpTokens: { budget: sessionToken, crm: sessionToken },
+})
+```
+
+| Server | Chat with `mcpTokens` | Automation (autonomous, no `mcpTokens`) |
+| --- | --- | --- |
+| `budget`: user token only | The token of the user. | Unavailable: there is no token and no `autonomousToken`. |
+| `crm`: user token, and a service account for automations | The token of the user. | `CRM_SERVICE_TOKEN`, and the header `X-User-Id` with the owner of the automation. |
+| `catalog`: always the service account | `CATALOG_SERVICE_TOKEN`, written in the header. | The same, without `X-User-Id`. |
+
+- A chat never uses an `autonomousToken`. If `crm` is used in a chat and the request brings no token for it, the server is unavailable for that run.
+- In `catalog` the credential is the same for every user and in every run. Use it only for data that is not specific to a user.
+
 ### Internal servers stored in the database
 
 You can also manage the internal servers from a back office, without a deploy. They are stored in the same collection as the servers of the users, with `internal: true`, and the agent loads the enabled ones at the start of every run next to the ones declared in code. They behave the same way: trusted, no manifest review, no history, no notice of third party, destructive tools still ask.
@@ -204,6 +247,7 @@ const mcp = await createInternalMcp({
         name: 'budget',
         url: 'https://api.example.com/mcp',
         headers: { Authorization: 'Bearer {{token}}' },
+        autonomousToken: 'eyj...',
     },
     currentUser: admin,
 })
@@ -213,7 +257,7 @@ await updateInternalMcp({ id: mcp._id, payload: { enabled: false, __v: mcp.__v }
 
 - Every function needs an admin as `currentUser` and answers 403 otherwise. The sub-route separates the code, the permission is what protects it.
 - `name` and `url` are required, `type` is always `http`, `environment` and `autonomousToken` are optional and `enabled` defaults to `true`. A disabled server is not loaded. The name must be unique among the internal servers (409).
-- A header with `{{token}}` works as in the declared ones: it uses `mcpTokens[name]` of the run, or the service token in an automation. A header with the token written in it (`Bearer eyj...`) is sent as it is and needs nothing from the run.
+- A header with `{{token}}` works as in the declared ones: it uses `mcpTokens[name]` of the run, or its `autonomousToken` in an autonomous run. A header with the token written in it (`Bearer eyj...`) is sent as it is and needs nothing from the run.
 - Deleting is permanent. Internal servers have no owner, so they are not listed to any user.
 - The normal functions (`getMcpServerById`, `updateMcpServer`, `deleteMcpServer`, `decideMcpServerTrust`, and the lists) never see them, not even for an admin, and `internal` and `enabled` in the payload of a user are ignored.
 - If a server declared in code has the same name, the one in code wins. A server of a user with the same name as an internal one is ignored for that run.
