@@ -1,5 +1,3 @@
-import 'reflect-metadata'
-import { container } from 'tsyringe'
 import { ObjectId } from 'mongodb'
 import { CreateUserUseCase } from '@services/users/use-cases/create-user.use-case'
 import { UpdateUserUseCase } from '@services/users/use-cases/update-user.use-case'
@@ -22,7 +20,7 @@ const owner: any = { userId: new ObjectId().toHexString(), isAdmin: () => false 
 describe('the default model of a user', () => {
     let id: string
 
-    const update = (payload: Record<string, any>) => container.resolve(UpdateUserUseCase).execute({ id, payload, currentUser: owner })
+    const update = (payload: Record<string, any>) => new UpdateUserUseCase().execute({ id, payload, currentUser: owner })
 
     beforeEach(async () => {
         fakeMongo.reset()
@@ -41,7 +39,7 @@ describe('the default model of a user', () => {
     })
 
     it('is returned with the preferences of the user', async () => {
-        const { data } = await update({ preferences: { defaultModel: { provider: ' anthropic ', model: ' claude-haiku-5-5 ' } } })
+        const data = await update({ preferences: { defaultModel: { provider: ' anthropic ', model: ' claude-haiku-5-5 ' } } })
 
         expect(data.preferences?.defaultModel).toEqual({ provider: 'anthropic', model: 'claude-haiku-5-5' })
     })
@@ -82,14 +80,14 @@ describe('the default model of a user', () => {
     })
 
     it('is validated when a user is created', async () => {
-        const create = (defaultModel: any) => container.resolve(CreateUserUseCase).execute({
+        const create = (defaultModel: any) => new CreateUserUseCase().execute({
             payload: { email: 'new@openloops.xyz', password: 'a-real-password', preferences: { defaultModel } },
             currentUser: owner,
         })
 
         await expect(create({ provider: 'anthropic', model: 'gpt-4o-mini' })).rejects.toThrow(/does not exist/)
 
-        const { data } = await create({ provider: 'anthropic', model: 'claude-haiku-5-5' })
+        const data = await create({ provider: 'anthropic', model: 'claude-haiku-5-5' })
         expect(data.preferences?.defaultModel).toEqual({ provider: 'anthropic', model: 'claude-haiku-5-5' })
     })
 })

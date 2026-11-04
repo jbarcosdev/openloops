@@ -34,7 +34,7 @@ const result = await createUser({
 })
 ```
 
-`email` and `password` are required. Passwords are hashed before being stored and are never returned.
+`email` and `password` are required. Passwords are hashed before being stored and are never returned. To change it later use `changePassword` (see [authentication](authentication.md#resetting-a-password)): `updateUser` refuses a `password`.
 
 ### The scope
 

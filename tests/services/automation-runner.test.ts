@@ -1,5 +1,3 @@
-import 'reflect-metadata'
-import { container } from 'tsyringe'
 import { CurrentUser } from '@common/base'
 import { Agent } from '@harness/agent'
 import { inputGuards } from '@guardrails/index'
@@ -28,7 +26,7 @@ describe('the runner of automations', () => {
     let owner: CurrentUser
 
     const createAutomationFixture = async (extra: Record<string, any> = {}, due = true) => {
-        const { data } = await container.resolve(CreateAutomationUseCase).execute({
+        const data = await new CreateAutomationUseCase().execute({
             payload: {
                 name: 'Report',
                 instructions: 'Summarize my open tickets',
@@ -261,7 +259,7 @@ describe('the runner of automations', () => {
             expect(answered.data.state.status).toBe('idle')
             expect(w.deleted).toEqual(['9'])
 
-            const { data } = await container.resolve(SyncAutomationRunUseCase).execute({ runId: String(runs().docs[0]._id) })
+            const data = await new SyncAutomationRunUseCase().execute({ runId: String(runs().docs[0]._id) })
 
             expect(data?.status).toBe('completed')
             expect(automations().docs[0].lastRunStatus).toBe('completed')
@@ -288,17 +286,17 @@ describe('the runner of automations', () => {
 
     describe('events', () => {
         const createEvent = async (): Promise<{ id: string, token: string }> => {
-            const { data } = await container.resolve(CreateAutomationUseCase).execute({
+            const data = await new CreateAutomationUseCase().execute({
                 payload: { name: 'Cost alerts', instructions: 'Analyze the cost alert', triggers: { event: {} }, modelProvider: 'anthropic', modelName: 'claude-haiku-5-5' } as any,
                 currentUser: owner,
             })
             const id = String(data._id)
-            const { data: issued } = await container.resolve(IssueAutomationEventTokenUseCase).execute({ id, currentUser: owner })
+            const issued = await new IssueAutomationEventTokenUseCase().execute({ id, currentUser: owner })
 
             return { id, token: issued.token }
         }
 
-        const send = (id: string, token: string, payload: unknown) => container.resolve(ReceiveAutomationEventUseCase).execute({ automationId: id, token, payload })
+        const send = (id: string, token: string, payload: unknown) => new ReceiveAutomationEventUseCase().execute({ automationId: id, token, payload })
 
         it('runs a queued event with its payload as data after the instructions', async () => {
             env.llm.script(say('Analyzed'))

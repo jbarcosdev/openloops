@@ -1,5 +1,4 @@
-import { autoInjectable, inject } from 'tsyringe'
-import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { BaseUseCase, BaseUseCaseParams } from '@common/base/base.use-case'
 import { Scope } from '@common/repositories'
 import { LLMCallRepository } from '../repositories'
 import { LLMCall, LLMCallProps } from '../entities'
@@ -9,13 +8,10 @@ export interface Params extends BaseUseCaseParams {
 	payload?: LLMCallProps
 }
 
-export interface Output extends BaseUseCaseOutput {
-	data: LLMCallProps
-}
+export type Output = LLMCallProps
 
-@autoInjectable()
 export class UpdateLLMCallUseCase extends BaseUseCase<Params, Output> {
-	constructor (@inject(LLMCallRepository) private readonly llmCallRepository?: LLMCallRepository) {
+	constructor (private readonly llmCallRepository = new LLMCallRepository()) {
 		super()
 	}
 
@@ -28,12 +24,12 @@ export class UpdateLLMCallUseCase extends BaseUseCase<Params, Output> {
 
 		const llmCall = LLMCall.fromJSON({ ...payload, _id: id })
 
-		this.logger.info(`Updating LLMCall: ${llmCall.stringify()}`)
+		this.logger.info({ llmCallId: id }, '[LLMCalls] Updating LLMCall')
 
-		const result = await this.llmCallRepository?.update(llmCall, params.scope ?? Scope.canEdit(currentUser))
+		const result = await this.llmCallRepository.update(llmCall, params.scope ?? Scope.canEdit(currentUser))
 
-		if (!result) return this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' }) as any
+		if (!result) this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' })
 
-		return { data: result }
+		return result
 	}
 }

@@ -18,7 +18,6 @@ export default defineSkillEval({
     ],
     finals: { respond: 'answer', ask_user: 'question' },
     load () {
-        require('reflect-metadata')
         return require('@loops/agi/skills/reasoning-engine').reasoningEngine
     },
 })

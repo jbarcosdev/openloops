@@ -16,7 +16,7 @@ async function setDefaultModel () {
         currentUser,
     })
 
-    logger.info(result.data.preferences?.defaultModel, '[Demo] Default model:')
+    logger.info(result.preferences?.defaultModel, '[Demo] Default model:')
 }
 
 async function removeDefaultModel () {

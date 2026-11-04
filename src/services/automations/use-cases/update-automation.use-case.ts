@@ -1,5 +1,4 @@
-import { autoInjectable, inject } from 'tsyringe'
-import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { BaseUseCase, BaseUseCaseParams } from '@common/base/base.use-case'
 import { Scope } from '@common/repositories'
 import { VersionConflictError } from '@common/repositories/mongo-db.repository'
 import { Automation, AutomationPayload, AutomationProps } from '../entities'
@@ -11,13 +10,10 @@ export interface Params extends BaseUseCaseParams {
 	payload?: AutomationPayload
 }
 
-export interface Output extends BaseUseCaseOutput {
-	data: AutomationProps
-}
+export type Output = AutomationProps
 
-@autoInjectable()
 export class UpdateAutomationUseCase extends BaseUseCase<Params, Output> {
-	constructor (@inject(AutomationRepository) private readonly automationRepository?: AutomationRepository) {
+	constructor (private readonly automationRepository = new AutomationRepository()) {
 		super()
 	}
 
@@ -27,8 +23,8 @@ export class UpdateAutomationUseCase extends BaseUseCase<Params, Output> {
 		if (!payload || Object.keys(payload).length === 0) throw new Error('Payload is required for updating an automation')
 
 		const scope = params.scope ?? Scope.canEdit(currentUser)
-		const existing = await this.automationRepository?.findById(id, scope)
-		if (!existing) return this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' }) as any
+		const existing = await this.automationRepository.findById(id, scope)
+		if (!existing) this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' })
 
 		if (payload.__v !== undefined && payload.__v !== existing.__v) throw new VersionConflictError()
 
@@ -47,10 +43,10 @@ export class UpdateAutomationUseCase extends BaseUseCase<Params, Output> {
 			_id: id,
 		})
 
-		if (!provider) automation.unset(['modelProvider', 'modelName'])
+		if (!provider) Object.assign(automation.clearedFields, { modelProvider: '', modelName: '' })
 
 		const removed = (['schedule', 'event'] as const).filter(key => existing.triggers?.[key] && !automation.triggers?.[key])
-		if (removed.length) automation.toUnset = Object.fromEntries(removed.map(key => [`triggers.${key}`, '']))
+		if (removed.length) Object.assign(automation.clearedFields, Object.fromEntries(removed.map(key => [`triggers.${key}`, ''])))
 		if (removed.includes('event')) automation.eventTokenVersion = (existing.eventTokenVersion as number) + 1
 
 		const schedule = automation.triggers?.schedule
@@ -61,9 +57,9 @@ export class UpdateAutomationUseCase extends BaseUseCase<Params, Output> {
 			if (schedule.enabled && !schedule.nextRunAt) throw new Error('The date of the recurrence has already passed')
 		}
 
-		const result = await this.automationRepository?.update(automation, scope, { expectedVersion: existing.__v })
-		if (!result) return this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' }) as any
+		const result = await this.automationRepository.update(automation, scope, { expectedVersion: existing.__v })
+		if (!result) this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' })
 
-		return { data: result }
+		return result
 	}
 }

@@ -15,10 +15,10 @@ async function createEventAutomation () {
         currentUser,
     })
 
-    const id = String(created.data._id)
+    const id = String(created._id)
     const issued = await issueAutomationEventToken({ id, expiresIn: '90d', currentUser })
 
-    logger.info({ id, token: issued.data.token, expiresAt: issued.data.expiresAt }, '[Demo] Created automation, send events to it with this token')
+    logger.info({ id, token: issued.token, expiresAt: issued.expiresAt }, '[Demo] Created automation, send events to it with this token')
 }
 
 createEventAutomation()

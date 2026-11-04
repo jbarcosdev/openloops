@@ -1,5 +1,3 @@
-import 'reflect-metadata'
-import { container } from 'tsyringe'
 import { ObjectId } from 'mongodb'
 import { CreateAutomationUseCase } from '@services/automations/use-cases/create-automation.use-case'
 import { UpdateAutomationUseCase } from '@services/automations/use-cases/update-automation.use-case'
@@ -31,17 +29,17 @@ const automation = () => automations().docs[0]
 const at = (value: any) => new Date(value).toISOString()
 const schedule = () => automation().triggers.schedule
 
-const claim = (workerId: string, now: Date) => container.resolve(ClaimDueAutomationsUseCase).execute({ workerId, now, leaseMs: LEASE })
+const claim = (workerId: string, now: Date) => new ClaimDueAutomationsUseCase().execute({ workerId, now, leaseMs: LEASE })
 const finish = (runId: any, workerId: string, status: 'completed' | 'paused' | 'failed', now: Date, error?: any) =>
-    container.resolve(FinishAutomationRunUseCase).execute({ runId: String(runId), workerId, status, now, error })
-const sync = (runId: any, now: Date) => container.resolve(SyncAutomationRunUseCase).execute({ runId: String(runId), now })
+    new FinishAutomationRunUseCase().execute({ runId: String(runId), workerId, status, now, error })
+const sync = (runId: any, now: Date) => new SyncAutomationRunUseCase().execute({ runId: String(runId), now })
 const seedChat = (state: Record<string, any>) => fakeMongo.collection('chats').insertOne({ state, __v: 1 }).then(result => result.insertedId)
 
 describe('running automations', () => {
     let id: string
 
     const createAutomationFixture = async (recurrence: any = { type: 'daily', time: '08:00' }) => {
-        const { data } = await container.resolve(CreateAutomationUseCase).execute({
+        const data = await new CreateAutomationUseCase().execute({
             payload: { name: 'Report', instructions: 'Summarize', triggers: { schedule: { recurrence, timezone: 'UTC' } }, modelProvider: 'anthropic', modelName: 'claude-haiku-5-5' } as any,
             currentUser: user,
         })
@@ -59,14 +57,14 @@ describe('running automations', () => {
 
     describe('claiming', () => {
         it('takes nothing before the time arrives', async () => {
-            const { data } = await claim('w1', new Date('2026-10-14T07:59:00Z'))
+            const data = await claim('w1', new Date('2026-10-14T07:59:00Z'))
 
             expect(data.claimed).toHaveLength(0)
             expect(runs().docs).toHaveLength(0)
         })
 
         it('takes the automation when the time arrives, records a run and moves the next run', async () => {
-            const { data } = await claim('w1', new Date('2026-10-14T08:00:00Z'))
+            const data = await claim('w1', new Date('2026-10-14T08:00:00Z'))
 
             expect(data.claimed).toHaveLength(1)
             expect(runs().docs).toHaveLength(1)
@@ -88,18 +86,18 @@ describe('running automations', () => {
         it('is won by one of several workers that ask at the same time', async () => {
             const results = await Promise.all(['a', 'b', 'c', 'd'].map(worker => claim(worker, new Date('2026-10-14T08:00:00Z'))))
 
-            expect(results.flatMap(result => result.data.claimed)).toHaveLength(1)
+            expect(results.flatMap(result => result.claimed)).toHaveLength(1)
             expect(runs().docs).toHaveLength(1)
         })
 
         it('does not run twice while it is being run', async () => {
             await claim('w1', new Date('2026-10-14T08:00:00Z'))
 
-            expect((await claim('w2', new Date('2026-10-14T08:05:00Z'))).data.claimed).toHaveLength(0)
+            expect((await claim('w2', new Date('2026-10-14T08:05:00Z'))).claimed).toHaveLength(0)
         })
 
         it('runs once when many runs were missed and counts the next from now', async () => {
-            const { data } = await claim('w1', new Date('2026-10-17T20:00:00Z'))
+            const data = await claim('w1', new Date('2026-10-17T20:00:00Z'))
 
             expect(data.claimed).toHaveLength(1)
             expect(runs().docs).toHaveLength(1)
@@ -107,36 +105,36 @@ describe('running automations', () => {
         })
 
         it('does not take an automation that is off', async () => {
-            await container.resolve(UpdateAutomationUseCase).execute({ id, payload: { triggers: { schedule: { enabled: false } } }, currentUser: user })
+            await new UpdateAutomationUseCase().execute({ id, payload: { triggers: { schedule: { enabled: false } } }, currentUser: user })
 
-            expect((await claim('w1', new Date('2026-10-14T09:00:00Z'))).data.claimed).toHaveLength(0)
+            expect((await claim('w1', new Date('2026-10-14T09:00:00Z'))).claimed).toHaveLength(0)
         })
     })
 
     describe('a run that fails', () => {
         it('is not repeated until the next occurrence', async () => {
-            const { data } = await claim('w1', new Date('2026-10-14T08:00:00Z'))
+            const data = await claim('w1', new Date('2026-10-14T08:00:00Z'))
             await finish(data.claimed[0].run._id, 'w1', 'failed', new Date('2026-10-14T08:01:00Z'), { code: 'LLM_TIMEOUT', message: 'The model did not answer in time' })
 
             expect(runs().docs[0]).toMatchObject({ status: 'failed', error: { code: 'LLM_TIMEOUT' } })
             expect(automation()).toMatchObject({ lastRunStatus: 'failed' })
             expect(automation().lockedBy).toBeUndefined()
-            expect((await claim('w1', new Date('2026-10-14T08:02:00Z'))).data.claimed).toHaveLength(0)
-            expect((await claim('w1', new Date('2026-10-14T23:59:00Z'))).data.claimed).toHaveLength(0)
-            expect((await claim('w1', new Date('2026-10-15T08:00:00Z'))).data.claimed).toHaveLength(1)
+            expect((await claim('w1', new Date('2026-10-14T08:02:00Z'))).claimed).toHaveLength(0)
+            expect((await claim('w1', new Date('2026-10-14T23:59:00Z'))).claimed).toHaveLength(0)
+            expect((await claim('w1', new Date('2026-10-15T08:00:00Z'))).claimed).toHaveLength(1)
         })
 
         it('is not repeated when the worker dies, only marked as lost', async () => {
             await claim('w1', new Date('2026-10-14T08:00:00Z'))
             const later = new Date(new Date('2026-10-14T08:00:00Z').getTime() + 2 * LEASE)
 
-            const { data } = await claim('w2', later)
+            const data = await claim('w2', later)
 
             expect(data.claimed).toHaveLength(0)
 
             const lost = await sync(runs().docs[0]._id, later)
 
-            expect(lost.data).toMatchObject({ status: 'failed', error: { code: 'WORKER_LOST' } })
+            expect(lost).toMatchObject({ status: 'failed', error: { code: 'WORKER_LOST' } })
             expect(automation().lastRunStatus).toBe('failed')
             expect(automation().activeRunId).toBeUndefined()
         })
@@ -144,10 +142,10 @@ describe('running automations', () => {
 
     describe('a run that finishes well', () => {
         it('records the result and releases the automation', async () => {
-            const { data } = await claim('w1', new Date('2026-10-14T08:00:00Z'))
+            const data = await claim('w1', new Date('2026-10-14T08:00:00Z'))
             const finished = await finish(data.claimed[0].run._id, 'w1', 'completed', new Date('2026-10-14T08:03:00Z'))
 
-            expect(finished.data).toMatchObject({ status: 'completed' })
+            expect(finished).toMatchObject({ status: 'completed' })
             expect(at(runs().docs[0].finishedAt)).toBe('2026-10-14T08:03:00.000Z')
             expect(automation()).toMatchObject({ lastRunStatus: 'completed' })
             expect(at(automation().lastRunAt)).toBe('2026-10-14T08:03:00.000Z')
@@ -156,8 +154,8 @@ describe('running automations', () => {
         })
 
         it('does not turn on again an automation that the user turned off while it was running', async () => {
-            const { data } = await claim('w1', new Date('2026-10-14T08:00:00Z'))
-            await container.resolve(UpdateAutomationUseCase).execute({ id, payload: { triggers: { schedule: { enabled: false } } }, currentUser: user })
+            const data = await claim('w1', new Date('2026-10-14T08:00:00Z'))
+            await new UpdateAutomationUseCase().execute({ id, payload: { triggers: { schedule: { enabled: false } } }, currentUser: user })
             await finish(data.claimed[0].run._id, 'w1', 'completed', new Date('2026-10-14T08:03:00Z'))
 
             expect(schedule().enabled).toBe(false)
@@ -165,12 +163,12 @@ describe('running automations', () => {
         })
 
         it('does not fail when the lock was lost to another worker', async () => {
-            const { data } = await claim('w1', new Date('2026-10-14T08:00:00Z'))
+            const data = await claim('w1', new Date('2026-10-14T08:00:00Z'))
             automation().lockedBy = 'someone else'
 
             const finished = await finish(data.claimed[0].run._id, 'w1', 'completed', new Date('2026-10-14T08:03:00Z'))
 
-            expect(finished.data).toMatchObject({ status: 'completed' })
+            expect(finished).toMatchObject({ status: 'completed' })
             expect(automation().lockedBy).toBe('someone else')
         })
     })
@@ -182,18 +180,18 @@ describe('running automations', () => {
 
             expect(at(schedule().nextRunAt)).toBe('2026-10-14T10:00:00.000Z')
 
-            const { data } = await claim('w1', new Date('2026-10-14T10:00:00Z'))
+            const data = await claim('w1', new Date('2026-10-14T10:00:00Z'))
             expect(data.claimed).toHaveLength(1)
             expect(schedule().nextRunAt).toBeUndefined()
 
             await finish(data.claimed[0].run._id, 'w1', 'completed', new Date('2026-10-14T10:02:00Z'))
-            expect((await claim('w1', new Date('2026-10-20T10:00:00Z'))).data.claimed).toHaveLength(0)
+            expect((await claim('w1', new Date('2026-10-20T10:00:00Z'))).claimed).toHaveLength(0)
         })
     })
 
     describe('a run that waits for the user', () => {
         const pause = async () => {
-            const { data } = await claim('w1', new Date('2026-10-14T08:00:00Z'))
+            const data = await claim('w1', new Date('2026-10-14T08:00:00Z'))
             const run = data.claimed[0].run
             const chatId = await seedChat({ status: 'awaiting_user_confirmation' })
             Object.assign(runs().docs[0], { chatId })
@@ -215,14 +213,14 @@ describe('running automations', () => {
         it('is still paused while the chat waits', async () => {
             const { runId } = await pause()
 
-            expect((await sync(runId, new Date('2026-10-14T09:00:00Z'))).data?.status).toBe('paused')
+            expect((await sync(runId, new Date('2026-10-14T09:00:00Z')))?.status).toBe('paused')
         })
 
         it('becomes completed when the user answers and the chat finishes', async () => {
             const { runId, chatId } = await pause()
             fakeMongo.collection('chats').docs.find(doc => String(doc._id) === String(chatId))!.state = { status: 'idle' }
 
-            const { data } = await sync(runId, new Date('2026-10-14T09:00:00Z'))
+            const data = await sync(runId, new Date('2026-10-14T09:00:00Z'))
 
             expect(data).toMatchObject({ status: 'completed' })
             expect(at(runs().docs[0].finishedAt)).toBe('2026-10-14T09:00:00.000Z')
@@ -234,7 +232,7 @@ describe('running automations', () => {
             const { runId, chatId } = await pause()
             fakeMongo.collection('chats').docs.find(doc => String(doc._id) === String(chatId))!.state = { status: 'failed', lastError: { code: 'AGENT_RUN_FAILED', message: 'boom' } }
 
-            const { data } = await sync(runId, new Date('2026-10-14T09:00:00Z'))
+            const data = await sync(runId, new Date('2026-10-14T09:00:00Z'))
 
             expect(data).toMatchObject({ status: 'failed', error: { code: 'AGENT_RUN_FAILED', message: 'boom' } })
             expect(automation().lastRunStatus).toBe('failed')
@@ -243,7 +241,7 @@ describe('running automations', () => {
         it('makes the next occurrence skip, and records it', async () => {
             await pause()
 
-            const { data } = await claim('w1', new Date('2026-10-15T08:00:00Z'))
+            const data = await claim('w1', new Date('2026-10-15T08:00:00Z'))
 
             expect(data.claimed).toHaveLength(0)
             expect(data.skipped).toHaveLength(1)
@@ -259,7 +257,7 @@ describe('running automations', () => {
             const { chatId } = await pause()
             fakeMongo.collection('chats').docs.find(doc => String(doc._id) === String(chatId))!.state = { status: 'idle' }
 
-            const { data } = await claim('w1', new Date('2026-10-15T08:00:00Z'))
+            const data = await claim('w1', new Date('2026-10-15T08:00:00Z'))
 
             expect(data.claimed).toHaveLength(1)
             expect(data.skipped).toHaveLength(0)
@@ -268,12 +266,12 @@ describe('running automations', () => {
     })
 
     describe('running by hand', () => {
-        const start = (now: Date, worker = 'w1') => container.resolve(StartAutomationRunUseCase).execute({ automationId: id, workerId: worker, now, leaseMs: LEASE, currentUser: user })
+        const start = (now: Date, worker = 'w1') => new StartAutomationRunUseCase().execute({ automationId: id, workerId: worker, now, leaseMs: LEASE, currentUser: user })
 
         it('runs at once without moving the next run', async () => {
             const before = at(schedule().nextRunAt)
 
-            const { data } = await start(new Date('2026-10-14T07:10:00Z'))
+            const data = await start(new Date('2026-10-14T07:10:00Z'))
 
             expect(data.run).toMatchObject({ status: 'running', trigger: 'manual' })
             expect(at(schedule().nextRunAt)).toBe(before)
@@ -281,7 +279,7 @@ describe('running automations', () => {
         })
 
         it('is refused while the automation is running and allowed after', async () => {
-            const { data } = await start(new Date('2026-10-14T07:10:00Z'))
+            const data = await start(new Date('2026-10-14T07:10:00Z'))
 
             await expect(start(new Date('2026-10-14T07:11:00Z'), 'w2')).rejects.toThrow(/already running/)
             await finish(data.run._id, 'w1', 'completed', new Date('2026-10-14T07:12:00Z'))
@@ -289,29 +287,29 @@ describe('running automations', () => {
         })
 
         it('is not repeated by the schedule when it fails', async () => {
-            const { data } = await start(new Date('2026-10-14T07:10:00Z'))
+            const data = await start(new Date('2026-10-14T07:10:00Z'))
             await finish(data.run._id, 'w1', 'failed', new Date('2026-10-14T07:11:00Z'), { message: 'boom' })
 
-            expect((await claim('w1', new Date('2026-10-14T07:30:00Z'))).data.claimed).toHaveLength(0)
-            expect((await claim('w1', new Date('2026-10-14T08:00:00Z'))).data.claimed).toHaveLength(1)
+            expect((await claim('w1', new Date('2026-10-14T07:30:00Z'))).claimed).toHaveLength(0)
+            expect((await claim('w1', new Date('2026-10-14T08:00:00Z'))).claimed).toHaveLength(1)
         })
 
         it('fails for an automation that does not exist', async () => {
-            await expect(container.resolve(StartAutomationRunUseCase).execute({ automationId: new ObjectId().toHexString(), workerId: 'w1', currentUser: user })).rejects.toMatchObject({ statusCode: 404 })
+            await expect(new StartAutomationRunUseCase().execute({ automationId: new ObjectId().toHexString(), workerId: 'w1', currentUser: user })).rejects.toMatchObject({ statusCode: 404 })
         })
     })
 
     describe('syncing every open run', () => {
         it('settles the paused runs that finished and the runs that lost their worker', async () => {
-            const { data } = await claim('w1', new Date('2026-10-14T08:00:00Z'))
+            const data = await claim('w1', new Date('2026-10-14T08:00:00Z'))
             const chatId = await seedChat({ status: 'idle' })
             Object.assign(runs().docs[0], { chatId, status: 'paused' })
             Object.assign(automation(), { lockedBy: undefined, lockedUntil: undefined })
             const lost = await runs().insertOne({ automationId: new ObjectId(), ownerId: new ObjectId(OWNER), status: 'running', startedAt: new Date('2026-10-14T08:00:00Z'), __v: 1 })
 
-            const result = await container.resolve(SyncAutomationRunsUseCase).execute({ now: new Date('2026-10-14T09:00:00Z') })
+            const result = await new SyncAutomationRunsUseCase().execute({ now: new Date('2026-10-14T09:00:00Z') })
 
-            expect(result.data).toEqual({ checked: 2, settled: 2 })
+            expect(result).toEqual({ checked: 2, settled: 2 })
             expect(runs().docs.find(run => String(run._id) === String(data.claimed[0].run._id))!.status).toBe('completed')
             expect(runs().docs.find(run => String(run._id) === String(lost.insertedId))!.status).toBe('failed')
         })

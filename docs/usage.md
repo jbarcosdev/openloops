@@ -29,10 +29,10 @@ const chat = await getLLMUsageByChat({
 `messageId` is the `answerId` of the assistant message, and everything the agent spent to produce that answer is added together. Both functions only count the calls of `currentUser`, and both return the same shape:
 
 ```typescript
-result.data.summary
+result.summary
 // { calls, input, output, cacheRead, cacheWrite, reasoning, totalTokens, totalCost }
 
-result.data.models
+result.models
 // [{ provider, model, calls, input, output, cacheRead, cacheWrite, reasoning, totalTokens, totalCost }]
 ```
 
@@ -77,13 +77,13 @@ Days and periods are calculated in the time zone of the user (UTC when the user 
 ### The result
 
 ```typescript
-result.data.summary
+result.summary
 // { calls, totalTokens, totalCost }
 
-result.data.models
+result.models
 // [{ provider, model, calls, totalTokens, totalCost, tokensPercentage, costPercentage }]
 
-result.data.series
+result.series
 // [{ period, input, output, cacheRead, cacheWrite, reasoning, totalTokens, totalCost }]
 ```
 

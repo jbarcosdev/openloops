@@ -9,6 +9,7 @@ import { mcpServers } from './mcp-servers'
 import { automations } from './automations'
 import { automationRuns } from './automation-runs'
 import { revokedTokens } from './revoked-tokens'
+import { refreshTokens } from './refresh-tokens'
 
 export const indexes: Record<string, IndexDescription[]> = {
 	llm_calls: llmCalls,
@@ -21,6 +22,7 @@ export const indexes: Record<string, IndexDescription[]> = {
 	automations,
 	automation_runs: automationRuns,
 	revoked_tokens: revokedTokens,
+	refresh_tokens: refreshTokens,
 }
 
 export async function ensureIndexes (db: Db): Promise<Record<string, string[]>> {

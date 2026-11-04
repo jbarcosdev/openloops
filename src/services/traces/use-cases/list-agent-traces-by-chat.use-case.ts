@@ -1,6 +1,5 @@
-import { autoInjectable, inject } from 'tsyringe'
 import { QueryOptions, Scope } from '@common/repositories'
-import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { BaseUseCase, BaseUseCaseParams } from '@common/base/base.use-case'
 import { BaseEntity } from '@common/base/base.entity'
 import { AgentTraceRepository } from '../repositories'
 import { AgentTraceEntryProps } from '../entities'
@@ -14,14 +13,13 @@ export interface Params extends BaseUseCaseParams {
 	options?: QueryOptions
 }
 
-export interface Output extends BaseUseCaseOutput {
-	data: AgentTraceEntryProps[]
-	hasMore?: boolean
+export interface Output {
+	items: AgentTraceEntryProps[]
+	hasMore: boolean
 }
 
-@autoInjectable()
 export class ListAgentTracesByChatUseCase extends BaseUseCase<Params, Output> {
-	constructor (@inject(AgentTraceRepository) private readonly agentTraceRepository?: AgentTraceRepository) {
+	constructor (private readonly agentTraceRepository = new AgentTraceRepository()) {
 		super()
 	}
 
@@ -31,7 +29,7 @@ export class ListAgentTracesByChatUseCase extends BaseUseCase<Params, Output> {
 		if (!chatId) throw new Error('chatId is required')
 		if (!currentUser) this.throwError403()
 
-		const result = await this.agentTraceRepository?.findByProps(
+		const result = await this.agentTraceRepository.findByProps(
 			{
 				ownerId: BaseEntity.toObjectId(currentUser?.userId),
 				chatId: BaseEntity.toObjectId(chatId),
@@ -42,6 +40,6 @@ export class ListAgentTracesByChatUseCase extends BaseUseCase<Params, Output> {
 			params.scope ?? Scope.canView(currentUser),
 		)
 
-		return { data: result?.items ?? [], hasMore: result?.hasMore ?? false }
+		return { items: result?.items ?? [], hasMore: result?.hasMore ?? false }
 	}
 }

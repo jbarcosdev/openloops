@@ -2,6 +2,39 @@
 
 All notable changes to `openloops` are written here, newest first. The format follows [Keep a Changelog](https://keepachangelog.com) and the versions follow [semantic versioning](https://semver.org), where a minor version can still break the API while the package is in beta. Changes before 0.4.0 are not recorded here, see the commits and the tags.
 
+## 0.7.0
+
+This version breaks the API of the entities, of the repository, of the results of the use cases and of the authentication, and removes `tsyringe`. The tokens that 0.6 issued (logins and event automations) stop working: issue new ones. Read [authentication](docs/authentication.md). The parameters of the use cases do not change, except for `updateChat`, which accepts `unset`.
+
+### Added
+
+- **Sessions with refresh.** `refreshSession`, `logout` and `revokeUserSessions` in `openloops/authentication`, and the collection `refresh_tokens` (the index is created by `ensureIndexes`). The refresh token rotates in each use, a token that is used again after 10 seconds closes the whole session, and a session ends at 90 days at most (7 for an admin).
+- **Password reset.** `issuePasswordResetToken` and `resetPassword` in `openloops/authentication`, and `changePassword` in `openloops/users`, which closes the other sessions. The package does not send the email, and does not limit the attempts: your backend does both.
+- `verifySessionToken`, `signToken`, `verifyToken`, `TokenError` and the audiences, to read the tokens in your backend.
+- `MongoRepository.patchOne`, `archiveByPatch` and `claimOne`. `patchOne` takes `set` and `unset` (paths with dots), stamps who and when, drops the paths of control of a user scope, never writes `_id`, `__v`, `createdAt` nor `createdBy`, and accepts `expectedVersion` to detect conflicts. `claimOne` gives back the document as it was before the change.
+- `softDelete` accepts `unset`.
+- `toPatch` and `entityPatch` in `@common/base/utils`: the first turns an object into `set` and `unset` (a `null` or a blank text removes the field), the second adds the `clearedFields` of an entity.
+- `clearedFields` in `Chat`, `Automation` and `User`, for the fields that an entity removes from the stored document.
+- `updateChat` accepts `unset`, with the paths to remove.
+
+### Changed
+
+- **One convention for every token.** They are signed with `HS256`, carry `iss: openloops`, an `aud` (`session`, `password-reset` or `automation-event`) and `sub`, and are refused if any of them is wrong. The tokens of event automations follow it too.
+- **`login` gives `{ accessToken, refreshToken, expiresIn, refreshExpiresAt, user }`**, not `{ token, user }`. The access token lasts 1 hour for everyone. An unknown user and a wrong password fail with the same 401 (`{{invalid_credentials}}`), before it was 404 and 401.
+- `revokeToken` answers `true` the first time and `false` if the `jti` was already revoked, and not the record.
+- `updateUser` refuses a `password` (400): use `changePassword`.
+- **The use cases and the functions of the services return the result itself, no longer `{ data }`.** `const { data } = await getChatById(...)` becomes `const chat = await getChatById(...)`. The lists return `{ items, hasMore }` (`hasMore` is always there), the functions that delete return the record, or `{ deletedCount }` on a hard delete, and `execute` does not return an `HttpError` anymore: it throws. `BaseUseCaseOutput` is gone. `Agent.run` and the tools are not affected, they still use `{ data, error }` and `{ data }`.
+- A getter that finds nothing answers `null`, also `getChatById`, which answered `{}`.
+- `BaseEntity` is the one with `toJSON` only. Its static `toDate` and `toNumber` are public, an invalid id, date or number is a 400 `HttpError` and not a plain `Error`, and `toText` answers `undefined` for a blank text (it answered `''`).
+- The repositories save with `patchOne`, so a text that is blank inside a document is removed and not stored as `''`, and the inserts and the patches ignore the `undefined` values, also inside arrays.
+- The use cases take their repositories as default parameters of the constructor (`new XUseCase(repository)` still works).
+
+### Removed
+
+- `tsyringe`, `reflect-metadata`, the `MaskInLogs` decorator and `BaseUseCaseOutput`.
+- `toDocument`, `toFlatDocument`, `toUnset`, `unset`, `setId`, `setDefaults`, `stringify` and `clean` of `BaseEntity`, and the `Document` type.
+- `MongoRepository.updateOne`, replaced by `patchOne`.
+
 ## 0.6.0
 
 This version breaks the API of the use cases. The functions that read or write the records of a user need the `currentUser` or a `scope` (login, the tokens, the preview of runs, the events and the functions of the runner do not), creating a record takes its owner from the scope and not from the payload, and the ownership of the records is checked by the repository. Follow the [migration steps](docs/authorization.md#migrating-from-05) when you update.

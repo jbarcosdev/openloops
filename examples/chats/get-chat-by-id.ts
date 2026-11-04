@@ -11,7 +11,7 @@ async function getChat () {
         currentUser,
     })
 
-    logger.info(result.data?.messages, '[Demo] Messages')
+    logger.info(result?.messages, '[Demo] Messages')
 }
 
 async function getChatStatus () {
@@ -24,7 +24,7 @@ async function getChatStatus () {
         currentUser,
     })
 
-    logger.info(result.data?.state, '[Demo] Chat state')
+    logger.info(result?.state, '[Demo] Chat state')
 }
 
 getChat()

@@ -1,5 +1,4 @@
-import { autoInjectable, inject } from 'tsyringe'
-import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { BaseUseCase, BaseUseCaseParams } from '@common/base/base.use-case'
 import { Scope } from '@common/repositories'
 import { BaseEntity } from '@common/base/base.entity'
 import { WorkspaceItemRepository } from '../repositories'
@@ -10,13 +9,10 @@ export interface Params extends BaseUseCaseParams {
 	taskId?: string
 }
 
-export interface Output extends BaseUseCaseOutput {
-	data: { deletedCount: number }
-}
+export type Output = { deletedCount: number }
 
-@autoInjectable()
 export class DeleteWorkspaceItemUseCase extends BaseUseCase<Params, Output> {
-	constructor (@inject(WorkspaceItemRepository) private readonly workspaceItemRepository?: WorkspaceItemRepository) {
+	constructor (private readonly workspaceItemRepository = new WorkspaceItemRepository()) {
 		super()
 	}
 
@@ -28,7 +24,7 @@ export class DeleteWorkspaceItemUseCase extends BaseUseCase<Params, Output> {
 
 		const scope = params.scope ?? Scope.canManage(currentUser)
 
-		const existing = await this.workspaceItemRepository?.findByName(
+		const existing = await this.workspaceItemRepository.findByName(
 			{
 				ownerId: BaseEntity.toObjectId(currentUser?.userId),
 				chatId: BaseEntity.toObjectId(chatId)!,
@@ -39,10 +35,10 @@ export class DeleteWorkspaceItemUseCase extends BaseUseCase<Params, Output> {
 			{ _id: 1 },
 		)
 
-		if (!existing?._id) return { data: { deletedCount: 0 } }
+		if (!existing?._id) return { deletedCount: 0 }
 
-		const deletedCount = await this.workspaceItemRepository?.deleteById(existing._id.toString(), scope)
+		const deletedCount = await this.workspaceItemRepository.deleteById(existing._id.toString(), scope)
 
-		return { data: { deletedCount: deletedCount ?? 0 } }
+		return { deletedCount: deletedCount ?? 0 }
 	}
 }

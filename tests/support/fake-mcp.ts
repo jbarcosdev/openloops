@@ -98,12 +98,12 @@ class FakeMcpRegistry {
         return found
     }
 
-    async list (_params?: unknown): Promise<{ data: McpServerProps[] }> {
+    async list (_params?: unknown): Promise<{ items: McpServerProps[], hasMore: boolean }> {
         if (this.listFails) throw new Error('listing is down')
-        return { data: [...this.records.values()].map(clone) }
+        return { items: [...this.records.values()].map(clone), hasMore: false }
     }
 
-    async verify (params: { id: string }): Promise<{ data: McpServerProps }> {
+    async verify (params: { id: string }): Promise<McpServerProps> {
         const record = this.byId(params.id)
         this.verifies.push(record.name!)
 
@@ -117,10 +117,10 @@ class FakeMcpRegistry {
 
         this.store(record.name!, server)
 
-        return { data: clone(this.record(record.name!)) }
+        return clone(this.record(record.name!))
     }
 
-    async decide (params: { id: string; decision: 'approve' | 'block'; manifestHash?: string }): Promise<{ data: McpServerProps }> {
+    async decide (params: { id: string; decision: 'approve' | 'block'; manifestHash?: string }): Promise<McpServerProps> {
         const record = this.byId(params.id)
         this.decisions.push({ name: record.name!, decision: params.decision, manifestHash: params.manifestHash })
 
@@ -131,7 +131,7 @@ class FakeMcpRegistry {
 
         this.store(record.name!, server)
 
-        return { data: clone(this.record(record.name!)) }
+        return clone(this.record(record.name!))
     }
 }
 

@@ -14,7 +14,7 @@ async function listAutomations () {
         currentUser,
     })
 
-    logger.info(result.data.map(automation => ({
+    logger.info(result.items.map(automation => ({
         name: automation.name,
         scheduleEnabled: automation.triggers?.schedule?.enabled,
         eventEnabled: automation.triggers?.event?.enabled,

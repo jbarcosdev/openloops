@@ -17,7 +17,7 @@ async function getRangeStats () {
         currentUser,
     })
 
-    logger.info(result.data, '[Demo] Usage by month for one model')
+    logger.info(result, '[Demo] Usage by month for one model')
 }
 
 getRangeStats()

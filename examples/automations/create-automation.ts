@@ -22,7 +22,7 @@ async function createSchedule () {
         currentUser,
     })
 
-    logger.info({ id: result.data._id, nextRunAt: result.data.triggers?.schedule?.nextRunAt }, '[Demo] Created automation')
+    logger.info({ id: result._id, nextRunAt: result.triggers?.schedule?.nextRunAt }, '[Demo] Created automation')
 }
 
 createSchedule()

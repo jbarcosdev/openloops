@@ -1,5 +1,4 @@
-import { autoInjectable } from 'tsyringe'
-import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { BaseUseCase, BaseUseCaseParams } from '@common/base/base.use-case'
 import { validateRecurrence } from '../entities'
 import { assertTimezone, previewNextRuns } from '../utils/next-run'
 
@@ -12,11 +11,8 @@ export interface Params extends BaseUseCaseParams {
 	from?: string | Date
 }
 
-export interface Output extends BaseUseCaseOutput {
-	data: { runs: Date[] }
-}
+export type Output = { runs: Date[] }
 
-@autoInjectable()
 export class PreviewAutomationRunsUseCase extends BaseUseCase<Params, Output> {
 	async execute (params: Params): Promise<Output> {
 		const recurrence = validateRecurrence(params.recurrence)
@@ -25,6 +21,6 @@ export class PreviewAutomationRunsUseCase extends BaseUseCase<Params, Output> {
 
 		if (Number.isNaN(from.getTime())) throw new Error('The date to start from is not valid')
 
-		return { data: { runs: previewNextRuns(recurrence, timezone, params.count ?? DEFAULT_COUNT, from) } }
+		return { runs: previewNextRuns(recurrence, timezone, params.count ?? DEFAULT_COUNT, from) }
 	}
 }

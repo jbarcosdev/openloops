@@ -1,5 +1,4 @@
-import { autoInjectable, inject } from 'tsyringe'
-import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { BaseUseCase, BaseUseCaseParams } from '@common/base/base.use-case'
 import { Scope } from '@common/repositories'
 import { Chat, ChatProps } from '../entities'
 import { ChatRepository } from '../repositories'
@@ -8,13 +7,10 @@ export interface Params extends BaseUseCaseParams {
 	id?: string
 }
 
-export interface Output extends BaseUseCaseOutput {
-	data: ChatProps
-}
+export type Output = ChatProps
 
-@autoInjectable()
 export class InterruptExecutionUseCase extends BaseUseCase<Params, Output> {
-	constructor (@inject(ChatRepository) private readonly chatRepository?: ChatRepository) {
+	constructor (private readonly chatRepository = new ChatRepository()) {
 		super()
 	}
 
@@ -30,10 +26,10 @@ export class InterruptExecutionUseCase extends BaseUseCase<Params, Output> {
 		chat.state?.interruptExecution()
 
 		this.logger.debug(chat, '[AGENT] Interrupting execution...')
-		const result = await this.chatRepository?.update(chat, params.scope ?? Scope.canEdit(currentUser))
+		const result = await this.chatRepository.update(chat, params.scope ?? Scope.canEdit(currentUser))
 
-		if (!result) return this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' }) as any
+		if (!result) this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' })
 
-		return { data: result }
+		return result
 	}
 }

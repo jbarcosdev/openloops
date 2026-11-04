@@ -12,7 +12,7 @@ async function listRunsOfAnAutomation () {
         currentUser,
     })
 
-    logger.info(result.data.map(run => ({ status: run.status, startedAt: run.startedAt, chatId: run.chatId, error: run.error })), '[Demo] Runs of the automation')
+    logger.info(result.items.map(run => ({ status: run.status, startedAt: run.startedAt, chatId: run.chatId, error: run.error })), '[Demo] Runs of the automation')
 }
 
 async function listRunsThatNeedAttention () {
@@ -22,7 +22,7 @@ async function listRunsThatNeedAttention () {
     const paused = await listAutomationRunsByUser({ status: 'paused', currentUser })
     const failed = await listAutomationRunsByUser({ status: 'failed', currentUser })
 
-    logger.info({ paused: paused.data.length, failed: failed.data.length }, '[Demo] Runs that need attention')
+    logger.info({ paused: paused.items.length, failed: failed.items.length }, '[Demo] Runs that need attention')
 }
 
 listRunsOfAnAutomation()

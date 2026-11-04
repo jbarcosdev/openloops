@@ -10,6 +10,13 @@ function clone<T> (value: T): T {
     return value
 }
 
+function withoutUndefined<T> (value: T): T {
+    if (value instanceof ObjectId || value instanceof Date) return value
+    if (Array.isArray(value)) return value.map(item => withoutUndefined(item)) as T
+    if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).filter(([, item]) => item !== undefined).map(([key, item]) => [key, withoutUndefined(item)])) as T
+    return value
+}
+
 const comparable = (value: any): any => value instanceof Date ? value.getTime() : value instanceof ObjectId ? value.toHexString() : value
 
 function isOperators (value: any): boolean {
@@ -71,7 +78,7 @@ class FakeCollection {
     beforeUpdate?: () => void
 
     async insertOne (doc: Doc) {
-        const stored = clone({ _id: new ObjectId(), ...doc })
+        const stored = clone({ _id: new ObjectId(), ...withoutUndefined(doc) })
         this.docs.push(stored)
         return { insertedId: stored._id }
     }
@@ -120,17 +127,31 @@ class FakeCollection {
         return { deletedCount: 1 }
     }
 
-    async findOneAndUpdate (filter: Doc, update: { $set?: Doc, $unset?: Doc, $inc?: Record<string, number> }) {
+    async findOneAndUpdate (filter: Doc, update: { $set?: Doc, $unset?: Doc, $inc?: Record<string, number> }, options: { returnDocument?: 'before' | 'after' } = {}) {
         this.beforeUpdate?.()
 
         const doc = this.docs.find(candidate => matches(candidate, filter))
         if (!doc) return null
 
+        const before = clone(doc)
+
+        this.apply(doc, update)
+
+        return options.returnDocument === 'before' ? before : clone(doc)
+    }
+
+    async updateMany (filter: Doc, update: { $set?: Doc, $unset?: Doc, $inc?: Record<string, number> }) {
+        const found = this.docs.filter(candidate => matches(candidate, filter))
+
+        for (const doc of found) this.apply(doc, update)
+
+        return { modifiedCount: found.length }
+    }
+
+    private apply (doc: Doc, update: { $set?: Doc, $unset?: Doc, $inc?: Record<string, number> }) {
         for (const [path, value] of Object.entries(update.$set ?? {})) setPath(doc, path, clone(value))
         for (const path of Object.keys(update.$unset ?? {})) deletePath(doc, path)
         for (const [path, amount] of Object.entries(update.$inc ?? {})) doc[path] = (doc[path] ?? 0) + amount
-
-        return clone(doc)
     }
 }
 

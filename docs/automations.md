@@ -41,7 +41,7 @@ const result = await createAutomation({
     currentUser,
 })
 
-result.data.triggers.schedule.nextRunAt
+result.triggers.schedule.nextRunAt
 ```
 
 | Field | Required | What it is |
@@ -101,7 +101,7 @@ The recurrence of a `schedule` trigger is stored as a structured value, so a scr
 ### Previewing
 
 ```typescript
-const { data } = await previewAutomationRuns({
+const data = await previewAutomationRuns({
     recurrence: { type: 'weekly', days: [1, 5], time: '08:00' },
     timezone: 'America/New_York',
     count: 5,
@@ -145,7 +145,7 @@ await deleteAutomation({ id, currentUser })
 An automation with an event trigger runs when another system sends it an event, for example an alarm of AWS that reaches a Lambda, which calls your backend. The event becomes a run in a queue and the runner executes it as soon as it can.
 
 ```typescript
-const { data: automation } = await createAutomation({
+const automation = await createAutomation({
     payload: {
         name: 'Cost anomaly analysis',
         instructions: 'Find the cause of the cost alert in AWS and send a summary to the channel #costs',
@@ -154,7 +154,7 @@ const { data: automation } = await createAutomation({
     currentUser,
 })
 
-const { data } = await issueAutomationEventToken({ id: String(automation._id), expiresIn: '90d', currentUser })
+const data = await issueAutomationEventToken({ id: String(automation._id), expiresIn: '90d', currentUser })
 
 data.token
 data.expiresAt
@@ -167,7 +167,7 @@ import { AutomationEventError, receiveAutomationEvent } from 'openloops/automati
 
 app.post('/automations/events/:automationId', async (req, res) => {
     try {
-        const { data } = await receiveAutomationEvent({
+        const data = await receiveAutomationEvent({
             automationId: req.params.automationId,
             token: req.headers.authorization?.replace(/^Bearer /, ''),
             payload: req.body,
@@ -215,6 +215,7 @@ The token is a JWT signed with `JWT_SECRET`. It is not stored: the owner can ask
 
 | Claim | Value |
 | --- | --- |
+| `iss` | `openloops`, like every token of the package (see [authentication](authentication.md#the-tokens)). |
 | `aud` | `automation-event`. A session token of a user is refused, and this one does not log anybody in. |
 | `sub` | The id of the automation. It must be the one of the URL. |
 | `v` | The `eventTokenVersion` of the automation when the token was issued. |

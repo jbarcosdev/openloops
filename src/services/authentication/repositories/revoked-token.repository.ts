@@ -1,9 +1,7 @@
-import { autoInjectable } from 'tsyringe'
 import { MongoRepository, Scope } from '@common/repositories'
 import { getDatabaseName } from '@common/utils/database-name'
 import { RevokedToken, RevokedTokenProps } from '../entities'
 
-@autoInjectable()
 export class RevokedTokenRepository {
 	public readonly _ = new MongoRepository<RevokedTokenProps>({
 		database: getDatabaseName(),
@@ -12,7 +10,7 @@ export class RevokedTokenRepository {
 	})
 
 	public async create (token: RevokedToken, scope: Scope): Promise<RevokedToken> {
-		const { _id, ownerId, createdAt, createdBy } = await this._.createOne({ payload: token.toDocument(), scope })
+		const { _id, ownerId, createdAt, createdBy } = await this._.createOne({ payload: token.toJSON(), scope })
 		Object.assign(token, { _id, ownerId, createdAt, createdBy })
 		return token
 	}

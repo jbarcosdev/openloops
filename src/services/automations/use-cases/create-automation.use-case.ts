@@ -1,5 +1,4 @@
-import { autoInjectable, inject } from 'tsyringe'
-import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { BaseUseCase, BaseUseCaseParams } from '@common/base/base.use-case'
 import { Scope } from '@common/repositories'
 import { Automation, AutomationPayload, AutomationProps } from '../entities'
 import { AutomationRepository } from '../repositories'
@@ -9,13 +8,10 @@ export interface Params extends BaseUseCaseParams {
 	payload?: AutomationPayload
 }
 
-export interface Output extends BaseUseCaseOutput {
-	data: AutomationProps
-}
+export type Output = AutomationProps
 
-@autoInjectable()
 export class CreateAutomationUseCase extends BaseUseCase<Params, Output> {
-	constructor (@inject(AutomationRepository) private readonly automationRepository?: AutomationRepository) {
+	constructor (private readonly automationRepository = new AutomationRepository()) {
 		super()
 	}
 
@@ -41,8 +37,8 @@ export class CreateAutomationUseCase extends BaseUseCase<Params, Output> {
 		const schedule = automation.triggers?.schedule
 		if (schedule?.enabled && !schedule.nextRunAt) throw new Error('The date of the recurrence has already passed')
 
-		await this.automationRepository?.create(automation, params.scope ?? Scope.canEdit(currentUser))
+		await this.automationRepository.create(automation, params.scope ?? Scope.canEdit(currentUser))
 
-		return { data: automation.toJSON() }
+		return automation.toJSON()
 	}
 }

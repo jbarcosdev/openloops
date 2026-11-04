@@ -1,10 +1,9 @@
-import { autoInjectable } from 'tsyringe'
 import { ObjectId } from 'mongodb'
+import { entityPatch } from '@common/base/utils'
 import { MongoRepository, QueryOptions, Scope } from '@common/repositories'
 import { getDatabaseName } from '@common/utils/database-name'
 import { McpServer, McpServerProps } from '../entities'
 
-@autoInjectable()
 export class McpServerRepository {
 	public readonly _ = new MongoRepository<McpServerProps>({
 		database: getDatabaseName(),
@@ -13,19 +12,14 @@ export class McpServerRepository {
 	})
 
 	public async create (mcpServer: McpServer, scope: Scope): Promise<McpServer> {
-		const { _id, ownerId, createdAt, createdBy } = await this._.createOne({ payload: mcpServer.toDocument(), scope })
+		const { _id, ownerId, createdAt, createdBy } = await this._.createOne({ payload: mcpServer.toJSON(), scope })
 		Object.assign(mcpServer, { _id, ownerId, createdAt, createdBy })
 		return mcpServer
 	}
 
 	public async update (mcpServer: McpServer, scope: Scope, options?: { expectedVersion?: number }): Promise<McpServerProps | null> {
 		if (options && typeof options.expectedVersion !== 'number') throw new Error('[McpServerRepository] The expected version is required to check for conflicts')
-		return await this._.updateOne({
-			scope,
-			where: { _id: mcpServer._id },
-			payload: mcpServer.toFlatDocument(),
-			expectedVersion: options?.expectedVersion,
-		})
+		return await this._.patchOne({ scope, where: { _id: mcpServer._id }, ...entityPatch(mcpServer), expectedVersion: options?.expectedVersion })
 	}
 
 	public async findById (id: string, scope: Scope): Promise<McpServerProps | null> {

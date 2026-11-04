@@ -15,11 +15,11 @@ export abstract class BaseApp {
         throw error
     }
 
-    public throwHttpError (error: HttpErrorProps) {
+    public throwHttpError (error: HttpErrorProps): never {
         throw new HttpError(error)
     }
 
-    public throwError401 (currentSession?: CurrentSessionProps) {
+    public throwError401 (currentSession?: CurrentSessionProps): never {
 		this.throwHttpError({
 			statusCode: 401,
 			errorMessage: '{{invalid_token}}: {{not_authenticated_error_details}}',
@@ -27,7 +27,7 @@ export abstract class BaseApp {
 		})
 	}
 
-    public throwError403 (currentSession?: CurrentSessionProps) {
+    public throwError403 (currentSession?: CurrentSessionProps): never {
         this.throwHttpError({
             statusCode: 403,
             errorMessage: '{{forbidden_error}}: {{forbidden_error_details}}',

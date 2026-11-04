@@ -17,7 +17,6 @@ import { FinishAutomationRunUseCase } from '../use-cases/finish-automation-run.u
 import { AttachAutomationRunChatUseCase } from '../use-cases/attach-automation-run-chat.use-case'
 import { RenewAutomationLeaseUseCase } from '../use-cases/renew-automation-lease.use-case'
 import { SyncAutomationRunsUseCase } from '../use-cases/sync-automation-runs.use-case'
-import { container } from 'tsyringe'
 import { Scope } from '@common/repositories'
 
 const DEFAULT_MAX_CONCURRENT_RUNS = 3
@@ -93,14 +92,14 @@ export class AutomationRunner {
 		const capacity = (this.options.maxConcurrentRuns ?? DEFAULT_MAX_CONCURRENT_RUNS) - this.inFlight.size
 
 		try {
-			await container.resolve(SyncAutomationRunsUseCase).execute({})
+			await new SyncAutomationRunsUseCase().execute({})
 		} catch (error: any) {
 			this.logger.error({ error: error?.message ?? error }, '[AUTOMATIONS] Failed to sync the open runs')
 		}
 
 		if (capacity <= 0) return
 
-		const { data } = await container.resolve(ClaimDueAutomationsUseCase).execute({ workerId: this.workerId, limit: capacity, leaseMs: this.options.leaseMs ?? defaultLeaseMs() })
+		const data = await new ClaimDueAutomationsUseCase().execute({ workerId: this.workerId, limit: capacity, leaseMs: this.options.leaseMs ?? defaultLeaseMs() })
 
 		for (const { automation, run } of data.skipped) await this.notify({ automation, run })
 
@@ -109,7 +108,7 @@ export class AutomationRunner {
 		const remaining = capacity - data.claimed.length
 		if (remaining <= 0) return
 
-		const { data: queued } = await container.resolve(ClaimQueuedAutomationRunsUseCase).execute({ workerId: this.workerId, limit: remaining, leaseMs: this.options.leaseMs ?? defaultLeaseMs() })
+		const queued = await new ClaimQueuedAutomationRunsUseCase().execute({ workerId: this.workerId, limit: remaining, leaseMs: this.options.leaseMs ?? defaultLeaseMs() })
 
 		for (const { automation, run } of queued.skipped) await this.notify({ automation, run })
 
@@ -117,7 +116,7 @@ export class AutomationRunner {
 	}
 
 	async runNow (params: { automationId: string, currentUser?: CurrentUser, scope?: Scope }): Promise<{ run: AutomationRunProps }> {
-		const { data } = await container.resolve(StartAutomationRunUseCase).execute({ automationId: params.automationId, currentUser: params.currentUser, scope: params.scope, workerId: this.workerId, leaseMs: this.options.leaseMs ?? defaultLeaseMs() })
+		const data = await new StartAutomationRunUseCase().execute({ automationId: params.automationId, currentUser: params.currentUser, scope: params.scope, workerId: this.workerId, leaseMs: this.options.leaseMs ?? defaultLeaseMs() })
 
 		this.track(this.execute(data.automation, data.run))
 
@@ -154,7 +153,7 @@ export class AutomationRunner {
 		const runId = String(run._id)
 
 		const heartbeat = setInterval(() => {
-			container.resolve(RenewAutomationLeaseUseCase).execute({ automationId, workerId: this.workerId, leaseMs }).catch(error => {
+			new RenewAutomationLeaseUseCase().execute({ automationId, workerId: this.workerId, leaseMs }).catch(error => {
 				this.logger.error({ error: error?.message ?? error, automationId }, '[AUTOMATIONS] Failed to renew the lease of an automation')
 			})
 		}, Math.max(Math.floor(leaseMs / 3), 1000))
@@ -176,7 +175,7 @@ export class AutomationRunner {
 			clearInterval(heartbeat)
 		}
 
-		const { data } = await container.resolve(FinishAutomationRunUseCase).execute({ runId, workerId: this.workerId, status, error })
+		const data = await new FinishAutomationRunUseCase().execute({ runId, workerId: this.workerId, status, error })
 
 		await this.notify({ automation, run: data ?? run, chat })
 	}
@@ -196,10 +195,10 @@ export class AutomationRunner {
 		if (model.modelProvider) draft.settings?.setModelProvider(model.modelProvider)
 		if (model.modelName) draft.settings?.setModelName(model.modelName)
 
-		const { data: created } = await createChat({ payload: draft.toJSON(), currentUser })
+		const created = await createChat({ payload: draft.toJSON(), currentUser })
 		const chatId = String(created?._id)
 
-		await container.resolve(AttachAutomationRunChatUseCase).execute({ runId: String(run._id), chatId })
+		await new AttachAutomationRunChatUseCase().execute({ runId: String(run._id), chatId })
 
 		const result = await agent.run({
 			input: { message: buildMessage(automation.instructions as string, run.payload), chatId },

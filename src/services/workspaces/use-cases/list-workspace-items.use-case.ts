@@ -1,6 +1,5 @@
-import { autoInjectable, inject } from 'tsyringe'
 import { QueryOptions, Scope } from '@common/repositories'
-import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { BaseUseCase, BaseUseCaseParams } from '@common/base/base.use-case'
 import { BaseEntity } from '@common/base/base.entity'
 import { WorkspaceItemRepository } from '../repositories'
 import { WorkspaceItemProps, WorkspaceItemKind } from '../entities'
@@ -14,14 +13,13 @@ export interface Params extends BaseUseCaseParams {
 	options?: QueryOptions
 }
 
-export interface Output extends BaseUseCaseOutput {
-	data: WorkspaceItemProps[]
-	hasMore?: boolean
+export interface Output {
+	items: WorkspaceItemProps[]
+	hasMore: boolean
 }
 
-@autoInjectable()
 export class ListWorkspaceItemsUseCase extends BaseUseCase<Params, Output> {
-	constructor (@inject(WorkspaceItemRepository) private readonly workspaceItemRepository?: WorkspaceItemRepository) {
+	constructor (private readonly workspaceItemRepository = new WorkspaceItemRepository()) {
 		super()
 	}
 
@@ -38,13 +36,13 @@ export class ListWorkspaceItemsUseCase extends BaseUseCase<Params, Output> {
 			...(kind ? { kind } : {}),
 		}
 
-		const result = await this.workspaceItemRepository?.findManyPaginated(
+		const result = await this.workspaceItemRepository.findManyPaginated(
 			where,
 			params.scope ?? Scope.canView(currentUser),
 			{ content: 0 },
 			{ limit: DEFAULT_LIMIT, sortBy: { _id: -1 }, ...options },
 		)
 
-		return { data: result?.items ?? [], hasMore: result?.hasMore ?? false }
+		return { items: result?.items ?? [], hasMore: result?.hasMore ?? false }
 	}
 }

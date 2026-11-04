@@ -1,5 +1,4 @@
-import { autoInjectable, inject } from 'tsyringe'
-import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { BaseUseCase, BaseUseCaseParams } from '@common/base/base.use-case'
 import { Scope } from '@common/repositories'
 import { VersionConflictError } from '@common/repositories/mongo-db.repository'
 import { McpServer, McpServerProps, McpManifest } from '../entities'
@@ -11,13 +10,10 @@ export interface Params extends BaseUseCaseParams {
 	id: string
 }
 
-export interface Output extends BaseUseCaseOutput {
-	data: McpServerProps
-}
+export type Output = McpServerProps
 
-@autoInjectable()
 export class VerifyMcpServerConnectionUseCase extends BaseUseCase<Params, Output> {
-	constructor (@inject(McpServerRepository) private readonly mcpServerRepository?: McpServerRepository) {
+	constructor (private readonly mcpServerRepository = new McpServerRepository()) {
 		super()
 	}
 
@@ -25,9 +21,9 @@ export class VerifyMcpServerConnectionUseCase extends BaseUseCase<Params, Output
 		const { id, currentUser } = params
 		const scope = params.scope ?? Scope.canEdit(currentUser)
 
-		const found = await this.mcpServerRepository?.findById(id, scope)
+		const found = await this.mcpServerRepository.findById(id, scope)
 
-		if (!found) return this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' }) as any
+		if (!found) this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' })
 
 		const probed = McpServer.fromJSON(found)
 		let manifest: McpManifest | undefined
@@ -40,18 +36,18 @@ export class VerifyMcpServerConnectionUseCase extends BaseUseCase<Params, Output
 		}
 
 		for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-			const current = attempt === 1 ? probed : McpServer.fromJSON((await this.mcpServerRepository?.findById(id, scope)) ?? found)
+			const current = attempt === 1 ? probed : McpServer.fromJSON((await this.mcpServerRepository.findById(id, scope)) ?? found)
 
 			if (current.url !== probed.url || JSON.stringify(current.headers) !== JSON.stringify(probed.headers)) {
-				return { data: current.toJSON() }
+				return current.toJSON()
 			}
 
 			if (manifest) current.addManifest(manifest)
 			else current.markError(failure)
 
 			try {
-				const saved = await this.mcpServerRepository?.update(current, scope, { expectedVersion: current.__v })
-				return { data: saved ?? current.toJSON() }
+				const saved = await this.mcpServerRepository.update(current, scope, { expectedVersion: current.__v })
+				return saved ?? current.toJSON()
 			} catch (error) {
 				if (!(error instanceof VersionConflictError) || attempt === MAX_ATTEMPTS) throw error
 			}

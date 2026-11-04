@@ -1,7 +1,6 @@
-import { autoInjectable, inject } from 'tsyringe'
 import { ObjectId } from 'mongodb'
 import { QueryOptions } from '@common/repositories'
-import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { BaseUseCase, BaseUseCaseParams } from '@common/base/base.use-case'
 import { McpServerRepository } from '../repositories'
 import { McpServerProps } from '../entities'
 
@@ -10,14 +9,13 @@ export interface Params extends BaseUseCaseParams {
 	options?: QueryOptions
 }
 
-export interface Output extends BaseUseCaseOutput {
-	data: McpServerProps[] | null | undefined
-	hasMore?: boolean
+export interface Output {
+	items: McpServerProps[]
+	hasMore: boolean
 }
 
-@autoInjectable()
 export class ListMcpServersByUserUseCase extends BaseUseCase<Params, Output> {
-	constructor (@inject(McpServerRepository) private readonly mcpServerRepository?: McpServerRepository) {
+	constructor (private readonly mcpServerRepository = new McpServerRepository()) {
 		super()
 	}
 
@@ -25,13 +23,13 @@ export class ListMcpServersByUserUseCase extends BaseUseCase<Params, Output> {
 		const { options, currentUser } = params
 		const { page = 1, limit: pageSize = 10 } = options || {}
 
-		const result = await this.mcpServerRepository?._.findManyPaginated({
+		const result = await this.mcpServerRepository._.findManyPaginated({
 			where: { 
 				ownerId: new ObjectId(currentUser?.userId),
 			},
 			options: { page, limit: pageSize, sortBy: { updatedAt: -1 } },
 		})
 
-		return { data: result?.items, hasMore: result?.hasMore }
+		return { items: result?.items ?? [], hasMore: result?.hasMore ?? false }
 	}
 }

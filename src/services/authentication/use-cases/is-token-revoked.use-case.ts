@@ -1,5 +1,4 @@
-import { autoInjectable, inject } from 'tsyringe'
-import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { BaseUseCase, BaseUseCaseParams } from '@common/base/base.use-case'
 import { RevokedTokenRepository } from '../repositories'
 import { Scope } from '@common/repositories'
 
@@ -7,13 +6,10 @@ export interface Params extends BaseUseCaseParams {
 	jti: string
 }
 
-export interface Output extends BaseUseCaseOutput {
-	data: { revoked: boolean }
-}
+export type Output = { revoked: boolean }
 
-@autoInjectable()
 export class IsTokenRevokedUseCase extends BaseUseCase<Params, Output> {
-	constructor (@inject(RevokedTokenRepository) private readonly revokedTokenRepository?: RevokedTokenRepository) {
+	constructor (private readonly revokedTokenRepository = new RevokedTokenRepository()) {
 		super()
 	}
 
@@ -22,6 +18,6 @@ export class IsTokenRevokedUseCase extends BaseUseCase<Params, Output> {
 
 		const found = await this.revokedTokenRepository!.findByJti(params.jti, params.scope ?? Scope.system('revoked tokens are checked by jti, not by owner'))
 
-		return { data: { revoked: Boolean(found) } }
+		return { revoked: Boolean(found) }
 	}
 }

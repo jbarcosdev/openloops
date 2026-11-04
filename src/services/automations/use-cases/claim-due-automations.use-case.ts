@@ -1,6 +1,5 @@
-import { autoInjectable, inject } from 'tsyringe'
 import { Logger } from '@common/logger'
-import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { BaseUseCase, BaseUseCaseParams } from '@common/base/base.use-case'
 import { AutomationProps, AutomationRunProps } from '../entities'
 import { AutomationRepository, AutomationRunRepository } from '../repositories'
 import { computeNextRun } from '../utils/next-run'
@@ -24,18 +23,15 @@ export interface ClaimedRun {
 	run: AutomationRunProps
 }
 
-export interface Output extends BaseUseCaseOutput {
-	data: { claimed: ClaimedRun[], skipped: ClaimedRun[] }
-}
+export type Output = { claimed: ClaimedRun[], skipped: ClaimedRun[] }
 
-@autoInjectable()
 export class ClaimDueAutomationsUseCase extends BaseUseCase<Params, Output> {
 	private readonly log = new Logger()
 
 	constructor (
-		@inject(AutomationRepository) private readonly automationRepository?: AutomationRepository,
-		@inject(AutomationRunRepository) private readonly automationRunRepository?: AutomationRunRepository,
-		@inject(SyncAutomationRunUseCase) private readonly syncRun?: SyncAutomationRunUseCase,
+		private readonly automationRepository = new AutomationRepository(),
+		private readonly automationRunRepository = new AutomationRunRepository(),
+		private readonly syncRun = new SyncAutomationRunUseCase(),
 	) {
 		super()
 	}
@@ -84,6 +80,6 @@ export class ClaimDueAutomationsUseCase extends BaseUseCase<Params, Output> {
 			claimed.push({ automation, run: run.toJSON() })
 		}
 
-		return { data: { claimed, skipped } }
+		return { claimed, skipped }
 	}
 }

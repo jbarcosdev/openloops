@@ -1,5 +1,3 @@
-import 'reflect-metadata'
-import { container } from 'tsyringe'
 import { ObjectId } from 'mongodb'
 import jwt from 'jsonwebtoken'
 import { CreateAutomationUseCase } from '@services/automations/use-cases/create-automation.use-case'
@@ -32,7 +30,7 @@ const automations = () => fakeMongo.collection('automations')
 const revoked = () => fakeMongo.collection('revoked_tokens')
 
 const createEvent = async (extra: Record<string, any> = {}) => {
-    const { data } = await container.resolve(CreateAutomationUseCase).execute({
+    const data = await new CreateAutomationUseCase().execute({
         payload: { name: 'Cost alerts', instructions: 'Analyze the cost alert', triggers: { event: {} }, ...extra } as any,
         currentUser: user,
     })
@@ -41,10 +39,10 @@ const createEvent = async (extra: Record<string, any> = {}) => {
 }
 
 const issue = async (id: string, expiresIn?: string, currentUser = user) =>
-    (await container.resolve(IssueAutomationEventTokenUseCase).execute({ id, expiresIn, currentUser })).data
+    (await new IssueAutomationEventTokenUseCase().execute({ id, expiresIn, currentUser }))
 
 const receive = (automationId: string, token: string, extra: Record<string, any> = {}) =>
-    container.resolve(ReceiveAutomationEventUseCase).execute({ automationId, token, ...extra })
+    new ReceiveAutomationEventUseCase().execute({ automationId, token, ...extra })
 
 const rejection = async (promise: Promise<unknown>): Promise<string | undefined> => {
     try {
@@ -74,20 +72,20 @@ describe('automations with an event trigger', () => {
 
         it('can be turned off and on without a next run', async () => {
             const id = await createEvent()
-            const update = container.resolve(UpdateAutomationUseCase)
+            const update = new UpdateAutomationUseCase()
 
             const off = await update.execute({ id, payload: { triggers: { event: { enabled: false } } }, currentUser: user })
             const on = await update.execute({ id, payload: { triggers: { event: { enabled: true } } }, currentUser: user })
 
-            expect(off.data.triggers?.event?.enabled).toBe(false)
-            expect(on.data.triggers).toEqual({ event: { enabled: true } })
-            expect(on.data.eventTokenVersion).toBe(1)
+            expect(off.triggers?.event?.enabled).toBe(false)
+            expect(on.triggers).toEqual({ event: { enabled: true } })
+            expect(on.eventTokenVersion).toBe(1)
         })
     })
 
     describe('next to a schedule', () => {
         const both = { triggers: { schedule: { recurrence: { type: 'daily', time: '08:00' }, timezone: 'UTC' }, event: {} } }
-        const update = (id: string, payload: Record<string, any>) => container.resolve(UpdateAutomationUseCase).execute({ id, payload, currentUser: user })
+        const update = (id: string, payload: Record<string, any>) => new UpdateAutomationUseCase().execute({ id, payload, currentUser: user })
 
         it('keeps receiving events when the schedule is turned off', async () => {
             const id = await createEvent(both)
@@ -95,7 +93,7 @@ describe('automations with an event trigger', () => {
 
             await update(id, { triggers: { schedule: { enabled: false } } })
 
-            expect((await receive(id, token)).data.status).toBe('queued')
+            expect((await receive(id, token)).status).toBe('queued')
         })
 
         it('stops receiving events when only the event is turned off, and the schedule stays', async () => {
@@ -116,7 +114,7 @@ describe('automations with an event trigger', () => {
             await update(id, { triggers: { event: { enabled: false } } })
             await update(id, { triggers: { event: { enabled: true } } })
 
-            expect((await receive(id, token)).data.status).toBe('queued')
+            expect((await receive(id, token)).status).toBe('queued')
         })
 
         it('rejects the old tokens when the event is removed', async () => {
@@ -132,7 +130,7 @@ describe('automations with an event trigger', () => {
         it('keeps rejecting the old tokens when the event is added again', async () => {
             const id = await createEvent(both)
             const old = await issue(id)
-            await container.resolve(RotateAutomationEventTokensUseCase).execute({ id, currentUser: user })
+            await new RotateAutomationEventTokensUseCase().execute({ id, currentUser: user })
             const rotated = await issue(id)
 
             await update(id, { triggers: { event: null } })
@@ -142,14 +140,14 @@ describe('automations with an event trigger', () => {
             expect(automations().docs[0].eventTokenVersion).toBe(3)
             expect(await rejection(receive(id, old.token))).toBe('invalid')
             expect(await rejection(receive(id, rotated.token))).toBe('invalid')
-            expect((await receive(id, fresh.token)).data.status).toBe('queued')
+            expect((await receive(id, fresh.token)).status).toBe('queued')
         })
 
         it('rotates the tokens without touching the schedule', async () => {
             const id = await createEvent(both)
             const before = automations().docs[0].triggers.schedule
 
-            const { data } = await container.resolve(RotateAutomationEventTokensUseCase).execute({ id, currentUser: user })
+            const data = await new RotateAutomationEventTokensUseCase().execute({ id, currentUser: user })
 
             expect(data.eventTokenVersion).toBe(2)
             expect(automations().docs[0].triggers.schedule).toEqual(before)
@@ -174,8 +172,8 @@ describe('automations with an event trigger', () => {
             const second = await issue(id)
 
             expect(first.token).not.toBe(second.token)
-            expect((await receive(id, first.token)).data.status).toBe('queued')
-            expect((await receive(id, second.token)).data.status).toBe('queued')
+            expect((await receive(id, first.token)).status).toBe('queued')
+            expect((await receive(id, second.token)).status).toBe('queued')
         })
 
         it('expires when it was asked to', async () => {
@@ -199,9 +197,9 @@ describe('automations with an event trigger', () => {
 
             await expect(issue(id, undefined, stranger)).rejects.toMatchObject({ statusCode: 404 })
             await expect(issue(id, undefined, admin)).rejects.toMatchObject({ statusCode: 404 })
-            await expect(container.resolve(IssueAutomationEventTokenUseCase).execute({ id, currentUser: admin, scope: Scope.asAdmin(admin) })).resolves.toMatchObject({ data: { token: expect.any(String) } })
+            await expect(new IssueAutomationEventTokenUseCase().execute({ id, currentUser: admin, scope: Scope.asAdmin(admin) })).resolves.toMatchObject({ token: expect.any(String) })
 
-            const { data } = await container.resolve(CreateAutomationUseCase).execute({
+            const data = await new CreateAutomationUseCase().execute({
                 payload: { name: 'Daily', instructions: 'Do it', triggers: { schedule: { recurrence: { type: 'daily', time: '08:00' }, timezone: 'UTC' } } } as any,
                 currentUser: user,
             })
@@ -215,7 +213,7 @@ describe('automations with an event trigger', () => {
             const id = await createEvent()
             const { token } = await issue(id)
 
-            const { data } = await receive(id, token, { payload: { alarm: 'cost', amount: 1200 } })
+            const data = await receive(id, token, { payload: { alarm: 'cost', amount: 1200 } })
 
             expect(data.status).toBe('queued')
             expect(runs().docs).toHaveLength(1)
@@ -242,10 +240,10 @@ describe('automations with an event trigger', () => {
             const again = await receive(id, token, { idempotencyKey: 'alarm-1' })
             const other = await receive(id, token, { idempotencyKey: 'alarm-2' })
 
-            expect(first.data.status).toBe('queued')
-            expect(again.data.status).toBe('duplicate')
-            expect(String(again.data.run._id)).toBe(String(first.data.run._id))
-            expect(other.data.status).toBe('queued')
+            expect(first.status).toBe('queued')
+            expect(again.status).toBe('duplicate')
+            expect(String(again.run._id)).toBe(String(first.run._id))
+            expect(other.status).toBe('queued')
             expect(runs().docs).toHaveLength(2)
         })
 
@@ -264,7 +262,7 @@ describe('automations with an event trigger', () => {
             const { token } = await issue(id)
 
             for (let i = 0; i < 3; i++) await receive(id, token, { payload: `alert ${i}` })
-            const { data } = await receive(id, token, { payload: 'alert 3', idempotencyKey: 'late' })
+            const data = await receive(id, token, { payload: 'alert 3', idempotencyKey: 'late' })
 
             expect(data.status).toBe('skipped')
             expect(runs().docs[3]).toMatchObject({ status: 'skipped', skipReason: 'The queue of this automation is full', payload: 'alert 3' })
@@ -321,11 +319,11 @@ describe('automations with an event trigger', () => {
             const id = await createEvent()
             const { token } = await issue(id)
 
-            await container.resolve(UpdateAutomationUseCase).execute({ id, payload: { triggers: { event: { enabled: false } } }, currentUser: user })
+            await new UpdateAutomationUseCase().execute({ id, payload: { triggers: { event: { enabled: false } } }, currentUser: user })
             expect(await rejection(receive(id, token))).toBe('disabled')
 
             const missing = new ObjectId().toHexString()
-            const orphan = jwt.sign({ v: 1 }, 'test-secret', { audience: 'automation-event', subject: missing, jwtid: 'z' })
+            const orphan = jwt.sign({ v: 1 }, 'test-secret', { issuer: 'openloops', audience: 'automation-event', subject: missing, jwtid: 'z' })
             expect(await rejection(receive(missing, orphan))).toBe('not_found')
         })
     })
@@ -336,17 +334,17 @@ describe('automations with an event trigger', () => {
             const leaked = await issue(id)
             const healthy = await issue(id)
 
-            await container.resolve(RevokeAutomationEventTokenUseCase).execute({ id, token: leaked.token, currentUser: user })
+            await new RevokeAutomationEventTokenUseCase().execute({ id, token: leaked.token, currentUser: user })
 
             expect(await rejection(receive(id, leaked.token))).toBe('revoked')
-            expect((await receive(id, healthy.token)).data.status).toBe('queued')
+            expect((await receive(id, healthy.token)).status).toBe('queued')
             expect(revoked().docs[0]).toMatchObject({ audience: 'automation-event', subject: id })
         })
 
         it('is not repeated when the same token is revoked twice', async () => {
             const id = await createEvent()
             const { token } = await issue(id)
-            const revoke = container.resolve(RevokeAutomationEventTokenUseCase)
+            const revoke = new RevokeAutomationEventTokenUseCase()
 
             await revoke.execute({ id, token, currentUser: user })
             await revoke.execute({ id, token, currentUser: user })
@@ -358,7 +356,7 @@ describe('automations with an event trigger', () => {
             const id = await createEvent()
             const { token, expiresAt } = await issue(id, '1d')
 
-            await container.resolve(RevokeAutomationEventTokenUseCase).execute({ id, token, currentUser: user })
+            await new RevokeAutomationEventTokenUseCase().execute({ id, token, currentUser: user })
 
             expect(new Date(revoked().docs[0].expiresAt).toISOString()).toBe(expiresAt?.toISOString())
         })
@@ -367,7 +365,7 @@ describe('automations with an event trigger', () => {
             const id = await createEvent()
             const other = await createEvent({ name: 'Other' })
             const { token } = await issue(other)
-            const revoke = container.resolve(RevokeAutomationEventTokenUseCase)
+            const revoke = new RevokeAutomationEventTokenUseCase()
 
             await expect(revoke.execute({ id, token, currentUser: user })).rejects.toThrow(/does not belong/)
             await expect(revoke.execute({ id: other, token, currentUser: stranger })).rejects.toMatchObject({ statusCode: 404 })
@@ -380,24 +378,24 @@ describe('automations with an event trigger', () => {
             const id = await createEvent()
             const before = await issue(id)
 
-            const { data } = await container.resolve(RotateAutomationEventTokensUseCase).execute({ id, currentUser: user })
+            const data = await new RotateAutomationEventTokensUseCase().execute({ id, currentUser: user })
             const after = await issue(id)
 
             expect(data.triggers?.event).toEqual({ enabled: true })
             expect(data.eventTokenVersion).toBe(2)
             expect(await rejection(receive(id, before.token))).toBe('invalid')
-            expect((await receive(id, after.token)).data.status).toBe('queued')
+            expect((await receive(id, after.token)).status).toBe('queued')
         })
 
         it('is only for the owner', async () => {
             const id = await createEvent()
 
-            await expect(container.resolve(RotateAutomationEventTokensUseCase).execute({ id, currentUser: stranger })).rejects.toMatchObject({ statusCode: 404 })
+            await expect(new RotateAutomationEventTokensUseCase().execute({ id, currentUser: stranger })).rejects.toMatchObject({ statusCode: 404 })
         })
     })
 
     describe('claiming the queue', () => {
-        const claim = (workerId = 'w1', limit?: number) => container.resolve(ClaimQueuedAutomationRunsUseCase).execute({ workerId, limit, now: new Date() })
+        const claim = (workerId = 'w1', limit?: number) => new ClaimQueuedAutomationRunsUseCase().execute({ workerId, limit, now: new Date() })
 
         it('starts the oldest event of an automation and leaves the rest waiting', async () => {
             const id = await createEvent()
@@ -406,7 +404,7 @@ describe('automations with an event trigger', () => {
             jest.setSystemTime(new Date(NOW.getTime() + 1000))
             await receive(id, token, { payload: 'second' })
 
-            const { data } = await claim()
+            const data = await claim()
 
             expect(data.claimed).toHaveLength(1)
             expect(data.claimed[0].run).toMatchObject({ status: 'running', payload: 'first', workerId: 'w1' })
@@ -414,7 +412,7 @@ describe('automations with an event trigger', () => {
             expect(automations().docs[0]).toMatchObject({ lockedBy: 'w1' })
             expect(String(automations().docs[0].activeRunId)).toBe(String(data.claimed[0].run._id))
 
-            expect((await claim('w2')).data.claimed).toHaveLength(0)
+            expect((await claim('w2')).claimed).toHaveLength(0)
         })
 
         it('starts the next event when the previous run finishes', async () => {
@@ -424,10 +422,10 @@ describe('automations with an event trigger', () => {
             jest.setSystemTime(new Date(NOW.getTime() + 1000))
             await receive(id, token, { payload: 'second' })
 
-            const first = (await claim()).data.claimed[0]
-            await container.resolve(FinishAutomationRunUseCase).execute({ runId: String(first.run._id), workerId: 'w1', status: 'completed' })
+            const first = (await claim()).claimed[0]
+            await new FinishAutomationRunUseCase().execute({ runId: String(first.run._id), workerId: 'w1', status: 'completed' })
 
-            const next = (await claim()).data.claimed
+            const next = (await claim()).claimed
 
             expect(next).toHaveLength(1)
             expect(next[0].run.payload).toBe('second')
@@ -440,10 +438,10 @@ describe('automations with an event trigger', () => {
             jest.setSystemTime(new Date(NOW.getTime() + 1000))
             await receive(id, token, { payload: 'second' })
 
-            const first = (await claim()).data.claimed[0]
-            await container.resolve(FinishAutomationRunUseCase).execute({ runId: String(first.run._id), workerId: 'w1', status: 'paused' })
+            const first = (await claim()).claimed[0]
+            await new FinishAutomationRunUseCase().execute({ runId: String(first.run._id), workerId: 'w1', status: 'paused' })
 
-            expect((await claim()).data.claimed).toHaveLength(0)
+            expect((await claim()).claimed).toHaveLength(0)
             expect(runs().docs[1].status).toBe('queued')
             expect(automations().docs[0].lockedBy).toBeUndefined()
         })
@@ -454,16 +452,16 @@ describe('automations with an event trigger', () => {
             await receive(a, (await issue(a)).token)
             await receive(b, (await issue(b)).token)
 
-            expect((await claim('w1', 1)).data.claimed).toHaveLength(1)
-            expect((await claim('w1', 5)).data.claimed).toHaveLength(1)
+            expect((await claim('w1', 1)).claimed).toHaveLength(1)
+            expect((await claim('w1', 5)).claimed).toHaveLength(1)
         })
 
         it('skips what was queued for an automation whose event trigger was removed', async () => {
             const id = await createEvent({ triggers: { schedule: { recurrence: { type: 'daily', time: '08:00' }, timezone: 'UTC' }, event: {} } })
             await receive(id, (await issue(id)).token)
-            await container.resolve(UpdateAutomationUseCase).execute({ id, payload: { triggers: { event: null } } as any, currentUser: user })
+            await new UpdateAutomationUseCase().execute({ id, payload: { triggers: { event: null } } as any, currentUser: user })
 
-            const { data } = await claim()
+            const data = await claim()
 
             expect(data.claimed).toHaveLength(0)
             expect(runs().docs[0]).toMatchObject({ status: 'skipped', skipReason: 'The event trigger of the automation is turned off' })
@@ -472,9 +470,9 @@ describe('automations with an event trigger', () => {
         it('skips what was queued for an automation that was turned off', async () => {
             const id = await createEvent()
             await receive(id, (await issue(id)).token)
-            await container.resolve(UpdateAutomationUseCase).execute({ id, payload: { triggers: { event: { enabled: false } } }, currentUser: user })
+            await new UpdateAutomationUseCase().execute({ id, payload: { triggers: { event: { enabled: false } } }, currentUser: user })
 
-            const { data } = await claim()
+            const data = await claim()
 
             expect(data.claimed).toHaveLength(0)
             expect(data.skipped).toHaveLength(1)

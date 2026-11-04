@@ -14,7 +14,7 @@ async function listChats () {
         currentUser,
     })
 
-    logger.info(result.data?.map(chat => ({ id: chat._id, status: chat.state?.status })), '[Demo] Chats')
+    logger.info(result.items.map(chat => ({ id: chat._id, status: chat.state?.status })), '[Demo] Chats')
 }
 
 listChats()

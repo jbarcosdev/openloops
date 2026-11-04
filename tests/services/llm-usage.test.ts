@@ -1,4 +1,3 @@
-import 'reflect-metadata'
 import { ObjectId } from 'mongodb'
 import { GetLLMUsageByMessageUseCase } from '@services/llmcalls/use-cases/get-llm-usage-by-message.use-case'
 import { GetLLMUsageByChatUseCase } from '@services/llmcalls/use-cases/get-llm-usage-by-chat.use-case'
@@ -100,7 +99,7 @@ describe('the usage of a message and of a chat', () => {
                 row('anthropic', 'claude-haiku-5-5', { calls: 3, input: 10, output: 5, cacheRead: 2, cacheWrite: 1, reasoning: 3, totalTokens: 18, totalCost: 0.0012345678 }),
             ])
 
-            const { data } = await make(fake).execute({ [param]: new ObjectId().toHexString(), currentUser: user() } as any)
+            const data = await make(fake).execute({ [param]: new ObjectId().toHexString(), currentUser: user() } as any)
 
             expect(data.models).toEqual([{ provider: 'anthropic', model: 'claude-haiku-5-5', calls: 3, input: 10, output: 5, cacheRead: 2, cacheWrite: 1, reasoning: 3, totalTokens: 18, totalCost: 0.001235 }])
             expect(data.summary).toEqual({ calls: 3, input: 10, output: 5, cacheRead: 2, cacheWrite: 1, reasoning: 3, totalTokens: 18, totalCost: 0.001235 })
@@ -109,7 +108,7 @@ describe('the usage of a message and of a chat', () => {
         it('returns zeros and no models when there are no calls', async () => {
             const { repository: fake } = repository([])
 
-            const { data } = await make(fake).execute({ [param]: new ObjectId().toHexString(), currentUser: user() } as any)
+            const data = await make(fake).execute({ [param]: new ObjectId().toHexString(), currentUser: user() } as any)
 
             expect(data.models).toEqual([])
             expect(data.summary).toEqual({ calls: 0, input: 0, output: 0, cacheRead: 0, cacheWrite: 0, reasoning: 0, totalTokens: 0, totalCost: 0 })

@@ -52,7 +52,7 @@ describe('getChatById and the activity of a chat', () => {
             description: 'reads the chat the way a polling client does',
             handler: async () => {
                 const id = env.db.chats.all()[0]._id.toString()
-                during = (await getChatById({ id, currentUser: env.user })).data
+                during = (await getChatById({ id, currentUser: env.user }))
                 return { ok: true }
             },
         })
@@ -64,7 +64,7 @@ describe('getChatById and the activity of a chat', () => {
         await env.send(env.agent([...w.tools, probe]), 'find item 3')
 
         const id = env.db.chats.all()[0]._id.toString()
-        const after = (await getChatById({ id, currentUser: env.user })).data
+        const after = (await getChatById({ id, currentUser: env.user }))
 
         expect(during.state.status).toBe(AgentStatus.PROCESSING)
         expect(during.state.currentActivity).toMatch(/\.\.\.$/)

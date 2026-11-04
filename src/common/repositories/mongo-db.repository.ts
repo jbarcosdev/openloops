@@ -1,12 +1,14 @@
 import { ObjectId } from 'mongodb'
+import type { BaseEntityProps } from '@common/base/base.entity'
 import { reportError } from '@common/error'
-import { Document } from '@common/base/base.entity'
 import { MongoClient, getMongoDBClient } from './mongo-db.client'
 import { Scope } from './scope'
 
 const DEFAULT_LIMIT = 10
 
 const PROTECTED_FIELDS = ['__v', 'ownerId', 'sharedWith', 'createdAt', 'createdBy', 'updatedAt', 'updatedBy', 'deletedAt', 'deletedBy', 'archivedAt', 'archivedBy']
+
+const IMMUTABLE_FIELDS = ['_id', '__v', 'createdAt', 'createdBy']
 
 export class VersionConflictError extends Error {
 	readonly code = 'VERSION_CONFLICT'
@@ -187,7 +189,7 @@ export class MongoRepository<T> {
 		}
 	}
 
-	public async createOne ({ payload, scope }: CommandParams<T>): Promise<Document & { _id: ObjectId }> {
+	public async createOne ({ payload, scope }: CommandParams<T>): Promise<BaseEntityProps & { _id: ObjectId }> {
 		if (!payload || Object.keys(payload).length === 0) throw new Error('[Mongo Repository] Payload is required for createOne operation')
 
 		const document = this.stampCreate(payload as Record<string, unknown>, scope)
@@ -195,8 +197,8 @@ export class MongoRepository<T> {
 		try {
 			const db = await this.dbClient.db(this.database)
 			const collection = db.collection(this.collection)
-			const { insertedId } = await collection.insertOne({ ...document, __v: 1 })
-			return { ...document, _id: insertedId, __v: 1 } as Document & { _id: ObjectId }
+			const { insertedId } = await collection.insertOne({ ...document, __v: 1 }, { ignoreUndefined: true })
+			return { ...document, _id: insertedId, __v: 1 } as BaseEntityProps & { _id: ObjectId }
 		} catch (error: any) {
 			await this.report(error as Error)
 			throw error
@@ -209,7 +211,7 @@ export class MongoRepository<T> {
 		try {
 			const db = await this.dbClient.db(this.database)
 			const collection = db.collection(this.collection)
-			const { insertedIds } = await collection.insertMany(documents as any)
+			const { insertedIds } = await collection.insertMany(documents.map(document => ({ ...document, __v: 1 })) as any, { ignoreUndefined: true })
 			return insertedIds
 		} catch (error: any) {
 			await this.report(error as Error)
@@ -217,32 +219,68 @@ export class MongoRepository<T> {
 		}
 	}
 
-	public async updateOne ({ where, payload, expectedVersion, scope }: CommandParams<T>): Promise<T> {
-		if (!where || Object.keys(where).length === 0) throw new Error('[Mongo Repository] Where is required for updateOne operation')
-		if (!payload || Object.keys(payload).length === 0) throw new Error('[Mongo Repository] Payload is required for updateOne operation')
+	public async patchOne ({ where, set, unset, expectedVersion, scope }: PatchParams<T>): Promise<T | null> {
+		return this.applyPatch({ where, set, unset, expectedVersion, scope })
+	}
+
+	public async archiveByPatch (params: PatchParams<T>): Promise<T | null> {
+		const actor = this.actorId(params.scope)
+		return this.applyPatch(params, { archivedAt: new Date(), ...(actor ? { archivedBy: actor } : {}) })
+	}
+
+	private async applyPatch ({ where, set, unset, expectedVersion, scope }: PatchParams<T>, stamps: Record<string, unknown> = {}): Promise<T | null> {
+		if (!where || Object.keys(where).length === 0) throw new Error('[Mongo Repository] Where is required for patchOne operation')
 
 		const actor = this.actorId(scope)
-		const { _id, __v, createdAt, createdBy, toUnset, ...rest } = payload as Document
 		const toSet = {
-			...this.withoutProtected(rest as Record<string, unknown>, scope),
+			...this.withoutProtectedPaths(set ?? {}, scope),
 			...(scope ? { updatedAt: new Date(), ...(actor ? { updatedBy: actor } : {}) } : {}),
+			...stamps,
 		}
+		const toUnset = this.withoutProtectedPaths(unset ?? {}, scope)
 
 		return this.modifyOne(where, {
-			...(toSet ? { $set: toSet } : {}),
-			...(toUnset ? { $unset: toUnset } : {}),
+			$set: toSet,
+			...(Object.keys(toUnset).length ? { $unset: toUnset } : {}),
 		}, scope, expectedVersion)
 	}
 
-	public async softDelete ({ where, payload, scope }: CommandParams<T>): Promise<T | null> {
+	public async claimOne ({ where, set, scope }: PatchParams<T>): Promise<T | null> {
+		const filter = this.withScope({ ...where, ...this._where }, scope)
+
+		try {
+			const db = await this.dbClient.db(this.database)
+			const collection = db.collection(this.collection)
+			const result = await collection.findOneAndUpdate(
+				filter,
+				{ $set: this.withoutProtectedPaths(set ?? {}, scope) },
+				{ returnDocument: 'before', ignoreUndefined: true }
+			)
+
+			return result as unknown as T | null
+		} catch (error: any) {
+			await this.report(error as Error)
+			throw error
+		}
+	}
+
+	private withoutProtectedPaths (fields: Record<string, unknown>, scope?: Scope): Record<string, unknown> {
+		const guarded = scope && !scope.trusted
+		const isProtected = (key: string) => this.protectedFields.some(field => key === field || key.startsWith(`${field}.`) || field.startsWith(`${key}.`))
+
+		return Object.fromEntries(Object.entries(fields).filter(([key]) => !IMMUTABLE_FIELDS.includes(key) && !(guarded && isProtected(key))))
+	}
+
+	public async softDelete ({ where, payload, unset, scope }: CommandParams<T>): Promise<T | null> {
 		if (!where || Object.keys(where).length === 0) throw new Error('[Mongo Repository] Where is required for softDelete operation')
 
 		const actor = this.actorId(scope)
-		const { toUnset, ...rest } = (payload ?? {}) as Document
-		const extra = this.withoutProtected(rest as Record<string, unknown>, scope)
+		const extra = this.withoutProtected((payload ?? {}) as Record<string, unknown>, scope)
+		const toUnset = this.withoutProtectedPaths(unset ?? {}, scope)
+
 		return this.modifyOne(where, {
 			$set: { ...extra, deletedAt: new Date(), ...(actor ? { deletedBy: actor } : {}) },
-			...(toUnset ? { $unset: toUnset } : {}),
+			...(Object.keys(toUnset).length ? { $unset: toUnset } : {}),
 		}, scope)
 	}
 
@@ -256,7 +294,7 @@ export class MongoRepository<T> {
 			const result = await collection.findOneAndUpdate(
 				filter,
 				{ $inc: { __v: 1 }, ...update },
-				{ returnDocument: 'after' }
+				{ returnDocument: 'after', ignoreUndefined: true }
 			)
 
 			if (!result && checkVersion) {
@@ -407,6 +445,14 @@ export interface CommandParams<T> {
 	scope?: Scope
 	where?: Partial<T>
 	payload?: Partial<T> | Partial<T>[]
+	unset?: Record<string, unknown>
 	options?: Record<string, unknown>
+}
+
+export interface PatchParams<T> {
+	scope?: Scope
+	where?: Partial<T>
+	set?: Record<string, unknown>
+	unset?: Record<string, unknown>
 	expectedVersion?: number
 }

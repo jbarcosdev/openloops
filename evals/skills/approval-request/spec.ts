@@ -11,7 +11,6 @@ export default defineSkillEval({
     outputSchema: defineOutput({ reasoning: { type: 'string' }, question: { type: 'string' } }),
     scenarios: SCENARIOS,
     load () {
-        require('reflect-metadata')
         return require('@harness/skills').approvalRequest
     },
 })

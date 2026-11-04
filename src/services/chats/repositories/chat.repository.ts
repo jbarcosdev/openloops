@@ -1,9 +1,8 @@
-import { autoInjectable } from 'tsyringe'
+import { entityPatch } from '@common/base/utils'
 import { MongoRepository, QueryOptions, QueryParams, Scope } from '@common/repositories'
 import { getDatabaseName } from '@common/utils/database-name'
 import { Chat, ChatProps } from '../entities'
 
-@autoInjectable()
 export class ChatRepository {
 	public readonly _ = new MongoRepository<ChatProps>({
 		database: getDatabaseName(),
@@ -12,17 +11,13 @@ export class ChatRepository {
 	})
 
 	public async create (chat: Chat, scope: Scope): Promise<Chat> {
-		const { _id, ownerId, createdAt, createdBy } = await this._.createOne({ payload: chat.toDocument(), scope })
+		const { _id, ownerId, createdAt, createdBy } = await this._.createOne({ payload: chat.toJSON(), scope })
 		Object.assign(chat, { _id, ownerId, createdAt, createdBy })
 		return chat
 	}
 
 	public async update (chat: Chat, scope: Scope): Promise<ChatProps | null> {
-		return await this._.updateOne({
-			scope,
-			where: { _id: chat._id },
-			payload: chat.toFlatDocument(),
-		})
+		return await this._.patchOne({ scope, where: { _id: chat._id }, ...entityPatch(chat) })
 	}
 
 	public async findById (id: string, scope: Scope, select?: QueryParams<ChatProps>['select']): Promise<ChatProps | null> {

@@ -1,6 +1,5 @@
-import { autoInjectable, inject } from 'tsyringe'
 import { QueryOptions, Scope } from '@common/repositories'
-import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { BaseUseCase, BaseUseCaseParams } from '@common/base/base.use-case'
 import { BaseEntity } from '@common/base/base.entity'
 import { AgentTaskRepository } from '../repositories'
 import { AgentTaskProps } from '../entities'
@@ -12,14 +11,13 @@ export interface Params extends BaseUseCaseParams {
 	options?: QueryOptions
 }
 
-export interface Output extends BaseUseCaseOutput {
-	data: AgentTaskProps[]
-	hasMore?: boolean
+export interface Output {
+	items: AgentTaskProps[]
+	hasMore: boolean
 }
 
-@autoInjectable()
 export class ListAgentTasksByChatUseCase extends BaseUseCase<Params, Output> {
-	constructor (@inject(AgentTaskRepository) private readonly agentTaskRepository?: AgentTaskRepository) {
+	constructor (private readonly agentTaskRepository = new AgentTaskRepository()) {
 		super()
 	}
 
@@ -29,12 +27,12 @@ export class ListAgentTasksByChatUseCase extends BaseUseCase<Params, Output> {
 		if (!chatId) throw new Error('chatId is required')
 		if (!currentUser) this.throwError403()
 
-		const result = await this.agentTaskRepository?.findByProps(
+		const result = await this.agentTaskRepository.findByProps(
 			{ ownerId: BaseEntity.toObjectId(currentUser?.userId), chatId: BaseEntity.toObjectId(chatId) },
 			{ limit: DEFAULT_LIMIT, sortBy: { _id: -1 }, ...options },
 			params.scope ?? Scope.canView(currentUser),
 		)
 
-		return { data: result?.items ?? [], hasMore: result?.hasMore ?? false }
+		return { items: result?.items ?? [], hasMore: result?.hasMore ?? false }
 	}
 }

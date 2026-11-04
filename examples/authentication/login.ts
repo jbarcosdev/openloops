@@ -11,7 +11,7 @@ async function loginExample () {
         },
     })
 
-    logger.info({ user: result.data.user, token: result.data.token }, '[Demo] Logged in')
+    logger.info({ user: result.user, accessToken: result.accessToken, refreshToken: result.refreshToken }, '[Demo] Logged in')
 }
 
 loginExample()

@@ -1,5 +1,4 @@
-import { autoInjectable, inject } from 'tsyringe'
-import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { BaseUseCase, BaseUseCaseParams } from '@common/base/base.use-case'
 import { Scope } from '@common/repositories'
 import { ChatRepository } from '../repositories'
 import { Chat, ChatProps } from '../entities'
@@ -8,13 +7,10 @@ export interface Params extends BaseUseCaseParams {
 	payload?: ChatProps
 }
 
-export interface Output extends BaseUseCaseOutput {
-	data: ChatProps | null | undefined
-}
+export type Output = ChatProps
 
-@autoInjectable()
 export class CreateChatUseCase extends BaseUseCase<Params, Output> {
-	constructor (@inject(ChatRepository) private readonly chatRepository?: ChatRepository) {
+	constructor (private readonly chatRepository = new ChatRepository()) {
 		super()
 	}
 
@@ -23,8 +19,8 @@ export class CreateChatUseCase extends BaseUseCase<Params, Output> {
 
 		const chat = Chat.fromJSON({ ...payload })
 
-		const result = await this.chatRepository?.create(chat, params.scope ?? Scope.canEdit(currentUser))
+		const result = await this.chatRepository.create(chat, params.scope ?? Scope.canEdit(currentUser))
 
-		return { data: result }
+		return result.toJSON()
 	}
 }

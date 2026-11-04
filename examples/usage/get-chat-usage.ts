@@ -12,8 +12,8 @@ async function getChatUsage () {
     })
 
     logger.info({
-        summary: result.data.summary,
-        models: result.data.models,
+        summary: result.summary,
+        models: result.models,
     }, '[Demo] Chat usage')
 }
 

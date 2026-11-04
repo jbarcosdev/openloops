@@ -1,4 +1,3 @@
-import 'reflect-metadata'
 import { ObjectId } from 'mongodb'
 import { Logger } from '@common/logger'
 import { CurrentUser, CurrentSession } from '@common/base'
@@ -157,7 +156,7 @@ export class Agent {
 
         const newChat = Chat.withDefaults(loop?.name)
 
-        const { data } = await createChat({
+        const data = await createChat({
             payload: newChat.toJSON(),
             currentUser,
         })
@@ -319,7 +318,7 @@ export class Agent {
         let chatData: ChatProps | undefined | null
 
         if (chatId) {
-            const { data } = await getChatById({ id: chatId, currentUser: this.currentUser })
+            const data = await getChatById({ id: chatId, currentUser: this.currentUser })
             chatData = data?._id ? data : undefined
         }
 
@@ -527,21 +526,21 @@ export class Agent {
         }
     }
 
-    private fingerprint (entity: { toDocument: () => unknown }): string {
-        return JSON.stringify(entity.toDocument())
+    private fingerprint (entity: { toJSON: () => unknown }): string {
+        return JSON.stringify(entity.toJSON())
     }
 
     private async loadTasks (): Promise<void> {
         const chatId = this.currentChat._id?.toString()
         if (!chatId) return
 
-        const { data: taskDocs } = await listAgentTasksByChat({ chatId, currentUser: this.currentUser })
+        const { items: taskDocs } = await listAgentTasksByChat({ chatId, currentUser: this.currentUser })
         const tasks = taskDocs.map(doc => AgentTask.fromJSON(doc)).reverse()
 
         const activeTaskId = this.currentChat.state?.activeTaskId
 
         if (activeTaskId && !tasks.some(task => task.id === activeTaskId)) {
-            const { data } = await getAgentTaskById({ id: activeTaskId, currentUser: this.currentUser })
+            const data = await getAgentTaskById({ id: activeTaskId, currentUser: this.currentUser })
             if (data) tasks.push(AgentTask.fromJSON(data))
         }
 
@@ -562,8 +561,8 @@ export class Agent {
     private async hydrateTask (task: AgentTask): Promise<void> {
         if (task.hydrated) return
 
-        const { data } = await listAgentActionsByTask({ taskId: task.id, currentUser: this.currentUser })
-        const actions = data.map(doc => AgentAction.fromJSON(doc))
+        const { items } = await listAgentActionsByTask({ taskId: task.id, currentUser: this.currentUser })
+        const actions = items.map(doc => AgentAction.fromJSON(doc))
 
         for (const action of actions) this.snapshots.set(`action:${action.id}`, this.fingerprint(action))
 
@@ -658,7 +657,7 @@ export class Agent {
         try {
             const response = await listAllMcpServersByUser({ currentUser: this.currentUser })
             const reserved = new Set(this._internalMcps.map(mcp => mcp.name))
-            const stored = (response?.data ?? []).filter(props => {
+            const stored = response.items.filter(props => {
                 if (!reserved.has(props.name as string)) return true
 
                 this.logger.error({ mcpServer: props.name }, '[AGENT] A server of the user was ignored because its name belongs to an internal MCP')
@@ -798,7 +797,7 @@ export class Agent {
 
         if (entry.server.latest?.hash !== live.hash) {
             try {
-                const { data } = await verifyMcpServerConnection({ id: entry.id, currentUser: this.currentUser })
+                const data = await verifyMcpServerConnection({ id: entry.id, currentUser: this.currentUser })
                 this.refreshMcpServer(entry, data)
             } catch (error: any) {
                 this.logger.error({ error: error?.message ?? error, mcpServer: entry.name }, '[AGENT] Failed to verify MCP server')
@@ -904,7 +903,7 @@ export class Agent {
 
     private async decideMcp (entry: McpEntry, decision: 'approve' | 'block', manifestHash?: string): Promise<boolean> {
         try {
-            const { data } = await decideMcpServerTrust({ id: entry.id, decision, manifestHash, currentUser: this.currentUser })
+            const data = await decideMcpServerTrust({ id: entry.id, decision, manifestHash, currentUser: this.currentUser })
             this.refreshMcpServer(entry, data)
             return true
         } catch (error: any) {
@@ -966,14 +965,15 @@ export class Agent {
 
         const id = this.currentChat._id.toString()
         const payload = this.currentChat.toJSON()
+        const unset = { ...this.currentChat.clearedFields }
         const key = `chat:${id}`
-        const current = JSON.stringify(payload)
+        const current = JSON.stringify({ payload, unset })
 
         if (this.snapshots.get(key) === current) return
 
         this.logger.debug('[AGENT] Updating chat...')
 
-        await updateChat({ id, payload, currentUser: this.currentUser })
+        await updateChat({ id, payload, unset, currentUser: this.currentUser })
 
         this.snapshots.set(key, current)
     }
@@ -982,7 +982,7 @@ export class Agent {
         const chatId = this.currentChat?._id?.toString()
         if (!chatId) return
 
-        const { data } = await getChatById({ id: chatId, select: { state: 1 }, currentUser: this.currentUser })
+        const data = await getChatById({ id: chatId, select: { state: 1 }, currentUser: this.currentUser })
 
         if (data?.state?.stopRequested) this.stopRequested = true
     }

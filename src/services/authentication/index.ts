@@ -1,2 +1,5 @@
 export * from './module'
 export * from './entities'
+export { TOKEN_ISSUER, SESSION_AUDIENCE, PASSWORD_RESET_AUDIENCE, AUTOMATION_EVENT_AUDIENCE, TokenError, signToken, verifyToken, verifySessionToken } from './helpers/tokens'
+export type { SessionClaims, TokenClaims, SignTokenParams, TokenFailure } from './helpers/tokens'
+export type { SessionTokens } from './helpers/session-tokens'

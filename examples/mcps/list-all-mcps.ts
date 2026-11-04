@@ -8,7 +8,7 @@ async function listAllMcps () {
 
     const result = await listAllMcpServersByUser({ currentUser })
 
-    logger.info(result.data.map(server => ({ name: server.name, trust: server.trust, status: server.status })), '[Demo] MCP Servers')
+    logger.info(result.items.map(server => ({ name: server.name, trust: server.trust, status: server.status })), '[Demo] MCP Servers')
 }
 
 listAllMcps()

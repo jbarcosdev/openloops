@@ -15,7 +15,6 @@ export default defineSkillEval({
     }),
     scenarios: SCENARIOS,
     load () {
-        require('reflect-metadata')
         return require('@harness/skills').autonomousAnswer
     },
 })

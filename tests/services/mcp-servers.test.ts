@@ -1,5 +1,3 @@
-import 'reflect-metadata'
-import { container } from 'tsyringe'
 import { ObjectId } from 'mongodb'
 import { McpServer, buildManifest } from '@services/mcp-servers/entities'
 import { CreateMcpServerUseCase } from '@services/mcp-servers/use-cases/create-mcpserver.use-case'
@@ -28,7 +26,7 @@ const manifestOf = (...names: string[]) => buildManifest({ tools: names.map(name
 describe.each([['regular user', regular], ['admin', admin]])('MCP server use cases as a %s', (_label, currentUser) => {
     let live = manifestOf('ping')
 
-    const create = (name = 'srv') => container.resolve(CreateMcpServerUseCase).execute({ payload: { name, url: `http://fake/${name}`, type: 'http' }, currentUser })
+    const create = (name = 'srv') => new CreateMcpServerUseCase().execute({ payload: { name, url: `http://fake/${name}`, type: 'http' }, currentUser })
     const stored = () => collection().docs[0]
 
     beforeEach(() => {
@@ -40,7 +38,7 @@ describe.each([['regular user', regular], ['admin', admin]])('MCP server use cas
     afterEach(() => jest.restoreAllMocks())
 
     it('creates a locked server and records its manifest', async () => {
-        const { data } = await create()
+        const data = await create()
 
         expect(data?.trust).toBe('locked')
         expect(data?.status).toBe('ok')
@@ -52,7 +50,7 @@ describe.each([['regular user', regular], ['admin', admin]])('MCP server use cas
         await create()
         const before = stored().__v
 
-        const { data } = await container.resolve(UpdateMcpServerUseCase).execute({ id: String(stored()._id), payload: { name: 'renamed', __v: before }, currentUser })
+        const data = await new UpdateMcpServerUseCase().execute({ id: String(stored()._id), payload: { name: 'renamed', __v: before }, currentUser })
 
         expect(data.name).toBe('renamed')
         expect(stored().__v).toBe(before + 1)
@@ -62,12 +60,12 @@ describe.each([['regular user', regular], ['admin', admin]])('MCP server use cas
         await create()
         const id = String(stored()._id)
 
-        await container.resolve(UpdateMcpServerUseCase).execute({ id, payload: { name: 'renamed', trust: 'approved', approvedHash: live.hash, __v: stored().__v }, currentUser })
+        await new UpdateMcpServerUseCase().execute({ id, payload: { name: 'renamed', trust: 'approved', approvedHash: live.hash, __v: stored().__v }, currentUser })
         expect(stored().trust).toBe('locked')
         expect(stored().approvedHash).toBeUndefined()
 
-        await container.resolve(DecideMcpServerTrustUseCase).execute({ id, decision: 'approve', manifestHash: live.hash, currentUser })
-        await container.resolve(UpdateMcpServerUseCase).execute({ id, payload: { trust: 'blocked', approvedHash: 'other', __v: stored().__v }, currentUser })
+        await new DecideMcpServerTrustUseCase().execute({ id, decision: 'approve', manifestHash: live.hash, currentUser })
+        await new UpdateMcpServerUseCase().execute({ id, payload: { trust: 'blocked', approvedHash: 'other', __v: stored().__v }, currentUser })
         expect(stored().trust).toBe('approved')
         expect(stored().approvedHash).toBe(live.hash)
     })
@@ -75,7 +73,7 @@ describe.each([['regular user', regular], ['admin', admin]])('MCP server use cas
     it('rejects an update made over a stale version', async () => {
         await create()
 
-        await expect(container.resolve(UpdateMcpServerUseCase).execute({ id: String(stored()._id), payload: { name: 'renamed', __v: stored().__v - 1 }, currentUser }))
+        await expect(new UpdateMcpServerUseCase().execute({ id: String(stored()._id), payload: { name: 'renamed', __v: stored().__v - 1 }, currentUser }))
             .rejects.toMatchObject({ code: 'VERSION_CONFLICT', statusCode: 409 })
     })
 
@@ -83,7 +81,7 @@ describe.each([['regular user', regular], ['admin', admin]])('MCP server use cas
         await create()
         const before = stored().__v
 
-        const { data } = await container.resolve(DecideMcpServerTrustUseCase).execute({ id: String(stored()._id), decision: 'approve', manifestHash: live.hash, currentUser })
+        const data = await new DecideMcpServerTrustUseCase().execute({ id: String(stored()._id), decision: 'approve', manifestHash: live.hash, currentUser })
 
         expect(data.trust).toBe('approved')
         expect(data.approvedHash).toBe(live.hash)
@@ -93,13 +91,13 @@ describe.each([['regular user', regular], ['admin', admin]])('MCP server use cas
     it('refuses to approve a manifest that is not the latest', async () => {
         await create()
 
-        await expect(container.resolve(DecideMcpServerTrustUseCase).execute({ id: String(stored()._id), decision: 'approve', manifestHash: 'other', currentUser })).rejects.toThrow()
+        await expect(new DecideMcpServerTrustUseCase().execute({ id: String(stored()._id), decision: 'approve', manifestHash: 'other', currentUser })).rejects.toThrow()
         expect(stored().trust).toBe('locked')
     })
 
     it('blocks a server and unblocks it by approving the current manifest', async () => {
         await create()
-        const decide = container.resolve(DecideMcpServerTrustUseCase)
+        const decide = new DecideMcpServerTrustUseCase()
         const id = String(stored()._id)
 
         await decide.execute({ id, decision: 'block', currentUser })
@@ -113,7 +111,7 @@ describe.each([['regular user', regular], ['admin', admin]])('MCP server use cas
         await create()
         collection().beforeUpdate = () => { stored().__v += 1 }
 
-        await expect(container.resolve(DecideMcpServerTrustUseCase).execute({ id: String(stored()._id), decision: 'block', currentUser }))
+        await expect(new DecideMcpServerTrustUseCase().execute({ id: String(stored()._id), decision: 'block', currentUser }))
             .rejects.toMatchObject({ code: 'VERSION_CONFLICT' })
     })
 
@@ -123,7 +121,7 @@ describe.each([['regular user', regular], ['admin', admin]])('MCP server use cas
         let conflicts = 1
         collection().beforeUpdate = () => { if (conflicts-- > 0) stored().__v += 1 }
 
-        await container.resolve(VerifyMcpServerConnectionUseCase).execute({ id: String(stored()._id), currentUser })
+        await new VerifyMcpServerConnectionUseCase().execute({ id: String(stored()._id), currentUser })
 
         expect(stored().history.map((item: any) => item.hash)).toEqual([live.hash, manifestOf('ping').hash])
     })
@@ -132,7 +130,7 @@ describe.each([['regular user', regular], ['admin', admin]])('MCP server use cas
         await create()
         collection().beforeUpdate = () => { stored().__v += 1 }
 
-        await expect(container.resolve(VerifyMcpServerConnectionUseCase).execute({ id: String(stored()._id), currentUser }))
+        await expect(new VerifyMcpServerConnectionUseCase().execute({ id: String(stored()._id), currentUser }))
             .rejects.toMatchObject({ code: 'VERSION_CONFLICT' })
     })
 
@@ -140,7 +138,7 @@ describe.each([['regular user', regular], ['admin', admin]])('MCP server use cas
         for (let index = 0; index < 12; index++) await create(`srv${String(index).padStart(2, '0')}`)
         await collection().insertOne({ name: 'foreign', ownerId: new ObjectId(), createdAt: new Date(), __v: 1 })
 
-        const { data } = await container.resolve(ListAllMcpServersByUserUseCase).execute({ currentUser })
+        const { items: data } = await new ListAllMcpServersByUserUseCase().execute({ currentUser })
 
         expect(data.map(item => item.name)).toEqual(Array.from({ length: 12 }, (_, index) => `srv${String(index).padStart(2, '0')}`))
     })

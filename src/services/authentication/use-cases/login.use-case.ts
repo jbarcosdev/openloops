@@ -1,66 +1,45 @@
-import jwt from 'jsonwebtoken'
-import { autoInjectable } from 'tsyringe'
-import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
-import { User, UserProps, UserRole } from '@services/users/entities'
-import { UserRepository } from '@services/users/repositories'
-import { CurrentUser } from '@common/base'
+import { BaseUseCase, BaseUseCaseParams } from '@common/base/base.use-case'
 import { Scope } from '@common/repositories'
+import { UserProps } from '@services/users/entities'
+import { UserPassword } from '@services/users/entities/user-password.value-object'
+import { UserRepository } from '@services/users/repositories'
+import { SessionTokens } from '../helpers/session-tokens'
+import { IssueSessionUseCase } from './issue-session.use-case'
+
+const DUMMY_PASSWORD_HASH = '$2b$10$Ght7KzqDJGfF.DqpStMliepgL1i.91CiIyAyqfHOzWlwGe5ipCrl6'
 
 export interface Params extends BaseUseCaseParams {
-	payload: {
-		emailOrUsername: string
-		password: string
+	payload?: {
+		emailOrUsername?: string
+		password?: string
 	}
 }
 
-export interface Output extends BaseUseCaseOutput {
-	data: {
-		token: string
-		user: UserProps
-	}
-}
+export type Output = SessionTokens & { user: UserProps }
 
-@autoInjectable()
 export class LoginUseCase extends BaseUseCase<Params, Output> {
-	constructor (private readonly userRepository: UserRepository) {
+	constructor (
+		private readonly userRepository = new UserRepository(),
+		private readonly issueSession = new IssueSessionUseCase(),
+	) {
 		super()
 	}
 
 	async execute (params: Params): Promise<Output> {
-		const SECRET_KEY = this.secretManager.get('JWT_SECRET')
-		if (!SECRET_KEY) throw new Error('{{jwt_secret_not_found}}')
+		const { emailOrUsername, password } = params.payload ?? {}
 
-		const { payload } = params
-
-		const { emailOrUsername, password } = payload
-		const user: User | null = await this.userRepository.findByEmailOrUsernameWithPassword(emailOrUsername, params.scope ?? Scope.system('login: the user is not known before the credentials are checked'))
-		if (!user) {
-			return this.throwHttpError({
-				statusCode: 404,
-				errorMessage: `{{user_not_found}}: ${emailOrUsername}`,
-			}) as any
+		if (typeof emailOrUsername !== 'string' || typeof password !== 'string' || !emailOrUsername || !password) {
+			this.throwHttpError({ statusCode: 400, errorMessage: '{{missing_fields}}' })
 		}
 
-		const isValidPassword = await user.verifyPassword(password)
-		if (isValidPassword !== true) {
-			return this.throwHttpError({
-				statusCode: 401,
-				errorMessage: '{{invalid_password}}',
-			}) as any
-		}
+		const user = await this.userRepository.findByEmailOrUsernameWithPassword(emailOrUsername, params.scope ?? Scope.system('login: the user is not known before the credentials are checked'))
+		const isValidPassword = user ? await user.verifyPassword(password) : await UserPassword.compare(password, DUMMY_PASSWORD_HASH)
 
-		const expiresIn = user.role === UserRole.ADMIN ? '1h' : '7d'
+		if (!user || !isValidPassword) this.throwHttpError({ statusCode: 401, errorMessage: '{{invalid_credentials}}' })
 
-		const payloadData: Partial<CurrentUser> = {
-			userId: user._id?.toString(),
-			email: user.email,
-			firstName: user.firstName,
-			lastName: user.lastName,
-		}
-
-		const token = jwt.sign(payloadData, SECRET_KEY, { expiresIn: expiresIn })
-
+		const tokens = await this.issueSession.execute({ user })
 		const { password: _password, ...userWithoutPassword } = user.toJSON()
-		return { data: { token, user: userWithoutPassword } }
+
+		return { ...tokens, user: userWithoutPassword }
 	}
 }

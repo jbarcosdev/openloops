@@ -45,7 +45,7 @@ await createAutomation({ payload: { ...payload, ownerId: otherUserId }, scope: S
 
 ## What changes in your endpoints
 
-- A record that is not the user's is answered as if it did not exist. The functions that update or delete throw a 404 `HttpError` with the message `{{resource_not_found}}`, `getChatById` returns `{}` in `data`, and the other getters return `null` or throw the same 404. Nobody can learn that an id exists by getting a 403.
+- A record that is not the user's is answered as if it did not exist. The functions that update or delete throw a 404 `HttpError` with the message `{{resource_not_found}}`, and the getters return `null` or throw the same 404. Nobody can learn that an id exists by getting a 403.
 - A call without `currentUser` and without `scope` fails with 401, it does not read everything.
 - You do not need to load the record to check `ownerId` before calling a function that takes an id.
 

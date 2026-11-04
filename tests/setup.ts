@@ -1,4 +1,3 @@
-import 'reflect-metadata'
 
 jest.mock('langfuse', () => ({ Langfuse: class {} }))
 

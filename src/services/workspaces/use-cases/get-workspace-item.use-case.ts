@@ -1,5 +1,4 @@
-import { autoInjectable, inject } from 'tsyringe'
-import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { BaseUseCase, BaseUseCaseParams } from '@common/base/base.use-case'
 import { Scope } from '@common/repositories'
 import { BaseEntity } from '@common/base/base.entity'
 import { WorkspaceItemRepository } from '../repositories'
@@ -12,13 +11,10 @@ export interface Params extends BaseUseCaseParams {
 	includeContent?: boolean
 }
 
-export interface Output extends BaseUseCaseOutput {
-	data: WorkspaceItemProps | null
-}
+export type Output = WorkspaceItemProps | null
 
-@autoInjectable()
 export class GetWorkspaceItemUseCase extends BaseUseCase<Params, Output> {
-	constructor (@inject(WorkspaceItemRepository) private readonly workspaceItemRepository?: WorkspaceItemRepository) {
+	constructor (private readonly workspaceItemRepository = new WorkspaceItemRepository()) {
 		super()
 	}
 
@@ -37,10 +33,10 @@ export class GetWorkspaceItemUseCase extends BaseUseCase<Params, Output> {
 		]
 
 		for (const lookup of lookups) {
-			const data = await this.workspaceItemRepository?.findByName(lookup, params.scope ?? Scope.canView(currentUser), select)
-			if (data) return { data }
+			const data = await this.workspaceItemRepository.findByName(lookup, params.scope ?? Scope.canView(currentUser), select)
+			if (data) return data
 		}
 
-		return { data: null }
+		return null
 	}
 }

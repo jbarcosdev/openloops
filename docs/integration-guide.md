@@ -23,7 +23,7 @@ The package has no controllers: the authorization of every endpoint is the respo
 
 The use cases check who owns every record, in the repository, with the `currentUser` you pass. Read [authorization](authorization.md) once.
 
-- A record that is not the user's is answered as if it did not exist: a 404 `HttpError` from the functions that update or delete, `{}` in `data` from `getChatById` (so check for `data._id`), and `null` from the other getters.
+- A record that is not the user's is answered as if it did not exist: a 404 `HttpError` from the functions that update or delete, and `null` from the getters, `getChatById` included.
 - A call without `currentUser` fails with 401. Your endpoint is still the one that authenticates the request and builds the `currentUser` from the token.
 - An administrator acts on the records of other users only with `scope: Scope.asAdmin(currentUser)`, and a worker or a webhook with `Scope.system('reason')`. Never build a scope from a value that comes from a request.
 
@@ -44,7 +44,7 @@ The use cases check who owns every record, in the repository, with the `currentU
 | Tokens of an event automation | `issueAutomationEventToken`, `revokeAutomationEventToken`, `rotateAutomationEventTokens` |
 | History of runs | `listAutomationRunsByAutomation`, `listAutomationRunsByUser` |
 | "Run now" | `runner.runNow({ automationId, currentUser })` |
-| Sign in, users | `login`, `createUser`, `getUserById`, `updateUser`, `deleteUser` |
+| Sign in, sessions, users | `login`, `refreshSession`, `logout`, `issuePasswordResetToken`, `resetPassword`, `changePassword`, `createUser`, `getUserById`, `updateUser`, `deleteUser` |
 
 ## Running the agent for a message
 

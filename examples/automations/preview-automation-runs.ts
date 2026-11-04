@@ -10,7 +10,7 @@ async function previewRuns () {
         count: 5,
     })
 
-    logger.info(result.data.runs, '[Demo] Next runs')
+    logger.info(result.runs, '[Demo] Next runs')
 }
 
 previewRuns()

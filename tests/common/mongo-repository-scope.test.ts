@@ -123,7 +123,7 @@ describe('MongoRepository scope', () => {
         await expect(repo.findAll({ where: {} })).rejects.toThrow('Scope is required')
         await expect(repo.createOne({ payload: { a: 1 } })).rejects.toThrow('Scope is required')
         await expect(repo.createMany({ payload: [{ a: 1 }] })).rejects.toThrow('Scope is required')
-        await expect(repo.updateOne({ where: { _id: DOC_ID }, payload: { a: 1 } })).rejects.toThrow('Scope is required')
+        await expect(repo.patchOne({ where: { _id: DOC_ID }, set: { a: 1 } })).rejects.toThrow('Scope is required')
         await expect(repo.updateMany({ where: {}, payload: { a: 1 } })).rejects.toThrow('Scope is required')
         await expect(repo.softDelete({ where: { _id: DOC_ID } })).rejects.toThrow('Scope is required')
         await expect(repo.deleteOne({ where: { _id: DOC_ID } })).rejects.toThrow('Scope is required')
@@ -165,7 +165,7 @@ describe('MongoRepository scope', () => {
         findOneAndUpdate.mockResolvedValue(null)
         findOne.mockResolvedValue(null)
 
-        const result = await scopedRepo().updateOne({ where: { _id: DOC_ID }, payload: { a: 1 }, expectedVersion: 3, scope: Scope.canEdit(user()) })
+        const result = await scopedRepo().patchOne({ where: { _id: DOC_ID }, set: { a: 1 }, expectedVersion: 3, scope: Scope.canEdit(user()) })
 
         expect(result).toBeNull()
         expect(findOneAndUpdate.mock.calls[0][0].$and[0]).toMatchObject({ __v: 3 })
@@ -177,7 +177,7 @@ describe('MongoRepository scope', () => {
         findOneAndUpdate.mockResolvedValue(null)
         findOne.mockResolvedValue({ _id: DOC_ID })
 
-        await expect(scopedRepo().updateOne({ where: { _id: DOC_ID }, payload: { a: 1 }, expectedVersion: 3, scope: Scope.canEdit(user()) })).rejects.toBeInstanceOf(VersionConflictError)
+        await expect(scopedRepo().patchOne({ where: { _id: DOC_ID }, set: { a: 1 }, expectedVersion: 3, scope: Scope.canEdit(user()) })).rejects.toBeInstanceOf(VersionConflictError)
     })
 })
 
@@ -227,7 +227,7 @@ describe('MongoRepository stamps', () => {
 
         await repo.createOne({ payload: payload as any, scope: Scope.canEdit(user()) })
         await repo.createOne({ payload: payload as any, scope: Scope.system('test') })
-        await repo.updateOne({ where: { _id: DOC_ID }, payload: { 'marketing.drawNumber': '1234', 'acquisition.referrerCode': 'abc', 'acquisition.platform': 'ios' } as any, scope: Scope.canEdit(user()) })
+        await repo.patchOne({ where: { _id: DOC_ID }, set: { 'marketing.drawNumber': '1234', 'acquisition.referrerCode': 'abc', 'acquisition.platform': 'ios' } as any, scope: Scope.canEdit(user()) })
 
         const [byUser, bySystem] = insertOne.mock.calls.map(call => call[0])
         expect(byUser.marketing).toBeUndefined()
@@ -271,7 +271,7 @@ describe('MongoRepository stamps', () => {
     })
 
     it('drops the control fields on update and stamps who and when', async () => {
-        await scopedRepo().updateOne({ where: { _id: DOC_ID }, payload: { ...clientPayload(), __v: 9, createdAt: new Date(0) }, scope: Scope.canEdit(user()) })
+        await scopedRepo().patchOne({ where: { _id: DOC_ID }, set: { ...clientPayload(), __v: 9, createdAt: new Date(0) }, scope: Scope.canEdit(user()) })
 
         const [filter, update] = findOneAndUpdate.mock.calls[0]
         expect(filter.$and[1]).toEqual({ ownerId: new ObjectId(USER) })
@@ -281,7 +281,7 @@ describe('MongoRepository stamps', () => {
     })
 
     it('lets a trusted scope write the control fields but never the version nor the creation', async () => {
-        await scopedRepo().updateOne({ where: { _id: DOC_ID }, payload: { ...clientPayload(), __v: 9, createdAt: new Date(0) }, scope: Scope.system('test') })
+        await scopedRepo().patchOne({ where: { _id: DOC_ID }, set: { ...clientPayload(), __v: 9, createdAt: new Date(0) }, scope: Scope.system('test') })
 
         const { $set } = findOneAndUpdate.mock.calls[0][1]
         expect($set.ownerId).toEqual(new ObjectId(OTHER))
@@ -313,10 +313,83 @@ describe('MongoRepository stamps', () => {
     })
 
     it('unsets the fields that it is asked to when it soft deletes', async () => {
-        await scopedRepo().softDelete({ where: { _id: DOC_ID }, payload: { toUnset: { 'triggers.schedule.nextRunAt': '' } } as any, scope: Scope.canManage(user()) })
+        await scopedRepo().softDelete({ where: { _id: DOC_ID }, unset: { 'triggers.schedule.nextRunAt': '' }, scope: Scope.canManage(user()) })
 
         const update = findOneAndUpdate.mock.calls[0][1]
         expect(update.$unset).toEqual({ 'triggers.schedule.nextRunAt': '' })
-        expect(update.$set.toUnset).toBeUndefined()
+    })
+})
+
+describe('MongoRepository patches', () => {
+    beforeEach(() => {
+        findOneAndUpdate.mockReset().mockResolvedValue({ _id: DOC_ID })
+        findOne.mockReset()
+    })
+
+    it('sets and unsets only what it is asked to, stamps who and when and keeps the version out of the set', async () => {
+        await scopedRepo().patchOne({ where: { _id: DOC_ID }, set: { name: 'renamed', 'state.step': 2, __v: 9, createdAt: new Date(0), _id: new ObjectId() }, unset: { old: '' }, scope: Scope.canEdit(user()) })
+
+        const [filter, update] = findOneAndUpdate.mock.calls[0]
+        expect(filter.$and[1]).toEqual({ ownerId: new ObjectId(USER) })
+        expect(Object.keys(update.$set).sort()).toEqual(['name', 'state.step', 'updatedAt', 'updatedBy'])
+        expect(update.$unset).toEqual({ old: '' })
+        expect(update.$inc).toEqual({ __v: 1 })
+    })
+
+    it('never writes the version, the creation nor the id, not even with a trusted scope', async () => {
+        await scopedRepo().patchOne({ where: { _id: DOC_ID }, set: { ...clientPayload(), __v: 9, createdAt: new Date(0), _id: new ObjectId() }, scope: Scope.system('test') })
+
+        const { $set } = findOneAndUpdate.mock.calls[0][1]
+        expect($set.ownerId).toEqual(new ObjectId(OTHER))
+        for (const field of ['__v', 'createdAt', '_id']) expect($set[field]).toBeUndefined()
+    })
+
+    it('drops the paths of control of a user scope, also the nested ones of the collection', async () => {
+        const repo = new MongoRepository<any>({ database: 'app', collection: 'users', scoped: true, protectedFields: ['marketing.drawNumber'] })
+
+        await repo.patchOne({ where: { _id: DOC_ID }, set: { 'marketing.drawNumber': '1', 'marketing.optIn': true, ownerId: new ObjectId(OTHER) }, unset: { 'marketing.drawNumber': '', sharedWith: '' }, scope: Scope.canEdit(user()) })
+
+        const update = findOneAndUpdate.mock.calls[0][1]
+        expect(update.$set['marketing.drawNumber']).toBeUndefined()
+        expect(update.$set['marketing.optIn']).toBe(true)
+        expect(update.$set.ownerId).toBeUndefined()
+        expect(update.$unset).toBeUndefined()
+    })
+
+    it('checks the expected version and reports a conflict when the document is there', async () => {
+        findOneAndUpdate.mockResolvedValue(null)
+        findOne.mockResolvedValue({ _id: DOC_ID })
+
+        await expect(scopedRepo().patchOne({ where: { _id: DOC_ID }, set: { a: 1 }, expectedVersion: 3, scope: Scope.canEdit(user()) })).rejects.toBeInstanceOf(VersionConflictError)
+        expect(findOneAndUpdate.mock.calls[0][0].$and[0]).toMatchObject({ __v: 3 })
+    })
+
+    it('answers null when nothing matches and there is no version to check', async () => {
+        findOneAndUpdate.mockResolvedValue(null)
+
+        await expect(scopedRepo().patchOne({ where: { _id: DOC_ID }, set: { a: 1 }, scope: Scope.canEdit(user()) })).resolves.toBeNull()
+    })
+
+    it('requires a where and a scope', async () => {
+        await expect(scopedRepo().patchOne({ where: {}, set: { a: 1 }, scope: Scope.canEdit(user()) })).rejects.toThrow('Where is required')
+        await expect(scopedRepo().patchOne({ where: { _id: DOC_ID }, set: { a: 1 } })).rejects.toThrow('Scope is required')
+    })
+
+    it('archives with the author and the date', async () => {
+        await scopedRepo().archiveByPatch({ where: { _id: DOC_ID }, set: { status: 'archived' }, scope: Scope.canManage(user()) })
+
+        const { $set } = findOneAndUpdate.mock.calls[0][1]
+        expect($set.archivedAt).toBeInstanceOf(Date)
+        expect($set.archivedBy).toEqual(new ObjectId(USER))
+    })
+
+    it('claims a document and gives it back as it was before the change', async () => {
+        findOneAndUpdate.mockResolvedValue({ _id: DOC_ID, status: 'queued' })
+
+        const before = await scopedRepo().claimOne({ where: { _id: DOC_ID, status: 'queued' }, set: { status: 'running' }, scope: Scope.canEdit(user()) })
+
+        expect(before).toMatchObject({ status: 'queued' })
+        expect(findOneAndUpdate.mock.calls[0][1]).toEqual({ $set: { status: 'running' } })
+        expect(findOneAndUpdate.mock.calls[0][2]).toMatchObject({ returnDocument: 'before' })
     })
 })

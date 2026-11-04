@@ -15,7 +15,7 @@ async function listAutonomousChats () {
         currentUser,
     })
 
-    const needsAttention = result.data?.filter(chat => chat.state?.status === 'awaiting_user_confirmation' || chat.state?.status === 'awaiting_user_input' || chat.state?.status === 'failed')
+    const needsAttention = result.items.filter(chat => chat.state?.status === 'awaiting_user_confirmation' || chat.state?.status === 'awaiting_user_input' || chat.state?.status === 'failed')
 
     logger.info(needsAttention?.map(chat => ({ id: chat._id, status: chat.state?.status })), '[Demo] Autonomous runs that need attention')
 }

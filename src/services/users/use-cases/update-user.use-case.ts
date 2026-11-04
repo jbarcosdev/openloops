@@ -1,5 +1,4 @@
-import { autoInjectable, inject } from 'tsyringe'
-import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { BaseUseCase, BaseUseCaseParams } from '@common/base/base.use-case'
 import { Scope } from '@common/repositories'
 import { UserRepository } from '../repositories'
 import { User, UserProps } from '../entities'
@@ -10,13 +9,10 @@ export interface Params extends BaseUseCaseParams {
 	payload?: UserProps
 }
 
-export interface Output extends BaseUseCaseOutput {
-	data: UserProps
-}
+export type Output = UserProps
 
-@autoInjectable()
 export class UpdateUserUseCase extends BaseUseCase<Params, Output> {
-	constructor (@inject(UserRepository) private readonly userRepository?: UserRepository) {
+	constructor (private readonly userRepository = new UserRepository()) {
 		super()
 	}
 
@@ -27,18 +23,20 @@ export class UpdateUserUseCase extends BaseUseCase<Params, Output> {
 			throw new Error('Payload is required for updating user')
 		}
 
+		if ('password' in payload) this.throwHttpError({ statusCode: 400, errorMessage: 'The password cannot be changed with this request, use changePassword' })
+
 		const model = payload.preferences ? await readDefaultModel(payload.preferences) : undefined
 
 		const user = await User.create({ ...payload, ...(payload.preferences ? { preferences: model!.preferences } : {}), _id: id })
 
-		if (model?.clear) user.unset(['preferences.defaultModel' as keyof User])
+		if (model?.clear) user.clearedFields['preferences.defaultModel'] = ''
 
-		this.logger.info(`Updating user: ${user.stringify()}`)
+		this.logger.info({ userId: id }, '[Users] Updating user')
 
-		const result = await this.userRepository?.update(user, params.scope ?? Scope.canEdit(currentUser))
+		const result = await this.userRepository.update(user, params.scope ?? Scope.canEdit(currentUser))
 
-		if (!result) return this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' }) as any
+		if (!result) this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' })
 
-		return { data: result }
+		return result
 	}
 }

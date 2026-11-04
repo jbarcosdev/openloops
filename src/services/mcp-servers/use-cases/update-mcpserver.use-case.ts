@@ -1,5 +1,4 @@
-import { autoInjectable, inject } from 'tsyringe'
-import { BaseUseCase, BaseUseCaseParams, BaseUseCaseOutput } from '@common/base/base.use-case'
+import { BaseUseCase, BaseUseCaseParams } from '@common/base/base.use-case'
 import { Scope } from '@common/repositories'
 import { VersionConflictError } from '@common/repositories/mongo-db.repository'
 import { McpServerRepository } from '../repositories'
@@ -11,15 +10,12 @@ export interface Params extends BaseUseCaseParams {
 	payload?: McpServerProps
 }
 
-export interface Output extends BaseUseCaseOutput {
-	data: McpServerProps
-}
+export type Output = McpServerProps
 
-@autoInjectable()
 export class UpdateMcpServerUseCase extends BaseUseCase<Params, Output> {
 	constructor (
-		@inject(McpServerRepository) private readonly mcpServerRepository?: McpServerRepository,
-		@inject(VerifyMcpServerConnectionUseCase) private readonly verifyConnection?: VerifyMcpServerConnectionUseCase,
+		private readonly mcpServerRepository = new McpServerRepository(),
+		private readonly verifyConnection = new VerifyMcpServerConnectionUseCase(),
 	) {
 		super()
 	}
@@ -32,9 +28,9 @@ export class UpdateMcpServerUseCase extends BaseUseCase<Params, Output> {
 		}
 
 		const scope = params.scope ?? Scope.canEdit(currentUser)
-		const existing = await this.mcpServerRepository?.findById(id, scope)
+		const existing = await this.mcpServerRepository.findById(id, scope)
 
-		if (!existing) return this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' }) as any
+		if (!existing) this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' })
 
 		if (payload.__v !== undefined && payload.__v !== existing.__v) {
 			throw new VersionConflictError()
@@ -49,15 +45,14 @@ export class UpdateMcpServerUseCase extends BaseUseCase<Params, Output> {
 			mcpServer.lockForNewEndpoint()
 		}
 
-		const result = await this.mcpServerRepository?.update(mcpServer, scope, { expectedVersion: existing.__v })
+		const result = await this.mcpServerRepository.update(mcpServer, scope, { expectedVersion: existing.__v })
 
-		if (!result) return this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' }) as any
+		if (!result) this.throwHttpError({ statusCode: 404, errorMessage: '{{resource_not_found}}' })
 
 		if (endpointChanged || headersChanged) {
-			const verified = await this.verifyConnection?.execute({ id, currentUser })
-			return { data: verified?.data ?? result }
+			return await this.verifyConnection.execute({ id, currentUser })
 		}
 
-		return { data: result }
+		return result
 	}
 }

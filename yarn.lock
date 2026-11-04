@@ -6151,13 +6151,11 @@ __metadata:
     mongodb: "npm:^7.8.0"
     pino: "npm:^10.4.0"
     pino-pretty: "npm:^13.2.0"
-    reflect-metadata: "npm:^0.2.2"
     sanitize-html: "npm:^2.18.1"
     ts-jest: "npm:^29.4.15"
     tsc-alias: "npm:^1.9.9"
     tsconfig-paths: "npm:^4.2.0"
     tsup: "npm:^9.0.0"
-    tsyringe: "npm:^4.10.0"
     typescript: "npm:^6.0.3"
   languageName: unknown
   linkType: soft
@@ -6755,13 +6753,6 @@ __metadata:
   version: 1.0.0
   resolution: "real-require@npm:1.0.0"
   checksum: 10c0/74d44b360b8b662d29c646f4688da462c4b10243b11d22ff9635395e81951a9c1ed349393411c4911ca6f3474c3e10e812bf4767052706abb863ba59bde0813b
-  languageName: node
-  linkType: hard
-
-"reflect-metadata@npm:^0.2.2":
-  version: 0.2.2
-  resolution: "reflect-metadata@npm:0.2.2"
-  checksum: 10c0/1cd93a15ea291e420204955544637c264c216e7aac527470e393d54b4bb075f10a17e60d8168ec96600c7e0b9fcc0cb0bb6e91c3fbf5b0d8c9056f04e6ac1ec2
   languageName: node
   linkType: hard
 
@@ -7706,13 +7697,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tslib@npm:^1.9.3":
-  version: 1.14.1
-  resolution: "tslib@npm:1.14.1"
-  checksum: 10c0/69ae09c49eea644bc5ebe1bca4fa4cc2c82b7b3e02f43b84bd891504edf66dbc6b2ec0eef31a957042de2269139e4acff911e6d186a258fb14069cd7f6febce2
-  languageName: node
-  linkType: hard
-
 "tslib@npm:^2.4.0, tslib@npm:^2.6.2":
   version: 2.8.1
   resolution: "tslib@npm:2.8.1"
@@ -7759,15 +7743,6 @@ __metadata:
     tsup: dist/cli-default.js
     tsup-node: dist/cli-node.js
   checksum: 10c0/0a073f6e484239e254ec98700e5ac6c827d58346ce6163138a52874a0c1406efb0145eae9e4bf9ea562f1180facde545b8bbfbcf97b3cf3694b5d24e74b52c46
-  languageName: node
-  linkType: hard
-
-"tsyringe@npm:^4.10.0":
-  version: 4.10.0
-  resolution: "tsyringe@npm:4.10.0"
-  dependencies:
-    tslib: "npm:^1.9.3"
-  checksum: 10c0/918594b4dfac97beb8be2c041c6ec45f078ef3768ed4edfe35ae2c709ab503e2e6b454b2b37e692c658572d1972a428fbfdbc0a2b42fee727a83c1c685fbe5e1
   languageName: node
   linkType: hard
 
