@@ -61,7 +61,7 @@ export class UserRepository {
 	}
 
 	public async findByEmailOrUsernameWithPassword (emailOrUsername: string, scope: Scope): Promise<User | null> {
-		const input = this._.cleanInput(emailOrUsername)
+		const input = this._.cleanInput(emailOrUsername)?.trim().toLowerCase()
 
 		const user = await this._.findOne({
 			scope,

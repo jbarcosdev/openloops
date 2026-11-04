@@ -64,7 +64,7 @@ export class CurrentUser extends User {
     }
 
     public isFreePlan (): boolean {
-        return !this.isPremium
+        return !this.isPremium()
     }
 
     public isPremium (): boolean {

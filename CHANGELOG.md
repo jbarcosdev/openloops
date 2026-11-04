@@ -23,6 +23,8 @@ This version breaks the API of the internal MCP servers in automations. Before, 
 - The functions of `openloops/mcps` never see an internal server, not even for an admin, and ignore `internal` and `enabled` in the payload of a user.
 - `listMcpServersByUser` failed because it sent no scope to the repository, now it lists the servers of the user.
 - The connection errors of an internal server mask the values of its headers in the logs.
+- `CurrentUser.isFreePlan()` always returned `false`, now it is `true` for a user that is not premium.
+- `login` and `issuePasswordResetToken` find the user whatever the case of the email or the username, and ignore spaces around it.
 
 ## 0.7.0
 

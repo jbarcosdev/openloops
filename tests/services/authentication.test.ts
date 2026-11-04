@@ -70,6 +70,11 @@ describe('authentication', () => {
             expect(wrong).toMatchObject({ statusCode: 401, errorMessage: '{{invalid_credentials}}' })
         })
 
+        it('finds the user whatever the case of the email or the username', async () => {
+            await expect(signIn('ANA@Mail.com')).resolves.toBeDefined()
+            await expect(signIn('  Ana ')).resolves.toBeDefined()
+        })
+
         it('answers 400 without credentials', async () => {
             await expect(login({ payload: { emailOrUsername: 'ana@mail.com' } })).rejects.toMatchObject({ statusCode: 400 })
             await expect(login({})).rejects.toMatchObject({ statusCode: 400 })
