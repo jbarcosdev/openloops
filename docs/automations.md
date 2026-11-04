@@ -343,6 +343,7 @@ const runner = createAutomationRunner({
 - The header is added only in autonomous runs and only to internal servers that use `{{token}}`. It replaces any `X-User-Id` you configured. It is never sent to the servers added by the user.
 - An interactive run never uses the `autonomousToken`. A server without one is unavailable in the automations that need a token, and the run continues without it.
 - Each server has its own token, so two servers can use different service accounts. A server that must use a service account in every run, also in chats, does not need this: write the token in the header (for example `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjcm0uZXhhbXBsZS5jb20iLCJzdWIiOiJzdmMtb3Blbmxvb3BzLWNybSIsImF1ZCI6ImNybS1tY3AiLCJzY29wZSI6ImNybTpyZWFkIGNybTp3cml0ZSIsImlhdCI6MTc2MjIxNDQwMCwiZXhwIjoxNzkzNzUwNDAwfQ.YCtd8mv7RZpaZb3Z1aSl25MGP2QRWHc8RtA82MJOH7U`).
+- `autonomousToken` exists only in the servers declared in code. A server stored with the back office is [available in an automation](mcp-servers.md#internal-servers-stored-in-the-database) only if its header has the token written in it.
 - This field is temporary. It will go away when the integrations let the runner get the token of the owner.
 
 ### Running by hand

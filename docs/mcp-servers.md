@@ -247,7 +247,6 @@ const mcp = await createInternalMcp({
         name: 'budget',
         url: 'https://api.example.com/mcp',
         headers: { Authorization: 'Bearer {{token}}' },
-        autonomousToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjcm0uZXhhbXBsZS5jb20iLCJzdWIiOiJzdmMtb3Blbmxvb3BzLWNybSIsImF1ZCI6ImNybS1tY3AiLCJzY29wZSI6ImNybTpyZWFkIGNybTp3cml0ZSIsImlhdCI6MTc2MjIxNDQwMCwiZXhwIjoxNzkzNzUwNDAwfQ.YCtd8mv7RZpaZb3Z1aSl25MGP2QRWHc8RtA82MJOH7U',
     },
     currentUser: admin,
 })
@@ -256,12 +255,12 @@ await updateInternalMcp({ id: mcp._id, payload: { enabled: false, __v: mcp.__v }
 ```
 
 - Every function needs an admin as `currentUser` and answers 403 otherwise. The sub-route separates the code, the permission is what protects it.
-- `name` and `url` are required, `type` is always `http`, `environment` and `autonomousToken` are optional and `enabled` defaults to `true`. A disabled server is not loaded. The name must be unique among the internal servers (409).
-- A header with `{{token}}` works as in the declared ones: it uses `mcpTokens[name]` of the run, or its `autonomousToken` in an autonomous run. A header with the token written in it (for example `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjcm0uZXhhbXBsZS5jb20iLCJzdWIiOiJzdmMtb3Blbmxvb3BzLWNybSIsImF1ZCI6ImNybS1tY3AiLCJzY29wZSI6ImNybTpyZWFkIGNybTp3cml0ZSIsImlhdCI6MTc2MjIxNDQwMCwiZXhwIjoxNzkzNzUwNDAwfQ.YCtd8mv7RZpaZb3Z1aSl25MGP2QRWHc8RtA82MJOH7U`) is sent as it is and needs nothing from the run.
+- `name` and `url` are required, `type` is always `http`, `environment` is optional and `enabled` defaults to `true`. A disabled server is not loaded. The name must be unique among the internal servers (409).
+- A header with `{{token}}` uses `mcpTokens[name]` of the run. The stored servers have no `autonomousToken`, which exists only in the servers declared in code, so in an automation they are available only when the token is written in the header (for example `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjcm0uZXhhbXBsZS5jb20iLCJzdWIiOiJzdmMtb3Blbmxvb3BzLWNybSIsImF1ZCI6ImNybS1tY3AiLCJzY29wZSI6ImNybTpyZWFkIGNybTp3cml0ZSIsImlhdCI6MTc2MjIxNDQwMCwiZXhwIjoxNzkzNzUwNDAwfQ.YCtd8mv7RZpaZb3Z1aSl25MGP2QRWHc8RtA82MJOH7U`), which is sent as it is in every run.
 - Deleting is permanent. Internal servers have no owner, so they are not listed to any user.
 - The normal functions (`getMcpServerById`, `updateMcpServer`, `deleteMcpServer`, `decideMcpServerTrust`, and the lists) never see them, not even for an admin, and `internal` and `enabled` in the payload of a user are ignored.
 - If a server declared in code has the same name, the one in code wins. A server of a user with the same name as an internal one is ignored for that run.
-- `headers` and `autonomousToken` are stored as written, like the headers of the servers of the users. Mask them in your controller before sending a record to a client.
+- `headers` are stored as written, like the headers of the servers of the users. Mask them in your controller before sending a record to a client.
 - Run `ensureIndexes` after updating: it adds the unique index of the names of the internal servers.
 
 ## Tools of MCP servers

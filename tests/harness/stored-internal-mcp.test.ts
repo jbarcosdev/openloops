@@ -35,13 +35,14 @@ describe('internal MCPs stored in the database', () => {
         expect(env.llm.opening(0).CONTEXT.unavailable_sources).toEqual(['crm'])
     })
 
-    it('use their autonomous token only in an autonomous run', async () => {
+    it('do not use an autonomous token, so they are unavailable in an autonomous run when they need one', async () => {
         fakeMcp.setInternal([{ name: 'crm' }])
-        fakeMcp.stored = [{ name: 'crm', url: 'http://fake/crm', headers: { Authorization: 'Bearer {{token}}' }, autonomousToken: 'service-token' }]
-        env.llm.script({ actions: [list('crm')] }, say('ok'))
+        fakeMcp.stored = [{ name: 'crm', url: 'http://fake/crm', headers: { Authorization: 'Bearer {{token}}' } }]
+        env.llm.script(say('ok'))
         await env.send(env.agent(), 'hola', undefined, { executionMode: 'autonomous' })
 
-        expect(fakeMcp.connectHeaders.crm).toEqual({ Authorization: 'Bearer service-token', 'X-User-Id': env.user.userId })
+        expect(fakeMcp.connectAttempts).toEqual({})
+        expect(env.llm.opening(0).CONTEXT.unavailable_sources).toEqual(['crm'])
     })
 
     it('never verify, never store and never ask for approval', async () => {

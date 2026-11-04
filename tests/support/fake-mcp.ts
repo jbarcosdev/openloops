@@ -31,7 +31,7 @@ const clone = <T>(value: T): T => structuredClone(value)
 
 class FakeMcpRegistry {
     records = new Map<string, McpServerProps>()
-    stored: { name: string, url: string, headers?: Record<string, string>, autonomousToken?: string }[] = []
+    stored: { name: string, url: string, headers?: Record<string, string> }[] = []
     storedFails = false
     live = new Map<string, { tools: FakeMcpToolSpec[]; failures: number; instructions?: string }>()
     listFails = false
@@ -83,7 +83,7 @@ class FakeMcpRegistry {
         for (const spec of servers) this.live.set(spec.name, { tools: spec.tools ?? DEFAULT_TOOLS, failures: spec.failures ?? 0, instructions: spec.instructions })
     }
 
-    async listInternals (): Promise<{ name: string, url: string, headers?: Record<string, string>, autonomousToken?: string }[]> {
+    async listInternals (): Promise<{ name: string, url: string, headers?: Record<string, string> }[]> {
         if (this.storedFails) throw new Error('internal listing is down')
         return this.stored.map(clone)
     }
