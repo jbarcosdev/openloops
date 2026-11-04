@@ -4,7 +4,7 @@ import { McpServer, McpServerProps } from '../../entities'
 import { McpServerRepository } from '../../repositories'
 
 export interface Params extends BaseUseCaseParams {
-    payload?: Pick<McpServerProps, 'name' | 'url' | 'headers' | 'enabled' | 'environment'>
+    payload?: Pick<McpServerProps, 'name' | 'url' | 'headers' | 'enabled' | 'environment' | 'autonomousToken'>
 }
 
 export type Output = McpServerProps
@@ -24,8 +24,8 @@ export class CreateInternalMcpUseCase extends BaseUseCase<Params, Output> {
             this.throwHttpError({ statusCode: 409, errorMessage: `There is already an internal MCP named "${payload.name}"` })
         }
 
-        const { name, url, headers, enabled, environment } = payload
-        const mcpServer = McpServer.fromJSON({ name, url, headers, enabled, environment, type: 'http' }).initializeInternal()
+        const { name, url, headers, enabled, environment, autonomousToken } = payload
+        const mcpServer = McpServer.fromJSON({ name, url, headers, enabled, environment, autonomousToken, type: 'http' }).initializeInternal()
 
         await this.mcpServerRepository.create(mcpServer, scope)
 

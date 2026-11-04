@@ -83,6 +83,13 @@ describe('internal MCP servers of the back office', () => {
             expect(stored().environment).toBe('production')
         })
 
+        it('stores the autonomous token and the loader gives it to the agent', async () => {
+            await createInternal({ ...payload, autonomousToken: 'service-token' })
+
+            expect(stored().autonomousToken).toBe('service-token')
+            expect(await listActiveInternalMcps()).toEqual([{ ...payload, autonomousToken: 'service-token' }])
+        })
+
         it('needs a name and a url', async () => {
             await expect(createInternal({ name: 'crm' } as any)).rejects.toMatchObject({ statusCode: 400 })
             await expect(createInternal({ url: 'http://x' } as any)).rejects.toMatchObject({ statusCode: 400 })
@@ -166,13 +173,15 @@ describe('internal MCP servers of the back office', () => {
         })
 
         it('cannot mark their own server as internal, when creating or updating', async () => {
-            const created = await new CreateMcpServerUseCase().execute({ payload: { name: 'mine', url: 'http://fake/mine', type: 'http', internal: true, enabled: true }, currentUser: regular })
+            const created = await new CreateMcpServerUseCase().execute({ payload: { name: 'mine', url: 'http://fake/mine', type: 'http', internal: true, enabled: true, autonomousToken: 'x' }, currentUser: regular })
             expect(created?.internal).toBeUndefined()
             expect(stored().internal).toBeUndefined()
+            expect(stored().autonomousToken).toBeUndefined()
 
-            await new UpdateMcpServerUseCase().execute({ id: String(stored()._id), payload: { internal: true, enabled: true, __v: stored().__v }, currentUser: regular })
+            await new UpdateMcpServerUseCase().execute({ id: String(stored()._id), payload: { internal: true, enabled: true, autonomousToken: 'x', __v: stored().__v }, currentUser: regular })
             expect(stored().internal).toBeUndefined()
             expect(stored().enabled).toBeUndefined()
+            expect(stored().autonomousToken).toBeUndefined()
         })
     })
 

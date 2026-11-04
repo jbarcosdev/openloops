@@ -163,20 +163,32 @@ describe('internal MCPs', () => {
         })
     })
 
-    describe('with the token of the service, as in an automation', () => {
-        it('uses it for the MCPs without a token of their own and sends the id of the user', async () => {
+    describe('with the autonomous token, as in an automation', () => {
+        const autonomous = { executionMode: 'autonomous' as const }
+        const withToken = { ...sofi, autonomousToken: 'service-token' }
+
+        it('uses it in an autonomous run without a token of its own and sends the id of the user', async () => {
             fakeMcp.setInternal([{ name: 'sofi' }])
             env.llm.script({ actions: [list('sofi')] }, say('ok'))
-            await env.send(env.agent([], [], { internalMcps: [sofi] }), 'hola', undefined, undefined, { serviceToken: 'service-token' })
+            await env.send(env.agent([], [], { internalMcps: [withToken] }), 'hola', undefined, autonomous)
 
             expect(fakeMcp.connectHeaders.sofi).toEqual({ Authorization: 'Bearer service-token', 'X-App': 'sofi-agent', 'X-User-Id': env.user.userId })
+        })
+
+        it('never uses it in an interactive run', async () => {
+            fakeMcp.setInternal([{ name: 'sofi' }])
+            env.llm.script(say('ok'))
+            await env.send(env.agent([], [], { internalMcps: [withToken] }), 'hola')
+
+            expect(fakeMcp.connectAttempts).toEqual({})
+            expect(env.llm.opening(0).CONTEXT.unavailable_sources).toEqual(['sofi'])
         })
 
         it('overwrites an X-User-Id configured by the integrator, whatever its case', async () => {
             fakeMcp.setInternal([{ name: 'sofi' }])
             env.llm.script({ actions: [list('sofi')] }, say('ok'))
-            const mcp = { ...sofi, headers: { ...sofi.headers, 'x-user-id': 'someone-else' } }
-            await env.send(env.agent([], [], { internalMcps: [mcp] }), 'hola', undefined, undefined, { serviceToken: 'service-token' })
+            const mcp = { ...withToken, headers: { ...sofi.headers, 'x-user-id': 'someone-else' } }
+            await env.send(env.agent([], [], { internalMcps: [mcp] }), 'hola', undefined, autonomous)
 
             const sent = fakeMcp.connectHeaders.sofi
             expect(Object.keys(sent).filter(name => name.toLowerCase() === 'x-user-id')).toEqual(['X-User-Id'])
@@ -186,15 +198,23 @@ describe('internal MCPs', () => {
         it('prefers the token of the run and then does not send the id of the user', async () => {
             fakeMcp.setInternal([{ name: 'sofi' }])
             env.llm.script({ actions: [list('sofi')] }, say('ok'))
-            await env.send(env.agent([], [], { internalMcps: [sofi] }), 'hola', undefined, undefined, { mcpTokens: { sofi: 'user-token' }, serviceToken: 'service-token' })
+            await env.send(env.agent([], [], { internalMcps: [withToken] }), 'hola', undefined, autonomous, { mcpTokens: { sofi: 'user-token' } })
 
             expect(fakeMcp.connectHeaders.sofi).toEqual({ Authorization: 'Bearer user-token', 'X-App': 'sofi-agent' })
+        })
+
+        it('leaves an MCP without autonomous token unavailable in an autonomous run', async () => {
+            fakeMcp.setInternal([{ name: 'sofi' }])
+            env.llm.script(say('ok'))
+            await env.send(env.agent([], [], { internalMcps: [sofi] }), 'hola', undefined, autonomous)
+
+            expect(env.llm.opening(0).CONTEXT.unavailable_sources).toEqual(['sofi'])
         })
 
         it('does not send the id of the user to an MCP that does not use a token', async () => {
             fakeMcp.setInternal([{ name: 'open' }])
             env.llm.script({ actions: [list('open')] }, say('ok'))
-            await env.send(env.agent([], [], { internalMcps: [{ name: 'open', url: 'http://open' }] }), 'hola', undefined, undefined, { serviceToken: 'service-token' })
+            await env.send(env.agent([], [], { internalMcps: [{ name: 'open', url: 'http://open', autonomousToken: 'service-token' }] }), 'hola', undefined, autonomous)
 
             expect(fakeMcp.connectHeaders.open).toEqual({})
         })
@@ -202,7 +222,7 @@ describe('internal MCPs', () => {
         it('never sends the id of the user to the servers added by the user', async () => {
             fakeMcp.set([{ name: 'external' }])
             env.llm.script({ actions: [list('external')] }, say('ok'))
-            await env.send(env.agent(), 'hola', undefined, undefined, { serviceToken: 'service-token' })
+            await env.send(env.agent(), 'hola', undefined, autonomous)
 
             expect(fakeMcp.connectHeaders.external).toEqual({})
         })

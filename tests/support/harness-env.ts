@@ -83,7 +83,7 @@ export class HarnessEnv {
         return new Agent({ loop: new AgiLoop(), tools, guards, ...options })
     }
 
-    async send (agent: Agent, message: string, chatId?: string, options?: { executionMode?: 'interactive' | 'autonomous' }, credentials: { mcpTokens?: Record<string, string>, serviceToken?: string } = {}): Promise<RunResult> {
+    async send (agent: Agent, message: string, chatId?: string, options?: { executionMode?: 'interactive' | 'autonomous' }, credentials: { mcpTokens?: Record<string, string> } = {}): Promise<RunResult> {
         return agent.run({ input: { message, ...(chatId ? { chatId } : {}) }, ...(options ? { options } : {}), currentUser: this.user, ...credentials }) as Promise<RunResult>
     }
 

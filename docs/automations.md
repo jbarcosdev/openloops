@@ -320,13 +320,30 @@ A new `Agent` is created for every run, so the options are the same but nothing 
 
 ### Internal MCP servers in an automation
 
-An automation runs without the session of its owner, so there is no token of theirs to send to your [internal MCP servers](mcp-servers.md#internal-mcp-servers). For automations, the runner uses one token for the whole deployment, taken from `INTERNAL_MCP_TOKEN`. It replaces `{{token}}` in the headers of every internal server, and the runner also sends the id of the owner of the automation in the header `X-User-Id`, so your MCP server knows on whose behalf it acts.
+An automation runs without the session of its owner, so there is no token of theirs to send to your [internal MCP servers](mcp-servers.md#internal-mcp-servers). Each internal server can declare an `autonomousToken`, the token of a service account that is used only in autonomous runs, such as the ones of the runner, when the run brings no token for that server:
 
-- Your MCP server must accept `X-User-Id` only together with this service token. Never trust it on a request that carries the token of a user.
-- The header is added only in automations and only to internal servers that use `{{token}}`. It replaces any `X-User-Id` you configured. It is never sent to the servers added by the user.
-- Without `INTERNAL_MCP_TOKEN`, the internal servers that need a token are unavailable in the automations, and the run continues without them.
-- The value is read with the secret manager, so it can be encrypted with the `ENC:` prefix.
-- One variable serves all the internal servers. If two of them need different credentials, that is not supported yet.
+```typescript
+const runner = createAutomationRunner({
+    agent: {
+        loop: new AgiLoop(),
+        internalMcps: [
+            {
+                name: 'budget',
+                url: 'https://api.example.com/mcp',
+                headers: { Authorization: 'Bearer {{token}}' },
+                autonomousToken: process.env.BUDGET_SERVICE_TOKEN,
+            },
+        ],
+    },
+})
+```
+
+- `{{token}}` is replaced with the `autonomousToken` and the agent sends the id of the owner of the automation in the header `X-User-Id`, so your MCP server knows on whose behalf it acts.
+- Your MCP server must accept `X-User-Id` only together with that service token. Never trust it on a request that carries the token of a user.
+- The header is added only in autonomous runs and only to internal servers that use `{{token}}`. It replaces any `X-User-Id` you configured. It is never sent to the servers added by the user.
+- An interactive run never uses the `autonomousToken`. A server without one is unavailable in the automations that need a token, and the run continues without it.
+- Each server has its own token, so two servers can use different service accounts. A server that must use a service account in every run, also in chats, does not need this: write the token in the header (`Bearer eyj...`).
+- This field is temporary. It will go away when the integrations let the runner get the token of the owner.
 
 ### Running by hand
 

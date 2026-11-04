@@ -51,6 +51,7 @@ export interface InternalMcp {
     name: string
     url: string
     headers?: Record<string, string>
+    autonomousToken?: string
 }
 
 interface McpEntry {
@@ -114,7 +115,6 @@ export class Agent {
     private _internalMcps: InternalMcp[] = []
     private _mcps: McpEntry[] = []
     private mcpTokens: Record<string, string> = {}
-    private serviceToken?: string
     private mcpListing?: Promise<void>
     private mcpListingFailed = false
     private _preHooks: Function[] = []
@@ -211,9 +211,9 @@ export class Agent {
         return this.currentChat.lastAnswer
     }
 
-    async run (props: { input: ChatInput; options?: ChatSettingsProps; currentUser: CurrentUser; currentSession?: CurrentSession; mcpTokens?: Record<string, string>; serviceToken?: string }) {
+    async run (props: { input: ChatInput; options?: ChatSettingsProps; currentUser: CurrentUser; currentSession?: CurrentSession; mcpTokens?: Record<string, string> }) {
         try {
-            const { input, options, currentUser, currentSession, mcpTokens, serviceToken } = props || {}
+            const { input, options, currentUser, currentSession, mcpTokens } = props || {}
             const { chatId, message } = input || {}
 
             this.logger.debug(input, '[AGENT] Agent started')
@@ -241,7 +241,6 @@ export class Agent {
             this.currentMessage = message
             this.chatOptions = options
             this.mcpTokens = mcpTokens ?? {}
-            this.serviceToken = serviceToken
             this.model = undefined
             this.thinkingEffort = undefined
 
@@ -708,7 +707,7 @@ export class Agent {
         if (!Object.values(headers).some(value => value.includes(TOKEN_PLACEHOLDER))) return headers
 
         const own = this.mcpTokens[mcp.name]
-        const token = own || this.serviceToken
+        const token = own || (this.executionMode === 'autonomous' ? mcp.autonomousToken : undefined)
         const userId = this.currentUser?.userId
         if (!token || !userId) return undefined
 
@@ -724,7 +723,7 @@ export class Agent {
 
     private mask (error: unknown, entry?: McpEntry): string {
         let text = error instanceof Error ? error.message : String(error)
-        for (const secret of [...Object.values(this.mcpTokens), this.serviceToken, ...Object.values(entry?.server.headers ?? {})]) if (secret) text = text.split(secret).join('***')
+        for (const secret of [...Object.values(this.mcpTokens), ...Object.values(entry?.server.headers ?? {})]) if (secret) text = text.split(secret).join('***')
         return text
     }
 

@@ -159,6 +159,7 @@ const agent = new Agent({
                 Authorization: 'Bearer {{token}}',
                 'X-App': 'budget-agent',
             },
+            autonomousToken: process.env.BUDGET_SERVICE_TOKEN,
         },
     ],
 })
@@ -174,13 +175,14 @@ await agent.run({
 
 - `name` and `url` are required, and the name must be unique among the internal servers. `headers` is optional.
 - `{{token}}` in a header value is replaced with `mcpTokens[name]` of the run. A header without the placeholder is sent as written, so the other headers are plain strings. If no header uses `{{token}}`, the server needs no token.
+- `autonomousToken` is optional. It is the token of a service account, used instead of `mcpTokens[name]` only in an [autonomous run](agent.md#autonomous-mode) that brings no token for that server, and then the agent also sends the id of the user in `X-User-Id`. An interactive run never uses it. See [automations](automations.md#internal-mcp-servers-in-an-automation).
 - The token lives only in memory during the run. Do not put it in `options`, which is saved in the chat. It is masked in the connection errors the agent logs.
 - It is trusted: no approval is asked, the manifest is not reviewed or stored, and its tools are not marked as written by a third party. The tools still follow the rules of the tool pipeline, so a tool with `destructiveHint` asks the user before it runs.
 - If the token of a server is missing for a run, or it cannot be reached, the agent leaves it out for that run, writes a trace and a log, and tells the model that the source is unavailable, so it says it could not access that information. The run does not fail. It does not tell the user the details, only that the source was not reachable.
 - If a server of the user has the same name as an internal one, the one of the user is ignored for that run, so nobody can impersonate an internal server.
 - The tools are named `<name>__<tool>`, like any other MCP tool.
 
-In an automation there is no session of the user, so there is no token of theirs. See [automations](automations.md#internal-mcp-servers-in-a-automation).
+In an automation there is no session of the user, so there is no token of theirs. See [automations](automations.md#internal-mcp-servers-in-an-automation).
 
 ### Internal servers stored in the database
 
@@ -210,12 +212,12 @@ await updateInternalMcp({ id: mcp._id, payload: { enabled: false, __v: mcp.__v }
 ```
 
 - Every function needs an admin as `currentUser` and answers 403 otherwise. The sub-route separates the code, the permission is what protects it.
-- `name` and `url` are required, `type` is always `http`, `environment` is optional and `enabled` defaults to `true`. A disabled server is not loaded. The name must be unique among the internal servers (409).
+- `name` and `url` are required, `type` is always `http`, `environment` and `autonomousToken` are optional and `enabled` defaults to `true`. A disabled server is not loaded. The name must be unique among the internal servers (409).
 - A header with `{{token}}` works as in the declared ones: it uses `mcpTokens[name]` of the run, or the service token in an automation. A header with the token written in it (`Bearer eyj...`) is sent as it is and needs nothing from the run.
 - Deleting is permanent. Internal servers have no owner, so they are not listed to any user.
 - The normal functions (`getMcpServerById`, `updateMcpServer`, `deleteMcpServer`, `decideMcpServerTrust`, and the lists) never see them, not even for an admin, and `internal` and `enabled` in the payload of a user are ignored.
 - If a server declared in code has the same name, the one in code wins. A server of a user with the same name as an internal one is ignored for that run.
-- `headers` are stored as written, like the ones of the servers of the users. Mask them in your controller before sending a record to a client.
+- `headers` and `autonomousToken` are stored as written, like the headers of the servers of the users. Mask them in your controller before sending a record to a client.
 - Run `ensureIndexes` after updating: it adds the unique index of the names of the internal servers.
 
 ## Tools of MCP servers

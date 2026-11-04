@@ -9,7 +9,7 @@ import { SyncAutomationRunUseCase } from '@services/automations/use-cases/sync-a
 import { useHarness, warehouseTools, fakeMcp, say, act } from '../support'
 import { fakeMongo } from '../support/fake-mongo-client'
 
-jest.mock('@common/utils/secret-manager', () => ({ secretManager: { get: (key: string): string => key === 'OPENLOOPS_DB_NAME' ? 'openloops-test' : key === 'INTERNAL_MCP_TOKEN' ? 'service-token' : key === 'JWT_SECRET' ? 'test-secret' : '' } }))
+jest.mock('@common/utils/secret-manager', () => ({ secretManager: { get: (key: string): string => key === 'OPENLOOPS_DB_NAME' ? 'openloops-test' : key === 'JWT_SECRET' ? 'test-secret' : '' } }))
 jest.mock('@common/repositories', () => jest.requireActual('@common/repositories'))
 jest.mock('@common/repositories/mongo-db.client', () => ({
     MongoClient: class {},
@@ -89,14 +89,11 @@ describe('the runner of automations', () => {
         describe('with internal MCPs', () => {
             const sofi = { name: 'sofi', url: 'https://api.sofi.cash/mcp', headers: { Authorization: 'Bearer {{token}}' } }
 
-            afterEach(() => { delete process.env.INTERNAL_MCP_TOKEN })
-
-            it('gives them the service token and the id of the owner of the automation', async () => {
-                process.env.INTERNAL_MCP_TOKEN = 'encrypted-or-not'
+            it('gives them their autonomous token and the id of the owner of the automation', async () => {
                 fakeMcp.setInternal([{ name: 'sofi' }])
                 env.llm.script({ actions: [act('search_tools', { server: 'sofi' })] }, say('done'))
                 await createAutomationFixture()
-                const runner = createAutomationRunner({ agent: { internalMcps: [sofi] } })
+                const runner = createAutomationRunner({ agent: { internalMcps: [{ ...sofi, autonomousToken: 'service-token' }] } })
 
                 await runner.tick()
                 await runner.stop()
@@ -105,7 +102,7 @@ describe('the runner of automations', () => {
                 expect(runs().docs[0].status).toBe('completed')
             })
 
-            it('leaves them unavailable, without failing the run, when there is no service token', async () => {
+            it('leaves them unavailable, without failing the run, when they have no autonomous token', async () => {
                 fakeMcp.setInternal([{ name: 'sofi' }])
                 env.llm.script(say('done'))
                 await createAutomationFixture()

@@ -4,10 +4,11 @@ export interface StoredInternalMcp {
     name: string
     url: string
     headers?: Record<string, string>
+    autonomousToken?: string
 }
 
 export async function listActiveInternalMcps (): Promise<StoredInternalMcp[]> {
     const items = await new McpServerRepository().findActiveInternals()
 
-    return items.flatMap(item => item.name && item.url ? [{ name: item.name, url: item.url, ...(item.headers ? { headers: item.headers } : {}) }] : [])
+    return items.flatMap(item => item.name && item.url ? [{ name: item.name, url: item.url, ...(item.headers ? { headers: item.headers } : {}), ...(item.autonomousToken ? { autonomousToken: item.autonomousToken } : {}) }] : [])
 }

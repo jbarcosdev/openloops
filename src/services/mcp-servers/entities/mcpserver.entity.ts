@@ -25,6 +25,7 @@ export interface McpServerProps extends BaseEntityProps {
     internal?: boolean
     enabled?: boolean
     environment?: string
+    autonomousToken?: string
 }
 
 export class McpServer extends BaseEntity {
@@ -45,6 +46,7 @@ export class McpServer extends BaseEntity {
             props.internal,
             props.enabled,
             props.environment,
+            props.autonomousToken,
         )
     }
 
@@ -62,6 +64,7 @@ export class McpServer extends BaseEntity {
         public internal?: boolean,
         public enabled?: boolean,
         public environment?: string,
+        public autonomousToken?: string,
     ) {
         super(props)
     }
@@ -81,6 +84,7 @@ export class McpServer extends BaseEntity {
             internal: this.internal,
             enabled: this.enabled,
             environment: this.environment,
+            autonomousToken: this.autonomousToken,
         }
     }
 
@@ -104,6 +108,7 @@ export class McpServer extends BaseEntity {
         this.lastError = null
         this.internal = undefined
         this.enabled = undefined
+        this.autonomousToken = undefined
         return this
     }
 

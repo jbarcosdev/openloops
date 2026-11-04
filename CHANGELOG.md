@@ -4,12 +4,19 @@ All notable changes to `openloops` are written here, newest first. The format fo
 
 ## Unreleased
 
+This version breaks the API of the internal MCP servers in automations. Before, the runner sent one token for the whole deployment, from `INTERNAL_MCP_TOKEN`. Now each internal server declares its own. To migrate: delete `INTERNAL_MCP_TOKEN` and, in each internal server that used `{{token}}` in automations, add `autonomousToken: process.env.<YOUR_VARIABLE>` with the token of the service account that it needs. Read [automations](docs/automations.md#internal-mcp-servers-in-an-automation).
+
 ### Added
 
 - **Internal MCP servers stored in the database**, managed from a back office. `createInternalMcp`, `updateInternalMcp`, `getInternalMcpById`, `listInternalMcps` and `deleteInternalMcp` in the new entry point `openloops/mcps/admin`, all for admins only. The agent loads the enabled ones in every run next to the ones declared in code, with the same rules: trusted, no manifest review, destructive tools still ask. `{{token}}` in a header uses the token of the run, a token written in the header is sent as it is. Read [MCP servers](docs/mcp-servers.md#internal-servers-stored-in-the-database).
 - `internal` and `enabled` in `McpServerProps`. A record without them is a normal server, so no migration is needed.
 - A unique index on the name of the internal servers: run `ensureIndexes`.
+- `autonomousToken` in the internal MCP servers, declared in code (`InternalMcp`) or stored (`createInternalMcp` and `updateInternalMcp`). It is the token of a service account, used for `{{token}}` only in an autonomous run that brings no token for that server, and then the agent sends the id of the user in `X-User-Id`. An interactive run never uses it. It is temporary, until the integrations give the runner the token of the owner.
 - `environment` in `McpServerProps`, an optional text for every MCP server, internal or not, to say which environment it belongs to. It is only a label. The functions of `openloops/mcps` and of `openloops/mcps/admin` accept it, and a blank text removes it.
+
+### Removed
+
+- `INTERNAL_MCP_TOKEN` and the `serviceToken` parameter of `Agent.run`. Use `autonomousToken` in each internal MCP server.
 
 ### Changed
 

@@ -72,7 +72,7 @@ Omit `chatId` to start a brand-new chat. Pass an existing `chatId` to continue a
 
 `currentSession` is optional. It carries device, location and locale, which skills use to answer in the right time zone and language.
 
-`mcpTokens` is optional. It gives the token of the user to each [internal MCP server](mcp-servers.md#internal-mcp-servers), by name. It is never saved. `serviceToken` is the token that the runner of [automations](automations.md#internal-mcp-servers-in-a-automation) passes when there is no session of the user. You do not need it unless you write your own scheduler.
+`mcpTokens` is optional. It gives the token of the user to each [internal MCP server](mcp-servers.md#internal-mcp-servers), by name. It is never saved. In an [autonomous run](#autonomous-mode) with no token for a server, the `autonomousToken` of that server is used, see [automations](automations.md#internal-mcp-servers-in-an-automation).
 
 ## Autonomous mode
 
