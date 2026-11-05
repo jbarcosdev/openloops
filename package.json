@@ -108,7 +108,7 @@
   "dependencies": {
     "@earendil-works/pi-ai": "^1.4.0",
     "@modelcontextprotocol/sdk": "^1.32.2",
-    "@sentry/node": "^11.10.0",
+    "@sentry/node": "^11.11.0",
     "bcryptjs": "^3.0.3",
     "croner": "^11.0.0",
     "cryptr": "^6.4.0",
