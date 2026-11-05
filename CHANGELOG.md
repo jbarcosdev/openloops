@@ -4,6 +4,10 @@ All notable changes to `openloops` are written here, newest first. The format fo
 
 ## Unreleased
 
+### Changed
+
+- `pino-pretty` moved from `dependencies` to `devDependencies`, so it is no longer installed with the package. The logger loads it only when `IS_LOCAL` is `true` or `NODE_ENV` is `development`, and falls back to plain JSON logs if it is not installed. If you want the colored logs in your own local environment, install it: `yarn add -D pino-pretty`.
+
 ## 0.7.6
 
 ### Changed

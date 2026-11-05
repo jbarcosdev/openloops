@@ -1,14 +1,25 @@
 import 'dotenv/config'
 import pino from 'pino'
-import pretty from 'pino-pretty'
 
-const stream = pretty({ colorize: true })
+let prettyStream: any
+
+function localStream () {
+	if (prettyStream === undefined) {
+		try {
+			prettyStream = require('pino-pretty')({ colorize: true })
+		} catch {
+			prettyStream = null
+		}
+	}
+
+	return prettyStream ?? undefined
+}
 
 type LogLevel = 'info' | 'warn' | 'debug' | 'error' | 'fatal'
 
 export class Logger {
 	private IS_LOCAL = process.env.IS_LOCAL === 'true' || process.env.NODE_ENV === 'development'
-	private logger = this.IS_LOCAL ? pino({ level: 'debug' }, stream) : pino({ level: 'info' })
+	private logger = this.IS_LOCAL ? pino({ level: 'debug' }, localStream()) : pino({ level: 'info' })
 
 	private log(level: LogLevel, obj?: any, msg?: string) {
 		if (typeof obj === 'string') {
