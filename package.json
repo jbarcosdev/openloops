@@ -106,9 +106,9 @@
     "eval:list": "ts-node --project evals/tsconfig.json evals/run.ts list"
   },
   "dependencies": {
-    "@earendil-works/pi-ai": "^1.4.0",
+    "@earendil-works/pi-ai": "^1.5.0",
     "@modelcontextprotocol/sdk": "^1.32.2",
-    "@sentry/node": "^11.10.0",
+    "@sentry/node": "^11.11.0",
     "bcryptjs": "^3.0.3",
     "croner": "^11.0.0",
     "cryptr": "^6.4.0",
@@ -127,7 +127,7 @@
     "@types/sanitize-html": "^2.16.2",
     "jest": "^30.5.2",
     "ts-jest": "^29.4.15",
-    "tsc-alias": "^1.9.9",
+    "tsc-alias": "^1.9.10",
     "tsconfig-paths": "^4.2.0",
     "tsup": "^9.0.0",
     "typescript": "^6.0.3"
