@@ -98,6 +98,7 @@ What it does:
 - It never reaches a private network. Loopback, private ranges, link-local (cloud metadata included) and IPv6 equivalents are refused, for the first URL and for each redirect, and the check runs on the address the connection really uses.
 - The limits are fixed: 15 seconds, 10 MB of body and 50000 characters of text. When a limit cuts the content, `truncated` is `true`.
 - The tool has a `notice`, because the content of a page is untrusted.
+- The description tells the model to prefer a source that returns plain text or JSON and needs no key, such as a public API it knows, over a regular web page, which is long and noisy, and to search when it does not know one instead of guessing a URL.
 
 What it does not do:
 

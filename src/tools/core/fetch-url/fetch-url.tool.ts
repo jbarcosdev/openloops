@@ -165,7 +165,7 @@ async function fetchUrl (value: string, signal: AbortSignal): Promise<Output['da
 
 export const fetchUrlTool = new Tool({
     name: 'fetch_url',
-    description: 'Fetch a web page (GET) and return its content as text. It does not run JavaScript, so pages that load their content in the browser (SPAs) come back empty or incomplete: if the text is almost empty, tell the user instead of retrying. No login, cookies or anti-bot, no PDFs or binaries, no private network addresses. Long pages are truncated.',
+    description: 'Fetch a URL (GET) and return its content as text. Prefer plain text or JSON sources that need no key (a public API you know) over regular web pages, which are long and noisy; if you know none, search instead of guessing. No JavaScript: pages built in the browser come back empty, so tell the user instead of retrying. No login, cookies, anti-bot, PDFs or private addresses. Long content is truncated.',
     destructive: false,
     notice: NOTICE,
     parameters: {
