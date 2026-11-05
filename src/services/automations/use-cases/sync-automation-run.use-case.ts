@@ -11,6 +11,8 @@ export interface Params extends BaseUseCaseParams {
 
 export type Output = AutomationRunProps | null
 
+export const CHAT_DELETED_MESSAGE = 'The chat of this run was deleted while it waited for the user'
+
 export const LOST_WORKER_MESSAGE = 'The worker that was running this automation was lost before it finished'
 
 export class SyncAutomationRunUseCase extends BaseUseCase<Params, Output> {
@@ -36,10 +38,12 @@ export class SyncAutomationRunUseCase extends BaseUseCase<Params, Output> {
 		if (!run.chatId) return run
 
 		const chat = await getChatById({ id: String(run.chatId), scope: runnerScope })
-		const status = chat?.state?.status
+		if (!chat) return await this.settle(run, 'failed', now, { code: 'CHAT_DELETED', message: CHAT_DELETED_MESSAGE })
+
+		const status = chat.state?.status
 
 		if (status === 'idle') return await this.settle(run, 'completed', now)
-		if (status === 'failed') return await this.settle(run, 'failed', now, { code: chat?.state?.lastError?.code, message: chat?.state?.lastError?.message ?? 'The run failed' })
+		if (status === 'failed') return await this.settle(run, 'failed', now, { code: chat.state?.lastError?.code, message: chat.state?.lastError?.message ?? 'The run failed' })
 
 		return run
 	}

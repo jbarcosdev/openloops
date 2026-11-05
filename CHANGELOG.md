@@ -6,12 +6,15 @@ All notable changes to `openloops` are written here, newest first. The format fo
 
 ### Added
 
+- `status` in `listAutomationRunsByAutomation`, as `listAutomationRunsByUser` already had, so a page of runs is filtered before it is paginated.
+- Four codes for the failures of the model, saved in `state.lastError.code` with their own message: `LLM_AUTH_FAILED`, `LLM_CONTEXT_TOO_LONG`, `LLM_CONTENT_FILTERED` and `LLM_INCOMPLETE_RESPONSE`. They used to end in `LLM_FAILED`, so a client that compared `lastError.code` with it to show a generic message must handle the new ones. The first three are not retryable. Read [agent](docs/agent.md#error-handling).
 - `title` in `ChatProps`, a short text that names the chat. In an interactive run the `fast_responder` writes it in the first message of a chat that has none, in the language of the user, and it never replaces a title that exists. Rename a chat with `updateChat({ payload: { title } })` and remove the title with `unset: { title: '' }`. A chat that comes back without a title (the model returned nothing usable) is asked again in its next message. An autonomous run skips the `fast_responder`, so its chat has no title unless you set one. Read [chats](docs/chats.md#the-title).
 - `migrateChatTitles(db, { dryRun })` in `openloops/db`, which gives each chat without a title its first message of the user, on one line and cut to 80 characters. It can be run again without changing anything. In a checkout of this repository: `yarn migrate:chat-titles --dry-run` and `yarn migrate:chat-titles`. **Run it once when you update from an earlier version**: read [the migration to 0.8.0](docs/chats.md#migrating-to-080).
 - `select` in `listChatsByUser`, to get only some fields of each chat, such as `{ title: 1, updatedAt: 1 }` for a history list. Without it the chats come complete, as before. `search` still looks in the messages when they are not returned.
 
 ### Changed
 
+- A paused run of an automation whose chat was deleted is closed as `failed` with the code `CHAT_DELETED`, when the runner syncs it. Before it stayed `paused` for ever, and every later occurrence was skipped. The automation runs again on its next occurrence.
 - `search` in `listChatsByUser` also matches the title of the chat, not only the content of its messages.
 - The `fast_responder` skill is now 2.5.0 and returns an optional `title`, and the AgiLoop is now 1.10.0. The context that the loop sends to the skill has `needs_title: true` while the chat has no title.
 - `sanitizeString`, which cleans every text field of the entities and the email of a user, no longer uses `sanitize-html`, so that package and its dependencies are gone. It still removes tags, scripts, styles and comments and keeps the text, but now `&` stays as it is (before it was saved as `&amp;`) HTML entities are no longer decoded (`&copy;` stays `&copy;`, before it became `©`), and a `<` or `>` that does not belong to a tag is saved as `&lt;` or `&gt;` (before the text that followed a lone `<` was lost). Values already saved do not change.

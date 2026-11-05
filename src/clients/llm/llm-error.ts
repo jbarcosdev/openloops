@@ -1,4 +1,4 @@
-export type LLMErrorCode = 'LLM_RATE_LIMITED' | 'LLM_QUOTA_EXCEEDED' | 'LLM_UNAVAILABLE' | 'LLM_TIMEOUT' | 'LLM_UNSUPPORTED_PARAMETER' | 'LLM_FAILED'
+export type LLMErrorCode = 'LLM_RATE_LIMITED' | 'LLM_QUOTA_EXCEEDED' | 'LLM_UNAVAILABLE' | 'LLM_TIMEOUT' | 'LLM_UNSUPPORTED_PARAMETER' | 'LLM_AUTH_FAILED' | 'LLM_CONTEXT_TOO_LONG' | 'LLM_CONTENT_FILTERED' | 'LLM_INCOMPLETE_RESPONSE' | 'LLM_FAILED'
 
 const USER_MESSAGES: Record<LLMErrorCode, string> = {
     LLM_RATE_LIMITED: 'The model is receiving too many requests right now. Please try again in a few seconds.',
@@ -6,6 +6,10 @@ const USER_MESSAGES: Record<LLMErrorCode, string> = {
     LLM_UNAVAILABLE: 'The model provider is temporarily unavailable. Please try again in a moment.',
     LLM_TIMEOUT: 'The model did not answer in time. Please try again.',
     LLM_UNSUPPORTED_PARAMETER: 'The model does not accept one of the request settings. Please try again.',
+    LLM_AUTH_FAILED: 'The credentials of the model provider were rejected. Please check the configuration of the provider.',
+    LLM_CONTEXT_TOO_LONG: 'The conversation is too long for the model. Please start a new chat or shorten the message.',
+    LLM_CONTENT_FILTERED: 'The model provider blocked this request or its answer. Please rephrase the message.',
+    LLM_INCOMPLETE_RESPONSE: 'The model stopped before it finished its answer. Please try again.',
     LLM_FAILED: 'The model request failed. Please try again.',
 }
 
@@ -15,6 +19,10 @@ const RETRYABLE: Record<LLMErrorCode, boolean> = {
     LLM_UNAVAILABLE: true,
     LLM_TIMEOUT: true,
     LLM_UNSUPPORTED_PARAMETER: true,
+    LLM_AUTH_FAILED: false,
+    LLM_CONTEXT_TOO_LONG: false,
+    LLM_CONTENT_FILTERED: false,
+    LLM_INCOMPLETE_RESPONSE: true,
     LLM_FAILED: true,
 }
 
@@ -47,6 +55,10 @@ function classify (detail: string): LLMErrorCode {
     if (rejectsSamplingParameter(detail)) return 'LLM_UNSUPPORTED_PARAMETER'
     if (/PerDay|per day|billing|insufficient_quota|exceeded your current quota[\s\S]*(daily|day)/i.test(detail) && !/per.?min/i.test(detail)) return 'LLM_QUOTA_EXCEEDED'
     if (/\b429\b|rate.?limit|RESOURCE_EXHAUSTED|too many requests/i.test(detail)) return 'LLM_RATE_LIMITED'
+    if (/context.?(length|window)|prompt is too long|too many tokens|input.{0,40}exceeds|maximum.{0,20}tokens.{0,40}(input|prompt|context)/i.test(detail)) return 'LLM_CONTEXT_TOO_LONG'
+    if (/content.?(filter|policy)|safety|responsible.?ai|blocked.{0,30}(policy|safety)/i.test(detail)) return 'LLM_CONTENT_FILTERED'
+    if (/\b40[13]\b|unauthorized|forbidden|invalid.{0,10}api.?key|authentication|permission.?denied/i.test(detail)) return 'LLM_AUTH_FAILED'
+    if (/incomplete|truncated|max.?tokens|finish.?reason.{0,10}length|stop.?reason.{0,10}(length|max)/i.test(detail)) return 'LLM_INCOMPLETE_RESPONSE'
     if (/\b50[0-9]\b|unavailable|overloaded|timeout|timed out|econn|network/i.test(detail)) return 'LLM_UNAVAILABLE'
     return 'LLM_FAILED'
 }

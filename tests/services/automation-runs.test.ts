@@ -238,6 +238,37 @@ describe('running automations', () => {
             expect(automation().lastRunStatus).toBe('failed')
         })
 
+        it('becomes failed with CHAT_DELETED when the chat was deleted, so the automation is free again', async () => {
+            const { runId, chatId } = await pause()
+            fakeMongo.collection('chats').docs.find(doc => String(doc._id) === String(chatId))!.deletedAt = new Date('2026-10-14T08:30:00Z')
+
+            const data = await sync(runId, new Date('2026-10-14T09:00:00Z'))
+
+            expect(data).toMatchObject({ status: 'failed', error: { code: 'CHAT_DELETED' } })
+            expect(at(runs().docs[0].finishedAt)).toBe('2026-10-14T09:00:00.000Z')
+            expect(automation().lastRunStatus).toBe('failed')
+            expect(automation().activeRunId).toBeUndefined()
+        })
+
+        it('becomes failed with CHAT_DELETED when the chat no longer exists', async () => {
+            const { runId, chatId } = await pause()
+            const chats = fakeMongo.collection('chats')
+            chats.docs.splice(chats.docs.findIndex(doc => String(doc._id) === String(chatId)), 1)
+
+            expect(await sync(runId, new Date('2026-10-14T09:00:00Z'))).toMatchObject({ status: 'failed', error: { code: 'CHAT_DELETED' } })
+        })
+
+        it('runs the next occurrence normally after the chat was deleted', async () => {
+            const { runId, chatId } = await pause()
+            fakeMongo.collection('chats').docs.find(doc => String(doc._id) === String(chatId))!.deletedAt = new Date('2026-10-14T08:30:00Z')
+            await sync(runId, new Date('2026-10-14T09:00:00Z'))
+
+            const data = await claim('w1', new Date('2026-10-15T08:00:00Z'))
+
+            expect(data.claimed).toHaveLength(1)
+            expect(data.skipped).toHaveLength(0)
+        })
+
         it('makes the next occurrence skip, and records it', async () => {
             await pause()
 

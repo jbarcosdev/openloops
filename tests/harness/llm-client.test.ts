@@ -52,6 +52,27 @@ describe('LLMError classification', () => {
         expect(LLMError.fromProvider('something odd').code).toBe('LLM_FAILED')
     })
 
+    it.each([
+        ['401 {"error":{"type":"authentication_error","message":"invalid x-api-key"}}', 'LLM_AUTH_FAILED', false],
+        ['403 Forbidden: permission denied for this model', 'LLM_AUTH_FAILED', false],
+        ['400 prompt is too long: 250000 tokens > 200000 maximum', 'LLM_CONTEXT_TOO_LONG', false],
+        ["This model's maximum context length is 128000 tokens. However, your messages resulted in 130000 tokens", 'LLM_CONTEXT_TOO_LONG', false],
+        ['The input token count exceeds the maximum number of tokens allowed', 'LLM_CONTEXT_TOO_LONG', false],
+        ['400 Your request was rejected by the content filter', 'LLM_CONTENT_FILTERED', false],
+        ['Response blocked due to SAFETY', 'LLM_CONTENT_FILTERED', false],
+        ['The response was truncated because it reached max_tokens', 'LLM_INCOMPLETE_RESPONSE', true],
+    ])('tells apart %s', (detail, code, retryable) => {
+        const error = LLMError.fromProvider(detail)
+
+        expect(error.code).toBe(code)
+        expect(error.isRetryable).toBe(retryable)
+        expect(error.userMessage).not.toBe(LLMError.fromProvider('something odd').userMessage)
+    })
+
+    it('still sees a rate limit that talks about tokens', () => {
+        expect(LLMError.fromProvider('429 rate limit reached: too many tokens per minute').code).toBe('LLM_RATE_LIMITED')
+    })
+
     it('does not mistake an unrelated 400 for a sampling error', () => {
         expect(rejectsSamplingParameter('invalid api key')).toBe(false)
         expect(rejectsSamplingParameter(undefined)).toBe(false)
@@ -238,7 +259,7 @@ describe('LLMClient.chat', () => {
         })
 
         it('does not retry unrelated errors', async () => {
-            mockModels.complete.mockResolvedValue(failure('invalid api key'))
+            mockModels.complete.mockResolvedValue(failure('something odd happened'))
 
             await expect(new LLMClient().chat(params())).rejects.toMatchObject({ code: 'LLM_FAILED' })
             expect(mockModels.complete).toHaveBeenCalledTimes(1)

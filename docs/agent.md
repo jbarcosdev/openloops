@@ -223,4 +223,19 @@ For every chat, `openloops` persists the chat and its messages, the tasks, every
 
 ## Error handling
 
-If a turn fails for any reason, `Agent` marks the chat as failed, saves it, closes any open MCP session and returns the error in `result.error`. LLM failures such as rate limits, exhausted quota or a model that does not answer in time (`LLM_TIMEOUT`) carry a user-facing message and a retryable flag in `data.state.lastError`.
+If a turn fails for any reason, `Agent` marks the chat as failed, saves it, closes any open MCP session and returns the error in `result.error`. LLM failures such as rate limits, exhausted quota or a model that does not answer in time (`LLM_TIMEOUT`) carry a user-facing message and a retryable flag in `data.state.lastError`, together with a code that says what failed:
+
+| Code | Meaning | Retryable |
+| --- | --- | --- |
+| `LLM_RATE_LIMITED` | Too many requests. | yes |
+| `LLM_QUOTA_EXCEEDED` | The quota of the provider is exhausted. | no |
+| `LLM_UNAVAILABLE` | The provider is unavailable or overloaded. | yes |
+| `LLM_TIMEOUT` | The model did not answer in time. | yes |
+| `LLM_UNSUPPORTED_PARAMETER` | The model rejects a request setting. | yes |
+| `LLM_AUTH_FAILED` | The provider rejected the credentials. | no |
+| `LLM_CONTEXT_TOO_LONG` | The conversation does not fit in the context of the model. | no |
+| `LLM_CONTENT_FILTERED` | The provider blocked the request or the answer. | no |
+| `LLM_INCOMPLETE_RESPONSE` | The model stopped before it finished. | yes |
+| `LLM_FAILED` | Anything else. | yes |
+
+The provider tells these apart with free text, so a message that does not match any of them ends in `LLM_FAILED`.

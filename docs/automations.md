@@ -246,7 +246,7 @@ A revoked token is checked after its signature, so an invalid token never reache
 Every execution is a run.
 
 ```typescript
-const byAutomation = await listAutomationRunsByAutomation({ automationId, options: { page: 1, limit: 20 }, currentUser })
+const byAutomation = await listAutomationRunsByAutomation({ automationId, status: 'paused', options: { page: 1, limit: 20 }, currentUser })
 
 const byUser = await listAutomationRunsByUser({ status: 'failed', currentUser })
 ```
@@ -267,8 +267,8 @@ const byUser = await listAutomationRunsByUser({ status: 'failed', currentUser })
 | `queued` | An event waiting for its turn. |
 | `running` | In progress. |
 | `completed` | The agent finished its task. |
-| `paused` | The agent needs the user: it asked for the approval of a tool or an MCP server, or asked a question. The chat is waiting. When the user answers in the chat and it finishes, the run becomes `completed` or `failed`. |
-| `failed` | It failed. `error` says why: the model did not answer in time, a guardrail blocked the instructions, the owner no longer exists, or the worker was lost. |
+| `paused` | The agent needs the user: it asked for the approval of a tool or an MCP server, or asked a question. The chat is waiting. When the user answers in the chat and it finishes, the run becomes `completed` or `failed`. If the chat is deleted while the run waits, the runner closes it as `failed` with the code `CHAT_DELETED`, so the automation runs again on its next occurrence. |
+| `failed` | It failed. `error` says why: the model did not answer in time, a guardrail blocked the instructions, the owner no longer exists, the worker was lost (`WORKER_LOST`), or the chat was deleted while the run waited for the user (`CHAT_DELETED`). |
 | `skipped` | It was not started and `skipReason` says why: a scheduled run was due but the previous one was still `paused`, an event found the queue full, or the event trigger was turned off or removed, or the automation deleted, while the event waited. It is recorded so you can notify the user. |
 
 ## The runner

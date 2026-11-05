@@ -391,6 +391,14 @@ describe('automations', () => {
             expect(data.map(run => run.status)).toEqual(['failed', 'completed'])
         })
 
+        it('lists the runs of an automation filtered by status', async () => {
+            const { automationId } = await seed()
+            const list = new ListAutomationRunsByAutomationUseCase()
+
+            expect((await list.execute({ automationId: String(automationId), status: 'failed', currentUser: user })).items.map(run => run.status)).toEqual(['failed'])
+            expect((await list.execute({ automationId: String(automationId), status: 'paused', currentUser: user })).items).toHaveLength(0)
+        })
+
         it('lists the runs of a user and can filter by status', async () => {
             await seed()
             const list = new ListAutomationRunsByUserUseCase()
