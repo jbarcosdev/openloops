@@ -4,31 +4,51 @@ All notable changes to `openloops` are written here, newest first. The format fo
 
 ## Unreleased
 
-This version breaks the API of the internal MCP servers in automations. Before, the runner sent one token for the whole deployment, from `INTERNAL_MCP_TOKEN`. Now each internal server declares its own. To migrate: delete `INTERNAL_MCP_TOKEN` and, in each internal server that used `{{token}}` in automations, add `autonomousToken: process.env.<YOUR_VARIABLE>` with the token of the service account that it needs. Read [automations](docs/automations.md#internal-mcp-servers-in-an-automation).
+## 0.7.6
+
+### Changed
+
+- The description of `fetchUrlTool` tells the model to prefer a source that returns plain text or JSON and needs no key, such as a public API it knows, over a regular web page, and to search when it knows none instead of guessing a URL.
+
+## 0.7.4
 
 ### Added
 
 - `fetchUrlTool` in `openloops/tools`, a basic `curl` for the model: GET to an `http` or `https` URL, HTML converted to text with no dependencies. It refuses private and internal addresses, has fixed limits and does not run JavaScript. Opt-in with `agent.addTool(fetchUrlTool)`. Read [tools](docs/tools.md#fetchurltool).
-- **Internal MCP servers stored in the database**, managed from a back office. `createInternalMcp`, `updateInternalMcp`, `getInternalMcpById`, `listInternalMcps` and `deleteInternalMcp` in the new entry point `openloops/mcps/admin`, all for admins only. The agent loads the enabled ones in every run next to the ones declared in code, with the same rules: trusted, no manifest review, destructive tools still ask. `{{token}}` in a header uses the token of the run, a token written in the header is sent as it is. Read [MCP servers](docs/mcp-servers.md#internal-servers-stored-in-the-database).
-- `internal` and `enabled` in `McpServerProps`. A record without them is a normal server, so no migration is needed.
-- A unique index on the name of the internal servers: run `ensureIndexes`.
-- `autonomousToken` in the internal MCP servers declared in code (`InternalMcp`), not in the stored ones. It is the token of a service account, used for `{{token}}` only in an autonomous run that brings no token for that server, and then the agent sends the id of the user in `X-User-Id`. An interactive run never uses it. It is temporary, until the integrations give the runner the token of the owner.
-- `environment` in `McpServerProps`, an optional text for every MCP server, internal or not, to say which environment it belongs to. It is only a label. The functions of `openloops/mcps` and of `openloops/mcps/admin` accept it, and a blank text removes it.
-
-### Removed
-
-- `INTERNAL_MCP_TOKEN` and the `serviceToken` parameter of `Agent.run`. Use `autonomousToken` in each internal MCP server.
 
 ### Changed
 
 - The `notice` of a tool now goes in every observation of its results, next to `output`, in the turns that follow and in failed calls too, so the model sees it as long as the content is in its context. Before, it only showed when a tool was described by `search_tools`, and a local tool never showed it. The agent saves it in the new `notice` field of `AgentAction` when it runs the tool, an action saved earlier has none. The AgiLoop is now 1.9.0. Read [tools](docs/tools.md#notice).
 - The notice of the tools of external MCP servers, of `webSearchTool` and of `fetchUrlTool` is shorter, because it repeats in every observation.
 - `webSearchTool` tells the model that its results are snippets that can be outdated and use many tokens, and to read a source it already knows first when it has a tool to read pages. It also carries a `notice`, because the results come from the internet.
+- `CurrentUser.isFreePlan()` always returned `false`, now it is `true` for a user that is not premium.
+- `login` and `issuePasswordResetToken` find the user whatever the case of the email or the username, and ignore spaces around it.
+
+## 0.7.3
+
+### Changed
+
+- `autonomousToken` is only accepted by the internal MCP servers declared in code (`InternalMcp`). The stored ones (`createInternalMcp` and `updateInternalMcp`) no longer take it, so the token never goes in the database.
+
+## 0.7.1
+
+### Added
+
+- **Internal MCP servers stored in the database**, managed from a back office. `createInternalMcp`, `updateInternalMcp`, `getInternalMcpById`, `listInternalMcps` and `deleteInternalMcp` in the new entry point `openloops/mcps/admin`, all for admins only. The agent loads the enabled ones in every run next to the ones declared in code, with the same rules: trusted, no manifest review, destructive tools still ask. `{{token}}` in a header uses the token of the run, a token written in the header is sent as it is. Read [MCP servers](docs/mcp-servers.md#internal-servers-stored-in-the-database).
+- `internal` and `enabled` in `McpServerProps`. A record without them is a normal server, so no migration is needed.
+- A unique index on the name of the internal servers: run `ensureIndexes`.
+- `autonomousToken` in the internal MCP servers, declared in code (`InternalMcp`) or stored (`createInternalMcp` and `updateInternalMcp`). It is the token of a service account, used for `{{token}}` only in an autonomous run that brings no token for that server, and then the agent sends the id of the user in `X-User-Id`. An interactive run never uses it. It is temporary, until the integrations give the runner the token of the owner.
+- `environment` in `McpServerProps`, an optional text for every MCP server, internal or not, to say which environment it belongs to. It is only a label. The functions of `openloops/mcps` and of `openloops/mcps/admin` accept it, and a blank text removes it.
+
+### Changed
+
 - The functions of `openloops/mcps` never see an internal server, not even for an admin, and ignore `internal` and `enabled` in the payload of a user.
 - `listMcpServersByUser` failed because it sent no scope to the repository, now it lists the servers of the user.
 - The connection errors of an internal server mask the values of its headers in the logs.
-- `CurrentUser.isFreePlan()` always returned `false`, now it is `true` for a user that is not premium.
-- `login` and `issuePasswordResetToken` find the user whatever the case of the email or the username, and ignore spaces around it.
+
+### Removed
+
+- `INTERNAL_MCP_TOKEN` and the `serviceToken` parameter of `Agent.run`. Use `autonomousToken` in each internal MCP server.
 
 ## 0.7.0
 
