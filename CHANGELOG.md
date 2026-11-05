@@ -8,6 +8,7 @@ This version breaks the API of the internal MCP servers in automations. Before, 
 
 ### Added
 
+- `fetchUrlTool` in `openloops/tools`, a basic `curl` for the model: GET to an `http` or `https` URL, HTML converted to text with no dependencies. It refuses private and internal addresses, has fixed limits and does not run JavaScript. Opt-in with `agent.addTool(fetchUrlTool)`. Read [tools](docs/tools.md#fetchurltool).
 - **Internal MCP servers stored in the database**, managed from a back office. `createInternalMcp`, `updateInternalMcp`, `getInternalMcpById`, `listInternalMcps` and `deleteInternalMcp` in the new entry point `openloops/mcps/admin`, all for admins only. The agent loads the enabled ones in every run next to the ones declared in code, with the same rules: trusted, no manifest review, destructive tools still ask. `{{token}}` in a header uses the token of the run, a token written in the header is sent as it is. Read [MCP servers](docs/mcp-servers.md#internal-servers-stored-in-the-database).
 - `internal` and `enabled` in `McpServerProps`. A record without them is a normal server, so no migration is needed.
 - A unique index on the name of the internal servers: run `ensureIndexes`.

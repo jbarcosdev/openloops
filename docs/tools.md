@@ -75,6 +75,33 @@ agent.addTool(webSearchTool)
 
 Requires a [Serper](https://serper.dev) API key. Set `SERPER_API_KEY` in your `.env`.
 
+### `fetchUrlTool`
+
+```typescript
+import { fetchUrlTool } from 'openloops/tools'
+
+agent.addTool(fetchUrlTool)
+```
+
+A basic `curl` for the model: it makes a GET request to an `http` or `https` URL and returns the content as text in `data` (`url` after redirects, `status`, `contentType`, `text` and `truncated`). It has no dependencies and no configuration. Like any tool it is opt-in, so the agent can reach the network only if you add it.
+
+What it does:
+
+- HTML becomes plain text: scripts, styles and comments are dropped, headings become `#`, list items `- `, and links `text (absolute url)`. JSON, plain text, XML and Markdown are returned as they are. The request asks for `text/markdown` first, so a site that serves it skips the conversion.
+- It follows up to 5 redirects, and decodes gzip, deflate and brotli.
+- It never reaches a private network. Loopback, private ranges, link-local (cloud metadata included) and IPv6 equivalents are refused, for the first URL and for each redirect, and the check runs on the address the connection really uses.
+- The limits are fixed: 15 seconds, 10 MB of body and 50000 characters of text. When a limit cuts the content, `truncated` is `true`.
+- The tool has a `notice`, because the content of a page is untrusted.
+
+What it does not do:
+
+- It does not run JavaScript. A page that builds its content in the browser (a single page app, or a page that hydrates after loading) comes back empty or incomplete. The description tells the model to say so to the user instead of retrying.
+- The conversion is simple: it keeps the menus and footers, does not pick the main article, flattens tables to one line per row and shows text hidden with CSS.
+- No login, cookies, custom headers or POST. A site behind an anti-bot (Cloudflare, captchas) answers with an error or a challenge page.
+- PDFs, images and any other binary are refused.
+
+If you need rendered pages, write your own tool with a headless browser; it fits in the same `Tool` shape.
+
 ### `sendSlackMessageTool`
 
 ```typescript
