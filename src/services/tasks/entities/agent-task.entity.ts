@@ -623,7 +623,7 @@ export class AgentTask extends BaseEntity {
 					OBSERVATIONS: actions.map(action => {
 						const ref = action.stepId ?? action.id
 						const routed = routeNote(action)
-						const note = routed ? { note: routed } : {}
+						const note = { ...(routed ? { note: routed } : {}), ...(action.notice ? { notice: action.notice } : {}) }
 
 						if (action.status === 'skipped') return { ref, tool: action.name, status: 'skipped', ...note }
 

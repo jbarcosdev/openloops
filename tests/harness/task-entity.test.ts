@@ -1,6 +1,7 @@
 import { ObjectId } from 'mongodb'
 import { AgentTask, TaskStatus, ASK_USER, RESPOND } from '@services/tasks/entities/agent-task.entity'
 import { AgentAction } from '@services/tasks/entities/agent-action.entity'
+import { Tool } from '@tools/tool'
 import { newTask, structured } from '../support'
 
 const declared = ['ext', 'other_ext']
@@ -282,6 +283,61 @@ describe('history', () => {
 
         expect(older.workspace_ref).toBe('out_1_1')
         expect(latest).toEqual({ b: 2 })
+    })
+})
+
+describe('notice of the tools in the history', () => {
+    const NOTICE = 'Unverified web content'
+
+    function completedTurn (task: AgentTask, tool: string, output: unknown) {
+        const [action] = task.addTurn({ reasoning: `think ${tool}`, state: { objective: 'o' }, actions: [{ tool, arguments: {} }] }, { declaredTools: [tool] })
+        action.markCompleted(output)
+        return action
+    }
+
+    it('goes in every observation of a tool that has one, next to the output and also in older turns', () => {
+        const task = newTask()
+        completedTurn(task, 'ext', { a: 1 }).notice = NOTICE
+        completedTurn(task, 'ext', { b: 2 }).notice = NOTICE
+
+        const observations = task.history().filter(message => message.role === 'user').slice(1).map(message => JSON.parse(message.content as string).OBSERVATIONS[0])
+
+        expect(observations).toEqual([
+            expect.objectContaining({ output: { a: 1 }, notice: NOTICE }),
+            expect.objectContaining({ output: { b: 2 }, notice: NOTICE }),
+        ])
+    })
+
+    it('stays in the stub of an output that moved to the workspace and in failed observations', () => {
+        const task = newTask()
+        const first = completedTurn(task, 'ext', structured({ rows: [1] }))
+        first.notice = NOTICE
+        first.keepOutputWithStub({ ref: 'out_1_1', totalChars: 9000, preview: '[1', outline: {} } as any)
+        const [failed] = task.addTurn({ reasoning: 'r', actions: [{ tool: 'ext', arguments: {} }] }, { declaredTools: declared })
+        failed.notice = NOTICE
+        failed.markFailed({ message: 'boom', retryable: false })
+
+        const messages = task.history()
+
+        expect(JSON.parse(messages[2].content as string).OBSERVATIONS[0]).toMatchObject({ output: { workspace_ref: 'out_1_1' }, notice: NOTICE })
+        expect(JSON.parse(messages[4].content as string).OBSERVATIONS[0]).toMatchObject({ status: 'failed', error: 'boom', notice: NOTICE })
+    })
+
+    it('does not appear for tools without a notice', () => {
+        const task = newTask()
+        completedTurn(task, 'ext', { a: 1 })
+
+        expect(Object.keys(JSON.parse(task.history()[2].content as string).OBSERVATIONS[0])).not.toContain('notice')
+    })
+
+    it('is saved by the action when it runs the tool, even if the tool fails, and survives a reload', async () => {
+        const make = (handler: () => Promise<any>) => new Tool({ name: 'web', description: 'd', notice: NOTICE, parameters: { type: 'object', properties: {}, required: [] }, handler })
+        const ok = await AgentAction.factory({ name: 'web' }).runTool(make(async () => ({ data: { a: 1 } })), {}, {} as any)
+        const failed = await AgentAction.factory({ name: 'web' }).runTool(make(async () => { throw new Error('x') }), {}, {} as any)
+
+        expect(ok.notice).toBe(NOTICE)
+        expect(failed.notice).toBe(NOTICE)
+        expect(AgentAction.fromJSON(JSON.parse(JSON.stringify(ok.toJSON()))).notice).toBe(NOTICE)
     })
 })
 

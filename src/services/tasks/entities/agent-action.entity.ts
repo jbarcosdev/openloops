@@ -30,6 +30,7 @@ export interface AgentActionProps extends BaseEntityProps {
 	outputStub?: Record<string, any>
 	requestedName?: string
 	reviewedHash?: string
+	notice?: string
 	callId?: string
 	turn?: number
 	startedAt?: Date
@@ -93,6 +94,7 @@ export class AgentAction extends BaseEntity {
 			props.outputStub,
 			props.requestedName,
 			props.reviewedHash,
+			props.notice,
 		)
 	}
 
@@ -121,6 +123,7 @@ export class AgentAction extends BaseEntity {
 		public outputStub?: Record<string, any>,
 		public requestedName?: string,
 		public reviewedHash?: string,
+		public notice?: string,
 	) {
 		super(props)
 	}
@@ -151,6 +154,7 @@ export class AgentAction extends BaseEntity {
 			outputStub: this.outputStub,
 			requestedName: this.requestedName,
 			reviewedHash: this.reviewedHash,
+			notice: this.notice,
 		}
 	}
 
@@ -287,6 +291,7 @@ export class AgentAction extends BaseEntity {
 			args,
 		}, '[Agent Action] Running tool')
 
+		this.notice = tool.notice
 		this.markRunning()
 		try {
 			const result = await tool.run({ ...args, ...baseParams })

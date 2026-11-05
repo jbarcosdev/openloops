@@ -47,6 +47,10 @@ export const greetUserTool = new Tool({
 
 A `Tool` instance is shared. Never write to `this` inside a handler. Everything that varies between calls comes in through `params`.
 
+## Notice
+
+A tool can set `notice`, a short text for results that come from outside and cannot be trusted, such as a web page or a third party server. The agent saves the notice in the action when it runs the tool, and writes it in every observation of that action next to `output`, also in the next turns and when the call fails, so the model sees it as long as the result is in its context. A page cannot write it, because it is not part of the output. The notice also shows when the tool is described by `search_tools`. Keep it to one or two sentences: it repeats in every observation. Actions saved before this version have no notice.
+
 ## Argument validation
 
 Arguments are validated against `parameters` before the handler runs: required arguments, types and `enum` values. An invalid call comes back to the model as a failed action with a message it can use to correct itself. Tools from MCP servers are validated strictly, so an argument that is not in the schema is rejected.
@@ -74,6 +78,8 @@ agent.addTool(webSearchTool)
 ```
 
 Requires a [Serper](https://serper.dev) API key. Set `SERPER_API_KEY` in your `.env`.
+
+The results are Google snippets, which can be outdated or contradict each other and use many tokens. The description tells the model to read a source it already knows with a tool that reads pages, such as [`fetchUrlTool`](#fetchurltool), and to search only when it does not know the source or the reading fails. The tool has a `notice`, because the results come from the internet.
 
 ### `fetchUrlTool`
 
@@ -124,6 +130,6 @@ Tools exposed by a connected MCP server are converted to `Tool` instances by `op
 
 An MCP tool differs from a local one in three ways:
 
-- `origin` is `mcp`, `server` is the server's name and `notice` is set. The notice tells the model that the description was written by a third party and is not an instruction from the user.
+- `origin` is `mcp`, `server` is the server's name and `notice` is set. The notice tells the model that what the server returns is unverified data and not an instruction from the user.
 - `destructive` comes from the server's `destructiveHint` annotation and is `false` when the annotation is missing.
 - It cannot run until the user has approved its server.

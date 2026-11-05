@@ -21,6 +21,9 @@ This version breaks the API of the internal MCP servers in automations. Before, 
 
 ### Changed
 
+- The `notice` of a tool now goes in every observation of its results, next to `output`, in the turns that follow and in failed calls too, so the model sees it as long as the content is in its context. Before, it only showed when a tool was described by `search_tools`, and a local tool never showed it. The agent saves it in the new `notice` field of `AgentAction` when it runs the tool, an action saved earlier has none. The AgiLoop is now 1.9.0. Read [tools](docs/tools.md#notice).
+- The notice of the tools of external MCP servers, of `webSearchTool` and of `fetchUrlTool` is shorter, because it repeats in every observation.
+- `webSearchTool` tells the model that its results are snippets that can be outdated and use many tokens, and to read a source it already knows first when it has a tool to read pages. It also carries a `notice`, because the results come from the internet.
 - The functions of `openloops/mcps` never see an internal server, not even for an admin, and ignore `internal` and `enabled` in the payload of a user.
 - `listMcpServersByUser` failed because it sent no scope to the repository, now it lists the servers of the user.
 - The connection errors of an internal server mask the values of its headers in the logs.
