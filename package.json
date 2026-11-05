@@ -8,6 +8,14 @@
     "url": "https://github.com/jbarcosdev"
   },
   "license": "Apache-2.0",
+  "homepage": "https://openloops.xyz",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jbarcosdev/openloops.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jbarcosdev/openloops/issues"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
@@ -133,10 +141,6 @@
   },
   "engines": {
     "node": ">=22.0.0"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/jbarcosdev/openloops.git"
   },
   "keywords": [
     "ai-agent",
