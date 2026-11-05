@@ -199,13 +199,13 @@ await agent.run({ input: { chatId, message }, currentUser })
 stop()
 ```
 
-The listener receives every change of the activity of the run while it is in progress. It gets no start or end marker: the run is over when `agent.run()` resolves. This is the only place where the real activity is available: since 0.3.0 it is not saved with the chat, and `state.currentActivity` is deprecated (see [chats](chats.md#statecurrentactivity-is-deprecated)). It does not receive a value that repeats the previous one. With `AgiLoop` the value is a short sentence written by the model in the language of the conversation, such as `Searching your flight expenses for August`, shown from the answer that asked for the actions until the next answer. When the model gives none, the listener hears nothing and the client keeps what it shows. See [loops](loops.md#agiloop).
+The listener receives every change of the activity of the run while it is in progress. It gets no start or end marker: the run is over when `agent.run()` resolves. This is the only place where the activity is available: it is not saved with the chat. It does not receive a value that repeats the previous one. With `AgiLoop` the value is a short sentence written by the model in the language of the conversation, such as `Searching your flight expenses for August`, shown from the answer that asked for the actions until the next answer. When the model gives none, the listener hears nothing and the client keeps what it shows. See [loops](loops.md#agiloop).
 
 - The listener belongs to that `Agent` instance and to the chat of its current run. Nothing is shared between instances, so concurrent runs in the same process, even of different users, never hear each other. As always, create one `Agent` per run and do not share it between concurrent requests.
 - It is called synchronously from the loop, so keep it fast and do not await inside it. An error thrown by a listener is logged and ignored, the run goes on and the other listeners still run.
 - `onActivity` returns a function that removes the listener.
 - The activity is not saved, so it does not cost a write: the chat is saved only when something else changes, such as a message, the status or the task, and when the run ends.
-- Past values are not replayed. If a client connects late or loses its connection, read the chat and use its `state.status`; a client that still reads `state.currentActivity` gets a generic word while the run is processing, and it will be removed in 0.4.0.
+- Past values are not replayed. If a client connects late or loses its connection, read the chat and use its `state.status`.
 
 ## Stopping a running turn
 

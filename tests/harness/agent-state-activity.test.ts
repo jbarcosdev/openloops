@@ -9,13 +9,6 @@ describe('AgentState current activity', () => {
         expect(JSON.stringify(state.toJSON())).not.toContain('Buscando')
     })
 
-    it('ignores the activity that chats saved before 0.3.0 still have', () => {
-        const state = AgentState.fromJSON({ status: AgentStatus.IDLE, currentActivity: 'Thinking...' })
-
-        expect(state.currentActivity).toBeUndefined()
-        expect(state.status).toBe(AgentStatus.IDLE)
-    })
-
     it('keeps the real activity in this process and still tells the listener', () => {
         const seen: string[] = []
         const state = new AgentState()

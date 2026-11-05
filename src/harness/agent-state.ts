@@ -23,12 +23,6 @@ export interface AgentStateProps {
     lastError?: AgentError
     activeTaskId?: string
     stopRequested?: boolean
-    /**
-     * @deprecated Since 0.3.0, and it will be removed in 0.4.0. It is no longer saved with the chat. While a run is `processing`,
-     * `getChatById` adds a generic word to it, only for the clients that still poll the chat, so they keep showing something.
-     * Follow a run with `agent.onActivity` instead.
-     */
-    currentActivity?: CurrentActivity
 }
 
 export class AgentState {
