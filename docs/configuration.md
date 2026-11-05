@@ -21,7 +21,7 @@
 | `MCP_TOOL_TIMEOUT_MS` | no | Longest time to wait for a tool of an MCP server, in milliseconds. Defaults to `60000`. See [Timeouts](#timeouts). |
 | `SENTRY_DSN` | no | Errors are reported to Sentry when set, unless `IS_LOCAL` is `true` or `NODE_ENV` is `development`. |
 | `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`, `LANGFUSE_BASE_URL` | no | Traces every LLM call in Langfuse when all three are set. |
-| `IS_LOCAL`, `NODE_ENV` | no | Local development switches. |
+| `IS_LOCAL`, `NODE_ENV` | no | Local development switches. With `IS_LOCAL` set to `true`, or `NODE_ENV` set to `development`, the logger prints colored logs if `pino-pretty` is installed in your project (it is a dev dependency of this package, so install it yourself: `yarn add -D pino-pretty`), and plain JSON otherwise. |
 
 Any value can be stored encrypted by prefixing it with `ENC:`. It is decrypted with `SECRET_MANAGER_KEY` when it is read.
 

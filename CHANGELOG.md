@@ -2,7 +2,9 @@
 
 All notable changes to `openloops` are written here, newest first. The format follows [Keep a Changelog](https://keepachangelog.com) and the versions follow [semantic versioning](https://semver.org), where a minor version can still break the API while the package is in beta. Changes before 0.4.0 are not recorded here, see the commits and the tags.
 
-## Unreleased
+## 0.8.0
+
+This version removes `state.currentActivity` from the chat and needs a migration of the chats that were saved before. Follow the [migration steps](docs/chats.md#migrating-to-080) when you update.
 
 ### Added
 
@@ -14,7 +16,7 @@ All notable changes to `openloops` are written here, newest first. The format fo
 
 ### Changed
 
-- A paused run of an automation whose chat was deleted is closed as `failed` with the code `CHAT_DELETED`, when the runner syncs it. Before it stayed `paused` for ever, and every later occurrence was skipped. The automation runs again on its next occurrence.
+- A paused run of an automation whose chat was deleted is closed as `failed` with the code `CHAT_DELETED`, when the runner syncs it, and the automation runs again on its next occurrence.
 - `search` in `listChatsByUser` also matches the title of the chat, not only the content of its messages.
 - The `fast_responder` skill is now 2.5.0 and returns an optional `title`, and the AgiLoop is now 1.10.0. The context that the loop sends to the skill has `needs_title: true` while the chat has no title.
 - `sanitizeString`, which cleans every text field of the entities and the email of a user, no longer uses `sanitize-html`, so that package and its dependencies are gone. It still removes tags, scripts, styles and comments and keeps the text, but now `&` stays as it is (before it was saved as `&amp;`) HTML entities are no longer decoded (`&copy;` stays `&copy;`, before it became `©`), and a `<` or `>` that does not belong to a tag is saved as `&lt;` or `&gt;` (before the text that followed a lone `<` was lost). Values already saved do not change.
@@ -22,7 +24,7 @@ All notable changes to `openloops` are written here, newest first. The format fo
 
 ### Removed
 
-- `state.currentActivity`, deprecated since 0.3.0. `AgentStateProps` no longer has it, and `getChatById` no longer adds a generic word (`Thinking...`, `Cooking...`) to it while a run is `processing`. The helper `deprecatedActivity` is gone too. A client that polls the chat and reads that field gets nothing now: move it to [`agent.onActivity`](docs/agent.md#activity-updates), which tells the real activity of the run as it happens, and use `state.status` to know whether the run is in progress. The app builds up to 102 of sofiapp are the ones that still depended on it. A chat saved before 0.3.0 can still carry the old field in the database, ignore it. `AgentState.setCurrentActivity` and `AgentState.currentActivity` stay as the in-memory value that feeds the listener, they are not saved.
+- `state.currentActivity`, deprecated since 0.3.0. `AgentStateProps` no longer has it, and `getChatById` no longer adds a generic word (`Thinking...`, `Cooking...`) to it while a run is `processing`. The helper `deprecatedActivity` is gone too. A client that polls the chat and reads that field gets nothing now: move it to [`agent.onActivity`](docs/agent.md#activity-updates), which tells the real activity of the run as it happens, and use `state.status` to know whether the run is in progress. The versions of your app that still poll the chat need to be updated before you update `openloops`. A chat saved before 0.3.0 can still carry the old field in the database, ignore it. `AgentState.setCurrentActivity` and `AgentState.currentActivity` stay as the in-memory value that feeds the listener, they are not saved.
 
 ## 0.7.6
 

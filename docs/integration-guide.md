@@ -33,7 +33,7 @@ The use cases check who owns every record, in the repository, with the `currentU
 | --- | --- |
 | Send a message | `new Agent({ loop, tools, guards }).run({ input: { message, chatId? }, currentUser })` |
 | Stop a running message | `Agent.interruptExecution(chatId, currentUser)` |
-| List, read, delete chats | `listChatsByUser` (with `executionMode` to separate interactive from autonomous), `getChatById`, `deleteChat` |
+| List, read, delete chats | `listChatsByUser` (with `executionMode` to separate interactive from autonomous, `search` for the title and the messages, and `select` for a light history list), `getChatById`, `updateChat` to rename a chat with `title`, `deleteChat` |
 | Poll the state of a chat | `getChatById({ id, select: { state: 1 } })` |
 | Manage MCP servers | `createMcpServer`, `listMcpServersByUser`, `getMcpServerById`, `updateMcpServer`, `deleteMcpServer`, `verifyMcpServerConnection` |
 | Approve or block an MCP server from a screen | `decideMcpServerTrust` |
@@ -84,7 +84,7 @@ Show `data.messages`, and look at `data.state.status`:
 | `processing` | A run is in progress. Show a loading state and offer to stop it. |
 | `awaiting_user_input` | The agent asked a question. The answer is sent as a normal message in the same chat. |
 | `awaiting_user_confirmation` | The agent needs an approval, for a destructive tool or for an MCP server. The question is the last message, and the answer is sent as a normal message in the same chat. |
-| `failed` | Show `data.state.lastError.message` and let the user try again. |
+| `failed` | Show `data.state.lastError.message` and let the user try again, unless `lastError.isRetryable` is `false`. `lastError.code` says what failed, see [error handling](agent.md#error-handling). |
 
 Messages have a `source` (`user`, `model` or `harness`) and some have `excludeFromContext`. Messages with `source: 'harness'` are written by the system, for example a guardrail reply or an approval question, and you may want to style them differently. See [chats](chats.md).
 

@@ -86,7 +86,11 @@ Chats saved with a version before 0.8.0 have no title. **Run `migrateChatTitles`
 
     The report has `titled` (chats that get a title) and `skipped` (chats without a message of the user, which the first message they receive will title).
 2. **Run it for real**, with `dryRun: false` or without the option. It can be run again without changing anything, because it only touches chats without a title, and it skips the deleted ones. In a checkout of this repository you can run `yarn migrate:chat-titles --dry-run` and `yarn migrate:chat-titles`, which read `OPENLOOPS_DB_URI` and `OPENLOOPS_DB_NAME`.
-3. **Show something for a chat with no title**, such as "Untitled": a new chat has none until its first run ends, and an autonomous chat has none unless you set it.
+3. **Show something for a chat with no title**, such as "Untitled": a new chat has none until its first message is processed, a chat whose title the model did not return gets it in the next message, and an autonomous chat has none unless you set it.
+4. **Stop reading `state.currentActivity`.** It is gone from the chat and `getChatById` no longer adds a generic word while a run is `processing`. Follow the run with [`agent.onActivity`](agent.md#activity-updates) and use `state.status` to know whether it is still going. The versions of your app that still poll the chat need to be updated before you update `openloops`.
+5. **Handle the new error codes** in `state.lastError.code`: `LLM_AUTH_FAILED`, `LLM_CONTEXT_TOO_LONG`, `LLM_CONTENT_FILTERED` and `LLM_INCOMPLETE_RESPONSE` used to be `LLM_FAILED`. See [the list](agent.md#error-handling).
+
+The changelog also lists two smaller changes of this version: `sanitizeString` no longer decodes HTML entities, and `pino-pretty` is now a dev dependency.
 
 ## Getting one chat
 
