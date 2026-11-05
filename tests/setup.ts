@@ -19,11 +19,6 @@ jest.mock('@common/logger', () => {
     return { __esModule: true, Logger, logger: new Logger(), default: new Logger() }
 })
 
-jest.mock('sanitize-html', () => ({
-    __esModule: true,
-    default: (input: string): string => input,
-}))
-
 jest.mock('@common/repositories', () => ({
     MongoRepository: class {},
     Scope: jest.requireActual('@common/repositories/scope').Scope,

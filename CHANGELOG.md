@@ -6,6 +6,7 @@ All notable changes to `openloops` are written here, newest first. The format fo
 
 ### Changed
 
+- `sanitizeString`, which cleans every text field of the entities and the email of a user, no longer uses `sanitize-html`, so that package and its dependencies are gone. It still removes tags, scripts, styles and comments and keeps the text, but now `&` stays as it is (before it was saved as `&amp;`) HTML entities are no longer decoded (`&copy;` stays `&copy;`, before it became `©`), and a `<` or `>` that does not belong to a tag is saved as `&lt;` or `&gt;` (before the text that followed a lone `<` was lost). Values already saved do not change.
 - `pino-pretty` moved from `dependencies` to `devDependencies`, so it is no longer installed with the package. The logger loads it only when `IS_LOCAL` is `true` or `NODE_ENV` is `development`, and falls back to plain JSON logs if it is not installed. If you want the colored logs in your own local environment, install it: `yarn add -D pino-pretty`.
 
 ## 0.7.6

@@ -1,10 +1,14 @@
-import sanitizeHtml from 'sanitize-html'
+import { stripBlocks } from './strip-blocks'
 
 export function sanitizeString (input = ''): string | undefined {
-	if (!input) return undefined
+    if (!input) return undefined
 
-	return sanitizeHtml(input, {
-		allowedTags: [],
-		allowedAttributes: {}
-	})
+    let text = stripBlocks(input, '<!--', '-->', '-->', false)
+    text = stripBlocks(text, '<script', '</script', '>', true)
+    text = stripBlocks(text, '<style', '</style', '>', true)
+
+    return text
+        .replace(/<[/!?]?[a-zA-Z][^<>]*>/g, '')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
 }

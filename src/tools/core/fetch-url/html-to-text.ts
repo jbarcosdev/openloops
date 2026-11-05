@@ -1,3 +1,5 @@
+import { stripBlocks } from '@common/helpers'
+
 const REMOVED_ELEMENTS = ['script', 'style', 'noscript', 'svg', 'head', 'template', 'iframe', 'object', 'canvas']
 
 const LINE = '\u0001'
@@ -13,30 +15,6 @@ const ENTITIES: Record<string, string> = {
     copy: '©', reg: '®', trade: '™', euro: '€', iexcl: '¡', iquest: '¿',
     aacute: 'á', eacute: 'é', iacute: 'í', oacute: 'ó', uacute: 'ú', ntilde: 'ñ', uuml: 'ü',
     Aacute: 'Á', Eacute: 'É', Iacute: 'Í', Oacute: 'Ó', Uacute: 'Ú', Ntilde: 'Ñ', Uuml: 'Ü',
-}
-
-function asciiLower (text: string): string {
-    return text.replace(/[A-Z]/g, char => String.fromCharCode(char.charCodeAt(0) + 32))
-}
-
-function strip (html: string, open: string, close: string, end: string, isElement: boolean): string {
-    const lower = asciiLower(html)
-    let result = ''
-    let cursor = 0
-
-    while (cursor < html.length) {
-        let start = lower.indexOf(open, cursor)
-        while (isElement && start !== -1 && /[a-z0-9]/.test(lower.charAt(start + open.length))) start = lower.indexOf(open, start + 1)
-        if (start === -1) break
-
-        result += html.slice(cursor, start)
-
-        const closing = lower.indexOf(close, start + open.length)
-        const stop = closing === -1 ? -1 : lower.indexOf(end, closing)
-        cursor = stop === -1 ? html.length : stop + end.length
-    }
-
-    return result + html.slice(cursor)
 }
 
 function decodeEntities (text: string): string {
@@ -61,8 +39,8 @@ function absolute (href: string, baseUrl?: string): string | undefined {
 }
 
 export function htmlToText (html: string, baseUrl?: string): string {
-    let text = strip(html, '<!--', '-->', '-->', false)
-    for (const tag of REMOVED_ELEMENTS) text = strip(text, `<${tag}`, `</${tag}`, '>', true)
+    let text = stripBlocks(html, '<!--', '-->', '-->', false)
+    for (const tag of REMOVED_ELEMENTS) text = stripBlocks(text, `<${tag}`, `</${tag}`, '>', true)
     text = text.slice(0, text.lastIndexOf('>') + 1).replace(/<[!?][^>]*>/g, '').replace(/[\u0001-\u0003]/g, '').replace(/\s+/g, ' ')
 
     const links: Array<string | undefined> = []
