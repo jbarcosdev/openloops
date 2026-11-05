@@ -1,5 +1,5 @@
 import { ObjectId } from 'mongodb'
-import { QueryOptions, Scope } from '@common/repositories'
+import { QueryOptions, QueryParams, Scope } from '@common/repositories'
 import { escapeRegex } from '@common/helpers'
 import { BaseUseCase, BaseUseCaseParams } from '@common/base/base.use-case'
 import { ChatRepository } from '../repositories'
@@ -9,6 +9,7 @@ export interface Params extends BaseUseCaseParams {
 	filters?: Partial<ChatProps>
 	executionMode?: ExecutionMode
 	search?: string
+	select?: QueryParams<ChatProps>['select']
 	options?: QueryOptions
 }
 
@@ -23,7 +24,7 @@ export class ListChatsByUserUseCase extends BaseUseCase<Params, Output> {
 	}
 
 	async execute (params: Params): Promise<Output> {
-		const { options, executionMode, search, currentUser } = params
+		const { options, executionMode, search, select, currentUser } = params
 		const { page = 1, limit: pageSize = 10 } = options || {}
 
 		const term = escapeRegex(search?.trim())
@@ -36,6 +37,7 @@ export class ListChatsByUserUseCase extends BaseUseCase<Params, Output> {
 				...(executionMode === 'interactive' ? { 'settings.executionMode': { $ne: 'autonomous' } } : {}),
 				...(term ? { $or: [{ title: { $regex: term, $options: 'i' } }, { 'messages.content': { $regex: term, $options: 'i' } }] } : {}),
 			},
+			...(select ? { select } : {}),
 			options: { page, limit: pageSize, sortBy: { updatedAt: -1 } },
 		})
 

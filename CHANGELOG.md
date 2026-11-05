@@ -7,7 +7,8 @@ All notable changes to `openloops` are written here, newest first. The format fo
 ### Added
 
 - `title` in `ChatProps`, a short text that names the chat. In an interactive run the `fast_responder` writes it in the first message of a chat that has none, in the language of the user, and it never replaces a title that exists. Rename a chat with `updateChat({ payload: { title } })` and remove the title with `unset: { title: '' }`. A chat that comes back without a title (the model returned nothing usable) is asked again in its next message. An autonomous run skips the `fast_responder`, so its chat has no title unless you set one. Read [chats](docs/chats.md#the-title).
-- `migrateChatTitles(db, { dryRun })` in `openloops/db`, which gives each chat without a title its first message of the user, on one line and cut to 80 characters. It can be run again without changing anything. In a checkout of this repository: `yarn migrate:chat-titles --dry-run` and `yarn migrate:chat-titles`. It is optional: a chat that is not migrated gets its title from the model in its next message.
+- `migrateChatTitles(db, { dryRun })` in `openloops/db`, which gives each chat without a title its first message of the user, on one line and cut to 80 characters. It can be run again without changing anything. In a checkout of this repository: `yarn migrate:chat-titles --dry-run` and `yarn migrate:chat-titles`. **Run it once when you update from an earlier version**: read [the migration to 0.8.0](docs/chats.md#migrating-to-080).
+- `select` in `listChatsByUser`, to get only some fields of each chat, such as `{ title: 1, updatedAt: 1 }` for a history list. Without it the chats come complete, as before. `search` still looks in the messages when they are not returned.
 
 ### Changed
 

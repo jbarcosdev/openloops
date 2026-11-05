@@ -60,6 +60,12 @@ const found = await listChatsByUser({ search: 'netflix', currentUser })
 
 `search` is optional. It returns the chats whose title or at least one message contains the text, ignoring case, in the same order and with the same pagination. The text is matched literally, so characters such as `(` or `.` have no special meaning. It reads the messages without an index, which is fine for the chats of one user. An empty text is ignored.
 
+```typescript
+const history = await listChatsByUser({ search: 'netflix', select: { title: 1, updatedAt: 1 }, currentUser })
+```
+
+`select` is optional and limits the fields that come back, as in `getChatById`. Without it every chat comes complete, with all its messages. A history list only needs a few fields, and `_id` always comes. `search` does not depend on `select`: it still looks in the messages when they are not returned, and the chat that the user picks is loaded with `getChatById`. A history without messages cannot show the first message of a chat that has no title, so [migrate the old chats](#migrating-to-080).
+
 ## The title
 
 In an interactive run the first node, `fast_responder`, writes a title for a chat that has none: at most 50 characters, in the language of the first message. The loop saves it on one line, without tags and cut to 80 characters, and never replaces a title that already exists. If the model returns nothing usable the chat stays without a title and the next message asks again. An autonomous run skips that node, so set the title yourself when you create its chat if you want one.
@@ -72,15 +78,21 @@ await updateChat({ id: chatId, payload: { settings: { notifyOnCompletion: true }
 
 The first call renames the chat, and the agent keeps that title from then on. The second removes the title, so the next message gets a new one.
 
-To give a title to the chats saved before it existed, run `migrateChatTitles` once. It uses the first message of the user, cut to 80 characters, and it is optional: without it, those chats get their title from the model in their next message.
+## Migrating to 0.8.0
 
-```typescript
-import { migrateChatTitles } from 'openloops/db'
+Chats saved with a version before 0.8.0 have no title. **Run `migrateChatTitles` once per database when you update.** It gives each chat without a title its first message of the user, on one line and cut to 80 characters. Without it those chats stay untitled until they receive another message, and a history that lists with `select` has nothing to show for them, because it does not read the messages.
 
-const report = await migrateChatTitles(db, { dryRun: true })
-```
+1. **Take a backup**, and run it with `dryRun` first. It only counts.
 
-With `dryRun` it only counts. In a checkout of this repository you can run `yarn migrate:chat-titles --dry-run` and `yarn migrate:chat-titles`, which read `OPENLOOPS_DB_URI` and `OPENLOOPS_DB_NAME`.
+    ```typescript
+    import { migrateChatTitles } from 'openloops/db'
+
+    const report = await migrateChatTitles(db, { dryRun: true })
+    ```
+
+    The report has `titled` (chats that get a title) and `skipped` (chats without a message of the user, which the first message they receive will title).
+2. **Run it for real**, with `dryRun: false` or without the option. It can be run again without changing anything, because it only touches chats without a title, and it skips the deleted ones. In a checkout of this repository you can run `yarn migrate:chat-titles --dry-run` and `yarn migrate:chat-titles`, which read `OPENLOOPS_DB_URI` and `OPENLOOPS_DB_NAME`.
+3. **Show something for a chat with no title**, such as "Untitled": a new chat has none until its first run ends, and an autonomous chat has none unless you set it.
 
 ## Getting one chat
 
