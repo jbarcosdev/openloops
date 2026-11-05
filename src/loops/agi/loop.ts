@@ -32,7 +32,7 @@ export class AgiLoop extends AgentLoop {
     }
 
     get version () {
-        return '1.9.0'
+        return '1.10.0'
     }
 
     get author () {
@@ -67,10 +67,12 @@ export class AgiLoop extends AgentLoop {
             contextInjection: {
                 ...(agentIdentity && Object.keys(agentIdentity)?.length ? { agentIdentity } : {}),
                 ...(chat_history?.length ? { chat_history } : {}),
+                ...(ctx.chat.title ? {} : { needs_title: true }),
             },
         })
 
         ctx.chat.state?.setLanguage(result.detected_language)
+        ctx.chat.setTitle(result.title)
 
         if (!result.can_answer) {
             const activity = cleanActivity(result.activity)

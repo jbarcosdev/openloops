@@ -3,8 +3,10 @@ import { AgentStateProps, AgentState } from '@harness/agent-state'
 import { AgentTask, TaskStatus } from '@services/tasks/entities/agent-task.entity'
 import { ChatMessage, ChatMessageProps } from './chat-message.entity'
 import { ChatSettings, ChatSettingsProps } from './chat-settings.entity'
+import { normalizeTitle } from '../utils/title'
 
 export interface ChatProps extends BaseEntityProps {
+	title?: string
 	state?: AgentStateProps
 	settings?: ChatSettingsProps
 	messages?: ChatMessageProps[]
@@ -40,6 +42,7 @@ export class Chat extends BaseEntity {
 		)
 	}
 
+	public title?: string
 	public tasks: AgentTask[] = []
 	public clearedFields: Record<string, ''> = {}
 	private pendingTraces: AgentTrace[] = []
@@ -51,6 +54,7 @@ export class Chat extends BaseEntity {
 		public messages?: ChatMessage[],
 	) {
 		super(props)
+		this.title = BaseEntity.toText(props.title)
 	}
 
 	get lastAnswer () {
@@ -65,10 +69,16 @@ export class Chat extends BaseEntity {
 	public toJSON (): ChatProps {
 		return {
 			...super.toJSON(),
+			title: this.title,
 			state: this.state?.toJSON(),
 			settings: this.settings?.toJSON(),
 			messages: this.messages?.map(message => message.toJSON()),
 		}
+	}
+
+	public setTitle (text?: string): void {
+		if (this.title) return
+		this.title = BaseEntity.toText(normalizeTitle(text))
 	}
 
 	public pushMessage (message: ChatMessageProps): ChatMessage {

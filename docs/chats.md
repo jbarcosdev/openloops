@@ -10,6 +10,7 @@ import { createChat, getChatById, listChatsByUser, updateChat, deleteChat } from
 
 | Field | Meaning |
 | --- | --- |
+| `title` | A short text that names the chat. See [the title](#the-title). |
 | `state` | `status`, detected `language`, `activeTaskId`, `lastError` and `stopRequested`. See [agent](agent.md#the-result) for the statuses. It also has `currentActivity`, which is deprecated (see below). |
 | `settings` | `modelProvider` and `modelName` (the model the chat uses, saved on every run), `thinkingEffort` (only when a run sent it), `loopName`, `executionMode`, `notifyOnCompletion` and `isPrivateSession`. |
 | `messages` | The conversation. Each message has `role` (`user` or `assistant`), `source`, `content`, `answerId` and `excludeFromContext`. |
@@ -57,7 +58,29 @@ const interactive = await listChatsByUser({ executionMode: 'interactive', curren
 const found = await listChatsByUser({ search: 'netflix', currentUser })
 ```
 
-`search` is optional. It returns the chats with at least one message whose content contains the text, ignoring case, in the same order and with the same pagination. The text is matched literally, so characters such as `(` or `.` have no special meaning. It reads the messages without an index, which is fine for the chats of one user. An empty text is ignored.
+`search` is optional. It returns the chats whose title or at least one message contains the text, ignoring case, in the same order and with the same pagination. The text is matched literally, so characters such as `(` or `.` have no special meaning. It reads the messages without an index, which is fine for the chats of one user. An empty text is ignored.
+
+## The title
+
+In an interactive run the first node, `fast_responder`, writes a title for a chat that has none: at most 50 characters, in the language of the first message. The loop saves it on one line, without tags and cut to 80 characters, and never replaces a title that already exists. If the model returns nothing usable the chat stays without a title and the next message asks again. An autonomous run skips that node, so set the title yourself when you create its chat if you want one.
+
+```typescript
+await updateChat({ id: chatId, payload: { title: 'Trip to Lisbon' }, currentUser })
+
+await updateChat({ id: chatId, payload: { settings: { notifyOnCompletion: true } }, unset: { title: '' }, currentUser })
+```
+
+The first call renames the chat, and the agent keeps that title from then on. The second removes the title, so the next message gets a new one.
+
+To give a title to the chats saved before it existed, run `migrateChatTitles` once. It uses the first message of the user, cut to 80 characters, and it is optional: without it, those chats get their title from the model in their next message.
+
+```typescript
+import { migrateChatTitles } from 'openloops/db'
+
+const report = await migrateChatTitles(db, { dryRun: true })
+```
+
+With `dryRun` it only counts. In a checkout of this repository you can run `yarn migrate:chat-titles --dry-run` and `yarn migrate:chat-titles`, which read `OPENLOOPS_DB_URI` and `OPENLOOPS_DB_NAME`.
 
 ## Getting one chat
 

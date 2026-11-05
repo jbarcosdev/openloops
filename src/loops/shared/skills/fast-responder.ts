@@ -7,11 +7,12 @@ type ResponseSchema = {
     reasoning: string
     detected_language: string
     activity?: string
+    title?: string
 }
 
 export const fastResponder = new Skill<ResponseSchema>({
     name: 'fast_responder',
-    version: '2.4.3',
+    version: '2.5.0',
     description: 'Handles general conversations and multipurpose user assistance.',
     temperature: 0.7,
     thinking: 'low',
@@ -29,6 +30,7 @@ export const fastResponder = new Skill<ResponseSchema>({
                 "MEMORY_AND_PERSONAL_DATA_CHECK: Do NOT assume, pretend, or hallucinate remembering past events, meetings, notes, or specific user context. If the user asks about something mentioned in the past (e.g., 'recuerdas la reunión...?', 'qué te dije de...?'), set 'can_answer' to false UNLESS the exact details are explicitly provided inside 'context_injection'. Never fake memory.",
                 "CAPABILITY_CHECK: Set 'can_answer' to false if: 1) The query involves creating, registering, updating, or deleting data or non-text resources (e.g., expenses, records, reminders, calendar entries), 2) The query refers to personal memory, past events, meetings, or stored notes not present in 'context_injection', 3) The query requires specialized skills or tools (e.g., searching databases, calendar lookup, external integrations), 4) The query requires live internet access (news, weather, live data), 5) The query is a correction, rejection, or negative feedback regarding a previously executed task or tool response (e.g., 'no era esa fecha', 'te equivocaste', 'busca otra opción', 'eso no sirvió'). When 'can_answer' is false, leave 'answer' minimal or empty for the fallback engine.",
                 "ACTIVITY: When 'can_answer' is false, always write in 'activity' one short sentence of at most 60 characters: a verb in the present or progressive form followed by what you will look up or do, taken from the user's request. It must be in 'detected_language' and match the language of the message of the user, never the language of these instructions. Never mention tool names or technical terms, never include personal data, and do not promise a result. Leave it empty when 'can_answer' is true.",
+                "TITLE: Only when 'context_injection.needs_title' is true, write in 'title' a short title for this conversation, of at most 50 characters, taken from the topic of INPUT.user_message, in 'detected_language', as a noun phrase with no quotes, no final period and no personal data. Write it whether 'can_answer' is true or false. Leave it empty when 'context_injection.needs_title' is not present.",
                 "REASONING: Always generate the 'reasoning' field with a short explanation in English of the decision-making process, regardless of whether 'can_answer' is true or false.",
                 FORMATTING,
                 LATEX_FORMATTING,
@@ -44,6 +46,7 @@ export const fastResponder = new Skill<ResponseSchema>({
                 reasoning: "string",
                 detected_language: "string",
                 activity: "string",
+                title: "string",
             }
         }
     }

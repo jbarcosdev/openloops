@@ -14,6 +14,7 @@ export default defineSkillEval({
         reasoning: { type: 'string' },
         detected_language: { type: 'string' },
         activity: { type: 'string' },
+        title: { type: 'string' },
     }, ['can_answer', 'answer', 'reasoning', 'detected_language']),
     scenarios: SCENARIOS,
     load () {

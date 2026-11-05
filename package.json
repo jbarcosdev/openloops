@@ -96,6 +96,7 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "migrate:automations": "ts-node scripts/migrate-automations.ts",
+    "migrate:chat-titles": "ts-node scripts/migrate-chat-titles.ts",
     "eval": "ts-node --project evals/tsconfig.json evals/run.ts",
     "eval:models": "ts-node --project evals/tsconfig.json evals/run.ts models",
     "eval:skills": "ts-node --project evals/tsconfig.json evals/run.ts skills",

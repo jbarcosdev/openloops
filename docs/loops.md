@@ -13,7 +13,7 @@ import { AgiLoop } from 'openloops/loops'
 
 | Node | What it does |
 | --- | --- |
-| `fast_responder` | Initial node. Answers directly when no tools or memory are needed, and when it cannot, says in one sentence what the agent will do. It is skipped in an autonomous run. |
+| `fast_responder` | Initial node. Answers directly when no tools or memory are needed, and when it cannot, says in one sentence what the agent will do. It also writes the [title](chats.md#the-title) of a chat that has none. It is skipped in an autonomous run. |
 | `reasoning_engine` | Reads the situation or the results of the last actions, rewrites its working state, decides the next actions, reports the language of the conversation and says in one sentence what is happening until its next answer. |
 | `action_engine` | Runs the actions the reasoning engine asked for, asks the user for confirmation when needed, delivers the final answer. |
 

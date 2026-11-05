@@ -4,7 +4,15 @@ All notable changes to `openloops` are written here, newest first. The format fo
 
 ## Unreleased
 
+### Added
+
+- `title` in `ChatProps`, a short text that names the chat. In an interactive run the `fast_responder` writes it in the first message of a chat that has none, in the language of the user, and it never replaces a title that exists. Rename a chat with `updateChat({ payload: { title } })` and remove the title with `unset: { title: '' }`. A chat that comes back without a title (the model returned nothing usable) is asked again in its next message. An autonomous run skips the `fast_responder`, so its chat has no title unless you set one. Read [chats](docs/chats.md#the-title).
+- `migrateChatTitles(db, { dryRun })` in `openloops/db`, which gives each chat without a title its first message of the user, on one line and cut to 80 characters. It can be run again without changing anything. In a checkout of this repository: `yarn migrate:chat-titles --dry-run` and `yarn migrate:chat-titles`. It is optional: a chat that is not migrated gets its title from the model in its next message.
+
 ### Changed
+
+- `search` in `listChatsByUser` also matches the title of the chat, not only the content of its messages.
+- The `fast_responder` skill is now 2.5.0 and returns an optional `title`, and the AgiLoop is now 1.10.0. The context that the loop sends to the skill has `needs_title: true` while the chat has no title.
 
 - `sanitizeString`, which cleans every text field of the entities and the email of a user, no longer uses `sanitize-html`, so that package and its dependencies are gone. It still removes tags, scripts, styles and comments and keeps the text, but now `&` stays as it is (before it was saved as `&amp;`) HTML entities are no longer decoded (`&copy;` stays `&copy;`, before it became `©`), and a `<` or `>` that does not belong to a tag is saved as `&lt;` or `&gt;` (before the text that followed a lone `<` was lost). Values already saved do not change.
 - `pino-pretty` moved from `dependencies` to `devDependencies`, so it is no longer installed with the package. The logger loads it only when `IS_LOCAL` is `true` or `NODE_ENV` is `development`, and falls back to plain JSON logs if it is not installed. If you want the colored logs in your own local environment, install it: `yarn add -D pino-pretty`.

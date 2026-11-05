@@ -34,7 +34,7 @@ export class ListChatsByUserUseCase extends BaseUseCase<Params, Output> {
 				ownerId: new ObjectId(currentUser?.userId),
 				...(executionMode === 'autonomous' ? { 'settings.executionMode': 'autonomous' } : {}),
 				...(executionMode === 'interactive' ? { 'settings.executionMode': { $ne: 'autonomous' } } : {}),
-				...(term ? { 'messages.content': { $regex: term, $options: 'i' } } : {}),
+				...(term ? { $or: [{ title: { $regex: term, $options: 'i' } }, { 'messages.content': { $regex: term, $options: 'i' } }] } : {}),
 			},
 			options: { page, limit: pageSize, sortBy: { updatedAt: -1 } },
 		})
