@@ -1,6 +1,6 @@
 # openloops
 
-> A TypeScript runtime for AI agents that run in your backend. It persists chats, tasks and tool calls in MongoDB, scopes everything to a user, asks for approval before destructive tools and unapproved MCP servers, and can run agents on a schedule. It has no HTTP layer: your backend calls its use cases and owns authorization.
+> An open source harness for building multitenant AI agents for your SaaS: a TypeScript runtime that runs in your backend. It persists chats, tasks and tool calls in MongoDB, scopes everything to a user, asks for approval before destructive tools and unapproved MCP servers, and can run agents on a schedule. It has no HTTP layer: your backend calls its use cases and owns authorization.
 
 Start with the integration guide, then read only the pages you need. All pages are in this folder.
 

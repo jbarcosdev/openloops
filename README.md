@@ -1,11 +1,13 @@
 # openloops
 
-**Build production-grade enterprise agents in minutes, not days, weeks, or months.** · [openloops.xyz](https://openloops.xyz)
+**Build enterprise multitenant AI agents for your SaaS in minutes, not days, weeks, or months.** · [openloops.xyz](https://openloops.xyz)
 
-`openloops` is an open source **harness** for AI agents. An agent is three things: a **model** that thinks (the engine), a **harness** that gives it hands, memory and rules (the chassis), and a **loop** that decides what it is for (the body). `openloops` is the harness, and it ships the loop. Change the model, or the loop, and the rest stays the same.
+Openloops is an open source **harness** for building AI agents. An agent is three things: a **model** that thinks (the engine), a **harness** that gives it hands, memory and rules (the chassis), and the **product** you build around it (the body). Anthropic and OpenAI give you the engine, Openloops is the chassis, with the AGI loop, the tools and everything an agent needs in production, and you build the body: a customer support agent, a financial auditor, a meeting copilot. Change the model, or the product, and the rest stays the same.
+
+**Want to see it working?** [Try the live demo](https://openloops.xyz/#what), a real agent running on Openloops, with nothing to install.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/jbarcosdev/openloops/main/docs/assets/harness-car.svg" alt="A car made of an engine (the AI model), a chassis (the harness) and a body (the loop). The body changes between a personal assistant, an analyst, customer support and a programmer, while the engine and the chassis stay the same." width="560">
+  <img src="https://raw.githubusercontent.com/jbarcosdev/openloops/main/docs/assets/harness-car.svg" alt="A car made of an engine (the AI model), a chassis (Openloops) and a body (your product). The body changes between a personal assistant, customer support, a meeting copilot and your own idea, while the engine and the chassis stay the same." width="560">
 </p>
 
 ```typescript
@@ -13,13 +15,13 @@ import { Agent } from 'openloops/core'
 import { Logger } from 'openloops/common'
 import { CurrentUser } from 'openloops/base'
 import { AgiLoop } from 'openloops/loops'
-import { webSearchTool } from 'openloops/tools'
+import { fetchUrlTool } from 'openloops/tools'
 
 const logger = new Logger()
 const currentUser = await CurrentUser.asyncFromDB(userId)
 const agent = new Agent({ loop: new AgiLoop() })
 
-agent.addTool(webSearchTool) // needs SERPER_API_KEY, see "Web search" below
+agent.addTool(fetchUrlTool) // reads web pages as text, it needs no key
 
 const result = await agent.run({
     input: { message: 'what is the current price of Bitcoin?' },
@@ -67,27 +69,9 @@ This project uses the `openloops` package. Before writing code that uses it, rea
 The package has no controllers: the authorization of every endpoint is the responsibility of this backend.
 ```
 
-## Pick a loop, or write your own
+## Built for your SaaS, not for one person
 
-The logic that makes your agent *your* agent (how it reasons, when it asks for confirmation, whether it answers in one shot or works through a sequence of tools) lives in an `AgentLoop`. `openloops` ships `AgiLoop`, a reasoning loop that answers directly when it can and otherwise works in cycles of think, act and observe until it has a final answer. Any loop, yours or someone else's, is interchangeable.
-
-Want a customer support agent?
-
-```typescript
-const agent = new Agent({ loop: new CustomerSupportLoop() })
-```
-
-Want a software development agent?
-
-```typescript
-const agent = new Agent({ loop: new CodeSpecialistLoop() })
-```
-
-A loop is a single file with a handful of node functions, so writing your own is a matter of an afternoon, not a sprint. See [Building an `AgentLoop`](docs/loops.md).
-
-## Built for products, not for one person
-
-If you've stood up [OpenClaw](https://github.com/openclaw/openclaw), [Hermes Agent](https://github.com/NousResearch/hermes-agent), or [ZeroClaw](https://github.com/zeroclaw-labs/zeroclaw), you already know how good a single, always-on personal agent can feel. You also know what happens the moment you try to make it serve more than one person: there's no clean boundary between "my agent" and "your agent." Conversations, memory, and connected tools were never designed to be scoped per user in the first place.
+If you've stood up [OpenClaw](https://github.com/openclaw/openclaw), [Hermes Agent](https://github.com/NousResearch/hermes-agent), or [ZeroClaw](https://github.com/zeroclaw-labs/zeroclaw), you already know how good a single, always-on personal agent can feel. You also know what happens the moment you try to make it serve every customer of a product: there's no clean boundary between "my agent" and "your agent." Conversations, memory, and connected tools were never designed to be scoped per user in the first place.
 
 `openloops` starts from the opposite assumption. Every chat, every task, every piece of context, and every connected MCP server is scoped to a `currentUser` from the ground up, not bolted on later. Two users, same deployment, completely separate agents, with zero risk of one seeing the other's history or tools.
 
@@ -95,11 +79,11 @@ If you've stood up [OpenClaw](https://github.com/openclaw/openclaw), [Hermes Age
 
 You know the pattern: before you write a single line of what your agent actually *does*, you're declaring a graph, wiring a checkpointer, and figuring out how tool retries and error states are supposed to work. Weeks in, you have an agent that technically runs, and a mental model of *why* it does what it does that only lives in your head, because the framework itself is a black box the moment something goes wrong in production.
 
-`openloops` gives you one file to read to understand your agent's behavior: the loop itself. Persistence and tracing aren't something you configure. They're just already there. See the full comparison further down.
+`openloops` gives you a ready-made chassis: you add your tools and your MCP servers, embed the agent in your app, and the rest is already there. Persistence and tracing aren't something you configure. See the full comparison further down.
 
 ## What you get out of the box
 
-- **Multi-user by design.** Chat history, task state, and MCP server configuration are all scoped per user, so the same deployment safely serves every one of your customers.
+- **Multitenant by design.** Chat history, task state, and MCP server configuration are all scoped per user, so the same deployment safely serves every one of your customers.
 - **Zero-boilerplate persistence.** Messages, tasks, and every tool call your agent makes are saved automatically to MongoDB, and a conversation resumes exactly where it stopped, including in the middle of a confirmation or a question. You never write a `save()` call.
 - **Safe tool execution.** Arguments are validated against the tool's schema, destructive tools wait for the user's confirmation, identical failing calls are blocked, identifiers the model invented are rejected before they reach a real system, and large outputs are kept out of the prompt. LLM calls retry with backoff and wait out rate limits.
 - **Native MCP support with a trust flow.** Connect any MCP server and its tools become regular tools. Each server must be approved by the user before its first tool runs, and a server that changes its tools is reviewed again, so a third party cannot quietly change what your agent does.
@@ -174,8 +158,8 @@ This is a comparison against the self-hosted, open-source versions of LangGraph 
 | User management | Included (`openloops/users`, `openloops/authentication`) | Not included, you build your own | Not included, you build your own |
 | LLM usage/cost tracking | Included (`openloops/llmcalls`): per answer, per chat, and per-user statistics | Not included in OSS, available via paid LangSmith | Third-party integrations such as OpenLIT report token usage and cost |
 | Observability | Langfuse via env vars, a hook to report errors to the tool you use, and traces stored per chat | Your own tracing setup, or paid LangSmith | Third-party integrations (Langfuse, OpenLIT, Arize Phoenix, Opik, Weave) that you set up |
-| What you write | Node functions (plain async functions) | Nodes and the graph's edges, explicitly | Agents, tasks, and crew orchestration, declared per role |
-| Mental model | A state machine your loop drives itself | A graph you declare and compile ahead of time | A crew of role-based agents coordinated for you |
+| What you write | Your tools and MCP servers, and the product you build on top. The loop is included, and you can write your own | Nodes and the graph's edges, explicitly | Agents, tasks, and crew orchestration, declared per role |
+| Mental model | A ready-made chassis: you connect your tools and embed the agent in your app | A graph you declare and compile ahead of time | A crew of role-based agents coordinated for you |
 
 Neither approach is "wrong." LangGraph's explicit graph declaration is a deliberate design choice that gives you visual tooling (LangGraph Studio) and fine-grained control over parallel execution, and CrewAI's role-based model is a natural fit for problems that map cleanly onto a team of specialists. `openloops` trades some of that explicitness for a much shorter path from "I have an idea for an agent" to "it's running in production, for all my users."
 
@@ -256,6 +240,12 @@ The built-in `sendSlackMessageTool` posts a message to a channel. Create a Slack
 
 - **Errors**: register one function with `setErrorReporter` and send them to Sentry or to the tool you use. See [reporting errors](docs/error-reporting.md). Reporting with `SENTRY_DSN` still works but is deprecated.
 - **Langfuse**: set `LANGFUSE_SECRET_KEY`, `LANGFUSE_PUBLIC_KEY`, and `LANGFUSE_BASE_URL` and every LLM call is traced automatically, with no code changes.
+
+## The AGI loop, and your own if you need it
+
+The logic that makes your agent *your* agent (how it reasons, when it asks for confirmation, whether it answers in one shot or works through a sequence of tools) lives in an `AgentLoop`. Most products never need to write one: `openloops` ships `AgiLoop`, a reasoning loop that answers directly when it can and otherwise works in cycles of think, act and observe until it has a final answer. What you add is your tools and your MCP servers.
+
+If you need full control, a loop is a single file with a handful of node functions, so writing your own is a matter of an afternoon, not a sprint. See [Building an `AgentLoop`](docs/loops.md).
 
 ## More examples
 

@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 310" width="560" height="310" role="img" aria-labelledby="t d">
 <title id="t">The openloops harness</title>
-<desc id="d">A car made of an engine (the AI model), a chassis (the harness) and a body (the loop). The body changes while the engine and the chassis stay the same: a different body, a different agent.</desc>
+<desc id="d">A car made of an engine (the AI model), a chassis (Openloops) and a body (your product). The body changes while the engine and the chassis stay the same: a different body, a different agent.</desc>
 <style>
 .mono{font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace}
 .body,.role{opacity:0;animation:cycle 12.8s infinite both;transform-box:fill-box}
@@ -22,25 +22,25 @@
 <path d="M 90 150 L 90 128 Q 90 118 104 116 L 190 110 L 225 82 Q 232 76 244 76 L 330 76 Q 342 76 350 84 L 378 110 L 462 118 Q 478 120 478 134 L 478 150 Z" fill="#cbd5e1" fill-opacity="0.04" stroke="#cbd5e1" stroke-width="1.75" stroke-linejoin="round"/>
 <path d="M 232 84 L 292 84 L 292 108 L 205 108 Z M 300 84 L 336 84 L 366 108 L 300 108 Z" fill="#cbd5e1" fill-opacity="0.08" stroke="#cbd5e1" stroke-width="1" stroke-linejoin="round"/>
 <line x1="290" y1="62" x2="290" y2="72" stroke="#64748b" stroke-width="1" stroke-dasharray="3 3"/>
-<text class="mono" x="290" y="54" text-anchor="middle" font-size="11" letter-spacing="1.2" fill="#cbd5e1">BODY<tspan fill="#94a3b8"> (</tspan><tspan fill="#f8fafc">LOOP</tspan><tspan fill="#94a3b8">)</tspan></text>
+<text class="mono" x="290" y="54" text-anchor="middle" font-size="11" letter-spacing="1.2" fill="#cbd5e1">BODY<tspan fill="#94a3b8"> (</tspan><tspan fill="#f8fafc">YOUR PRODUCT</tspan><tspan fill="#94a3b8">)</tspan></text>
 </g>
-<g class="body b1" style="animation-delay:3.2s">
+<g class="body b1" style="animation-delay:6.4s">
 <path d="M 90 150 L 90 132 Q 90 124 102 122 L 200 116 Q 240 84 290 84 L 330 84 Q 350 86 362 104 L 372 114 L 462 124 Q 480 128 480 138 L 480 150 Z" fill="#cbd5e1" fill-opacity="0.04" stroke="#cbd5e1" stroke-width="1.75" stroke-linejoin="round"/>
 <path d="M 232 112 Q 258 92 290 92 L 330 92 Q 342 94 350 110 Z" fill="#cbd5e1" fill-opacity="0.08" stroke="#cbd5e1" stroke-width="1" stroke-linejoin="round"/>
 <line x1="290" y1="62" x2="290" y2="80" stroke="#64748b" stroke-width="1" stroke-dasharray="3 3"/>
-<text class="mono" x="290" y="54" text-anchor="middle" font-size="11" letter-spacing="1.2" fill="#cbd5e1">BODY<tspan fill="#94a3b8"> (</tspan><tspan fill="#f8fafc">LOOP</tspan><tspan fill="#94a3b8">)</tspan></text>
+<text class="mono" x="290" y="54" text-anchor="middle" font-size="11" letter-spacing="1.2" fill="#cbd5e1">BODY<tspan fill="#94a3b8"> (</tspan><tspan fill="#f8fafc">YOUR PRODUCT</tspan><tspan fill="#94a3b8">)</tspan></text>
 </g>
-<g class="body b2" style="animation-delay:6.4s">
+<g class="body b2" style="animation-delay:3.2s">
 <path d="M 90 150 L 90 100 Q 90 84 106 84 L 340 84 Q 352 84 358 96 L 380 118 L 462 124 Q 478 126 478 140 L 478 150 Z" fill="#cbd5e1" fill-opacity="0.04" stroke="#cbd5e1" stroke-width="1.75" stroke-linejoin="round"/>
 <path d="M 110 96 L 166 96 L 166 124 L 110 124 Z M 176 96 L 232 96 L 232 124 L 176 124 Z M 242 96 L 298 96 L 298 124 L 242 124 Z M 308 96 L 342 96 L 366 118 L 308 118 Z" fill="#cbd5e1" fill-opacity="0.08" stroke="#cbd5e1" stroke-width="1" stroke-linejoin="round"/>
 <line x1="240" y1="62" x2="240" y2="80" stroke="#64748b" stroke-width="1" stroke-dasharray="3 3"/>
-<text class="mono" x="240" y="54" text-anchor="middle" font-size="11" letter-spacing="1.2" fill="#cbd5e1">BODY<tspan fill="#94a3b8"> (</tspan><tspan fill="#f8fafc">LOOP</tspan><tspan fill="#94a3b8">)</tspan></text>
+<text class="mono" x="240" y="54" text-anchor="middle" font-size="11" letter-spacing="1.2" fill="#cbd5e1">BODY<tspan fill="#94a3b8"> (</tspan><tspan fill="#f8fafc">YOUR PRODUCT</tspan><tspan fill="#94a3b8">)</tspan></text>
 </g>
 <g class="body b3" style="animation-delay:9.6s">
 <path d="M 290 150 L 290 100 Q 292 84 308 82 L 352 82 Q 364 82 370 92 L 384 114 L 462 120 Q 478 122 478 136 L 478 150 Z M 90 150 L 90 110 L 100 110 L 104 140 L 270 140 L 274 110 L 284 110 L 284 150 Z" fill="#cbd5e1" fill-opacity="0.04" stroke="#cbd5e1" stroke-width="1.75" stroke-linejoin="round"/>
 <path d="M 302 92 L 348 92 L 372 114 L 302 114 Z" fill="#cbd5e1" fill-opacity="0.08" stroke="#cbd5e1" stroke-width="1" stroke-linejoin="round"/>
 <line x1="330" y1="62" x2="330" y2="78" stroke="#64748b" stroke-width="1" stroke-dasharray="3 3"/>
-<text class="mono" x="330" y="54" text-anchor="middle" font-size="11" letter-spacing="1.2" fill="#cbd5e1">BODY<tspan fill="#94a3b8"> (</tspan><tspan fill="#f8fafc">LOOP</tspan><tspan fill="#94a3b8">)</tspan></text>
+<text class="mono" x="330" y="54" text-anchor="middle" font-size="11" letter-spacing="1.2" fill="#cbd5e1">BODY<tspan fill="#94a3b8"> (</tspan><tspan fill="#f8fafc">YOUR PRODUCT</tspan><tspan fill="#94a3b8">)</tspan></text>
 </g>
 <g>
 <rect class="motor" x="394" y="122" width="66" height="26" rx="4" fill="#ffffff" fill-opacity="0.06" stroke="#cbd5e1" stroke-width="1.5"/>
@@ -70,10 +70,10 @@
 <line x1="0" y1="-8" x2="0" y2="-20" stroke="#64748b" stroke-width="2" transform="rotate(288)"/>
 </g><circle r="8" fill="#0B0E14" stroke="#cbd5e1" stroke-width="1.5"/></g>
 <line x1="280" y1="172" x2="280" y2="232" stroke="#64748b" stroke-width="1" stroke-dasharray="3 3"/>
-<text class="mono" x="280" y="248" text-anchor="middle" font-size="11" letter-spacing="1.2" font-weight="700" fill="#C06CF0">CHASSIS<tspan fill="#94a3b8"> (</tspan><tspan fill="#e9d5ff">HARNESS</tspan><tspan fill="#94a3b8">)</tspan></text></g>
+<text class="mono" x="280" y="248" text-anchor="middle" font-size="11" letter-spacing="1.2" font-weight="700" fill="#C06CF0">CHASSIS<tspan fill="#94a3b8"> (</tspan><tspan fill="#e9d5ff">OPENLOOPS</tspan><tspan fill="#94a3b8">)</tspan></text></g>
 <text class="mono role b0" x="280" y="278" text-anchor="middle" font-size="13" fill="#f8fafc" style="animation-delay:0s">Personal assistant</text>
-<text class="mono role b1" x="280" y="278" text-anchor="middle" font-size="13" fill="#f8fafc" style="animation-delay:3.2s">Analyst</text>
-<text class="mono role b2" x="280" y="278" text-anchor="middle" font-size="13" fill="#f8fafc" style="animation-delay:6.4s">Customer support</text>
-<text class="mono role b3" x="280" y="278" text-anchor="middle" font-size="13" fill="#f8fafc" style="animation-delay:9.6s">Programmer</text>
+<text class="mono role b1" x="280" y="278" text-anchor="middle" font-size="13" fill="#f8fafc" style="animation-delay:6.4s">Meeting copilot</text>
+<text class="mono role b2" x="280" y="278" text-anchor="middle" font-size="13" fill="#f8fafc" style="animation-delay:3.2s">Customer support</text>
+<text class="mono role b3" x="280" y="278" text-anchor="middle" font-size="13" fill="#f8fafc" style="animation-delay:9.6s">Your incredible idea</text>
 <text class="mono" x="280" y="298" text-anchor="middle" font-size="11" fill="#94a3b8">Same engine. Same chassis. A different body, a different agent.</text>
 </svg>

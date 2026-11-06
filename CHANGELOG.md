@@ -2,6 +2,12 @@
 
 All notable changes to `openloops` are written here, newest first. The format follows [Keep a Changelog](https://keepachangelog.com) and the versions follow [semantic versioning](https://semver.org), where a minor version can still break the API while the package is in beta. Changes before 0.4.0 are not recorded here, see the commits and the tags.
 
+## Unreleased
+
+### Changed
+
+- The description of the package, the README and the docs index present `openloops` as the harness for building multitenant AI agents for your SaaS, where the model is the engine, `openloops` the chassis and your product the body. The README no longer shows the `CustomerSupportLoop` and `CodeSpecialistLoop` examples, which the package does not ship, and links to the live demo at openloops.xyz.
+
 ## 0.8.1
 
 ### Added
