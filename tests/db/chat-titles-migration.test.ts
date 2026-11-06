@@ -42,6 +42,14 @@ describe('migrateChatTitles', () => {
         expect(operations[1].updateOne.update.$set.title).toHaveLength(80)
     })
 
+    it('removes the tags of the message, as the entity does with any text', async () => {
+        const { db, operations } = fakeDb([chat([{ role: 'user', content: '<b>negrita</b> hola <script>alert(1)</script>' }])])
+
+        await migrateChatTitles(db)
+
+        expect(operations[0].updateOne.update).toEqual({ $set: { title: 'negrita hola' } })
+    })
+
     it('skips the chats that already have a title and the ones with no message of the user', async () => {
         const { db, operations } = fakeDb([
             chat([{ role: 'user', content: 'hola' }], 'Ya tiene'),

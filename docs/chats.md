@@ -74,7 +74,7 @@ The first call renames the chat, and the agent keeps that title from then on. Th
 
 ## Migrating to 0.8.0
 
-Chats saved with a version before 0.8.0 have no title. **Run `migrateChatTitles` once per database when you update.** It gives each chat without a title its first message of the user, on one line and cut to 80 characters. Without it those chats stay untitled until they receive another message, and a history that lists with `select` has nothing to show for them, because it does not read the messages.
+Chats saved with a version before 0.8.0 have no title. **Run `migrateChatTitles` once per database when you update.** It gives each chat without a title its first message of the user, on one line, without HTML tags and cut to 80 characters. Without it those chats stay untitled until they receive another message, and a history that lists with `select` has nothing to show for them, because it does not read the messages.
 
 1. **Take a backup**, and run it with `dryRun` first. It only counts.
 
