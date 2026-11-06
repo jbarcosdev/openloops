@@ -1,4 +1,4 @@
-# openloops
+# Openloops
 
 **Build production-ready, multitenant AI agents for your SaaS in minutes, not days, weeks, or months.** · [openloops.xyz](https://openloops.xyz)
 
