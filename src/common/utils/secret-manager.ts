@@ -22,7 +22,7 @@ export class SecretManager {
     private constructor() {
         const secretKey = process.env.SECRET_MANAGER_KEY
         if (!secretKey) {
-            throw new Error('[Secret manager] SSUID environment variable is not set')
+            throw new Error('[Secret manager] SECRET_MANAGER_KEY environment variable is not set')
         }
 
         this.cryptr = new Cryptr(secretKey, {
