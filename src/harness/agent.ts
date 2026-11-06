@@ -1,5 +1,6 @@
 import { ObjectId } from 'mongodb'
 import { Logger } from '@common/logger'
+import { reportError } from '@common/error'
 import { CurrentUser, CurrentSession } from '@common/base'
 import { McpServer, McpServerProps, McpManifest, McpManifestDiff, needsUserReview } from '@services/mcp-servers/entities'
 import { createChat, updateChat, getChatById } from '@services/chats'
@@ -267,6 +268,7 @@ export class Agent {
             const reported = llmError?.userMessage ?? message
 
             await this.failRun(reported, llmError)
+            await this.reportFailure(error, llmError ? { code: llmError.code } : {})
 
             return { data: this.currentChat?._id ? this.currentChat : undefined, error: reported }
         }
@@ -306,6 +308,7 @@ export class Agent {
                 listener(activity)
             } catch (error: any) {
                 this.logger.warn({ error: error?.message ?? error }, '[AGENT] An activity listener failed')
+                void this.reportFailure(error, { listener: 'activity' })
             }
         }
     }
@@ -403,6 +406,7 @@ export class Agent {
                 result = await guard.run(context)
             } catch (error: any) {
                 this.logger.error({ error: error?.message ?? error, guard: guard.name }, '[AGENT] Guard failed')
+                await this.reportFailure(error, { stage: 'guard', guard: guard.name })
                 failed = true
                 result = { passed: false, reason: `Guard failed: ${error?.message ?? error}` }
             }
@@ -512,6 +516,10 @@ export class Agent {
         await this.disconnectMcpServers()
     }
 
+    private async reportFailure (error: unknown, details: Record<string, unknown> = {}): Promise<void> {
+        await reportError(error as Error, { source: 'agent', chatId: this.currentChat?._id?.toString(), userId: this.currentUser?.userId, ...details })
+    }
+
     private async failRun (message: string, llmError?: LLMError) {
         try {
             this.currentChat.state?.setStatus(AgentStatus.FAILED)
@@ -521,6 +529,7 @@ export class Agent {
             await this.persist()
         } catch (saveError: any) {
             this.logger.error({ error: saveError?.message ?? saveError }, '[AGENT] Failed to persist failed run state')
+            await this.reportFailure(saveError, { stage: 'persist' })
         } finally {
             await this.disconnectMcpServers()
         }
@@ -635,6 +644,7 @@ export class Agent {
             })
         } catch (error: any) {
             this.logger.error({ error: error?.message ?? error }, '[AGENT] Failed to persist traces')
+            await this.reportFailure(error, { stage: 'traces' })
         }
     }
 

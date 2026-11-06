@@ -1,6 +1,7 @@
 import { randomBytes } from 'node:crypto'
 import { hostname } from 'node:os'
 import { Logger } from '@common/logger'
+import { reportError } from '@common/error'
 import { CurrentUser, CurrentSession } from '@common/base'
 import { Agent, AgentOptions } from '@harness/agent'
 import { AgiLoop } from '@loops/agi/loop'
@@ -94,6 +95,7 @@ export class AutomationRunner {
 			await new SyncAutomationRunsUseCase().execute({})
 		} catch (error: any) {
 			this.logger.error({ error: error?.message ?? error }, '[AUTOMATIONS] Failed to sync the open runs')
+			await reportError(error, { source: 'automations', stage: 'sync' })
 		}
 
 		if (capacity <= 0) return
@@ -124,8 +126,9 @@ export class AutomationRunner {
 
 	private async loop (): Promise<void> {
 		while (this.running) {
-			this.ticking = this.tick().catch(error => {
+			this.ticking = this.tick().catch(async error => {
 				this.logger.error({ error: error?.message ?? error }, '[AUTOMATIONS] The worker failed to check the due automations')
+				await reportError(error, { source: 'automations', stage: 'tick' })
 			})
 
 			await this.ticking
@@ -170,6 +173,7 @@ export class AutomationRunner {
 		} catch (failure: any) {
 			error = { code: failure?.code ?? 'RUNNER_ERROR', message: failure?.message ?? String(failure) }
 			this.logger.error({ error: error.message, automationId, runId }, '[AUTOMATIONS] A run failed')
+			await reportError(failure, { source: 'automations', stage: 'run', automationId, runId })
 		} finally {
 			clearInterval(heartbeat)
 		}
@@ -226,6 +230,7 @@ export class AutomationRunner {
 			await this.options.onRunFinished(event)
 		} catch (error: any) {
 			this.logger.error({ error: error?.message ?? error }, '[AUTOMATIONS] The onRunFinished callback failed')
+			await reportError(error, { source: 'automations', stage: 'onRunFinished' })
 		}
 	}
 }

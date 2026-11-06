@@ -29,7 +29,7 @@ export class MongoRepository<T> {
 	private readonly ownerField: string
 	private readonly protectedFields: string[]
 
-	private readonly report = reportError
+	private readonly report = (error: Error) => reportError(error, { source: 'mongo', collection: this.collection })
 
 	constructor (props: { database: string; collection: string; envvar?: string; scoped?: boolean; ownerField?: string; protectedFields?: string[] }) {
 		const { database, collection, envvar, scoped = false, ownerField = 'ownerId', protectedFields = [] } = props || {}

@@ -6085,6 +6085,11 @@ __metadata:
     tsconfig-paths: "npm:^4.2.0"
     tsup: "npm:^9.0.0"
     typescript: "npm:^6.0.3"
+  peerDependencies:
+    "@sentry/node": ^11.11.0
+  peerDependenciesMeta:
+    "@sentry/node":
+      optional: true
   languageName: unknown
   linkType: soft
 

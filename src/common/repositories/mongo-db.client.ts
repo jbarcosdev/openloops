@@ -46,7 +46,7 @@ export class MongoClient {
             await this.connect()
         } catch (error: any) {
             this.logger.error('[Mongo Client]: Error connecting to MongoDB')
-            await reportError(`Error connecting to MongoDB: ${error.message}`, { error })
+            await reportError(`Error connecting to MongoDB: ${error.message}`, { source: 'mongo', error })
 
             throw error
         }

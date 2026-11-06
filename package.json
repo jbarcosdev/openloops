@@ -117,7 +117,6 @@
   "dependencies": {
     "@earendil-works/pi-ai": "^1.5.0",
     "@modelcontextprotocol/sdk": "^1.32.2",
-    "@sentry/node": "^11.11.0",
     "bcryptjs": "^3.0.3",
     "croner": "^11.0.0",
     "cryptr": "^6.4.0",
@@ -129,6 +128,7 @@
     "pino": "^10.4.0"
   },
   "devDependencies": {
+    "@sentry/node": "^11.11.0",
     "@types/jest": "^30.0.0",
     "@types/node": "^26.6.6",
     "jest": "^30.5.2",
@@ -138,6 +138,14 @@
     "tsconfig-paths": "^4.2.0",
     "tsup": "^9.0.0",
     "typescript": "^6.0.3"
+  },
+  "peerDependencies": {
+    "@sentry/node": "^11.11.0"
+  },
+  "peerDependenciesMeta": {
+    "@sentry/node": {
+      "optional": true
+    }
   },
   "engines": {
     "node": ">=22.0.0"
