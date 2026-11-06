@@ -14,6 +14,7 @@ Start with the integration guide, then read only the pages you need. All pages a
 
 - [The Agent](agent.md): options, running a turn, statuses, confirmations, autonomous mode
 - [Configuration](configuration.md): environment variables, default model, timeouts
+- [Reporting errors](error-reporting.md): `setErrorReporter`, what it receives, what is reported, serverless and moving from `SENTRY_DSN`
 - [Chats](chats.md): the chat record, its title, message source, listing, searching and deleting, and the migration to 0.8.0
 
 ## Shape the agent

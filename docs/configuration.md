@@ -19,7 +19,7 @@
 | `LLM_FALLBACK_PROVIDER`, `LLM_FALLBACK_MODEL` | no | The model to use when nothing else chooses one, for the whole deployment. Set both or neither. See [Which model a chat uses](#which-model-a-chat-uses). |
 | `LLM_CALL_TIMEOUT_MS` | no | Longest time to wait for one attempt of a model call, in milliseconds. Defaults to `60000`, and calls with the `high` thinking effort get twice as much. See [Timeouts](#timeouts). |
 | `MCP_TOOL_TIMEOUT_MS` | no | Longest time to wait for a tool of an MCP server, in milliseconds. Defaults to `60000`. See [Timeouts](#timeouts). |
-| `SENTRY_DSN` | no | Errors are reported to Sentry when set, unless `IS_LOCAL` is `true` or `NODE_ENV` is `development`. |
+| `SENTRY_DSN` | no | **Deprecated.** Errors are reported to Sentry when set and no reporter is registered, unless `IS_LOCAL` is `true` or `NODE_ENV` is `development`. It needs `@sentry/node` installed in your project. Use [`setErrorReporter`](error-reporting.md) instead. |
 | `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`, `LANGFUSE_BASE_URL` | no | Traces every LLM call in Langfuse when all three are set. |
 | `IS_LOCAL`, `NODE_ENV` | no | Local development switches. With `IS_LOCAL` set to `true`, or `NODE_ENV` set to `development`, the logger prints colored logs if `pino-pretty` is installed in your project (it is a dev dependency of this package, so install it yourself: `yarn add -D pino-pretty`), and plain JSON otherwise. |
 
@@ -94,6 +94,10 @@ await client.close()
 ```
 
 It covers `llm_calls`, `chats`, `agent_tasks`, `agent_actions`, `agent_traces`, `workspace_items`, `mcp_servers`, `automations` and `automation_runs`. It is safe to run again: an index that already exists is left as it is. Collections of your own application are not included.
+
+## Reporting errors
+
+The package does not choose a tool to report errors: you declare one function, once, and it receives the errors that the package catches. Read [reporting errors](error-reporting.md).
 
 ## What is recorded
 

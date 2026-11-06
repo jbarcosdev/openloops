@@ -239,3 +239,5 @@ If a turn fails for any reason, `Agent` marks the chat as failed, saves it, clos
 | `LLM_FAILED` | Anything else. | yes |
 
 The provider tells these apart with free text, so a message that does not match any of them ends in `LLM_FAILED`.
+
+A failed run is also handed to the error reporter you registered, with the `code`, the `chatId` and the `userId`. See [reporting errors](error-reporting.md).

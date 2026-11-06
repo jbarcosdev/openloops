@@ -15,6 +15,7 @@ Start with the [README](../README.md) for what `openloops` is and how to run it.
 | --- | --- |
 | [The `Agent`](agent.md) | Options, running a turn, the result and its statuses, confirmations, autonomous mode, hooks and interruption. |
 | [Configuration](configuration.md) | Environment variables, choosing the model and what is recorded. |
+| [Reporting errors](error-reporting.md) | Declare one function, once, to send the errors that the package catches to Sentry or to the tool you use: what it receives, what is reported, serverless and moving from `SENTRY_DSN`. |
 | [Automations](automations.md) | Tasks that the agent runs by itself, on a schedule, when an event arrives or both: triggers, tokens, the queue, the history of runs and the runner that executes them. If you used `agentic-jobs`, read [the migration steps](automations.md#migrating-from-agentic-jobs). Updating to 0.5.0 breaks the shape of the triggers, read [the migration to 0.5.0](automations.md#migrating-to-050). |
 | [Chats](chats.md) | The chat record, its title and messages and their `source`, listing and searching chats, reading and deleting them. Updating to 0.8.0 needs [a migration of the titles](chats.md#migrating-to-080). |
 

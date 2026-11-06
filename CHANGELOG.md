@@ -2,6 +2,17 @@
 
 All notable changes to `openloops` are written here, newest first. The format follows [Keep a Changelog](https://keepachangelog.com) and the versions follow [semantic versioning](https://semver.org), where a minor version can still break the API while the package is in beta. Changes before 0.4.0 are not recorded here, see the commits and the tags.
 
+## Unreleased
+
+### Added
+
+- `setErrorReporter(callback)` in `openloops/common`, to receive the errors that the package catches and send them to the tool you use. The callback gets the error and `details`, with a `source` (`agent`, `mongo`, `automations` or `openloops`) and, when they exist, `code`, `chatId` and `userId`. It is global to the process, it is awaited, and an error in it is ignored. Read [reporting errors](docs/error-reporting.md) and the [example](examples/errors/error-reporting.ts).
+- The `Agent` reports a failed run, an `onActivity` listener that throws, a guard that throws, and the traces or the failed state of the chat that it cannot save, and the automations runner reports the errors it catches (`sync`, `tick`, `run` and `onRunFinished`). Before, those only went to the log. A reporter also receives the failures of the model that are not a problem of yours, such as `LLM_RATE_LIMITED`: filter them by `code`.
+
+### Changed
+
+- Reporting errors to Sentry with `SENTRY_DSN` is deprecated and will be removed in a future version. `@sentry/node` is no longer installed with the package: it is an optional peer dependency, loaded only when `SENTRY_DSN` is set and no reporter is registered, and the package no longer starts Sentry when it is imported. If you rely on `SENTRY_DSN`, install `@sentry/node` in your project, or move to `setErrorReporter`: read [moving from `SENTRY_DSN`](docs/error-reporting.md#moving-from-sentry_dsn). Registering a reporter turns the old path off.
+
 ## 0.8.0
 
 This version removes `state.currentActivity` from the chat and needs a migration of the chats that were saved before. Follow the [migration steps](docs/chats.md#migrating-to-080) when you update.

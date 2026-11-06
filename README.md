@@ -109,7 +109,7 @@ You know the pattern: before you write a single line of what your agent actually
 - **Usage and cost tracking.** Every LLM call is recorded. Get the tokens and cost of a chat or an answer, and per-user statistics by model and by period. See [usage](docs/usage.md).
 - **Users and authentication included.** User management and login with tokens, so you don't need a parallel system just to have an identity to hand the `Agent`.
 - **Any LLM provider, including local ones.** Built on [`@earendil-works/pi-ai`](https://www.npmjs.com/package/@earendil-works/pi-ai), so OpenAI, Anthropic, Google, and self-hosted models (e.g. via Ollama) all work the same way, chosen per chat.
-- **Observability without ceremony.** Sentry and Langfuse are built in. Set the environment variables and they turn on, no SDK wiring required. Every node, skill and guard also writes a trace you can read back.
+- **Observability without ceremony.** Langfuse is built in: set the environment variables and every LLM call is traced. Errors go to one function that you register, so you report them to Sentry or to whatever tool you use. Every node, skill and guard also writes a trace you can read back.
 
 On the roadmap: **sub-agent orchestration**, where an agent launches and coordinates other agents to split up a problem. A guide will come with it.
 
@@ -173,7 +173,7 @@ This is a comparison against the self-hosted, open-source versions of LangGraph 
 | MCP support | Native: servers are a per-user record, tools load on demand, and every server goes through an approval flow | A separate package (`langchain-mcp-adapters`) with a client that you wire into the graph | Native `mcps` field on agents, or `MCPServerAdapter`. Servers are declared in code, not loaded per user |
 | User management | Included (`openloops/users`, `openloops/authentication`) | Not included, you build your own | Not included, you build your own |
 | LLM usage/cost tracking | Included (`openloops/llmcalls`): per answer, per chat, and per-user statistics | Not included in OSS, available via paid LangSmith | Third-party integrations such as OpenLIT report token usage and cost |
-| Observability | Sentry + Langfuse, enabled via env vars, plus traces stored per chat | Your own tracing setup, or paid LangSmith | Third-party integrations (Langfuse, OpenLIT, Arize Phoenix, Opik, Weave) that you set up |
+| Observability | Langfuse via env vars, a hook to report errors to the tool you use, and traces stored per chat | Your own tracing setup, or paid LangSmith | Third-party integrations (Langfuse, OpenLIT, Arize Phoenix, Opik, Weave) that you set up |
 | What you write | Node functions (plain async functions) | Nodes and the graph's edges, explicitly | Agents, tasks, and crew orchestration, declared per role |
 | Mental model | A state machine your loop drives itself | A graph you declare and compile ahead of time | A crew of role-based agents coordinated for you |
 
@@ -229,7 +229,6 @@ MCP_TOOL_TIMEOUT_MS=
 OPENLOOPS_MONGO_MAX_POOL_SIZE=
 
 # Optional, see "Observability" below
-SENTRY_DSN=
 LANGFUSE_SECRET_KEY=
 LANGFUSE_PUBLIC_KEY=
 LANGFUSE_BASE_URL=
@@ -255,14 +254,12 @@ The built-in `sendSlackMessageTool` posts a message to a channel. Create a Slack
 
 ### Observability
 
-- **Sentry**: set `SENTRY_DSN` and error tracking turns on automatically.
-- **Langfuse**: set `LANGFUSE_SECRET_KEY`, `LANGFUSE_PUBLIC_KEY`, and `LANGFUSE_BASE_URL` and every LLM call is traced automatically.
-
-Neither requires any code changes. They're opt-in purely through environment variables.
+- **Errors**: register one function with `setErrorReporter` and send them to Sentry or to the tool you use. See [reporting errors](docs/error-reporting.md). Reporting with `SENTRY_DSN` still works but is deprecated.
+- **Langfuse**: set `LANGFUSE_SECRET_KEY`, `LANGFUSE_PUBLIC_KEY`, and `LANGFUSE_BASE_URL` and every LLM call is traced automatically, with no code changes.
 
 ## More examples
 
-Every pattern above, and a lot more, lives as a runnable example in [`examples/`](examples), organized by domain: `run-agent`, `loops`, `tools`, `guardrails`, `automations`, `mcps`, `chats`, `usage`, `users`, and `authentication`.
+Every pattern above, and a lot more, lives as a runnable example in [`examples/`](examples), organized by domain: `run-agent`, `loops`, `tools`, `guardrails`, `automations`, `mcps`, `chats`, `usage`, `users`, `errors`, and `authentication`.
 
 ## Package structure
 

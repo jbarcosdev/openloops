@@ -88,6 +88,10 @@ Show `data.messages`, and look at `data.state.status`:
 
 Messages have a `source` (`user`, `model` or `harness`) and some have `excludeFromContext`. Messages with `source: 'harness'` are written by the system, for example a guardrail reply or an approval question, and you may want to style them differently. See [chats](chats.md).
 
+## Reporting errors
+
+Register one reporter when the process starts, before the first request, with `setErrorReporter` from `openloops/common`, and send what it receives to Sentry or to the tool you use. A failed run, a failed database call and the errors of the automations runner come to it. In a serverless deployment, import it at the top of each handler that uses `openloops`. Read [reporting errors](error-reporting.md).
+
 ## MCP servers
 
 Your users register their own servers, and every server must be approved before the agent runs any of its tools. The approval normally happens in the chat. If you also want a screen, call `decideMcpServerTrust` with the hash of the manifest the user reviewed (`history[0].hash`). See [MCP servers](mcp-servers.md).
