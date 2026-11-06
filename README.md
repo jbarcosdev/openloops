@@ -1,6 +1,6 @@
 # openloops
 
-**Build enterprise multitenant AI agents for your SaaS in minutes, not days, weeks, or months.** · [openloops.xyz](https://openloops.xyz)
+**Build production-ready, multitenant AI agents for your SaaS in minutes, not days, weeks, or months.** · [openloops.xyz](https://openloops.xyz)
 
 Openloops is an open source **harness** for building AI agents. An agent is three things: a **model** that thinks (the engine), a **harness** that gives it hands, memory and rules (the chassis), and the **product** you build around it (the body). Anthropic and OpenAI give you the engine. Openloops gives you the chassis, with the AGI loop, the tools and everything an agent needs in production. You build the body: a customer support agent, a financial auditor, a meeting copilot. Change the model, or the product, and the rest stays the same.
 
