@@ -2,7 +2,7 @@
 
 All notable changes to `openloops` are written here, newest first. The format follows [Keep a Changelog](https://keepachangelog.com) and the versions follow [semantic versioning](https://semver.org), where a minor version can still break the API while the package is in beta. Changes before 0.4.0 are not recorded here, see the commits and the tags.
 
-## Unreleased
+## 0.8.1
 
 ### Added
 
@@ -11,6 +11,8 @@ All notable changes to `openloops` are written here, newest first. The format fo
 
 ### Changed
 
+- The error that the secret manager throws when `SECRET_MANAGER_KEY` is missing now names that variable. It said `SSUID`.
+- `migrateChatTitles` removes the HTML tags of the message it takes as a title, as the entities do with any text. Before, the title kept them.
 - Reporting errors to Sentry with `SENTRY_DSN` is deprecated and will be removed in a future version. `@sentry/node` is no longer installed with the package: it is an optional peer dependency, loaded only when `SENTRY_DSN` is set and no reporter is registered, and the package no longer starts Sentry when it is imported. If you rely on `SENTRY_DSN`, install `@sentry/node` in your project, or move to `setErrorReporter`: read [moving from `SENTRY_DSN`](docs/error-reporting.md#moving-from-sentry_dsn). Registering a reporter turns the old path off.
 
 ## 0.8.0
