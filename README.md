@@ -230,7 +230,9 @@ By default, `openloops` uses a database named `openloops` if `OPENLOOPS_DB_NAME`
 
 ### Web search
 
-The built-in `webSearchTool` uses [Serper](https://serper.dev). Create a free API key there and set `SERPER_API_KEY` in your `.env`. See [`docs/tools.md`](docs/tools.md).
+Most agents don't need a search tool. `fetchUrlTool` is built in, free and needs no key: it reads any web page as text, which is enough when the agent already knows the source (a docs page, a price page, an API).
+
+The built-in `webSearchTool` is only for when you strictly need to search Google. It uses [Serper](https://serper.dev) and returns Google result snippets, not pages, so the agent still has to read the sources with `fetchUrlTool`. Create a free API key there and set `SERPER_API_KEY` in your `.env`. See [`docs/tools.md`](docs/tools.md).
 
 ### Slack
 
