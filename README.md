@@ -245,7 +245,7 @@ The built-in `sendSlackMessageTool` posts a message to a channel. Create a Slack
 
 ## The AGI loop, and your own if you need it
 
-The logic that makes your agent *your* agent (how it reasons, when it asks for confirmation, whether it answers in one shot or works through a sequence of tools) lives in an `AgentLoop`. Most products never need to write one: `openloops` ships `AgiLoop`, a reasoning loop that answers directly when it can and otherwise works in cycles of think, act and observe until it has a final answer. What you add is your tools and your MCP servers.
+The loop is the transmission of the harness: it decides how the agent reasons, when it asks for confirmation and whether it answers in one shot or works through a sequence of tools, and it lives in an `AgentLoop`. Most products never need to write one: `openloops` ships `AgiLoop`, a reasoning loop that answers directly when it can and otherwise works in cycles of think, act and observe until it has a final answer. What makes your agent yours is the interface you build and the tools and MCP servers you connect.
 
 If you need full control, a loop is a single file with a handful of node functions, so writing your own is a matter of an afternoon, not a sprint. See [Building an `AgentLoop`](docs/loops.md).
 

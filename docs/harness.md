@@ -1,6 +1,6 @@
 # The harness
 
-An agent is three things: a **model** that thinks, a **harness** that gives it hands, memory and rules, and a **loop** that decides what it is for. `openloops` is the harness, and it ships a loop. You can change the model or the loop and the harness stays the same.
+An agent is three things: a **model** that thinks, a **harness** that gives it hands, memory and rules, and the **interface** you build on top, which is how your users talk to the agent plus its tools and MCP servers. `openloops` is the harness, and it ships a loop, the transmission that turns the model's decisions into steps. You can change the model or the interface and the harness stays the same.
 
 The harness is everything between a loop and the outside world. A loop decides what to do. The harness makes sure it is done safely, remembers it and shows the result back to the model in a form it can use. You get all of this by using [`Agent`](agent.md) with any loop.
 

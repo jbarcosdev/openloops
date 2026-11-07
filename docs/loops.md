@@ -1,6 +1,6 @@
 # Building an `AgentLoop`
 
-An `AgentLoop` decides how your agent thinks and acts: when it answers directly, when it uses tools, when it asks the user. `openloops` ships `AgiLoop`, which is the one to use for general agents and works out of the box, so most products never need to write a loop. This page is for the advanced case where you do.
+An `AgentLoop` is the transmission of the harness. It decides how your agent thinks and acts: when it answers directly, when it uses tools, when it asks the user. `openloops` ships `AgiLoop`, which is the one to use for general agents and works out of the box, so most products never need to write a loop. This page is for the advanced case where you do.
 
 ```typescript
 import { AgentLoop, AgentStatus, Harness, RunContext } from 'openloops/core'
