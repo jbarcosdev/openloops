@@ -6,7 +6,7 @@ All notable changes to `openloops` are written here, newest first. The format fo
 
 ### Changed
 
-- The description of the package, the README and the docs index present `openloops` as the harness for building multitenant AI agents for your SaaS, where the model is the engine, `openloops` the chassis and your product the body. The README no longer shows the `CustomerSupportLoop` and `CodeSpecialistLoop` examples, which the package does not ship, and links to the live demo at openloops.xyz.
+- The description of the package, the README and the docs index present `openloops` as the harness for building multitenant AI agents for your SaaS, where the model is the engine, `openloops` the chassis and your interface the body. The README no longer shows the `CustomerSupportLoop` and `CodeSpecialistLoop` examples, which the package does not ship, and links to the live demo at openloops.xyz.
 
 ## 0.8.1
 

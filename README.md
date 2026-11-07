@@ -2,12 +2,12 @@
 
 **Build production-ready, multitenant AI agents for your SaaS in minutes, not days, weeks, or months.** · [openloops.xyz](https://openloops.xyz)
 
-Openloops is an open source **harness** for building AI agents. An agent is three things: a **model** that thinks (the engine), a **harness** that gives it hands, memory and rules (the chassis), and the **product** you build around it (the body). Anthropic and OpenAI give you the engine. Openloops gives you the chassis, with the AGI loop, the tools and everything an agent needs in production. You build the body: a customer support agent, a financial auditor, a meeting copilot. Change the model, or the product, and the rest stays the same.
+Openloops is an open source **harness** for building AI agents. An agent is three things: a **model** that thinks (the engine), a **harness** that gives it hands, memory and rules (the chassis), and the **interface** you build on top, with your tools and MCP servers (the body). Anthropic and OpenAI give you the engine. Openloops gives you the chassis, with the AGI loop, the tools and everything an agent needs in production. You build the body: a customer support agent, a financial auditor, a meeting copilot. Change the model, or the product, and the rest stays the same.
 
 **Want to see it working?** [Try the live demo](https://openloops.xyz/#demo), a real agent running on Openloops, with nothing to install.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/jbarcosdev/openloops/main/docs/assets/harness-car.svg" alt="A car made of an engine (the AI model), a chassis (Openloops) and a body (your product). The body changes between a personal assistant, customer support, a meeting copilot and your own idea, while the engine and the chassis stay the same." width="560">
+  <img src="https://raw.githubusercontent.com/jbarcosdev/openloops/main/docs/assets/harness-car.svg" alt="A car made of an engine (the AI model), a chassis (Openloops) and a body (your interface). The body changes between a personal assistant, customer support, a meeting copilot and your own idea, while the engine and the chassis stay the same." width="560">
 </p>
 
 ```typescript
@@ -158,7 +158,7 @@ This is a comparison against the self-hosted, open-source versions of LangGraph 
 | User management | Included (`openloops/users`, `openloops/authentication`) | Not included, you build your own | Not included, you build your own |
 | LLM usage/cost tracking | Included (`openloops/llmcalls`): per answer, per chat, and per-user statistics | Not included in OSS, available via paid LangSmith | Third-party integrations such as OpenLIT report token usage and cost |
 | Observability | Langfuse via env vars, a hook to report errors to the tool you use, and traces stored per chat | Your own tracing setup, or paid LangSmith | Third-party integrations (Langfuse, OpenLIT, Arize Phoenix, Opik, Weave) that you set up |
-| What you write | Your tools and MCP servers, and the product you build on top. The loop is included, and you can write your own | Nodes and the graph's edges, explicitly | Agents, tasks, and crew orchestration, declared per role |
+| What you write | Your interface, your tools and MCP servers. The loop is included, and you can write your own | Nodes and the graph's edges, explicitly | Agents, tasks, and crew orchestration, declared per role |
 | Mental model | A ready-made chassis: you connect your tools and embed the agent in your app | A graph you declare and compile ahead of time | A crew of role-based agents coordinated for you |
 
 Neither approach is "wrong." LangGraph's explicit graph declaration is a deliberate design choice that gives you visual tooling (LangGraph Studio) and fine-grained control over parallel execution, and CrewAI's role-based model is a natural fit for problems that map cleanly onto a team of specialists. `openloops` trades some of that explicitness for a much shorter path from "I have an idea for an agent" to "it's running in production, for all my users."
