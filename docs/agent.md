@@ -142,6 +142,8 @@ You do not implement any of this. See [harness](harness.md#approvals).
 
 Pass `identity` once when constructing the `Agent` and it is injected into every skill's context. This is how you reskin an agent (name, personality framing) without touching a single line of loop or skill code.
 
+Write `role` as a short description of the agent and of the product it serves, including the kind of data it manages. The fast responder has no tools and knows nothing else about your product, so it uses the `role` to decide what it answers on its own (greetings and general knowledge) and what it hands to the reasoning engine (anything about the product, the agent or the data of the user).
+
 ## Tools
 
 ```typescript

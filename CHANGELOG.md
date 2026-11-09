@@ -6,6 +6,7 @@ All notable changes to `openloops` are written here, newest first. The format fo
 
 ### Changed
 
+- The fast responder (2.6.0) now knows it is the front layer of an agent, adopts `identity` like the reasoning engine does, and delegates to the engine every message about the product, the agent or its capabilities, and the data or advice that belong to the domain described in `identity.role`. It no longer lists what the agent can or cannot do, and it delegates when in doubt. Write `identity.role` as a short description of the agent and its product.
 - The description of the package, the README and the docs index present `openloops` as the harness for building multitenant AI agents for your SaaS, where the model is the engine, `openloops` the chassis and your interface the body. The README no longer shows the `CustomerSupportLoop` and `CodeSpecialistLoop` examples, which the package does not ship, and links to the live demo at openloops.xyz.
 
 ## 0.8.1
