@@ -215,7 +215,7 @@ function isNativeTool (name?: string): boolean {
 	return NATIVE_TOOL_NAMES.includes(name as string)
 }
 
-const NOT_JSON_MESSAGE = 'Your last response was not a JSON object, so nothing in it was read or executed. Reply again with ONLY the JSON object (reasoning, state, actions). In "actions" put the tool calls you need next; if you already have what you need, use a respond action whose "answer" is the text for the user.'
+const NOT_JSON_MESSAGE = 'Your last response was not a JSON object, so nothing in it was read or executed. Reply again with ONLY the JSON object (reasoning, state, actions). In "actions" put the tool calls you need next; if you already have what you need, use a respond action whose "answer" is the text for the user. If the text you wrote was your answer for the user, put it in the "answer" of a respond action.'
 
 function definedOnly<T extends Record<string, any>> (value?: T): Partial<T> {
 	return Object.fromEntries(Object.entries(value ?? {}).filter(([, item]) => item !== undefined)) as Partial<T>
