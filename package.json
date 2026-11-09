@@ -1,6 +1,6 @@
 {
   "name": "openloops",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "Open source harness for building multitenant AI agents for your SaaS: a TypeScript runtime with persistence, tools, MCP trust, approvals and autonomous automations",
   "author": {
     "name": "Jose Barcos",
