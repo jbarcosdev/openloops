@@ -26,6 +26,7 @@ jest.mock('@common/repositories', () => ({
 
 jest.mock('@services/llmcalls', () => ({
     createLLMCall: jest.fn(async () => ({})),
+    getLLMUsageStats: jest.fn(async () => ({ summary: { calls: 0, totalTokens: 0, totalCost: 0 }, models: [], series: [] })),
 }))
 
 jest.mock('@services/mcp-servers', () => ({

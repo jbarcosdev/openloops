@@ -1,3 +1,5 @@
 export * from './agent-loop'
 export * from './agent-state'
 export * from './agent'
+export { UsageLimitError, USAGE_LIMIT_REACHED } from './usage-limit'
+export type { UsageLimit } from './usage-limit'

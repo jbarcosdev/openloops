@@ -34,6 +34,7 @@ const agent = new Agent({
 | `productInfo` | no | none | Name, company and a short description of the product the agent serves, injected into every skill. |
 | `maxInputLength` | no | `100000` | Longest message accepted, in characters. Longer messages are blocked by a built-in guard. |
 | `maxIterations` | no | `50` | Hard limit of loop iterations in one run. When reached, the run fails with `AGENT_MAX_ITERATIONS_REACHED`. |
+| `stopOnUsageLimit` | no | `false` | When `true` and the run has a [`usageLimit`](#usage-limit), the spend is checked again before each loop iteration and the run stops when the limit is reached. When `false`, the limit is checked only before the run starts. |
 | `fallbackModel` | no | none | `{ provider, model }` used when neither the run, the chat nor the user chose a model. See [configuration](configuration.md#which-model-a-chat-uses). |
 | `internalMcps` | no | none | MCP servers of your own solution that the user never registers. Also added with `agent.addInternalMcp(mcp)`. See [MCP servers](mcp-servers.md#internal-mcp-servers). |
 | `strictMode` | no | `false` | When `true`, the user is always asked before the agent uses an MCP server whose tools changed after being approved. See [MCP servers](mcp-servers.md#how-the-agent-uses-the-servers). |
@@ -74,6 +75,53 @@ Omit `chatId` to start a brand-new chat. Pass an existing `chatId` to continue a
 `currentSession` is optional. It carries device, location and locale, which skills use to answer in the right time zone and language.
 
 `mcpTokens` is optional. It gives the token of the user to each [internal MCP server](mcp-servers.md#internal-mcp-servers), by name. It is never saved. In an [autonomous run](#autonomous-mode) with no token for a server, the `autonomousToken` of that server is used, see [automations](automations.md#internal-mcp-servers-in-an-automation).
+
+## Usage limit
+
+Pass `usageLimit` in the run to cap what a user can spend, in US dollars, in a period:
+
+```typescript
+const result = await agent.run({
+    input: { message: 'hi' },
+    currentUser,
+    usageLimit: { maxCostUsd: 1, period: 'month' },
+})
+```
+
+`period` is required and can be `day`, `week` (Monday to Sunday) or `month`. The period is calculated in the time zone of the user (UTC when it has none) and the spend is the cost of all the model calls of that user in it, from any chat and of any kind. The limit itself belongs to your application: `openloops` only checks it.
+
+Before the run starts, if the spend is equal to or greater than `maxCostUsd`, the run does not start and nothing is saved. The result has no `data` and carries the details:
+
+```typescript
+result.error
+result.errorCode
+result.usageLimit
+```
+
+`errorCode` is `USAGE_LIMIT_REACHED` and `usageLimit` is `{ used, limit, period }`. This is an expected rejection, so it is not sent to the [error reporter](error-reporting.md).
+
+A run that starts under the limit finishes even if it goes over it, so the last run of a period can spend a little more than `maxCostUsd`. To stop a run between the iterations of the loop, create the agent with `stopOnUsageLimit: true`. The chat is then marked as `failed` with `USAGE_LIMIT_REACHED` (not retryable) in `data.state.lastError`, and the result carries the same `errorCode` and `usageLimit`. It costs one query per iteration.
+
+A common setup is one limit per plan, chosen by your application and passed in every run:
+
+```typescript
+const limits = {
+    free: { maxCostUsd: 0.1, period: 'month' },
+    paid: { maxCostUsd: 1, period: 'month' },
+} as const
+
+const result = await agent.run({
+    input,
+    currentUser,
+    usageLimit: limits[userPays ? 'paid' : 'free'],
+})
+
+if (result.errorCode === 'USAGE_LIMIT_REACHED') {
+    const { used, limit, period } = result.usageLimit!
+}
+```
+
+The spend is the one that [usage tracking](usage.md) reports, so `getLLMUsageStats` shows the same figure that the limit compares. Examples: [limit by plan](../examples/run-agent/run-agent-with-usage-limit.ts) and [stopping in the middle of a run](../examples/run-agent/run-agent-with-usage-limit-stop.ts).
 
 ## Autonomous mode
 
@@ -118,6 +166,7 @@ data?.state?.status
 
 - `data` is the `Chat` after the turn, or `undefined` if the chat could not even be created.
 - `error` is a message you can show to the user, present only when the run failed. The chat is marked as `failed` and saved.
+- `errorCode` and `usageLimit` are present only when the run was stopped by a [usage limit](#usage-limit).
 
 `data.state.status` tells you where the conversation is:
 

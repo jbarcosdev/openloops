@@ -2,6 +2,15 @@
 
 All notable changes to `openloops` are written here, newest first. The format follows [Keep a Changelog](https://keepachangelog.com) and the versions follow [semantic versioning](https://semver.org), where a minor version can still break the API while the package is in beta. Changes before 0.4.0 are not recorded here, see the commits and the tags.
 
+## 0.9.0
+
+### Added
+
+- `usageLimit` in `agent.run`, as `{ maxCostUsd, period }` with `period` required (`day`, `week` or `month`, in the time zone of the user). If the cost of all the model calls of the user in that period is equal to or greater than `maxCostUsd`, the run does not start, nothing is saved and the result carries `error`, `errorCode: 'USAGE_LIMIT_REACHED'` and `usageLimit: { used, limit, period }`. Without it nothing changes. A blocked run is not sent to the error reporter. Read [usage limit](docs/agent.md#usage-limit).
+- `stopOnUsageLimit` option of the `Agent`, `false` by default. When `true`, the limit is checked again before each iteration of the loop and the run stops with the chat `failed` and `USAGE_LIMIT_REACHED` in `state.lastError`.
+- `UsageLimit`, `UsageLimitError`, `USAGE_LIMIT_REACHED` and `AgentRunResult` are exported from `openloops/core`.
+- Examples: `run-agent-with-usage-limit` (one limit per plan) and `run-agent-with-usage-limit-stop` (stopping in the middle of a run).
+
 ## 0.8.3
 
 ### Added

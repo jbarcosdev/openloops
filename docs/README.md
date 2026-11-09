@@ -41,7 +41,7 @@ Start with the [README](../README.md) for what `openloops` is and how to run it.
 | --- | --- |
 | [User management](users.md) | `CurrentUser`, creating, listing, updating and deleting users. |
 | [Authentication](authentication.md) | Login and tokens. |
-| [LLM usage tracking](usage.md) | Tokens and cost per chat or answer, and per-user statistics. |
+| [LLM usage tracking](usage.md) | Tokens and cost per chat or answer, per-user statistics, and how to limit the spend of a user. |
 
 ## Examples
 

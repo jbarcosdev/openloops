@@ -58,6 +58,22 @@ export const resolveRange = (input: { fromDate?: string, toDate?: string }, time
 	return { from, to }
 }
 
+export type LimitPeriod = 'day' | 'week' | 'month'
+
+export const resolveLimitRange = (period: LimitPeriod, timezone: string, now: Date = new Date()): { from: string, to: string } => {
+	const today = todayIn(timezone, now)
+
+	if (period === 'day') return { from: today, to: today }
+
+	if (period === 'week') {
+		const sinceMonday = (new Date(`${today}T00:00:00Z`).getUTCDay() + 6) % 7
+		const from = addDays(today, -sinceMonday)
+		return { from, to: addDays(from, 6) }
+	}
+
+	return resolveRange({}, timezone, now)
+}
+
 export const enumeratePeriods = (groupBy: UsagePeriod, from: string, to: string): string[] => {
 	const period: PeriodConfig | undefined = PERIODS[groupBy]
 	if (!period) throw new Error(`Invalid groupBy "${groupBy}". Use one of: ${Object.keys(PERIODS).join(', ')}`)

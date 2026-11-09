@@ -12,6 +12,8 @@ There are three functions:
 - `getLLMUsageByChat` answers how much a whole chat used.
 - `getLLMUsageStats` answers how much a user used in a period, by model and over time.
 
+To stop a user who spent too much, pass a `usageLimit` in the run: it compares the cost of the period with the amount you choose. Read [usage limit](agent.md#usage-limit).
+
 ## Usage of one answer and of one chat
 
 ```typescript

@@ -35,6 +35,7 @@ import { ToolPipeline, ToolPipelineRunOptions } from './tool-pipeline'
 import { NATIVE_TOOLS } from './native-tools'
 import { buildToolCatalog, isDeclarable, needsSearch, McpIndexEntry } from './tool-catalog'
 import { LLMError } from '@clients/llm/llm-error'
+import { UsageLimit, UsageLimitError, USAGE_LIMIT_REACHED, checkUsageLimit, validateUsageLimit } from './usage-limit'
 import { isSelectableThinkingEffort, SELECTABLE_THINKING_EFFORTS, SelectableThinkingEffort } from '@clients/llm/llm-types'
 import { ModelRef, resolveModel, toModelRef } from '@clients/llm/model-resolution'
 
@@ -72,6 +73,7 @@ export const AGENT_ERROR_CODES = {
     NODE_NOT_FOUND: 'AGENT_NODE_NOT_FOUND',
     RUN_FAILED: 'AGENT_RUN_FAILED',
     MAX_ITERATIONS_REACHED: 'AGENT_MAX_ITERATIONS_REACHED',
+    USAGE_LIMIT_REACHED,
 } as const
 
 export interface AgentOptions {
@@ -84,7 +86,15 @@ export interface AgentOptions {
     productInfo?: AgentProductInfo
     maxIterations?: number
     strictMode?: boolean
+    stopOnUsageLimit?: boolean
     fallbackModel?: { provider: string, model: string }
+}
+
+export interface AgentRunResult {
+    data?: Chat
+    error?: string
+    errorCode?: string
+    usageLimit?: { used: number, limit: number, period: UsageLimit['period'] }
 }
 
 interface ChatInput {
@@ -105,6 +115,8 @@ export class Agent {
     private readonly _productInfo?: AgentProductInfo
     private readonly maxIterations: number
     private readonly strictMode: boolean
+    private readonly stopOnUsageLimit: boolean
+    private usageLimit?: UsageLimit
     private readonly fallbackModel?: ModelRef
     private model?: ModelRef
     private thinkingEffort?: SelectableThinkingEffort
@@ -173,6 +185,7 @@ export class Agent {
         this._productInfo = agentOptions.productInfo
         this.maxIterations = agentOptions.maxIterations ?? DEFAULT_MAX_ITERATIONS
         this.strictMode = agentOptions.strictMode ?? false
+        this.stopOnUsageLimit = agentOptions.stopOnUsageLimit ?? false
 
         for (const mcp of agentOptions.internalMcps ?? []) this.addInternalMcp(mcp)
 
@@ -209,9 +222,9 @@ export class Agent {
         return this.currentChat.lastAnswer
     }
 
-    async run (props: { input: ChatInput; options?: ChatSettingsProps; currentUser: CurrentUser; currentSession?: CurrentSession; mcpTokens?: Record<string, string> }) {
+    async run (props: { input: ChatInput; options?: ChatSettingsProps; currentUser: CurrentUser; currentSession?: CurrentSession; mcpTokens?: Record<string, string>; usageLimit?: UsageLimit }): Promise<AgentRunResult> {
         try {
-            const { input, options, currentUser, currentSession, mcpTokens } = props || {}
+            const { input, options, currentUser, currentSession, mcpTokens, usageLimit } = props || {}
             const { chatId, message } = input || {}
 
             this.logger.debug(input, '[AGENT] Agent started')
@@ -241,10 +254,21 @@ export class Agent {
             this.mcpTokens = mcpTokens ?? {}
             this.model = undefined
             this.thinkingEffort = undefined
+            this.usageLimit = usageLimit
 
+            if (usageLimit) validateUsageLimit(usageLimit)
             if (options?.thinkingEffort !== undefined && !isSelectableThinkingEffort(options.thinkingEffort)) throw new Error(`[AGENT] thinkingEffort must be one of ${SELECTABLE_THINKING_EFFORTS.join(', ')}`)
             if (Boolean(options?.modelProvider) !== Boolean(options?.modelName)) throw new Error('[AGENT] Set both modelProvider and modelName, or neither')
             this.answerId = new ObjectId().toString()
+
+            if (usageLimit) {
+                try {
+                    await checkUsageLimit(usageLimit, currentUser)
+                } catch (error: any) {
+                    if (error instanceof UsageLimitError) return this.usageLimitResult(error)
+                    throw error
+                }
+            }
 
             const proceed = await this.preRunner(chatId)
 
@@ -262,9 +286,14 @@ export class Agent {
 
             this.logger.error({ error: message, stack: error?.stack }, '[AGENT] Run failed')
             const llmError = error instanceof LLMError ? error : undefined
-            const reported = llmError?.userMessage ?? message
+            const limitError = error instanceof UsageLimitError ? error : undefined
+            const known = llmError ?? limitError
+            const reported = known?.userMessage ?? message
 
-            await this.failRun(reported, llmError)
+            await this.failRun(reported, known)
+
+            if (limitError) return this.usageLimitResult(limitError, this.currentChat?._id ? this.currentChat : undefined)
+
             await this.reportFailure(error, llmError ? { code: llmError.code } : {})
 
             return { data: this.currentChat?._id ? this.currentChat : undefined, error: reported }
@@ -517,10 +546,14 @@ export class Agent {
         await reportError(error as Error, { source: 'agent', chatId: this.currentChat?._id?.toString(), userId: this.currentUser?.userId, ...details })
     }
 
-    private async failRun (message: string, llmError?: LLMError) {
+    private usageLimitResult (error: UsageLimitError, data?: Chat): AgentRunResult {
+        return { data, error: error.userMessage, errorCode: error.code, usageLimit: { used: error.used, limit: error.limit, period: error.period } }
+    }
+
+    private async failRun (message: string, knownError?: { code: string, isRetryable: boolean }) {
         try {
             this.currentChat.state?.setStatus(AgentStatus.FAILED)
-            this.currentChat.state?.setLastError({ code: llmError?.code ?? AGENT_ERROR_CODES.RUN_FAILED, message, isRetryable: llmError?.isRetryable ?? true, timestamp: new Date() })
+            this.currentChat.state?.setLastError({ code: knownError?.code ?? AGENT_ERROR_CODES.RUN_FAILED, message, isRetryable: knownError?.isRetryable ?? true, timestamp: new Date() })
             this.currentChat.addTrace({ node: 'agent', kind: 'agent', reasoning: `Run failed: ${message}` })
             this.currentChat.failTask()
             await this.persist()
@@ -1025,6 +1058,8 @@ export class Agent {
                 this.stopLoop = true
                 break
             }
+
+            if (iterations > 0 && this.stopOnUsageLimit && this.usageLimit) await checkUsageLimit(this.usageLimit, this.currentUser!)
 
             iterations++
             this.iteration = iterations

@@ -3,7 +3,7 @@ import { GetLLMUsageByMessageUseCase } from '@services/llmcalls/use-cases/get-ll
 import { GetLLMUsageByChatUseCase } from '@services/llmcalls/use-cases/get-llm-usage-by-chat.use-case'
 import { toUsageReport } from '@services/llmcalls/utils/usage-totals'
 import { GetLLMUsageStatsUseCase, buildUsageStatsPipeline, shapeUsageStats } from '@services/llmcalls/use-cases/get-llm-usage-stats.use-case'
-import { MAX_PERIODS, enumeratePeriods, resolveRange, resolveTimezone } from '@services/llmcalls/utils/usage-periods'
+import { MAX_PERIODS, enumeratePeriods, resolveLimitRange, resolveRange, resolveTimezone } from '@services/llmcalls/utils/usage-periods'
 
 const OWNER = new ObjectId().toHexString()
 
@@ -208,5 +208,30 @@ describe('getLLMUsageStats', () => {
         await expect(useCase.execute({ currentUser: undefined })).rejects.toThrow(/CurrentUser/)
         await expect(useCase.execute({ filters: { fromDate: '2020-01-01', toDate: '2026-01-01' }, currentUser: user() })).rejects.toThrow(/more than 366/)
         expect(aggregate).not.toHaveBeenCalled()
+    })
+})
+
+describe('resolveLimitRange', () => {
+    const now = new Date('2026-11-11T15:00:00Z')
+
+    it('uses today for a day', () => {
+        expect(resolveLimitRange('day', 'UTC', now)).toEqual({ from: '2026-11-11', to: '2026-11-11' })
+    })
+
+    it('goes from Monday to Sunday for a week', () => {
+        expect(resolveLimitRange('week', 'UTC', now)).toEqual({ from: '2026-11-09', to: '2026-11-15' })
+        expect(resolveLimitRange('week', 'UTC', new Date('2026-11-15T10:00:00Z'))).toEqual({ from: '2026-11-09', to: '2026-11-15' })
+        expect(resolveLimitRange('week', 'UTC', new Date('2026-11-09T10:00:00Z'))).toEqual({ from: '2026-11-09', to: '2026-11-15' })
+    })
+
+    it('goes from the first to the last day for a month', () => {
+        expect(resolveLimitRange('month', 'UTC', now)).toEqual({ from: '2026-11-01', to: '2026-11-30' })
+    })
+
+    it('uses the day of the time zone', () => {
+        const late = new Date('2026-11-12T02:00:00Z')
+
+        expect(resolveLimitRange('day', 'America/Lima', late)).toEqual({ from: '2026-11-11', to: '2026-11-11' })
+        expect(resolveLimitRange('day', 'UTC', late)).toEqual({ from: '2026-11-12', to: '2026-11-12' })
     })
 })
