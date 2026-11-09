@@ -2,7 +2,7 @@
 
 All notable changes to `openloops` are written here, newest first. The format follows [Keep a Changelog](https://keepachangelog.com) and the versions follow [semantic versioning](https://semver.org), where a minor version can still break the API while the package is in beta. Changes before 0.4.0 are not recorded here, see the commits and the tags.
 
-## Unreleased
+## 0.8.3
 
 ### Added
 
@@ -12,6 +12,7 @@ All notable changes to `openloops` are written here, newest first. The format fo
 ### Changed
 
 - The fast responder (2.6.0) now knows it is the front layer of an agent, adopts `identity` like the reasoning engine does, and delegates to the engine every message about the product, the agent or its capabilities, and the data or advice that belong to the domain described in `productInfo.about`. It no longer lists what the agent can or cannot do, and it delegates when in doubt. Keep `identity.role` short.
+- The reasoning engine (2.5.6) states more firmly that the final answer goes inside the `respond` action and that text written outside the JSON is never delivered, which reduces the plain text answers that were rejected as `invalid_response` and cost an extra call. The message sent back after a response that is not JSON now says that text meant for the user belongs in the `answer` of a `respond` action. It also reads `productInfo` when the user asks about the product or the company.
 - The description of the package, the README and the docs index present `openloops` as the harness for building multitenant AI agents for your SaaS, where the model is the engine, `openloops` the chassis and your interface the body. The README no longer shows the `CustomerSupportLoop` and `CodeSpecialistLoop` examples, which the package does not ship, and links to the live demo at openloops.xyz.
 
 ## 0.8.1
