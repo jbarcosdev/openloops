@@ -265,7 +265,7 @@ export class Agent {
                 try {
                     await checkUsageLimit(usageLimit, currentUser)
                 } catch (error: any) {
-                    if (error instanceof UsageLimitError) return this.usageLimitResult(error)
+                    if (error instanceof UsageLimitError) return this.usageLimitResult(error, await this.saveBlockedMessage(chatId))
                     throw error
                 }
             }
@@ -544,6 +544,27 @@ export class Agent {
 
     private async reportFailure (error: unknown, details: Record<string, unknown> = {}): Promise<void> {
         await reportError(error as Error, { source: 'agent', chatId: this.currentChat?._id?.toString(), userId: this.currentUser?.userId, ...details })
+    }
+
+    private async saveBlockedMessage (chatId?: string): Promise<Chat | undefined> {
+        if (!chatId) return undefined
+
+        try {
+            const data = await getChatById({ id: chatId, currentUser: this.currentUser })
+            if (!data?._id) return undefined
+
+            this.currentChat = Chat.fromJSON(data)
+            if (!this.currentChat.messages?.length) this.currentChat.setTitle(this.currentMessage)
+            this.currentChat.pushMessage({ role: 'user', content: this.currentMessage, source: 'user' })
+            await this.saveChat({ resetStop: true })
+
+            return this.currentChat
+        } catch (error: any) {
+            this.logger.error({ error: error?.message ?? error }, '[AGENT] Failed to save the message of a run blocked by the usage limit')
+            await this.reportFailure(error, { stage: 'blocked-message' })
+
+            return undefined
+        }
     }
 
     private usageLimitResult (error: UsageLimitError, data?: Chat): AgentRunResult {

@@ -13,7 +13,7 @@ export interface AgentError {
     timestamp: Date
 }
 
-type CurrentActivity = 'running' | 'stopped' | (string & {})
+type CurrentActivity = string
 
 export type ActivityListener = (activity: string) => void
 

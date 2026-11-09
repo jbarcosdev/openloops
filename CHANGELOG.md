@@ -2,6 +2,13 @@
 
 All notable changes to `openloops` are written here, newest first. The format follows [Keep a Changelog](https://keepachangelog.com) and the versions follow [semantic versioning](https://semver.org), where a minor version can still break the API while the package is in beta. Changes before 0.4.0 are not recorded here, see the commits and the tags.
 
+## 0.9.1
+
+### Changed
+
+- A run blocked by `usageLimit` that continues an existing chat (`chatId`) now saves the message of the user in it, with no answer, and returns the chat in `data`. Before, nothing was saved and `data` was `undefined`. It still calls no guard, no model and no loop, the status of the chat does not change, a chat with no messages takes the message as its title, and the next run reads the saved message, so the user can say `continue` when the limit is lifted. With no `chatId`, or with one that does not exist, nothing is saved. Read [usage limit](docs/agent.md#usage-limit).
+- The type of `AgentState.currentActivity` is `string`. It listed `'running'` and `'stopped'`, values from the activity that was removed in 0.8.0.
+
 ## 0.9.0
 
 ### Added

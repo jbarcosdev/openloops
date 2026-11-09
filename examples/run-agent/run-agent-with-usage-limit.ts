@@ -25,8 +25,9 @@ async function runAgentWithUsageLimit () {
      * 2. PASS IT IN THE RUN.
      *
      * Before the run starts, `openloops` adds the cost of every model call of the user in the period, from any chat. If the total
-     * is equal to or greater than `maxCostUsd`, the run does not start and nothing is saved. A run that starts under the limit
-     * finishes, even if it goes over it.
+     * is equal to or greater than `maxCostUsd`, the run does not start: nothing calls the model. When the run continues a chat
+     * (`chatId`), the message is saved in it with no answer, so the user can say `continue` when the limit is lifted. A run that
+     * starts under the limit finishes, even if it goes over it.
      */
     const result = await agent.run({
         input: { message: 'hi, how are you?' },
@@ -37,8 +38,8 @@ async function runAgentWithUsageLimit () {
     /**
      * 3. HANDLE THE REJECTION.
      *
-     * `agent.run` does not throw. A blocked run comes back with `errorCode: 'USAGE_LIMIT_REACHED'`, no `data` and the amounts in
-     * `usageLimit`. Answer your client with the status that fits, for example 429, and let the app show its own message. This
+     * `agent.run` does not throw. A blocked run comes back with `errorCode: 'USAGE_LIMIT_REACHED'`, the amounts in `usageLimit`
+     * and, when it continued a chat, the chat in `data` with the saved message. Answer your client with the status that fits, for example 429, and let the app show its own message. This
      * rejection is expected, so it is not sent to the error reporter.
      */
     if (result.errorCode === 'USAGE_LIMIT_REACHED') {

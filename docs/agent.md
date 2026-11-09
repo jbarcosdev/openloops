@@ -90,15 +90,16 @@ const result = await agent.run({
 
 `period` is required and can be `day`, `week` (Monday to Sunday) or `month`. The period is calculated in the time zone of the user (UTC when it has none) and the spend is the cost of all the model calls of that user in it, from any chat and of any kind. The limit itself belongs to your application: `openloops` only checks it.
 
-Before the run starts, if the spend is equal to or greater than `maxCostUsd`, the run does not start and nothing is saved. The result has no `data` and carries the details:
+Before the run starts, if the spend is equal to or greater than `maxCostUsd`, the run does not start: no guard, no model call and no loop run. When the run continues an existing chat (`chatId`), the message of the user is saved in it with no answer, the status of the chat does not change, and the chat is returned in `data`. A chat with no messages takes that message as its title. With no `chatId`, or with one that does not exist, nothing is saved and `data` is `undefined`. The result carries the details:
 
 ```typescript
+result.data
 result.error
 result.errorCode
 result.usageLimit
 ```
 
-`errorCode` is `USAGE_LIMIT_REACHED` and `usageLimit` is `{ used, limit, period }`. This is an expected rejection, so it is not sent to the [error reporter](error-reporting.md).
+`errorCode` is `USAGE_LIMIT_REACHED` and `usageLimit` is `{ used, limit, period }`. This is an expected rejection, so it is not sent to the [error reporter](error-reporting.md). The message that was saved is part of the history of the chat, so when the limit is lifted the next run reads it and the user can just say `continue`.
 
 A run that starts under the limit finishes even if it goes over it, so the last run of a period can spend a little more than `maxCostUsd`. To stop a run between the iterations of the loop, create the agent with `stopOnUsageLimit: true`. The chat is then marked as `failed` with `USAGE_LIMIT_REACHED` (not retryable) in `data.state.lastError`, and the result carries the same `errorCode` and `usageLimit`. It costs one query per iteration.
 
