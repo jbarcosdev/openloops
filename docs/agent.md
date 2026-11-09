@@ -31,6 +31,7 @@ const agent = new Agent({
 | `tools` | no | `[]` | Extra native `Tool` instances. See [tools](tools.md). |
 | `guards` | no | `[]` | Input guards that run before the model sees a message. See [guardrails](guardrails.md). |
 | `identity` | no | none | Name, gender and role injected into every skill. |
+| `productInfo` | no | none | Name, company and a short description of the product the agent serves, injected into every skill. |
 | `maxInputLength` | no | `100000` | Longest message accepted, in characters. Longer messages are blocked by a built-in guard. |
 | `maxIterations` | no | `50` | Hard limit of loop iterations in one run. When reached, the run fails with `AGENT_MAX_ITERATIONS_REACHED`. |
 | `fallbackModel` | no | none | `{ provider, model }` used when neither the run, the chat nor the user chose a model. See [configuration](configuration.md#which-model-a-chat-uses). |
@@ -142,7 +143,23 @@ You do not implement any of this. See [harness](harness.md#approvals).
 
 Pass `identity` once when constructing the `Agent` and it is injected into every skill's context. This is how you reskin an agent (name, personality framing) without touching a single line of loop or skill code.
 
-Write `role` as a short description of the agent and of the product it serves, including the kind of data it manages. The fast responder has no tools and knows nothing else about your product, so it uses the `role` to decide what it answers on its own (greetings and general knowledge) and what it hands to the reasoning engine (anything about the product, the agent or the data of the user).
+Keep `role` short: what the agent is, like "AI personal finance assistant".
+
+## Product info
+
+```typescript
+const agent = new Agent({
+    loop: new AgiLoop(),
+    identity: { name: 'Ava', gender: 'Female', role: 'AI personal finance assistant' },
+    productInfo: {
+        name: 'Acme Money',
+        company: 'Acme Inc.',
+        about: 'Personal finance app that tracks income and expenses and imports receipts from email.',
+    },
+})
+```
+
+`productInfo` tells the agent which product it serves: `name`, `company` and `about` (one or two sentences on what the product is and which data or actions it manages). All of them are optional and it is injected into the context of the skills next to the identity. The fast responder has no tools, so it uses `about` to decide what it answers on its own (greetings and general knowledge) and what it hands to the reasoning engine (anything about the product, the agent or the data of the user). Keep it short because it travels in every call, and leave the details (features, plans, links) to your tools.
 
 ## Tools
 

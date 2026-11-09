@@ -14,6 +14,7 @@ import { ToolPipelineRunOptions } from './tool-pipeline'
 
 export interface RunContext {
     identity?: AgentIdentity
+    productInfo?: AgentProductInfo
     task?: AgentTask
     chat: Chat
     chatOptions?: ChatSettingsProps
@@ -42,10 +43,16 @@ export interface Harness {
     setNextNode: (node?: string | AgentLoopNode) => void
 }
 
-interface AgentIdentity {
+export interface AgentIdentity {
     name?: string
     gender?: string
     role?: string
+}
+
+export interface AgentProductInfo {
+    name?: string
+    company?: string
+    about?: string
 }
 
 export type AgentLoopNode = (ctx: RunContext, harness: Harness) => Promise<void>

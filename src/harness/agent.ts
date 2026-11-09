@@ -28,7 +28,7 @@ import { createBlockInputOversize } from '@guardrails/input/create-block-input-o
 import { listAllMcpServersByUser, verifyMcpServerConnection, decideMcpServerTrust } from '@services/mcp-servers'
 import { listActiveInternalMcps } from '@services/mcp-servers/internal'
 import { rankToolsByKeywords, WeightedKeyword, ScoredTool } from './utils/rank-tools-by-keywords'
-import { AgentLoop, AgentLoopNode, Harness, RunContext } from './agent-loop'
+import { AgentIdentity, AgentLoop, AgentLoopNode, AgentProductInfo, Harness, RunContext } from './agent-loop'
 import { AgentStatus, ActivityListener } from './agent-state'
 import { AgentWorkspace } from './workspace'
 import { ToolPipeline, ToolPipelineRunOptions } from './tool-pipeline'
@@ -74,12 +74,6 @@ export const AGENT_ERROR_CODES = {
     MAX_ITERATIONS_REACHED: 'AGENT_MAX_ITERATIONS_REACHED',
 } as const
 
-interface AgentIdentity {
-    name?: string
-    gender?: string
-    role?: string
-}
-
 export interface AgentOptions {
     loop: AgentLoop
     tools?: Tool[]
@@ -87,6 +81,7 @@ export interface AgentOptions {
     guards?: Guard[]
     maxInputLength?: number
     identity?: AgentIdentity
+    productInfo?: AgentProductInfo
     maxIterations?: number
     strictMode?: boolean
     fallbackModel?: { provider: string, model: string }
@@ -107,6 +102,7 @@ export class Agent {
 
     private readonly _loop: AgentLoop
     private readonly _identity?: AgentIdentity
+    private readonly _productInfo?: AgentProductInfo
     private readonly maxIterations: number
     private readonly strictMode: boolean
     private readonly fallbackModel?: ModelRef
@@ -174,6 +170,7 @@ export class Agent {
         this._loop = agentOptions.loop
         this._tools = agentOptions.tools ?? []
         this._identity = agentOptions.identity
+        this._productInfo = agentOptions.productInfo
         this.maxIterations = agentOptions.maxIterations ?? DEFAULT_MAX_ITERATIONS
         this.strictMode = agentOptions.strictMode ?? false
 
@@ -1178,6 +1175,7 @@ export class Agent {
 
         return {
             identity: this._identity,
+            productInfo: this._productInfo,
             task: this.currentChat.activeTask,
             chat: this.currentChat,
             chatOptions: this.chatOptions,

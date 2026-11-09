@@ -43,12 +43,21 @@ export class AgiLoop extends AgentLoop {
         }
     }
 
-    private context (ctx: RunContext) {
+    private agentContext (ctx: RunContext) {
         const agentIdentity = ctx.identity
-        const chatHistory = ctx.chat.lastHistoryMessages()
+        const productInfo = ctx.productInfo
 
         return {
             ...(agentIdentity && Object.keys(agentIdentity)?.length ? { agentIdentity } : {}),
+            ...(productInfo && Object.keys(productInfo)?.length ? { productInfo } : {}),
+        }
+    }
+
+    private context (ctx: RunContext) {
+        const chatHistory = ctx.chat.lastHistoryMessages()
+
+        return {
+            ...this.agentContext(ctx),
             ...(chatHistory?.length ? { chat_history: chatHistory } : {}),
         }
     }
@@ -60,12 +69,11 @@ export class AgiLoop extends AgentLoop {
         }
 
         const chat_history = ctx.chat.lastHistoryMessages()
-        const agentIdentity = ctx.identity
 
         const result = await fastResponder.run({
             ...ctx.skillParams,
             contextInjection: {
-                ...(agentIdentity && Object.keys(agentIdentity)?.length ? { agentIdentity } : {}),
+                ...this.agentContext(ctx),
                 ...(chat_history?.length ? { chat_history } : {}),
                 ...(ctx.chat.title ? {} : { needs_title: true }),
             },
