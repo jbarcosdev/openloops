@@ -18,7 +18,7 @@ export class CurrentUser extends User {
 
         try {
             user = await db.collection('users').findOne(
-                { _id: new ObjectId(userId) },
+                { _id: new ObjectId(userId), deletedAt: null, archivedAt: null },
                 { projection: { password: 0 } }
             )
         } catch (error: any) {
