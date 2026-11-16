@@ -14,7 +14,7 @@ export interface ClaimParams {
 
 export class AutomationRepository {
 	public readonly _ = new MongoRepository<AutomationProps>({
-		database: getDatabaseName(),
+		database: getDatabaseName,
 		collection: 'automations',
 		scoped: true,
 	})

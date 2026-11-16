@@ -1,11 +1,15 @@
 import 'dotenv/config'
 import Cryptr from 'cryptr'
 import { logger } from '@common/logger'
+import { getContextConfigs } from './config-context'
+
+const VERSIONED = /^ENC:v(\d+):/
 
 export class SecretManager {
     private static instance: SecretManager
-    private cache = new Map<string, string>()
-    private cryptr: Cryptr
+    private envCache = new Map<string, string>()
+    private contextCache = new WeakMap<object, Map<string, string>>()
+    private cryptrs = new Map<string, Cryptr>()
 
     static getInstance(): SecretManager {
         if (!SecretManager.instance) {
@@ -14,39 +18,61 @@ export class SecretManager {
         return SecretManager.instance
     }
 
-    static encrypt(value: string): string {
+    static encrypt(value: string, version?: number): string {
         if (!value) throw new Error('[Secret manager] Value to encrypt cannot be empty')
-        return `ENC:${SecretManager.getInstance().cryptr.encrypt(value)}`
+        const manager = SecretManager.getInstance()
+        if (!version) return `ENC:${manager.cryptr().encrypt(value)}`
+        return `ENC:v${version}:${manager.cryptr(version).encrypt(value)}`
     }
 
     private constructor() {
-        const secretKey = process.env.SECRET_MANAGER_KEY
+        this.cryptr()
+    }
+
+    private cryptr(version?: number): Cryptr {
+        const envName = version ? `SECRET_MANAGER_KEY_V${version}` : 'SECRET_MANAGER_KEY'
+        const cached = this.cryptrs.get(envName)
+        if (cached) return cached
+
+        const secretKey = process.env[envName]
         if (!secretKey) {
-            throw new Error('[Secret manager] SECRET_MANAGER_KEY environment variable is not set')
+            throw new Error(`[Secret manager] ${envName} environment variable is not set`)
         }
 
-        this.cryptr = new Cryptr(secretKey, {
+        const cryptr = new Cryptr(secretKey, {
             pbkdf2Iterations: 1_000,
             saltLength: 16
         })
+        this.cryptrs.set(envName, cryptr)
+        return cryptr
     }
 
     get(key: string): string {
         const startTime = process.hrtime.bigint()
+        const configs = getContextConfigs()
+        const cache = configs ? this.cacheOf(configs) : this.envCache
 
-        if (this.cache.has(key)) {
-            const decryptedValue = this.cache.get(key) as string
+        if (cache.has(key)) {
             this.logElapsed(key, startTime, true)
-            return decryptedValue
+            return cache.get(key) as string
         }
 
-        const encryptedValue = this.getEnvVar(key)
-        const decryptedValue = this.decryptEnvVar(encryptedValue)
+        const raw = configs ? configs[key] : this.getEnvVar(key)
+        const decryptedValue = this.decrypt(raw)
 
-        this.cache.set(key, decryptedValue)
+        cache.set(key, decryptedValue)
         this.logElapsed(key, startTime, false)
 
         return decryptedValue
+    }
+
+    private cacheOf(configs: object): Map<string, string> {
+        let cache = this.contextCache.get(configs)
+        if (!cache) {
+            cache = new Map()
+            this.contextCache.set(configs, cache)
+        }
+        return cache
     }
 
     private getEnvVar(key: string): string {
@@ -58,24 +84,14 @@ export class SecretManager {
         return value
     }
 
-    private decryptEnvVar(encryptedValue: string): string {
-        if (!encryptedValue) {
-            logger.debug('[Secret manager] Encrypted value cannot be empty')
-            return ''
-        }
+    private decrypt(value: string | undefined): string {
+        if (!value) return ''
+        if (!value.startsWith('ENC:')) return value
 
-        if (!this.isStringEncrypted(encryptedValue)) {
-            logger.debug('[Secret Manager] Value is not encrypted')
-            return encryptedValue
-        }
+        const versioned = VERSIONED.exec(value)
+        if (versioned) return this.cryptr(Number(versioned[1])).decrypt(value.slice(versioned[0].length))
 
-        const valueWithoutPrefix = encryptedValue.replace(/^ENC:/, '')
-        return this.cryptr.decrypt(valueWithoutPrefix)
-    }
-
-    private isStringEncrypted(value: string): boolean {
-        if (!value) return false
-        return value.startsWith('ENC:')
+        return this.cryptr().decrypt(value.replace(/^ENC:/, ''))
     }
 
     private logElapsed(key: string, startTime: bigint, cached: boolean): void {

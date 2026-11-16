@@ -5,7 +5,7 @@ import { AgentAction, AgentActionProps } from '../entities'
 
 export class AgentActionRepository {
 	public readonly _ = new MongoRepository<AgentActionProps>({
-		database: getDatabaseName(),
+		database: getDatabaseName,
 		collection: 'agent_actions',
 		scoped: true,
 	})

@@ -8,6 +8,7 @@
 | `OPENLOOPS_DB_NAME` | no | Database name. Defaults to `openloops`. |
 | `OPENLOOPS_MONGO_MAX_POOL_SIZE` | no | Most connections each process keeps open to MongoDB. Defaults to `3`, which suits serverless functions, where every instance handles one request at a time. Raise it for a long-running server. |
 | `SECRET_MANAGER_KEY` | yes | Key used to decrypt values that start with `ENC:`. The library throws when it loads without it. |
+| `SECRET_MANAGER_KEY_V<N>` | only if you use `ENC:v<N>:` values | Key of version `N` of the [versioned encrypted values](#encrypted-values). |
 | `ANTHROPIC_API_KEY` | for the default model | API key of the default provider, `anthropic`. |
 | `OPENAI_API_KEY`, `GEMINI_API_KEY` | for those providers | API keys of the other providers you choose per chat. |
 | `JWT_SECRET` | for `login` and for event automations | Secret that signs the tokens of the sessions, of the reset of a password and of [event automations](automations.md#the-token). See [authentication](authentication.md). |
@@ -23,7 +24,35 @@
 | `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`, `LANGFUSE_BASE_URL` | no | Traces every LLM call in Langfuse when all three are set. |
 | `IS_LOCAL`, `NODE_ENV` | no | Local development switches. With `IS_LOCAL` set to `true`, or `NODE_ENV` set to `development`, the logger prints colored logs if `pino-pretty` is installed in your project (it is a dev dependency of this package, so install it yourself: `yarn add -D pino-pretty`), and plain JSON otherwise. |
 
-Any value can be stored encrypted by prefixing it with `ENC:`. It is decrypted with `SECRET_MANAGER_KEY` when it is read.
+## Encrypted values
+
+Any value can be stored encrypted. It is decrypted when it is read.
+
+- `ENC:<payload>` is decrypted with `SECRET_MANAGER_KEY`.
+- `ENC:v<N>:<payload>` is decrypted with `SECRET_MANAGER_KEY_V<N>`. Versions let you rotate the key: encrypt new values with the next version, keep the old key until nothing uses it, then remove it.
+
+```ts
+import { SecretManager } from 'openloops/common'
+
+SecretManager.encrypt('sk-ant-...')
+SecretManager.encrypt('sk-ant-...', 2)
+```
+
+## One process, several agents
+
+By default the configuration is read from the environment, which is one configuration per process. To serve several agents from the same process, for example one function that runs every agent of a platform, run each request with its own configuration:
+
+```ts
+import { runWithConfigs } from 'openloops/common'
+
+await runWithConfigs(configsOfThisAgent, () => handleRequest(event))
+```
+
+`configsOfThisAgent` is an object with the same names as the variables of this page (`OPENLOOPS_DB_URI`, `OPENLOOPS_DB_NAME`, `JWT_SECRET`, `ANTHROPIC_API_KEY`...), and its values can be encrypted. Everything that runs inside the callback, including what it awaits, reads those values and never the environment, so a name that is missing from the object is empty and does not fall back to the environment. Outside of `runWithConfigs` nothing changes.
+
+Each agent can use its own database, even in its own cluster: the repositories resolve the database name and the connection on every call, and the connections are shared by connection string. The API key of the provider is sent with each model call, so two agents never use each other's key. See the example [run-agent-multi-tenant](../examples/run-agent/run-agent-multi-tenant.ts).
+
+Pass the configuration of a request to `runWithConfigs` before creating the `Agent` and before resolving the user, and do not keep the result of `secretManager.get` between requests.
 
 ## Which model a chat uses
 

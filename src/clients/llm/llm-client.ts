@@ -57,9 +57,6 @@ export class LLMClient {
     private readonly callTimeoutMs: number
 
     constructor () {
-        process.env.OPENAI_API_KEY = secretManager.get('OPENAI_API_KEY')
-        process.env.ANTHROPIC_API_KEY = secretManager.get('ANTHROPIC_API_KEY')
-
         this.callTimeoutMs = numberSetting('LLM_CALL_TIMEOUT_MS', DEFAULT_CALL_TIMEOUT_MS)
 
         const publicKey = secretManager.get('LANGFUSE_PUBLIC_KEY')
@@ -104,7 +101,8 @@ export class LLMClient {
         const reasoning = thinking && thinking !== 'off' ? thinking : undefined
         const ruleOmitsTemperature = omitsTemperature(provider, modelName, Boolean(reasoning))
         const send = (omitTemperature: boolean) => this.withDeadline(thinking === 'high' ? this.callTimeoutMs * HIGH_THINKING_TIMEOUT_FACTOR : this.callTimeoutMs, signal => {
-            const options = { ...(omitTemperature || ruleOmitsTemperature ? {} : { temperature }), maxRetries: MAX_RETRIES, signal, ...(sessionId ? { sessionId } : {}) }
+            const apiKey = this.apiKeyOf(provider)
+            const options = { ...(apiKey ? { apiKey } : {}), ...(omitTemperature || ruleOmitsTemperature ? {} : { temperature }), maxRetries: MAX_RETRIES, signal, ...(sessionId ? { sessionId } : {}) }
 
             return resolvedChoice || thinking
                 ? models.completeSimple(model, context, { ...options, ...(resolvedChoice ? { toolChoice: resolvedChoice as never } : {}), ...(reasoning ? { reasoning } : {}) })
@@ -122,6 +120,11 @@ export class LLMClient {
         }
 
         return fromPiMessage(raw)
+    }
+
+    private apiKeyOf (provider: string): string | undefined {
+        const name = provider === 'google' ? 'GEMINI_API_KEY' : `${provider.toUpperCase().replace(/-/g, '_')}_API_KEY`
+        return secretManager.get(name) || undefined
     }
 
     private chooseModel (params: { provider?: string, modelName?: string, currentUser?: CurrentUser }) {

@@ -5,7 +5,7 @@ import { AgentTask, AgentTaskProps } from '../entities'
 
 export class AgentTaskRepository {
 	public readonly _ = new MongoRepository<AgentTaskProps>({
-		database: getDatabaseName(),
+		database: getDatabaseName,
 		collection: 'agent_tasks',
 		scoped: true,
 	})

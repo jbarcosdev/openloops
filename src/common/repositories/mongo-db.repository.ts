@@ -1,7 +1,7 @@
 import { ObjectId } from 'mongodb'
 import type { BaseEntityProps } from '@common/base/base.entity'
 import { reportError } from '@common/error'
-import { MongoClient, getMongoDBClient } from './mongo-db.client'
+import { getMongoDBClient } from './mongo-db.client'
 import { Scope } from './scope'
 
 const DEFAULT_LIMIT = 10
@@ -21,9 +21,9 @@ export class VersionConflictError extends Error {
 }
 
 export class MongoRepository<T> {
-	private readonly database
+	private readonly database: string | (() => string)
 	private readonly collection
-	private readonly dbClient: MongoClient
+	private readonly envvar?: string
 	private readonly _where = { deletedAt: null, archivedAt: null }
 	private readonly scoped: boolean
 	private readonly ownerField: string
@@ -31,19 +31,24 @@ export class MongoRepository<T> {
 
 	private readonly report = (error: Error) => reportError(error, { source: 'mongo', collection: this.collection })
 
-	constructor (props: { database: string; collection: string; envvar?: string; scoped?: boolean; ownerField?: string; protectedFields?: string[] }) {
+	constructor (props: { database: string | (() => string); collection: string; envvar?: string; scoped?: boolean; ownerField?: string; protectedFields?: string[] }) {
 		const { database, collection, envvar, scoped = false, ownerField = 'ownerId', protectedFields = [] } = props || {}
 		if (!database) throw new Error('[Mongo Repository] Database name is required')
 		if (!collection) throw new Error('[Mongo Repository] Collection name is required')
 
-		this.dbClient = getMongoDBClient(envvar)
-		if (!this.dbClient) throw new Error('[Mongo Repository] Database client not found')
-
+		this.envvar = envvar
 		this.database = database
 		this.collection = collection
 		this.scoped = scoped
 		this.ownerField = ownerField
 		this.protectedFields = [...PROTECTED_FIELDS, ...protectedFields]
+	}
+
+	private async db () {
+		const client = getMongoDBClient(this.envvar)
+		if (!client) throw new Error('[Mongo Repository] Database client not found')
+
+		return client.db(typeof this.database === 'function' ? this.database() : this.database)
 	}
 
 	private assertScope (scope?: Scope): void {
@@ -123,7 +128,7 @@ export class MongoRepository<T> {
 		const filter = this.withScope({ ...where, ...this._where }, scope)
 
 		try {
-			const db = await this.dbClient.db(this.database)
+			const db = await this.db()
 			const collection = db.collection(this.collection)
 			const result = await collection.findOne(
 				filter,
@@ -155,7 +160,7 @@ export class MongoRepository<T> {
 		const filter = this.withScope({ ...where, ...this._where }, scope)
 
 		try {
-			const db = await this.dbClient.db(this.database)
+			const db = await this.db()
 			const collection = db.collection(this.collection)
 			const { page = 1 } = options || {}
 			const _skip = +page > 0 ? (+page - 1) * pageSize : 0
@@ -178,7 +183,7 @@ export class MongoRepository<T> {
 		const filter = this.withScope({ ...where, ...this._where }, scope)
 
 		try {
-			const db = await this.dbClient.db(this.database)
+			const db = await this.db()
 			const collection = db.collection(this.collection)
 			const cursor = collection.find(filter, { projection: select })
 			const result = await (options?.sortBy ? cursor.sort(options.sortBy) : cursor).toArray()
@@ -195,7 +200,7 @@ export class MongoRepository<T> {
 		const document = this.stampCreate(payload as Record<string, unknown>, scope)
 
 		try {
-			const db = await this.dbClient.db(this.database)
+			const db = await this.db()
 			const collection = db.collection(this.collection)
 			const { insertedId } = await collection.insertOne({ ...document, __v: 1 }, { ignoreUndefined: true })
 			return { ...document, _id: insertedId, __v: 1 } as BaseEntityProps & { _id: ObjectId }
@@ -209,7 +214,7 @@ export class MongoRepository<T> {
 		const documents = (payload as unknown as Record<string, unknown>[]).map(item => this.stampCreate(item, scope))
 
 		try {
-			const db = await this.dbClient.db(this.database)
+			const db = await this.db()
 			const collection = db.collection(this.collection)
 			const { insertedIds } = await collection.insertMany(documents.map(document => ({ ...document, __v: 1 })) as any, { ignoreUndefined: true })
 			return insertedIds
@@ -249,7 +254,7 @@ export class MongoRepository<T> {
 		const filter = this.withScope({ ...where, ...this._where }, scope)
 
 		try {
-			const db = await this.dbClient.db(this.database)
+			const db = await this.db()
 			const collection = db.collection(this.collection)
 			const result = await collection.findOneAndUpdate(
 				filter,
@@ -289,7 +294,7 @@ export class MongoRepository<T> {
 		const filter = this.withScope({ ...where, ...(checkVersion ? { __v: expectedVersion } : {}), ...this._where }, scope)
 
 		try {
-			const db = await this.dbClient.db(this.database)
+			const db = await this.db()
 			const collection = db.collection(this.collection)
 			const result = await collection.findOneAndUpdate(
 				filter,
@@ -318,7 +323,7 @@ export class MongoRepository<T> {
 		}
 
 		try {
-			const db = await this.dbClient.db(this.database)
+			const db = await this.db()
 			const collection = db.collection(this.collection)
 			const result = await collection.updateMany(
 				filter,
@@ -336,7 +341,7 @@ export class MongoRepository<T> {
 		const filter = this.withScope({ ...where }, scope)
 
 		try {
-			const db = await this.dbClient.db(this.database)
+			const db = await this.db()
 			const collection = db.collection(this.collection)
 			const { deletedCount } = await collection.deleteOne(filter)
 			return deletedCount
@@ -350,7 +355,7 @@ export class MongoRepository<T> {
 		const filter = this.withScope({ ...where }, scope)
 
 		try {
-			const db = await this.dbClient.db(this.database)
+			const db = await this.db()
 			const collection = db.collection(this.collection)
 			const { deletedCount } = await collection.deleteMany(filter)
 			return deletedCount
@@ -364,7 +369,7 @@ export class MongoRepository<T> {
 		const filter = this.withScope({ ...where, ...( options?.includeDeleted ? {} : this._where) }, scope)
 
 		try {
-			const db = await this.dbClient.db(this.database)
+			const db = await this.db()
 			const collection = db.collection(this.collection)
 			const result = await collection.countDocuments(filter)
 			return result
@@ -379,7 +384,7 @@ export class MongoRepository<T> {
 		const scopedPipeline = Object.keys(scopeFilter).length ? [{ $match: scopeFilter }, ...pipeline] : pipeline
 
 		try {
-			const db = await this.dbClient.db(this.database)
+			const db = await this.db()
 			const collection = db.collection(this.collection)
 			const result = await collection.aggregate(scopedPipeline).toArray()
 			return result as unknown as T[]
@@ -393,7 +398,7 @@ export class MongoRepository<T> {
 		const filter = this.withScope({ ...where, ...this._where }, scope)
 
 		try {
-			const db = await this.dbClient.db(this.database)
+			const db = await this.db()
 			const collection = db.collection(this.collection)
 			const result = await collection.distinct(field, filter)
 			return result as unknown as any[]

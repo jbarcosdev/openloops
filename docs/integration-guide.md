@@ -130,7 +130,7 @@ runner.start()
 - Add input guards for what your product must never receive, such as card numbers.
 - Mark your own destructive tools with `destructive: true`. The agent asks for confirmation before running them. Do not rely on a tool being treated as destructive by default, because it is not.
 - Use `strictMode: true` in the agent when the tools of an MCP server must be reviewed by the user on every change.
-- Keep API keys and the secrets of [configuration](configuration.md) out of the code. Values can be stored encrypted with the `ENC:` prefix.
+- Keep API keys and the secrets of [configuration](configuration.md) out of the code. Values can be stored encrypted with the `ENC:` prefix. To serve several agents from one process, see [one process, several agents](configuration.md#one-process-several-agents).
 - Set limits on how many automations and how often they run in your own layer, since `openloops` does not limit them yet.
 
 ## Common mistakes

@@ -8,7 +8,7 @@ const external = <T extends object>(where: T): T => ({ ...where, internal: { $ne
 
 export class McpServerRepository {
 	public readonly _ = new MongoRepository<McpServerProps>({
-		database: getDatabaseName(),
+		database: getDatabaseName,
 		collection: 'mcp_servers',
 		scoped: true,
 	})

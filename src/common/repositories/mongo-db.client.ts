@@ -57,14 +57,15 @@ export class MongoClient {
 
 const mongoDBClients = new Map<string, MongoClient>()
 
-export function getMongoDBClient(envVarName: string = 'OPENLOOPS_DB_URI'): MongoClient {
-    if (!mongoDBClients.has(envVarName)) {
-        const connString = secretManager.get(envVarName)
+export function getMongoDBClient(envVarName: string = 'OPENLOOPS_DB_URI'): MongoClient | undefined {
+    const connString = secretManager.get(envVarName)
+    if (!connString) return undefined
 
-        if (connString) {
-            mongoDBClients.set(envVarName, new MongoClient(connString, {}))
-        }
+    let client = mongoDBClients.get(connString)
+    if (!client) {
+        client = new MongoClient(connString, {})
+        mongoDBClients.set(connString, client)
     }
 
-    return mongoDBClients.get(envVarName) as MongoClient
+    return client
 }

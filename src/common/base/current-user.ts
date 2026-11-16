@@ -12,6 +12,7 @@ export class CurrentUser extends User {
         if (!userId) return undefined
 
         const mongoDBClient = getMongoDBClient()
+        if (!mongoDBClient) throw new Error('[Current User] Database client not found')
         const db = await mongoDBClient.db(getDatabaseName())
 
         let user: UserProps | null

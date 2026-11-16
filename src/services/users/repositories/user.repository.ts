@@ -5,7 +5,7 @@ import { User, UserProps } from '../entities'
 
 export class UserRepository {
 	public readonly _ = new MongoRepository<UserProps>({
-		database: getDatabaseName(),
+		database: getDatabaseName,
 		collection: 'users',
 		scoped: true,
 		ownerField: '_id',

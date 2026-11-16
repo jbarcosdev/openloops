@@ -4,7 +4,7 @@ import { AgentTraceEntry, AgentTraceEntryProps } from '../entities'
 
 export class AgentTraceRepository {
 	public readonly _ = new MongoRepository<AgentTraceEntryProps>({
-		database: getDatabaseName(),
+		database: getDatabaseName,
 		collection: 'agent_traces',
 		scoped: true,
 	})

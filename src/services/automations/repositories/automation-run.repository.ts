@@ -6,7 +6,7 @@ import { AutomationRun, AutomationRunProps, AutomationRunStatus } from '../entit
 
 export class AutomationRunRepository {
 	public readonly _ = new MongoRepository<AutomationRunProps>({
-		database: getDatabaseName(),
+		database: getDatabaseName,
 		collection: 'automation_runs',
 		scoped: true,
 	})

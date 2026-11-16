@@ -2,6 +2,18 @@
 
 All notable changes to `openloops` are written here, newest first. The format follows [Keep a Changelog](https://keepachangelog.com) and the versions follow [semantic versioning](https://semver.org), where a minor version can still break the API while the package is in beta. Changes before 0.4.0 are not recorded here, see the commits and the tags.
 
+## 0.10.0
+
+### Added
+
+- `runWithConfigs(configs, fn)` (`openloops/common`) runs `fn` with its own configuration, so one process can serve several agents. `secretManager.get` reads the configs of the current context first (values can be `ENC:` or `ENC:v<N>:`) and the environment when there is no context.
+- Versioned encrypted values, `ENC:v<N>:`, with the master key in `SECRET_MANAGER_KEY_V<N>`. `SecretManager.encrypt(value, version?)` writes them. `ENC:` values keep using `SECRET_MANAGER_KEY`.
+
+### Changed
+
+- The repositories resolve the database name and the Mongo client on every call, not when the module loads. Mongo clients are cached by connection string. `getMongoDBClient` returns `undefined` when the connection string is not configured.
+- The LLM client sends the API key of the provider on each request (`apiKey`) and no longer writes `OPENAI_API_KEY` and `ANTHROPIC_API_KEY` into `process.env`. When the key is not configured, the provider falls back to its own environment variable as before.
+
 ## 0.9.1
 
 ### Changed

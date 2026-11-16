@@ -5,7 +5,7 @@ import { LLMCall, LLMCallProps } from '../entities'
 
 export class LLMCallRepository {
 	public readonly _ = new MongoRepository<LLMCallProps>({
-		database: getDatabaseName(),
+		database: getDatabaseName,
 		collection: 'llm_calls',
 		scoped: true,
 	})

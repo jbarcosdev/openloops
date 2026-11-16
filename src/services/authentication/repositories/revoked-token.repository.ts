@@ -4,7 +4,7 @@ import { RevokedToken, RevokedTokenProps } from '../entities'
 
 export class RevokedTokenRepository {
 	public readonly _ = new MongoRepository<RevokedTokenProps>({
-		database: getDatabaseName(),
+		database: getDatabaseName,
 		collection: 'revoked_tokens',
 		scoped: true,
 	})

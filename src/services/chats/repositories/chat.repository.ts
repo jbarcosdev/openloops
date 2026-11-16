@@ -5,7 +5,7 @@ import { Chat, ChatProps } from '../entities'
 
 export class ChatRepository {
 	public readonly _ = new MongoRepository<ChatProps>({
-		database: getDatabaseName(),
+		database: getDatabaseName,
 		collection: 'chats',
 		scoped: true,
 	})

@@ -4,7 +4,7 @@ import { RefreshToken, RefreshTokenProps } from '../entities'
 
 export class RefreshTokenRepository {
 	public readonly _ = new MongoRepository<RefreshTokenProps>({
-		database: getDatabaseName(),
+		database: getDatabaseName,
 		collection: 'refresh_tokens',
 		scoped: true,
 		ownerField: 'userId',

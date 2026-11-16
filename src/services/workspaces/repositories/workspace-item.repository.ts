@@ -13,7 +13,7 @@ export interface WorkspaceItemLookup {
 
 export class WorkspaceItemRepository {
 	public readonly _ = new MongoRepository<WorkspaceItemProps>({
-		database: getDatabaseName(),
+		database: getDatabaseName,
 		collection: 'workspace_items',
 		scoped: true,
 	})
