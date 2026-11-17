@@ -2,6 +2,12 @@
 
 All notable changes to `openloops` are written here, newest first. The format follows [Keep a Changelog](https://keepachangelog.com) and the versions follow [semantic versioning](https://semver.org), where a minor version can still break the API while the package is in beta. Changes before 0.4.0 are not recorded here, see the commits and the tags.
 
+## 0.10.1
+
+### Added
+
+- `openloops/tasks`, `openloops/traces` and `openloops/workspaces` are exported, so a backend can read the tasks, actions, traces and workspace items of a chat (`listAgentTasksByChat`, `getAgentTaskById`, `listAgentActionsByTask`, `listAgentTracesByChat`, `listWorkspaceItems`, `getWorkspaceItem`, `searchWorkspaceItems`, `saveWorkspaceItem`, `deleteWorkspaceItem`). Their functions already existed and only the subpaths were missing.
+
 ## 0.10.0
 
 ### Added

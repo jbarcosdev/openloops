@@ -1,6 +1,6 @@
 {
   "name": "openloops",
-  "version": "0.10.0",
+  "version": "0.10.1",
   "description": "Open source harness for building multitenant AI agents for your SaaS: a TypeScript runtime with persistence, tools, MCP trust, approvals and autonomous automations",
   "author": {
     "name": "Jose Barcos",
@@ -82,6 +82,18 @@
     "./users": {
       "types": "./dist/services/users/index.d.ts",
       "default": "./dist/services/users/index.js"
+    },
+    "./tasks": {
+      "types": "./dist/services/tasks/index.d.ts",
+      "default": "./dist/services/tasks/index.js"
+    },
+    "./traces": {
+      "types": "./dist/services/traces/index.d.ts",
+      "default": "./dist/services/traces/index.js"
+    },
+    "./workspaces": {
+      "types": "./dist/services/workspaces/index.d.ts",
+      "default": "./dist/services/workspaces/index.js"
     },
     "./db": {
       "types": "./dist/db/index.d.ts",
