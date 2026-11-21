@@ -194,6 +194,7 @@ export class AutomationRunner {
 		const model = automation.modelProvider && automation.modelName ? { modelProvider: automation.modelProvider, modelName: automation.modelName } : {}
 
 		const draft = Chat.withDefaults(loop.name)
+		draft.setTitle(automation.name)
 		draft.settings?.setExecutionMode('autonomous')
 		if (model.modelProvider) draft.settings?.setModelProvider(model.modelProvider)
 		if (model.modelName) draft.settings?.setModelName(model.modelName)

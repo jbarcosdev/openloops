@@ -65,6 +65,7 @@ describe('the runner of automations', () => {
 
             expect(run).toMatchObject({ status: 'completed', trigger: 'schedule', workerId: 'w1' })
             expect(String(run.chatId)).toBe(String(chat._id))
+            expect(chat.title).toBe('Report')
             expect(chat.settings).toMatchObject({ executionMode: 'autonomous', modelProvider: 'anthropic', modelName: 'claude-haiku-5-5', loopName: 'agi' })
             expect(env.llm.opening(0).CONTEXT.execution_mode).toBe('autonomous')
             expect(env.llm.opening(0).INPUT.user_message).toBe('Summarize my open tickets')
