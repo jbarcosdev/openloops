@@ -301,9 +301,11 @@ process.on('SIGTERM', async () => {
 })
 ```
 
+The runner does not share anything with the agent you build for your chat. If you leave out `agent`, every run starts with an agent that has no tools, no guards and no MCP servers, and nothing warns you: the model just answers that it cannot do the task. Pass the same tools and options you give your chat agent. The best way is to build them in one place, for example a function `buildAgentOptions()`, and call it from your chat endpoint and from the `agent` option of the runner. Two copies of the configuration drift apart, and the automations are the ones that fail, with no one watching.
+
 | Option | Default | What it does |
 | --- | --- | --- |
-| `agent` | `{}` | The options of the `Agent` used for every run: tools, guards, `maxIterations`, `strictMode`, `identity`... It can be a function `({ automation, currentUser }) => options` when they depend on the automation or on the user. The loop is `AgiLoop` unless you set `loop`. A custom loop must support autonomous mode (`harness.executionMode`). |
+| `agent` | `{}` (no tools, no guards) | The options of the `Agent` used for every run: tools, guards, `maxIterations`, `strictMode`, `identity`... It can be a function `({ automation, currentUser }) => options` when they depend on the automation or on the user. The loop is `AgiLoop` unless you set `loop`. A custom loop must support autonomous mode (`harness.executionMode`). |
 | `intervalMs` | `60000` | How often it checks. Also set with `AUTOMATIONS_POLL_INTERVAL_MS`. `runner.wake()` makes it check now. |
 | `leaseMs` | `600000` | How long an automation stays locked while it runs, renewed while the run lasts. Also set with `AUTOMATIONS_LEASE_MS`. |
 | `maxConcurrentRuns` | `3` | How many runs a runner executes at once. |
