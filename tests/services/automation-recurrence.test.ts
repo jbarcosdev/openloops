@@ -1,4 +1,4 @@
-import { validateRecurrence, toCronPattern } from '@services/automations/entities/recurrence'
+import { validateRecurrence, toCronPattern, IntervalUnit } from '@services/automations/entities/recurrence'
 import { computeNextRun, previewNextRuns, assertTimezone } from '@services/automations/utils/next-run'
 
 const iso = (date: Date | null) => date?.toISOString() ?? null
@@ -10,11 +10,13 @@ describe('validating a recurrence', () => {
         expect(validateRecurrence({ type: 'monthly', day: 31, time: '00:00' })).toEqual({ type: 'monthly', day: 31, time: '00:00' })
         expect(validateRecurrence({ type: 'monthly', day: 'last', time: '10:30' })).toEqual({ type: 'monthly', day: 'last', time: '10:30' })
         expect(validateRecurrence({ type: 'once', at: '2026-12-25T10:00' })).toEqual({ type: 'once', at: '2026-12-25T10:00' })
+        expect(validateRecurrence({ type: 'interval', every: 7, unit: 'hours', start: '2026-10-14T08:00' })).toEqual({ type: 'interval', every: 7, unit: IntervalUnit.HOURS, start: '2026-10-14T08:00' })
+        expect(validateRecurrence({ type: 'interval', every: 5, unit: 'minutes', start: '2026-10-14T08:00' })).toEqual({ type: 'interval', every: 5, unit: IntervalUnit.MINUTES, start: '2026-10-14T08:00' })
     })
 
     it.each([
         [undefined, /required/],
-        [{ type: 'hourly', time: '08:00' }, /must be daily, weekly, monthly or once/],
+        [{ type: 'hourly', time: '08:00' }, /must be daily, weekly, monthly, interval or once/],
         [{ type: 'daily', time: '8:00' }, /HH:mm/],
         [{ type: 'daily', time: '24:00' }, /HH:mm/],
         [{ type: 'daily', time: '08:60' }, /HH:mm/],
@@ -27,6 +29,13 @@ describe('validating a recurrence', () => {
         [{ type: 'monthly', day: 'first', time: '08:00' }, /day of a monthly/],
         [{ type: 'once', at: '2026-12-25 10:00' }, /YYYY-MM-DDTHH:mm/],
         [{ type: 'once', at: '2026-02-30T10:00' }, /does not exist/],
+        [{ type: 'interval', every: 0, unit: 'hours', start: '2026-10-14T08:00' }, /whole number/],
+        [{ type: 'interval', every: 1.5, unit: 'hours', start: '2026-10-14T08:00' }, /whole number/],
+        [{ type: 'interval', every: '2', unit: 'hours', start: '2026-10-14T08:00' }, /whole number/],
+        [{ type: 'interval', every: 2, unit: 'days', start: '2026-10-14T08:00' }, /minutes or hours/],
+        [{ type: 'interval', every: 4, unit: 'minutes', start: '2026-10-14T08:00' }, /shorter than 5 minutes/],
+        [{ type: 'interval', every: 2, unit: 'hours' }, /type interval must be written as YYYY-MM-DDTHH:mm/],
+        [{ type: 'interval', every: 2, unit: 'hours', start: '2026-02-30T10:00' }, /type interval does not exist/],
     ])('rejects %j', (value, message) => {
         expect(() => validateRecurrence(value)).toThrow(message)
     })
@@ -46,6 +55,7 @@ describe('translating a recurrence to a pattern', () => {
         expect(toCronPattern({ type: 'monthly', day: 15, time: '12:00' })).toBe('0 12 15 * *')
         expect(toCronPattern({ type: 'monthly', day: 'last', time: '12:00' })).toBe('0 12 L * *')
         expect(toCronPattern({ type: 'once', at: '2026-12-25T10:00' })).toBeUndefined()
+        expect(toCronPattern({ type: 'interval', every: 7, unit: IntervalUnit.HOURS, start: '2026-10-14T08:00' })).toBeUndefined()
     })
 })
 
@@ -99,6 +109,43 @@ describe('computing the next run', () => {
         expect(iso(computeNextRun(recurrence, 'America/Lima', new Date('2026-10-14T00:00:00Z')))).toBe('2026-12-25T15:00:00.000Z')
         expect(computeNextRun(recurrence, 'America/Lima', new Date('2026-12-25T15:00:00Z'))).toBeNull()
         expect(computeNextRun(recurrence, 'America/Lima', new Date('2027-01-01T00:00:00Z'))).toBeNull()
+    })
+
+    describe('an interval', () => {
+        const every7Hours = { type: 'interval' as const, every: 7, unit: IntervalUnit.HOURS, start: '2026-10-14T08:00' }
+        const every20Minutes = { type: 'interval' as const, every: 20, unit: IntervalUnit.MINUTES, start: '2026-10-14T08:10' }
+
+        it('runs at the start when it is still ahead', () => {
+            expect(iso(computeNextRun(every7Hours, 'America/Lima', new Date('2026-10-14T00:00:00Z')))).toBe('2026-10-14T13:00:00.000Z')
+        })
+
+        it('counts real hours and minutes from the start, not from the clock', () => {
+            expect(iso(computeNextRun(every7Hours, 'America/Lima', new Date('2026-10-14T13:00:00Z')))).toBe('2026-10-14T20:00:00.000Z')
+            expect(iso(computeNextRun(every7Hours, 'America/Lima', new Date('2026-10-14T20:00:00Z')))).toBe('2026-10-15T03:00:00.000Z')
+            expect(iso(computeNextRun(every7Hours, 'America/Lima', new Date('2026-10-15T03:00:00Z')))).toBe('2026-10-15T10:00:00.000Z')
+            expect(iso(computeNextRun(every20Minutes, 'America/Lima', new Date('2026-10-14T13:25:00Z')))).toBe('2026-10-14T13:30:00.000Z')
+        })
+
+        it('goes back to the grid when the start is in the past and never returns the moment it is asked from', () => {
+            const from = new Date('2027-03-01T09:17:00Z')
+            const next = computeNextRun(every20Minutes, 'America/Lima', from)!
+
+            expect(next.getTime()).toBeGreaterThan(from.getTime())
+            expect((next.getTime() - new Date('2026-10-14T15:10:00Z').getTime()) % (20 * 60 * 1000)).toBe(0)
+            expect(next.getTime() - from.getTime()).toBeLessThanOrEqual(20 * 60 * 1000)
+        })
+
+        it('keeps the real duration when the clocks change', () => {
+            const recurrence = { type: 'interval' as const, every: 6, unit: IntervalUnit.HOURS, start: '2026-03-07T00:00' }
+
+            expect(iso(computeNextRun(recurrence, 'America/New_York', new Date('2026-03-08T05:00:00Z')))).toBe('2026-03-08T11:00:00.000Z')
+        })
+
+        it('previews the next runs one interval apart', () => {
+            const runs = previewNextRuns(every7Hours, 'America/Lima', 3, new Date('2026-10-14T00:00:00Z'))
+
+            expect(runs.map(iso)).toEqual(['2026-10-14T13:00:00.000Z', '2026-10-14T20:00:00.000Z', '2026-10-15T03:00:00.000Z'])
+        })
     })
 
     describe('daylight saving time', () => {

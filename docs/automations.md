@@ -92,10 +92,12 @@ The recurrence of a `schedule` trigger is stored as a structured value, so a scr
 | `daily` | `time` | `{ type: 'daily', time: '08:00' }` |
 | `weekly` | `days` (1 is Monday, 7 is Sunday), `time` | `{ type: 'weekly', days: [1, 2, 3, 4, 5], time: '09:30' }` is Monday to Friday |
 | `monthly` | `day` (1 to 31 or `'last'`), `time` | `{ type: 'monthly', day: 15, time: '12:00' }` |
+| `interval` | `every` (whole number), `unit` (`'minutes'` or `'hours'`), `start` (`YYYY-MM-DDTHH:mm`, local time) | `{ type: 'interval', every: 90, unit: 'minutes', start: '2026-10-14T08:00' }` |
 | `once` | `at` (`YYYY-MM-DDTHH:mm`, local time) | `{ type: 'once', at: '2026-12-25T10:00' }` |
 
 - A monthly automation on day 29, 30 or 31 is skipped in the months that do not have that day. Use `'last'` for the last day of every month.
 - A time that does not exist on a day because of daylight saving time runs at the first valid moment of that day, and a time that happens twice runs once.
+- An `interval` counts real minutes or hours from `start`: it runs at `start`, then every `every` units after it, with no drift and not tied to the clock, so every 7 hours from 08:00 runs at 08:00, 15:00, 22:00, 05:00... Daylight saving time does not move it. A `start` in the past is fine, the next run is the next moment of the grid. Changing `start`, `every`, `unit` or the timezone changes the grid. The shortest interval is 5 minutes (`MIN_INTERVAL_MINUTES`).
 - An automation of type `once` runs a single time and then has no next run.
 
 ### Previewing

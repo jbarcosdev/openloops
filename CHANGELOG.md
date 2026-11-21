@@ -8,6 +8,8 @@ All notable changes to `openloops` are written here, newest first. The format fo
 
 - `openloops/tasks`, `openloops/traces` and `openloops/workspaces` are exported, so a backend can read the tasks, actions, traces and workspace items of a chat (`listAgentTasksByChat`, `getAgentTaskById`, `listAgentActionsByTask`, `listAgentTracesByChat`, `listWorkspaceItems`, `getWorkspaceItem`, `searchWorkspaceItems`, `saveWorkspaceItem`, `deleteWorkspaceItem`). Their functions already existed and only the subpaths were missing.
 
+- Recurrence of type `interval` for automations: every X minutes or hours counted from a `start` date and time (`{ type: 'interval', every, unit, start }`, `IntervalUnit` enum). It is an exact interval from `start`, not tied to the clock, and the shortest is 5 minutes. No migration needed.
+
 ### Changed
 
 - The chat of an automation run takes the name of the automation as its title. Before, it took the first 80 characters of the instructions, or had none.
