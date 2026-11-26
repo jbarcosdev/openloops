@@ -4,11 +4,11 @@
   "description": "Open source harness for building multitenant AI agents for your SaaS: a TypeScript runtime with persistence, tools, MCP trust, approvals and autonomous automations",
   "author": {
     "name": "Jose Barcos",
-    "email": "jose@openloops.xyz",
+    "email": "jose@endeavourai.co",
     "url": "https://github.com/jbarcosdev"
   },
   "license": "Apache-2.0",
-  "homepage": "https://openloops.xyz",
+  "homepage": "https://openloopsai.co",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/jbarcosdev/openloops.git"

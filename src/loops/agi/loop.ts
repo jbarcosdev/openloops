@@ -38,8 +38,8 @@ export class AgiLoop extends AgentLoop {
     get author () {
         return {
             name: 'Jose Barcos',
-            email: 'jose@openloops.xyz',
-            website: 'https://openloops.xyz/jose'
+            email: 'jose@endeavourai.co',
+            website: 'https://openloopsai.co/jose'
         }
     }
 

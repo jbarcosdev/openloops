@@ -11,7 +11,7 @@ async function loginExample () {
 
     const result = await login({
         payload: {
-            emailOrUsername: 'jose@openloops.xyz',
+            emailOrUsername: 'jose@endeavourai.co',
             password: 'openloops!',
         },
     })

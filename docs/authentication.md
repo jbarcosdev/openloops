@@ -36,7 +36,7 @@ The refresh token is not a JWT: it is a random string, and only its hash is stor
 ```typescript
 const result = await login({
     payload: {
-        emailOrUsername: 'jose@openloops.xyz',
+        emailOrUsername: 'jose@endeavourai.co',
         password: 'a-real-password',
     },
 })

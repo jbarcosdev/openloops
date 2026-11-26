@@ -11,7 +11,7 @@ jest.mock('@common/repositories/mongo-db.client', () => ({
 }))
 
 const users = () => fakeMongo.collection('users')
-const payload = { email: 'new@openloops.xyz', password: 'a-real-password', role: 'user' } as any
+const payload = { email: 'new@endeavourai.co', password: 'a-real-password', role: 'user' } as any
 const creator: any = { userId: new ObjectId().toHexString(), isAdmin: () => false }
 
 describe('creating a user', () => {
@@ -48,7 +48,7 @@ describe('creating a user', () => {
         const extra = { marketing: { drawNumber: '1234' }, acquisition: { platform: 'ios', referrerCode: 'abc' } }
 
         await create({ currentUser: creator, payload: { ...payload, ...extra } })
-        await create({ scope: Scope.system('test'), payload: { ...payload, email: 'other@openloops.xyz', ...extra } })
+        await create({ scope: Scope.system('test'), payload: { ...payload, email: 'other@endeavourai.co', ...extra } })
 
         expect(users().docs[0].marketing).toBeUndefined()
         expect(users().docs[0].acquisition?.referrerCode).toBeUndefined()

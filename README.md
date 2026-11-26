@@ -1,10 +1,10 @@
 # Openloops
 
-**Build production-ready, multitenant AI agents for your SaaS in minutes, not days, weeks, or months.** · [openloops.xyz](https://openloops.xyz)
+**Build production-ready, multitenant AI agents for your SaaS in minutes, not days, weeks, or months.** · [openloopsai.co](https://openloopsai.co)
 
 Openloops is an open source **harness** for building AI agents. An agent is three things: a **model** that thinks (the engine), a **harness** that gives it hands, memory and rules (the chassis), and the **interface** you build on top, with your tools and MCP servers (the body). Anthropic and OpenAI give you the engine. Openloops gives you the chassis, with the AGI loop, the tools and everything an agent needs in production. You build the body: a customer support agent, a financial auditor, a meeting copilot. Change the model, or the product, and the rest stays the same.
 
-**Want to see it working?** [Try the live demo](https://openloops.xyz/#demo), a real agent running on Openloops, with nothing to install.
+**Want to see it working?** [Try the live demo](https://openloopsai.co/#demo), a real agent running on Openloops, with nothing to install.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/jbarcosdev/openloops/main/docs/assets/harness-car.svg" alt="A car made of an engine (the AI model), a chassis (Openloops) and a body (your interface). The body changes between a personal assistant, customer support, a meeting copilot and your own idea, while the engine and the chassis stay the same." width="560">
@@ -300,4 +300,4 @@ Every pattern above, and a lot more, lives as a runnable example in [`examples/`
 
 Apache-2.0, free and open source, including for commercial and enterprise use.
 
-Questions? Reach out at jose@openloops.xyz.
+Questions? Reach out at jose@endeavourai.co.

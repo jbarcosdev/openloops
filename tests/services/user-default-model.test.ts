@@ -24,7 +24,7 @@ describe('the default model of a user', () => {
 
     beforeEach(async () => {
         fakeMongo.reset()
-        const { insertedId } = await users().insertOne({ _id: new ObjectId(owner.userId), email: 'jose@openloops.xyz', firstName: 'Jose', preferences: { language: { isoCode: 'es' }, currency: { isoCode: 'PEN' } }, __v: 1 })
+        const { insertedId } = await users().insertOne({ _id: new ObjectId(owner.userId), email: 'jose@endeavourai.co', firstName: 'Jose', preferences: { language: { isoCode: 'es' }, currency: { isoCode: 'PEN' } }, __v: 1 })
         id = String(insertedId)
     })
 
@@ -81,7 +81,7 @@ describe('the default model of a user', () => {
 
     it('is validated when a user is created', async () => {
         const create = (defaultModel: any) => new CreateUserUseCase().execute({
-            payload: { email: 'new@openloops.xyz', password: 'a-real-password', preferences: { defaultModel } },
+            payload: { email: 'new@endeavourai.co', password: 'a-real-password', preferences: { defaultModel } },
             currentUser: owner,
         })
 

@@ -12,7 +12,7 @@ async function createUserExample () {
         payload: {
             firstName: 'Jose',
             lastName: 'Barcos',
-            email: 'jose@openloops.xyz',
+            email: 'jose@endeavourai.co',
             password: 'openloops!',
             role: UserRole.USER
         },

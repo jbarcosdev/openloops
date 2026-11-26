@@ -26,7 +26,7 @@ const result = await createUser({
     payload: {
         firstName: 'Jose',
         lastName: 'Barcos',
-        email: 'jose@openloops.xyz',
+        email: 'jose@endeavourai.co',
         password: 'a-real-password',
         role: UserRole.USER,
     },
